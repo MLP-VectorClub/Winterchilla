@@ -305,6 +305,8 @@ class CoreUtils {
     $scope['default_js'] = !isset($options['default-js']) || $options['default-js'] === true;
     $scope['css'] = $scope['default_css'] ? self::DEFAULT_CSS : [];
     $scope['js'] = $scope['default_js'] ? self::DEFAULT_JS : [];
+    $potentially_brave = !isset($_COOKIE['brave_ack']) && !empty($_SERVER['HTTP_USER_AGENT']) && str_contains($_SERVER['HTTP_USER_AGENT'], 'Chrome/');
+    if ($potentially_brave) $scope['js'][] = 'brave';
     self::_checkAssets($options, $scope['css'], 'css', $view);
     self::_checkAssets($options, $scope['js'], 'js', $view);
     $scope['is_2020_event'] = self::$useNutshellNames;
@@ -1641,7 +1643,6 @@ class CoreUtils {
       if (!file_exists($names_path))
         throw new RuntimeException('Nutshell name mapping file missing');
 
-      /** @noinspection PhpIncludeInspection */
       require_once $names_path;
     }
   }

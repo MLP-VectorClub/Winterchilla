@@ -63,7 +63,7 @@
       this.$dialogScroll = $('#dialogScroll');
       this.$dialogButtons = $('#dialogButtons');
       this._open = this.$dialogContent.length ? {} : undefined;
-      this._closeButton = new DialogButton('Close', { action: closeAction });
+      this._closeButton = new DialogButton('Close', { action: closeAction, className: 'close-button' });
       this._$focusedElement = undefined;
     }
 
@@ -193,6 +193,7 @@
             $requestContentDiv.prepend($.mk('input').attr({ type: 'submit', tabindex: -1 }).hide());
           }
         }
+        if (obj.className) $button.addClass(obj.className);
         $button.val(obj.label).on('click', function(e) {
           e.preventDefault();
 

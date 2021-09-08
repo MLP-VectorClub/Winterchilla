@@ -42,6 +42,7 @@
     "react": "16.8.6",
     "react-dom": "16.8.6",
     "sass": "^1.32.13",
+    "tar": ">=4.4.18",
     "typicons.font": "^2.0.9"
   },
   "author": "SeinopSys <david@seinopsys.dev> (https://github.com/SeinopSys)",

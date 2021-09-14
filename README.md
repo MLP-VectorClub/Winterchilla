@@ -63,7 +63,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Thanks to
 
- - [tjhorner](https://github.com/tjhorner) and [SlvrEagle23](https://github.com/SlvrEagle23) for showing me that quotes around attribute values is a good idea
- - [DASPRiD](https://github.com/DASPRiD) for his contributions and bug reports
- - [parclytaxel](https://gitlab.com/parclytaxel) and [Trildar](https://github.com/Trildar) for their help with math-related code and numerous bug reports 
- - The members of our Discord server who continue to report issues and suggest features, making the site better for everyone
+  - MD. Nur A Alam Dipu ([@Dipu1A](http://twitter.com/Dipu1A)) for responsibly disclosing an open redirect vulnerability in the application
+  - [tjhorner](https://github.com/tjhorner) and [SlvrEagle23](https://github.com/SlvrEagle23) for showing me that quotes around attribute values is a good idea
+  - [DASPRiD](https://github.com/DASPRiD) for his contributions and bug reports
+  - [parclytaxel](https://gitlab.com/parclytaxel) and [Trildar](https://github.com/Trildar) for their help with math-related code and numerous bug reports 
+  - The members of our Discord server who continue to report issues and suggest features, making the site better for everyone

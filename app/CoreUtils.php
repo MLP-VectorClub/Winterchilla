@@ -76,7 +76,8 @@ class CoreUtils {
     $query = empty($split[1]) ? '' : "?{$split[1]}";
 
     $fix_split = explode('?', strtok($fix_uri, '#'), 2);
-    $fix_path = $fix_split[0];
+    // Prevent multiple leading slashes
+    $fix_path = preg_replace('~^/{2,}~', '/', $fix_split[0]);
     $fix_query = self::mergeQuery($query, empty($fix_split[1]) ? '' : "?{$fix_split[1]}", $remove_params);
     $fragment = self::appendFragment($fix_uri);
 

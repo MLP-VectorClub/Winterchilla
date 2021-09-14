@@ -7,7 +7,7 @@ use App\RouteHelper;
 
 // Strip &hellip; and what comes after
 $decoded_uri = CoreUtils::trim(urldecode($_SERVER['REQUEST_URI']));
-$request_uri = preg_replace('/(?:….*|<)$/u', '', $decoded_uri);
+$request_uri = preg_replace('/(?:….*|<)$/', '', $decoded_uri);
 // Strip non-ascii
 $safe_uri = preg_replace('/[^ -~]/', '', $request_uri);
 // Enforce URL

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d1f19d1138339018b169659b777bfadd",
+    "content-hash": "03df41b868c9bb16132326952d7b05e7",
     "packages": [
         {
             "name": "airmanbzh/php-html-generator",
@@ -3230,12 +3230,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/SeinopSys/php-activerecord.git",
-                "reference": "c81e9ba17b567506c4b34243936432bbad328a90"
+                "reference": "bce2486f8d6df390bf00b11f208a0ca8cf77d0d0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SeinopSys/php-activerecord/zipball/c81e9ba17b567506c4b34243936432bbad328a90",
-                "reference": "c81e9ba17b567506c4b34243936432bbad328a90",
+                "url": "https://api.github.com/repos/SeinopSys/php-activerecord/zipball/bce2486f8d6df390bf00b11f208a0ca8cf77d0d0",
+                "reference": "bce2486f8d6df390bf00b11f208a0ca8cf77d0d0",
                 "shasum": ""
             },
             "require": {
@@ -3265,7 +3265,7 @@
             "support": {
                 "source": "https://github.com/SeinopSys/php-activerecord/tree/master"
             },
-            "time": "2020-06-19T02:17:20+00:00"
+            "time": "2021-11-28T09:38:25+00:00"
         },
         {
             "name": "php-tmdb/api",
@@ -7700,7 +7700,7 @@
         },
         {
             "name": "roave/security-advisories",
-            "version": "dev-master",
+            "version": "dev-latest",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/SecurityAdvisories.git",
@@ -8088,6 +8088,7 @@
                 "zfr/zfr-oauth2-server-module": "<0.1.2",
                 "zoujingli/thinkadmin": "<6.0.22"
             },
+            "default-branch": true,
             "type": "metapackage",
             "notification-url": "https://packagist.org/downloads/",
             "license": [

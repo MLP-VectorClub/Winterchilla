@@ -22,10 +22,7 @@ use App\Response;
 use App\Twig;
 use App\UserPrefs;
 use App\Users;
-use Monolog\Logger;
 use RuntimeException;
-use Square1\Pwned\Exception\ConnectionFailedException;
-use Square1\Pwned\Pwned;
 use Throwable;
 use function count;
 
@@ -292,7 +289,8 @@ class UserController extends Controller {
       ],
     ]))->out();
 
-    $compromised = false;
+    // Disabled due to square1/pwned-check not being installable under PHP 8.1
+    /* $compromised = false;
     try {
       $pwned = new Pwned([
         'connection_timeout' => 5,
@@ -305,7 +303,7 @@ class UserController extends Controller {
     }
     if ($compromised){
       Response::fail('The specified new password is a known compromised password present in at least one data breach of other websites. Please chose a more unique password.');
-    }
+    } */
 
     DB::$instance->getConnection()->beginTransaction();
 

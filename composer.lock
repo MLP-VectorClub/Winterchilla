@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "11949e80f2b42a0d280550257aa7cdec",
+    "content-hash": "d1f19d1138339018b169659b777bfadd",
     "packages": [
         {
             "name": "airmanbzh/php-html-generator",
@@ -115,21 +115,21 @@
         },
         {
             "name": "cakephp/cache",
-            "version": "3.10.1",
+            "version": "3.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/cache.git",
-                "reference": "0e95a17b118d900f362de07bff902fa147e51fb2"
+                "reference": "bde82c6692f03351d113d010e1a4d7f69359144d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/cache/zipball/0e95a17b118d900f362de07bff902fa147e51fb2",
-                "reference": "0e95a17b118d900f362de07bff902fa147e51fb2",
+                "url": "https://api.github.com/repos/cakephp/cache/zipball/bde82c6692f03351d113d010e1a4d7f69359144d",
+                "reference": "bde82c6692f03351d113d010e1a4d7f69359144d",
                 "shasum": ""
             },
             "require": {
                 "cakephp/core": "^3.6.0",
-                "php": ">=5.6.0,<8.0.0",
+                "php": ">=5.6.0",
                 "psr/simple-cache": "^1.0.0"
             },
             "type": "library",
@@ -161,24 +161,24 @@
                 "issues": "https://github.com/cakephp/cakephp/issues",
                 "source": "https://github.com/cakephp/cache"
             },
-            "time": "2021-06-20T01:13:19+00:00"
+            "time": "2020-10-20T12:53:41+00:00"
         },
         {
             "name": "cakephp/collection",
-            "version": "3.10.1",
+            "version": "3.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/collection.git",
-                "reference": "5667e755cfafe4b186f5f2a54121cf44cb86159e"
+                "reference": "ddfff69d7bfa8b9b03eb7150097b0b06258fcaa3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/collection/zipball/5667e755cfafe4b186f5f2a54121cf44cb86159e",
-                "reference": "5667e755cfafe4b186f5f2a54121cf44cb86159e",
+                "url": "https://api.github.com/repos/cakephp/collection/zipball/ddfff69d7bfa8b9b03eb7150097b0b06258fcaa3",
+                "reference": "ddfff69d7bfa8b9b03eb7150097b0b06258fcaa3",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.6.0,<8.0.0"
+                "php": ">=5.6.0"
             },
             "type": "library",
             "autoload": {
@@ -213,25 +213,25 @@
                 "issues": "https://github.com/cakephp/cakephp/issues",
                 "source": "https://github.com/cakephp/collection"
             },
-            "time": "2021-03-26T00:40:07+00:00"
+            "time": "2020-07-05T02:00:29+00:00"
         },
         {
             "name": "cakephp/core",
-            "version": "3.10.1",
+            "version": "3.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/core.git",
-                "reference": "716300a55ac86b7456e52258d3f50545545d2d6b"
+                "reference": "4b45635d6be8a98be175fea9c9f575de29d515b3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/core/zipball/716300a55ac86b7456e52258d3f50545545d2d6b",
-                "reference": "716300a55ac86b7456e52258d3f50545545d2d6b",
+                "url": "https://api.github.com/repos/cakephp/core/zipball/4b45635d6be8a98be175fea9c9f575de29d515b3",
+                "reference": "4b45635d6be8a98be175fea9c9f575de29d515b3",
                 "shasum": ""
             },
             "require": {
                 "cakephp/utility": "^3.6.0",
-                "php": ">=5.6.0,<8.0.0"
+                "php": ">=5.6.0"
             },
             "suggest": {
                 "cakephp/cache": "To use Configure::store() and restore().",
@@ -269,20 +269,20 @@
                 "issues": "https://github.com/cakephp/cakephp/issues",
                 "source": "https://github.com/cakephp/core"
             },
-            "time": "2021-06-18T07:33:08+00:00"
+            "time": "2020-10-21T21:21:05+00:00"
         },
         {
             "name": "cakephp/database",
-            "version": "3.10.1",
+            "version": "3.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/database.git",
-                "reference": "e16dae97cfe00b1de9c210bd49f71ad5c2de199a"
+                "reference": "6f4cd60f53e8b6559cc6782ff288cc6d2b8fe1d3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/database/zipball/e16dae97cfe00b1de9c210bd49f71ad5c2de199a",
-                "reference": "e16dae97cfe00b1de9c210bd49f71ad5c2de199a",
+                "url": "https://api.github.com/repos/cakephp/database/zipball/6f4cd60f53e8b6559cc6782ff288cc6d2b8fe1d3",
+                "reference": "6f4cd60f53e8b6559cc6782ff288cc6d2b8fe1d3",
                 "shasum": ""
             },
             "require": {
@@ -290,7 +290,7 @@
                 "cakephp/core": "^3.6.0",
                 "cakephp/datasource": "^3.6.0",
                 "cakephp/log": "^3.6.0",
-                "php": ">=5.6.0,<8.0.0"
+                "php": ">=5.6.0"
             },
             "type": "library",
             "autoload": {
@@ -323,25 +323,25 @@
                 "issues": "https://github.com/cakephp/cakephp/issues",
                 "source": "https://github.com/cakephp/database"
             },
-            "time": "2021-10-23T07:22:45+00:00"
+            "time": "2020-10-04T00:34:57+00:00"
         },
         {
             "name": "cakephp/datasource",
-            "version": "3.10.1",
+            "version": "3.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/datasource.git",
-                "reference": "accbe0c85552f384e587d73abdba1618c604b54d"
+                "reference": "c1c5e06c38dc61b997703d38fc704917f39b4dd8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/datasource/zipball/accbe0c85552f384e587d73abdba1618c604b54d",
-                "reference": "accbe0c85552f384e587d73abdba1618c604b54d",
+                "url": "https://api.github.com/repos/cakephp/datasource/zipball/c1c5e06c38dc61b997703d38fc704917f39b4dd8",
+                "reference": "c1c5e06c38dc61b997703d38fc704917f39b4dd8",
                 "shasum": ""
             },
             "require": {
                 "cakephp/core": "^3.6.0",
-                "php": ">=5.6.0,<8.0.0"
+                "php": ">=5.6.0"
             },
             "suggest": {
                 "cakephp/cache": "If you decide to use Query caching.",
@@ -379,25 +379,25 @@
                 "issues": "https://github.com/cakephp/cakephp/issues",
                 "source": "https://github.com/cakephp/datasource"
             },
-            "time": "2021-04-07T13:23:38+00:00"
+            "time": "2020-10-20T12:53:41+00:00"
         },
         {
             "name": "cakephp/log",
-            "version": "3.10.1",
+            "version": "3.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/log.git",
-                "reference": "cf10bdcce4e78430a780edb2cc5b4b2b4719a65d"
+                "reference": "b5b97154b8e63f41e206021901e49397e2f4ca90"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/log/zipball/cf10bdcce4e78430a780edb2cc5b4b2b4719a65d",
-                "reference": "cf10bdcce4e78430a780edb2cc5b4b2b4719a65d",
+                "url": "https://api.github.com/repos/cakephp/log/zipball/b5b97154b8e63f41e206021901e49397e2f4ca90",
+                "reference": "b5b97154b8e63f41e206021901e49397e2f4ca90",
                 "shasum": ""
             },
             "require": {
                 "cakephp/core": "^3.6.0",
-                "php": ">=5.6.0,<8.0.0",
+                "php": ">=5.6.0",
                 "psr/log": "^1.0.0"
             },
             "type": "library",
@@ -430,25 +430,25 @@
                 "issues": "https://github.com/cakephp/cakephp/issues",
                 "source": "https://github.com/cakephp/log"
             },
-            "time": "2020-10-28T18:13:14+00:00"
+            "time": "2020-10-20T12:53:41+00:00"
         },
         {
             "name": "cakephp/utility",
-            "version": "3.10.1",
+            "version": "3.9.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/cakephp/utility.git",
-                "reference": "51b0af31af3239f6141006bbd7cbc7b16aba40d6"
+                "reference": "e655b399b7492e517caef52fb87af9db10543112"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cakephp/utility/zipball/51b0af31af3239f6141006bbd7cbc7b16aba40d6",
-                "reference": "51b0af31af3239f6141006bbd7cbc7b16aba40d6",
+                "url": "https://api.github.com/repos/cakephp/utility/zipball/e655b399b7492e517caef52fb87af9db10543112",
+                "reference": "e655b399b7492e517caef52fb87af9db10543112",
                 "shasum": ""
             },
             "require": {
                 "cakephp/core": "^3.6.0",
-                "php": ">=5.6.0,<8.0.0"
+                "php": ">=5.6.0"
             },
             "suggest": {
                 "ext-intl": "To use Text::transliterate() or Text::slug()",
@@ -489,7 +489,7 @@
                 "issues": "https://github.com/cakephp/cakephp/issues",
                 "source": "https://github.com/cakephp/utility"
             },
-            "time": "2020-12-09T02:43:02+00:00"
+            "time": "2020-08-18T13:55:20+00:00"
         },
         {
             "name": "cogpowered/finediff",
@@ -3902,30 +3902,30 @@
         },
         {
             "name": "restcord/restcord",
-            "version": "0.3.2",
+            "version": "0.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/restcord/restcord.git",
-                "reference": "2e332138428a91fbcc70630c324aa5a449c11b01"
+                "reference": "e79722fc74b15773a8b58237f678d004038f3529"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/restcord/restcord/zipball/2e332138428a91fbcc70630c324aa5a449c11b01",
-                "reference": "2e332138428a91fbcc70630c324aa5a449c11b01",
+                "url": "https://api.github.com/repos/restcord/restcord/zipball/e79722fc74b15773a8b58237f678d004038f3529",
+                "reference": "e79722fc74b15773a8b58237f678d004038f3529",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^6.3",
                 "guzzlehttp/guzzle-services": "^1.0",
-                "monolog/monolog": "^1.22",
+                "monolog/monolog": "^1.22|^2.0",
                 "netresearch/jsonmapper": "^1.4",
-                "php": "^5.6|^7.0",
-                "symfony/options-resolver": "^2.6|^3.0|^4.0"
+                "php": "^7.3|^8.0",
+                "symfony/options-resolver": "^3.4|^4.4|^5.1"
             },
             "require-dev": {
                 "beberlei/assert": "^2.7",
-                "gossi/php-code-generator": "^0.4.1",
-                "phpunit/phpunit": "^6.0|^5.0",
+                "gossi/php-code-generator": "^0.5.0",
+                "phpunit/phpunit": "^8.0|^9.0",
                 "symfony/console": "^2.6|^3.0|^4.0",
                 "symfony/process": "^2.6|^3.0|^4.0",
                 "symfony/var-dumper": "^2.6|^3.0|^4.0",
@@ -3950,9 +3950,9 @@
             "description": "REST Library for the Discord API",
             "support": {
                 "issues": "https://github.com/restcord/restcord/issues",
-                "source": "https://github.com/restcord/restcord/tree/0.3.2"
+                "source": "https://github.com/restcord/restcord/tree/0.5.0"
             },
-            "time": "2019-08-08T23:33:12+00:00"
+            "time": "2020-12-24T04:37:14+00:00"
         },
         {
             "name": "robmorgan/phinx",
@@ -4285,62 +4285,6 @@
                 "source": "https://github.com/SeinopSys/RGBAColor/tree/master"
             },
             "time": "2017-10-22T20:46:15+00:00"
-        },
-        {
-            "name": "square1/pwned-check",
-            "version": "1.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/square1-io/pwned-check.git",
-                "reference": "4fc22ff83823a813ffda130de8fe82cb984e8bf9"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/square1-io/pwned-check/zipball/4fc22ff83823a813ffda130de8fe82cb984e8bf9",
-                "reference": "4fc22ff83823a813ffda130de8fe82cb984e8bf9",
-                "shasum": ""
-            },
-            "require": {
-                "php": "~7.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "4.*"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Square1\\Pwned\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Paul Conroy",
-                    "email": "paul@square1.io",
-                    "homepage": "https://www.square1.io"
-                }
-            ],
-            "description": "Validate password changes against known-compromised passwords",
-            "homepage": "https://github.com/square1-io/pwned-check",
-            "keywords": [
-                "password",
-                "pwned-check",
-                "security",
-                "square1"
-            ],
-            "support": {
-                "issues": "https://github.com/square1-io/pwned-check/issues",
-                "source": "https://github.com/square1-io/pwned-check/tree/1.1"
-            },
-            "time": "2019-08-31T11:00:11+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -6413,16 +6357,16 @@
         },
         {
             "name": "twig/twig",
-            "version": "v3.3.3",
+            "version": "v3.3.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twigphp/Twig.git",
-                "reference": "a27fa056df8a6384316288ca8b0fa3a35fdeb569"
+                "reference": "65cb6f0b956485e1664f13d023c55298a4bb59ca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twigphp/Twig/zipball/a27fa056df8a6384316288ca8b0fa3a35fdeb569",
-                "reference": "a27fa056df8a6384316288ca8b0fa3a35fdeb569",
+                "url": "https://api.github.com/repos/twigphp/Twig/zipball/65cb6f0b956485e1664f13d023c55298a4bb59ca",
+                "reference": "65cb6f0b956485e1664f13d023c55298a4bb59ca",
                 "shasum": ""
             },
             "require": {
@@ -6473,7 +6417,7 @@
             ],
             "support": {
                 "issues": "https://github.com/twigphp/Twig/issues",
-                "source": "https://github.com/twigphp/Twig/tree/v3.3.3"
+                "source": "https://github.com/twigphp/Twig/tree/v3.3.4"
             },
             "funding": [
                 {
@@ -6485,7 +6429,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-09-17T08:44:23+00:00"
+            "time": "2021-11-25T13:46:55+00:00"
         },
         {
             "name": "voku/portable-ascii",
@@ -9025,7 +8969,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": "~7.4",
+        "php": "~8.1",
         "ext-curl": "*",
         "ext-dom": "*",
         "ext-gd": "*",
@@ -9041,5 +8985,5 @@
         "ext-zlib": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.1.0"
 }

@@ -40,7 +40,7 @@ class DiscordAuthController extends Controller {
   }
 
   private function getReturnUrl():string {
-    return Auth::$user->toURL(false).'#discord-connect';
+    return Auth::$user->toURL(true).'/account#discord-connect';
   }
 
   public static function getProvider():Discord {

@@ -83,7 +83,7 @@ class DiscordMember extends NSModel {
     }
     if (!empty($member)){
       $this->nick = $member->nick ?? null;
-      $this->joined_at = $member->joined_at;
+      $this->joined_at = $member->joined_at->format('c');
     }
     else {
       $this->nick = null;

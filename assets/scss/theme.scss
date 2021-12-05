@@ -298,6 +298,7 @@
 
     #breadcrumbs {
       position: relative;
+
       &:before {
         content: "";
         display: block;
@@ -796,14 +797,12 @@ header, #sidebar .mobile-nav {
     }
 
     .sb-useful-links {
-      list-style: none;
       border-radius: 5px;
       margin: 0 0 6px;
       padding: 5px;
       line-height: 1.2em;
 
-      &:before {
-        content: "Useful links";
+      .sb-useful-links-title {
         display: block;
         border-bottom: 1px solid $SidebarContentBorder;
         font-size: 1.2em;
@@ -813,34 +812,41 @@ header, #sidebar .mobile-nav {
         font-weight: bold;
       }
 
-      &:empty {
-        display: none
-      }
+      ul {
+        list-style: none;
+        line-height: inherit;
+        margin: 0;
+        padding: 0;
 
-      li {
-        display: inline-block;
-        white-space: normal;
+        &:empty {
+          display: none
+        }
 
-        a {
+        li {
           display: inline-block;
-          text-decoration: none;
-          color: inherit;
-          border-bottom: 1px solid transparent;
-          transition: border-bottom-color .2s linear;
-        }
+          white-space: normal;
 
-        &:not(:last-child):after {
-          content: ",";
-          margin-right: .3em;
-          display: inline-block;
-        }
+          a {
+            display: inline-block;
+            text-decoration: none;
+            color: inherit;
+            border-bottom: 1px solid transparent;
+            transition: border-bottom-color .2s linear;
+          }
 
-        &:not(.active) a:hover:not(:active) {
-          border-bottom-color: initial;
-        }
+          &:not(:last-child):after {
+            content: ",";
+            margin-right: .3em;
+            display: inline-block;
+          }
 
-        &.active a {
-          border-bottom-color: rgba(255, 255, 255, .5);
+          &:not(.active) a:hover:not(:active) {
+            border-bottom-color: initial;
+          }
+
+          &.active a {
+            border-bottom-color: rgba(255, 255, 255, .5);
+          }
         }
       }
     }

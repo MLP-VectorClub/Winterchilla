@@ -13,7 +13,7 @@ use function is_callable;
 use function is_string;
 
 class Input {
-  private $_type, $_source, $_key, $_initValue, $_origValue, $_value, $_respond = true, $_validator, $_range, $_silentFail, $_noLog;
+  private $_type, $_source, $_key, $_origValue, $_value, $_respond = true, $_validator, $_range, $_silentFail, $_noLog;
   private static $SUPPORTED_TYPES = [
     'exists' => true,
     'bool' => true,
@@ -190,7 +190,7 @@ class Input {
         if (!preg_match(Regexes::$rewrite, $this->_origValue) && !preg_match('/^#[a-z\-]+$/', $this->_origValue)){
           if (self::checkStringLength($this->_origValue, $this->_range, $code))
             return $code;
-          if (!preg_match('~^https?://[a-z\d/.-]+(?:/[ -~]+)?$~i', $this->_origValue))
+          if (!preg_match('_^https?://[a-z\d/.-]+(?:/[ -~]+)?$_i', $this->_origValue))
             Response::fail('Link URL does not appear to be a valid link');
         }
       break;
@@ -283,7 +283,7 @@ class Input {
   }
 
   private function _outputError($message, $errorCode = null) {
-    $message = str_replace('@value', CoreUtils::escapeHTML(str_replace('@', '&#64;', $this->_initValue)), $message);
+    $message = str_replace('@value', CoreUtils::escapeHTML(str_replace('@', '&#64;', $this->_origValue)), $message);
     if ($errorCode === self::ERROR_RANGE){
       if (isset($this->_range[0]))
         $message = str_replace('@min', $this->_range[0], $message);

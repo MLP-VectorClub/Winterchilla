@@ -1,7 +1,9 @@
 {# @var useful_links \App\Models\UsefulLink[] #}
 {%- if useful_links is defined and useful_links is not empty -%}
   {%- if wrap is not defined or wrap %}
-    <ul class="sb-useful-links">
+    <section class="sb-useful-links">
+      <p class="sb-useful-links-title">Useful links</p>
+      <ul>
   {% endif -%}
   {% for l in useful_links -%}
     {%- if l.minrole == 'guest' or (current_user is not null and current_user.perm(l.minrole)) -%}
@@ -11,6 +13,7 @@
     {% endif -%}
   {%- endfor %}
   {%- if wrap is not defined or wrap %}
-    </ul>
+      </ul>
+    </section>
   {% endif %}
 {% endif %}

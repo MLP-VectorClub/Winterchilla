@@ -104,6 +104,7 @@ class Logs {
         $details[] = ['User', Users::resolveById($data['userid'])->toAnchor()];
       break;
       case 'post_lock':
+      case 'post_fix':
         self::_genericPostInfo($data, $details);
       break;
       case 'major_changes':
@@ -258,6 +259,9 @@ class Logs {
         }
 
         foreach ($keys as $key){
+          if (is_string($data[$key])) {
+            $data[$key] = JSON::decode($data[$key]);
+          }
           foreach ($data[$key] as $k => $_){
             foreach ($data[$key][$k] as $i => $v){
               if (!isset($v) || $i === 'id'){
@@ -281,6 +285,9 @@ class Logs {
         $details[] = ['Appearance', self::_getAppearanceLink($data['appearance_id'])];
 
         if (!empty($data['data']))
+          if (is_string($data['data'])) {
+            $data['data'] = JSON::decode($data['data']);
+          }
           foreach ($data['data'] as $k => $_){
             foreach ($data['data'][$k] as $i => $v){
               if (!isset($v) || $i === 'id'){
@@ -304,10 +311,6 @@ class Logs {
         $details[] = ['Response Code', "<code>{$data['response_code']}</code>"];
         $escaped_url = CoreUtils::aposEncode($data['failing_url']);
         $details[] = ['Failing URL', "<a href='$escaped_url'>$escaped_url</a>"];
-      break;
-      case 'post_fix':
-        self::_genericPostInfo($data, $details);
-      break;
       break;
       case 'staff_limits':
         $details[] = ['For', Users::resolveById($data['user_id'])->toAnchor()];

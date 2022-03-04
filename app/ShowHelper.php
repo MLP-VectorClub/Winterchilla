@@ -163,7 +163,6 @@ class ShowHelper {
       'ep_title_regex' => $ep_title_regex,
       'current_episode' => $current_episode,
       'poster' => $current_episode->poster,
-      'videos' => $current_episode->videos,
       'prev_episode' => $prev_episode,
       'next_episode' => $next_episode,
       'linked_post' => $linked_post,
@@ -203,22 +202,6 @@ class ShowHelper {
     'sv' => 'yellow typcn-video',
     'mg' => 'red typcn-video',
   ];
-
-  /**
-   * Renders the HTML of the "Watch the Episode" section along with the buttons/links
-   *
-   * @param Show $Episode
-   * @param bool $wrap
-   *
-   * @return string
-   */
-  public static function getVideosHTML(Show $Episode, bool $wrap = WRAP):string {
-    return Twig::$env->render('show/_watch.html.twig', [
-      'current_episode' => $Episode,
-      'wrap' => $wrap,
-      'videos' => $Episode->videos,
-    ]);
-  }
 
   /**
    * Render episode voting HTML

@@ -10,7 +10,6 @@ use App\Models\LegacyPostMapping;
 use App\Models\Log;
 use App\Models\Post;
 use App\Models\Show;
-use App\Models\ShowVideo;
 use cogpowered\FineDiff;
 use Exception;
 use RuntimeException;
@@ -235,15 +234,6 @@ class Logs {
           $details[] = ['Old name', $data['old']];
         else
           $details[] = ['Name', self::diff($data['old'], $data['new'])];
-      break;
-      case 'video_broken':
-        $show = Show::find($data['show_id']);
-        $details[] = ['Episode', $show->toAnchor()];
-        $url = VideoProvider::getEmbed(new ShowVideo([
-          'provider_abbr' => $data['provider'],
-          'provider_id' => $data['id'],
-        ]), VideoProvider::URL_ONLY);
-        $details[] = ['Link', "<a href='$url'>$url</a>"];
       break;
       case 'cm_modify':
         $details[] = ['Appearance', self::_getAppearanceLink($data['appearance_id'])];

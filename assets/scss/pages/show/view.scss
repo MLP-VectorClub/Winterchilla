@@ -335,18 +335,6 @@
       }
     }
 
-    &.episode {
-      > .actions {
-        button, .btn {
-          font-size: 1.1em;
-        }
-      }
-
-      > .resp-embed-wrap .responsive-embed {
-        margin-bottom: 10px;
-      }
-    }
-
     &.rules {
       color: $NOrange;
 

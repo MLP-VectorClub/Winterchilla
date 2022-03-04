@@ -11,7 +11,7 @@ use App\Posts;
 use App\Regexes;
 use App\ShowHelper;
 use App\TMDBHelper;
-use App\VideoProvider;
+use RuntimeException;
 use function count;
 
 /**
@@ -37,7 +37,6 @@ use function count;
  * @property string           $short_title           (Via magic method)
  * @property ShowAppearance[] $show_appearances      (Via relations)
  * @property Appearance[]     $related_appearances   (Via relations)
- * @property ShowVideo[]      $videos                (Via relations)
  * @property User             $poster                (Via relations)
  * @method static Show find_by_season_and_episode(int $season, int $episode)
  * @method static Show find_by_generation_and_season_and_episode(string $generation, int $season, int $episode)
@@ -47,7 +46,6 @@ class Show extends NSModel implements Linkable {
   public static $table_name = 'show';
 
   public static $has_many = [
-    ['videos', 'class' => 'ShowVideo', 'order' => 'provider_abbr asc, part asc'],
     ['show_appearances'],
     ['related_appearances', 'class' => 'Appearance', 'order' => 'label asc', 'through' => 'show_appearances'],
   ];
@@ -345,7 +343,7 @@ class Show extends NSModel implements Linkable {
    *
    * @return Show|null
    */
-  private function _getAdjacent($dir):?Show {
+  private function _getAdjacent(string $dir):?Show {
     $is = $this->is_episode ? '=' : '!=';
     $col = $this->is_episode ? 'no' : 'episode';
     $sql_dir = $dir === self::NEXT ? 'asc' : 'desc';
@@ -389,6 +387,8 @@ class Show extends NSModel implements Linkable {
           'limit' => 1,
         ]);
       break;
+      default:
+        throw new RuntimeException("Unhandled show generation $this->generation");
     }
   }
 
@@ -424,33 +424,6 @@ class Show extends NSModel implements Linkable {
     if ($user === null) return null;
 
     return ShowVote::findFor($this, $user);
-  }
-
-  /**
-   * Get video embed HTML for an episode
-   *
-   * @return array
-   */
-  public function getVideoEmbeds():array {
-    $parts = 0;
-    $embed = '';
-    if (count($this->videos) > 0){
-      $Videos = [];
-      foreach ($this->videos as $v)
-        $Videos[$v->provider_abbr][$v->part] = $v;
-      // YouTube embed preferred
-      $Videos = !empty($Videos['yt']) ? $Videos['yt'] : ($Videos['dm'] ?? $Videos['sv'] ?? $Videos['mg']);
-      /** @var $Videos ShowVideo[] */
-
-      $parts = count($Videos);
-      foreach ($Videos as $v)
-        $embed .= "<div class='responsive-embed".($this->parts === 2 && $v->part !== 1 ? ' hidden' : '')."'>".VideoProvider::getEmbed($v).'</div>';
-    }
-
-    return [
-      'parts' => $parts,
-      'html' => $embed,
-    ];
   }
 
   /**

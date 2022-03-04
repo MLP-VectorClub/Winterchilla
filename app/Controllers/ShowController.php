@@ -13,7 +13,6 @@ use App\Models\Appearance;
 use App\Models\PinnedAppearance;
 use App\Models\Show;
 use App\Models\ShowAppearance;
-use App\Models\ShowVideo;
 use App\Models\ShowVote;
 use App\Pagination;
 use App\Permission;
@@ -22,7 +21,6 @@ use App\Regexes;
 use App\Response;
 use App\ShowHelper;
 use App\Twig;
-use App\VideoProvider;
 use DateInterval;
 use Exception;
 use League\Uri\UriModifier;
@@ -322,102 +320,6 @@ class ShowController extends Controller {
     }
   }
 
-  public function videoEmbeds($params):void {
-    if ($this->action !== 'GET')
-      CoreUtils::notAllowed();
-
-    $this->load_show($params);
-
-    Response::done($this->show->getVideoEmbeds());
-  }
-
-  public function videoDataApi($params):void {
-    if (Permission::insufficient('staff'))
-      Response::fail();
-
-    $this->load_show($params);
-
-    switch ($this->action){
-      case 'GET':
-        $response = [
-          'twoparter' => $this->show->parts === 2,
-          'vidlinks' => [],
-          'fullep' => [],
-          'airs' => date('c', strtotime($this->show->airs)),
-          'type' => $this->show->type,
-        ];
-        $videos = $this->show->videos;
-        foreach ($videos as $part => $vid){
-          if (!empty($vid->provider_id))
-            $response['vidlinks']["{$vid->provider_abbr}_{$vid->part}"] = VideoProvider::getEmbed($vid, VideoProvider::URL_ONLY);
-          if ($vid->fullep)
-            $response['fullep'][] = $vid->provider_abbr;
-        }
-        Response::done($response);
-      break;
-      case 'PUT':
-        foreach (array_keys(ShowHelper::VIDEO_PROVIDER_NAMES) as $provider){
-          for ($part = 1; $part <= $this->show->parts; $part++){
-            $set = null;
-            $post_key = "{$provider}_$part";
-            if (!empty($_REQUEST[$post_key])){
-              $provider_name = ShowHelper::VIDEO_PROVIDER_NAMES[$provider];
-              try {
-                $vid_provider = new VideoProvider(DeviantArt::trimOutgoingGateFromUrl($_REQUEST[$post_key]));
-              }
-              catch (Exception $e){
-                Response::fail("$provider_name#$part link issue: ".$e->getMessage());
-              }
-              if ($vid_provider->episodeVideo === null || $vid_provider->episodeVideo->provider_abbr !== $provider)
-                Response::fail("Incorrect $provider_name#$part URL specified");
-              $set = $vid_provider->id;
-            }
-
-            $fullep = $this->show->parts === 1;
-            if ($part === 1 && $this->show->parts === 2 && isset($_REQUEST["{$post_key}_full"])){
-              $next_part = $provider.'_'.($part + 1);
-              $_REQUEST[$next_part] = null;
-              $fullep = true;
-            }
-
-            $video_count = DB::$instance
-              ->where('show_id', $this->show->id)
-              ->where('provider_abbr', $provider)
-              ->where('part', $part)
-              ->count(ShowVideo::$table_name);
-            if ($video_count === 0){
-              if (!empty($set))
-                ShowVideo::create([
-                  'show_id' => $this->show->id,
-                  'provider_abbr' => $provider,
-                  'part' => $part,
-                  'provider_id' => $set,
-                  'fullep' => $fullep,
-                ]);
-            }
-            else {
-              DB::$instance
-                ->where('show_id', $this->show->id)
-                ->where('provider_abbr', $provider)
-                ->where('part', $part);
-              if (empty($set))
-                DB::$instance->delete(ShowVideo::$table_name);
-              else DB::$instance->update(ShowVideo::$table_name, [
-                'provider_id' => $set,
-                'fullep' => $fullep,
-                'updated_at' => date('c'),
-              ]);
-            }
-          }
-        }
-
-        Response::success('Links updated', ['epsection' => ShowHelper::getVideosHTML($this->show)]);
-      break;
-      default:
-        CoreUtils::notAllowed();
-    }
-  }
-
   public function guideRelationsApi($params):void {
     if (Permission::insufficient('staff'))
       Response::fail();
@@ -477,30 +379,6 @@ class ShowController extends Controller {
       default:
         CoreUtils::notAllowed();
     }
-  }
-
-  public function brokenVideos($params):void {
-    $this->load_show($params);
-
-    $removed = 0;
-    foreach ($this->show->videos as $k => $video){
-      if (!$video->isBroken())
-        continue;
-
-      $removed++;
-      $video->delete();
-      unset($this->show->videos[$k]);
-    }
-
-    if ($removed === 0){
-      Response::success("No broken videos found under this {$this->show->type}.");
-
-      return;
-    }
-
-    Response::success("$removed video link".($removed === 1 ? ' has' : 's have').' been removed from the site. Thank you for letting us know.', [
-      'epsection' => ShowHelper::getVideosHTML($this->show, NOWRAP),
-    ]);
   }
 
   public function synopsis($params) {

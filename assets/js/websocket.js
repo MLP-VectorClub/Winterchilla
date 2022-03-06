@@ -1,4 +1,3 @@
-/* global $w,$d,$head,$navbar,$body,$header,$sidebar,$sbToggle,$main,$footer,console,prompt,HandleNav,getTimeDiff,one,createTimeStr,PRINTABLE_ASCII_PATTERN,io,moment,Time,ace,mk,WSNotifications */
 (function() {
   'use strict';
 
@@ -10,6 +9,7 @@
           try {
             data = JSON.parse(data);
           } catch (err){
+            // Ignore
           }
         }
 
@@ -42,7 +42,7 @@
       if (this.conn)
         return;
 
-      this.conn = io(connpath, { reconnectionDelay: 10000 });
+      this.conn = io(connpath, { reconnectionDelay: 10000, withCredentials: true });
       this.conn.on('connect', () => {
         console.log('[WS] %cConnected', 'color:green');
 
@@ -77,64 +77,6 @@
           $notifSb.stop().slideDown();
         });
       }));
-      this.conn.on('post-delete', wsdecoder(data => {
-        if (!data.id)
-          return;
-
-        let postid = `post-${data.id}`,
-          $post = $(`#${postid}:not(.deleting)`);
-        console.log('[WS] Post deleted (postid=%s)', postid);
-        if ($post.length){
-          $post.find('.fluidbox--opened').fluidbox('close');
-          $post.find('.fluidbox--initialized').fluidbox('destroy');
-          $post.attr({
-            'class': 'deleted',
-            title: 'This post has been deleted; click here to hide',
-          }).on('click', e => {
-            let $this = $(e.target);
-            $this[window.withinMobileBreakpoint() ? 'slideUp' : 'fadeOut'](500, () => {
-              $this.remove();
-            });
-          });
-        }
-      }));
-      this.conn.on('post-break', wsdecoder(data => {
-        if (!data.id)
-          return;
-
-        let $post = $(`#post-${data.id}:not(.admin-break)`);
-        console.log('[WS] Post broken (id=%s)', data.id);
-        if ($post.length)
-          $post.reloadLi();
-      }));
-      this.conn.on('post-add', wsdecoder(data => {
-        if (!data.id || window.showId !== data.show_id)
-          return;
-
-        if ($(`.posts #post-${data.id}`).length > 0)
-          return;
-        $.API.get(`/post/${data.id}/reload`, resp => {
-          if (!resp.status) return;
-
-          if ($(`.posts #post-${data.id}`).length > 0)
-            return;
-          let $newli = $(resp.li);
-          $(resp.section).append($newli);
-          $newli.rebindFluidbox();
-          Time.update();
-          $newli.rebindHandlers().parent().reorderPosts();
-          console.log(`[WS] Post added (id=${data.id}) to container ${this.section}`);
-        });
-      }));
-      this.conn.on('post-update', wsdecoder(data => {
-        if (!data.id)
-          return;
-
-        let $post = $(`#post-${data.id}:not(.deleting)`);
-        console.log('[WS] Post updated (id=%s)', data.id);
-        if ($post.length)
-          $post.reloadLi(false);
-      }));
       this.conn.on('update', wsdecoder(response => {
         console.log('[WS] %cWebsite updated', 'color:darkblue');
         const speed = 100;
@@ -160,24 +102,6 @@
       const page = location.pathname + location.search + location.hash;
 
       this.conn.emit('navigate', { page });
-    }
-
-    recvPostUpdates(subscribe) {
-      if (typeof this.conn === 'undefined')
-        return setTimeout(() => {
-          this.recvPostUpdates(subscribe);
-        }, 2000);
-
-      if (typeof subscribe !== 'boolean' || this.substatus.postUpdates === subscribe)
-        return;
-      this.conn.emit('post-updates', String(subscribe), wsdecoder(data => {
-        if (!data.status)
-          return console.log('[WS] %cpost-updates subscription status change failed (subscribe=%s)', 'color:red', subscribe);
-
-        this.substatus.postUpdates = subscribe;
-        $('#episode-live-update')[this.substatus.postUpdates ? 'removeClass' : 'addClass']('hidden');
-        console.log('[WS] %c%s', 'color:green', data.message);
-      }));
     }
 
     authme() {
@@ -265,10 +189,14 @@
             $el.siblings('.mark-read').addBack().addClass('disabled');
 
             $.API.post(`/notif/${nid}/mark-read`, data, data => {
+              this.conn.emit('notif-cnt');
+
               if (!data.status) return $.Dialog.fail(title, data.message);
 
-              if (data.message)
-                return $.Dialog.success(title, data.message, true);
+              if (data.message) {
+                $.Dialog.success(title, data.message, true);
+                return;
+              }
 
               $.Dialog.close();
             }).always(() => {

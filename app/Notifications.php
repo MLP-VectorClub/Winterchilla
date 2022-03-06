@@ -3,7 +3,6 @@
 namespace App;
 
 use App\Models\Notification;
-use ElephantIO\Exception\ServerConnectionFailureException;
 use Exception;
 
 class Notifications
@@ -68,22 +67,10 @@ class Notifications
   {
     try {
       self::markRead($nid, $action);
-    } catch (ServerConnectionFailureException $e) {
-      CoreUtils::logError("Notification server down!\n" . $e->getMessage() . "\n" . $e->getTraceAsString());
-
-      // Attempt to mark as read if exists since users won't get a live update anyway if the server is down
-      $notif = Notification::find($nid);
-      if (!empty($notif)) {
-        $notif->read_at = date('c');
-        $notif->save();
-      }
-
-      if (!$silent)
-        Response::fail('Notification server is down! Please <a class="send-feedback">let us know</a>.');
     } catch (Exception $e) {
-      CoreUtils::logError("SocketEvent Error\n" . $e->getMessage() . "\n" . $e->getTraceAsString());
+      CoreUtils::logError("Mark read error\n" . $e->getMessage() . "\n" . $e->getTraceAsString());
       if (!$silent)
-        Response::fail('SocketEvent Error: ' . $e->getMessage());
+        Response::fail('Mark read error: ' . $e->getMessage());
     }
   }
 }

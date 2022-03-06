@@ -403,34 +403,6 @@ class AdminController extends Controller {
     ]);
   }
 
-  public function wshello() {
-    if ($this->action !== 'GET')
-      CoreUtils::notAllowed();
-
-    if (Permission::insufficient('developer'))
-      CoreUtils::noPerm();
-
-    CoreUtils::detectUnexpectedJSON();
-
-    $clientid = $_REQUEST['clientid'] ?? null;
-    if (!preg_match('/^[a-zA-Z\d_-]+$/', $clientid))
-      Response::fail('Invalid client ID');
-
-    try {
-      CoreUtils::socketEvent('hello', [
-        'clientid' => $clientid,
-        'priv' => $_REQUEST['priv'],
-      ]);
-    }
-    catch (Throwable $e){
-      $errmsg = 'Failed to send hello: '.$e->getMessage();
-      CoreUtils::logError($errmsg."\n".$e->getTraceAsString());
-      Response::fail($errmsg);
-    }
-
-    Response::done();
-  }
-
   private function _setupPcgAppearances():PostgresDb {
     return DB::$instance->where('owner_id IS NOT NULL');
   }

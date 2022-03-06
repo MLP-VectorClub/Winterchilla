@@ -14,15 +14,3 @@ if (empty($keys)){
 }
 $num = RedisHelper::del($keys) ?? 0;
 echo "$prefix ".CoreUtils::makePlural('key', $num, PREPEND_NUMBER)." deleted successfully\n";
-
-if (in_array('commit_info', $keys, true)){
-  require __DIR__.'/../config/init/twig.php';
-
-  try {
-    CoreUtils::socketEvent('update', ['git_info' => CoreUtils::getFooterGitInfo(true)], WS_LOCAL_ORIGIN);
-    echo "$prefix Sent update WS event\n";
-  }
-  catch (Throwable $e){
-    echo "$prefix Could not send update WS event: {$e->getMessage()} ({$e->getFile()}:{$e->getLine()})\nStack trace:\n{$e->getTraceAsString()}\n";
-  }
-}

@@ -56,7 +56,6 @@
     "symfony/dotenv": "^5.0",
     "twig/twig": "^3.0",
     "whichbrowser/parser": "^2.0",
-    "wisembly/elephant.io": "^3.3.0",
     "wohali/oauth2-discord-new": "^1.0",
     "zircote/swagger-php": "^3.0"
   },

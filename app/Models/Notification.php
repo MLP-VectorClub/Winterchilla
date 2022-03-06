@@ -7,7 +7,6 @@ use App\DB;
 use App\JSON;
 use App\Notifications;
 use App\Twig;
-use ElephantIO\Exception\ServerConnectionFailureException;
 use RuntimeException;
 
 /**
@@ -110,15 +109,6 @@ class Notification extends NSModel {
       'type' => $type,
       'data' => JSON::encode($data),
     ]);
-
-    try {
-      CoreUtils::socketEvent('notify-pls', ['user' => $recipient_id]);
-    }
-    catch (ServerConnectionFailureException $e){
-      CoreUtils::logError("Error while notifying $recipient_id with type $type (data:".JSON::encode($data).")\nError message: {$e->getMessage()}\nTrace:\n{$e->getTraceAsString()}");
-
-      return 'Notification server is down! Please <a class="send-feedback">let us know</a>.';
-    }
 
     return 0;
   }

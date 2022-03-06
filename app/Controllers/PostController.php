@@ -25,7 +25,6 @@ use App\Response;
 use App\ShowHelper;
 use App\UserPrefs;
 use App\Users;
-use ElephantIO\Exception\ServerConnectionFailureException;
 use Exception;
 use function in_array;
 use function intval;
@@ -105,16 +104,6 @@ class PostController extends Controller {
           $update['reserved_by'] = null;
         }
         $this->post->update_attributes($update);
-        try {
-          CoreUtils::socketEvent('post-break', [
-            'id' => $this->post->id,
-            'response_code' => $response_code,
-            'failing_url' => $failing_url,
-          ]);
-        }
-        catch (Exception $e){
-          CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-        }
         BrokenPost::record($this->post->id, $response_code, $failing_url, $old_reserver ?? $this->post->reserved_by);
 
         if (Permission::insufficient('staff'))
@@ -212,8 +201,6 @@ class PostController extends Controller {
         }
         else $response['li'] = $this->post->getLi();
 
-        Posts::sendUpdate($this->post);
-
         Response::done($response);
       break;
       case 'DELETE':
@@ -234,8 +221,6 @@ class PostController extends Controller {
 
           if (!$this->post->save())
             Response::dbError();
-
-          Posts::sendUpdate($this->post);
 
           $response = ['li' => $this->post->getLi()];
           if ($from_profile)
@@ -280,18 +265,8 @@ class PostController extends Controller {
 
         $response = [
           'message' => 'The image appears to be in the group gallery and as such it is now marked as approved.',
+          'li' => $this->post->getLi()
         ];
-        try {
-          CoreUtils::socketEvent('post-update', [
-            'id' => $this->post->id,
-          ]);
-        }
-        catch (ServerConnectionFailureException $e){
-          $response['li'] = $this->post->getLi();
-        }
-        catch (Exception $e){
-          CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-        }
         if ($this->is_user_reserver)
           $response['message'] .= ' '.self::$CONTRIB_THANKS;
 
@@ -315,8 +290,6 @@ class PostController extends Controller {
           PCGSlotHistory::record($this->post->reserved_by, 'post_unapproved', null, [
             'id' => $this->post->id,
           ]);
-
-        Posts::sendUpdate($this->post);
 
         Response::done();
       break;
@@ -418,17 +391,6 @@ class PostController extends Controller {
         if (!$post->save())
           Response::dbError();
 
-        try {
-          CoreUtils::socketEvent('post-add', [
-            'id' => $post->id,
-            'type' => $post->kind,
-            'show_id' => $post->show_id,
-          ]);
-        }
-        catch (Exception $e){
-          CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-        }
-
         Response::done(['id' => $post->getIdString(), 'kind' => $kind]);
       break;
       case 'PUT':
@@ -442,15 +404,6 @@ class PostController extends Controller {
 
         if (!$this->post->update_attributes($update))
           Response::dbError();
-
-        try {
-          CoreUtils::socketEvent('post-update', [
-            'id' => $this->post->id,
-          ]);
-        }
-        catch (Exception $e){
-          CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-        }
 
         Response::done();
       break;
@@ -501,15 +454,6 @@ class PostController extends Controller {
               ? "<div class='notice fail'><strong>Error:</strong> $notifSent</div>" : '');
         }
 
-        try {
-          CoreUtils::socketEvent('post-update', [
-            'id' => $this->post->id,
-          ]);
-        }
-        catch (Exception $e){
-          CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-        }
-
         if (!empty($message))
           Response::success($message);
         Response::done();
@@ -541,15 +485,6 @@ class PostController extends Controller {
 
         if (!$this->post->update_attributes($update))
           Response::dbError();
-
-        try {
-          CoreUtils::socketEvent('post-update', [
-            'id' => $this->post->id,
-          ]);
-        }
-        catch (Exception $e){
-          CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-        }
 
         Response::done();
       break;
@@ -685,14 +620,6 @@ class PostController extends Controller {
       'deviation_id' => $this->post->deviation_id,
       'lock' => $this->post->lock,
     ]);
-    try {
-      CoreUtils::socketEvent('post-delete', [
-        'id' => $this->post->id,
-      ]);
-    }
-    catch (Exception $e){
-      CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-    }
 
     Response::done();
   }
@@ -792,17 +719,6 @@ class PostController extends Controller {
 
     if (!empty($insert['lock']))
       LockedPost::record($reservation->id);
-
-    try {
-      CoreUtils::socketEvent('post-add', [
-        'id' => $reservation->id,
-        'type' => 'reservation',
-        'show_id' => $insert['show_id'],
-      ]);
-    }
-    catch (Exception $e){
-      CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-    }
 
     Response::success('Reservation added', ['id' => $reservation->getIdString()]);
   }

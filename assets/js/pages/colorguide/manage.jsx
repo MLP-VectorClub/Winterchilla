@@ -1,4 +1,4 @@
-(function(undefined) {
+(function() {
   'use strict';
 
   $('.cg-export').on('click', function() {
@@ -791,7 +791,7 @@
           continue;
         }
 
-        const matches = trimmedLine.match(/^(?:(\/\/)?#?([a-f\d]{0,6})?)?\s+(?:([ -~]{3,30}))?(?:\s*ID:(\d+))?$/i);
+        const matches = trimmedLine.match(/^(?:(\/\/)?#?([a-f\d]{0,6})?)?\s+([ -~]{3,30})?(?:\s*ID:(\d+))?$/i);
         // Valid line
         if (matches && matches[3]){
           const color = $.RGBAColor.parse(matches[2]);
@@ -1240,6 +1240,8 @@
   let $tags;
 
   function ctxmenus() {
+    if (!$.fn.ctxmenu) return;
+
     $tags = $('.tags');
     $tags.filter(':not(.ctxmenu-bound)').ctxmenu(
       [

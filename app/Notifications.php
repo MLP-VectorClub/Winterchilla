@@ -6,7 +6,8 @@ use App\Models\Notification;
 use ElephantIO\Exception\ServerConnectionFailureException;
 use Exception;
 
-class Notifications {
+class Notifications
+{
   public const
     ALL = 0,
     UNREAD_ONLY = 1,
@@ -19,18 +20,19 @@ class Notifications {
    *
    * @return Notification[]
    */
-  public static function get($only = self::ALL) {
+  public static function get($only = self::ALL)
+  {
     if (!Auth::$signed_in)
       return null;
     $user_id = Auth::$user->id;
 
-    switch ($only){
+    switch ($only) {
       case self::UNREAD_ONLY:
         DB::$instance->where('read_at IS NULL');
-      break;
+        break;
       case self::READ_ONLY:
         DB::$instance->where('read_at IS NOT NULL');
-      break;
+        break;
     }
 
     return DB::$instance->where('recipient_id', $user_id)->get('notifications');
@@ -38,42 +40,50 @@ class Notifications {
 
   /**
    * @param Notification[] $Notifications
-   * @param bool           $wrap
+   * @param bool $wrap
    *
    * @return string
    */
-  public static function getHTML($Notifications, bool $wrap = WRAP):string {
+  public static function getHTML($Notifications, bool $wrap = WRAP): string
+  {
     return Twig::$env->render('notifications/_list.html.twig', [
       'notifications' => $Notifications,
       'wrap' => $wrap,
     ]);
   }
 
-  public static function markRead(int $nid, ?string $action = null) {
-    CoreUtils::socketEvent('mark-read', ['nid' => $nid, 'action' => $action]);
+  public static function markRead(int $nid, ?string $action = null)
+  {
+    $notif = Notification::find($nid);
+    if (!empty($notif)) {
+      $notif->read_at = date('c');
+      if ($action) {
+        $notif->read_action = $action;
+      }
+      $notif->save();
+    }
   }
 
-  public static function safeMarkRead(int $NotifID, ?string $action = null, bool $silent = false) {
+  public static function safeMarkRead(int $nid, ?string $action = null, bool $silent = false)
+  {
     try {
-      self::markRead($NotifID, $action);
-    }
-    catch (ServerConnectionFailureException $e){
-      CoreUtils::logError("Notification server down!\n".$e->getMessage()."\n".$e->getTraceAsString());
+      self::markRead($nid, $action);
+    } catch (ServerConnectionFailureException $e) {
+      CoreUtils::logError("Notification server down!\n" . $e->getMessage() . "\n" . $e->getTraceAsString());
 
       // Attempt to mark as read if exists since users won't get a live update anyway if the server is down
-      $notif = Notification::find($NotifID);
-      if (!empty($notif)){
+      $notif = Notification::find($nid);
+      if (!empty($notif)) {
         $notif->read_at = date('c');
         $notif->save();
       }
 
       if (!$silent)
         Response::fail('Notification server is down! Please <a class="send-feedback">let us know</a>.');
-    }
-    catch (Exception $e){
-      CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
+    } catch (Exception $e) {
+      CoreUtils::logError("SocketEvent Error\n" . $e->getMessage() . "\n" . $e->getTraceAsString());
       if (!$silent)
-        Response::fail('SocketEvent Error: '.$e->getMessage());
+        Response::fail('SocketEvent Error: ' . $e->getMessage());
     }
   }
 }

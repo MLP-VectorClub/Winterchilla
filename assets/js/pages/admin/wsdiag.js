@@ -5,7 +5,6 @@
   let responseTimes = [];
   const
     responseTimeHistorySize = 6,
-    $sendHello = $('#send-hello'),
     $wssStatus = $('#wss-status'),
     $wssHeartbeat = $('#wss-heartbeat'),
     $wssResponseTime = $('#wss-response-time'),
@@ -23,7 +22,6 @@
             : 'Disconnected',
         );
         $wssHeartbeat.addClass('dead');
-        $sendHello.disable();
         return;
       }
       else if (interval !== false){
@@ -31,7 +29,6 @@
         interval = false;
         $wssStatus.removeClass('info fail').addClass('success');
         $wssHeartbeat.removeClass('dead');
-        $sendHello.enable();
       }
       if ($connectionList.is(':hover')){
         setTimeout(updateStatus, 500);
@@ -119,40 +116,4 @@
     };
 
   updateStatus();
-
-  $sendHello.on('click', () => {
-    $.Dialog.wait('Test PHP to WS server connectivity', 'Sending hello');
-
-    const priv = $.randomString();
-    const clientid = $.WS.getClientId();
-    const timeout = 5000;
-    let responseReceived = false;
-
-    $w.on('ws-hello', (e, response) => {
-      if (response.priv !== priv)
-        return;
-
-      $w.off('ws-hello');
-      responseReceived = true;
-
-      $.Dialog.success(false, 'Hello response received', true);
-    });
-
-    $.API.get('/admin/wsdiag/hello', { priv, clientid }, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      if (!responseReceived)
-        $.Dialog.success(false, 'Hello sent successfully');
-      if (!responseReceived)
-        $.Dialog.wait(false, `Waiting for reply (timeout ${timeout / 1000}s)`);
-
-      setTimeout(() => {
-        if (responseReceived)
-          return;
-
-        $w.off('ws-hello');
-        $.Dialog.fail(false, 'Hello response timed out');
-      }, timeout);
-    });
-  });
 })();

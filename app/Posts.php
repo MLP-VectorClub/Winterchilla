@@ -5,7 +5,6 @@ namespace App;
 use App\Exceptions\MismatchedProviderException;
 use App\Models\Post;
 use App\Models\User;
-use ElephantIO\Exception\ServerConnectionFailureException;
 use Exception;
 
 class Posts {
@@ -357,23 +356,5 @@ class Posts {
         Input::ERROR_INVALID => '"Finished at" timestamp (@value) is invalid',
       ],
     ]))->out();
-  }
-
-  public static function sendUpdate(Post $post):bool {
-    $socketServerAvailable = true;
-    try {
-      CoreUtils::socketEvent('post-update', [
-        'id' => $post->id,
-      ]);
-    }
-    catch (ServerConnectionFailureException $e){
-      $socketServerAvailable = false;
-      CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-    }
-    catch (Exception $e){
-      CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-    }
-
-    return $socketServerAvailable;
   }
 }

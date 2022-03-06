@@ -60,21 +60,9 @@ class Post extends NSModel implements Linkable {
   ];
 
   public static $before_create = ['add_post_time'];
-  public static $after_destroy = ['post_deletion'];
 
   public function add_post_time() {
     $this->posted_at = date('c');
-  }
-
-  public function post_deletion() {
-    try {
-      CoreUtils::socketEvent('post-delete', [
-        'id' => $this->id,
-      ]);
-    }
-    catch (Throwable $e){
-      CoreUtils::logError("SocketEvent Error\n".$e->getMessage()."\n".$e->getTraceAsString());
-    }
   }
 
   /* For Twig */
@@ -116,7 +104,7 @@ class Post extends NSModel implements Linkable {
     return DB::$instance->setModel(LockedPost::class)->querySingle(
       "SELECT * FROM locked_posts
 			WHERE post_id = ?
-			ORDER BY created_at 
+			ORDER BY created_at
 			LIMIT 1", [$this->id]
     );
   }
@@ -191,11 +179,11 @@ class Post extends NSModel implements Linkable {
     $label = str_replace(array("''", '...'), array('"', '&hellip;'), $label);
     $label = preg_replace("/(\\w)'(\\w)/", '$1&rsquo;$2', $label);
     $label = preg_replace('/"([^"]+)"/', '&ldquo;$1&rdquo;', $label);
-    $label = preg_replace('/(?:(f)ull[- ](b)od(?:y|ied)( version)?)/i', '<strong class="color-darkblue">$1ull $2ody</strong>$3', $label);
-    $label = preg_replace('/(?:(f)ace[- ](o)nly( version)?)/i', '<strong class="color-darkblue">$1ace $2nly</strong>$3', $label);
-    $label = preg_replace('/(?:(f)ull (s)cene( version)?)/i', '<strong class="color-darkblue">$1ull $2cene</strong>$3', $label);
-    $label = preg_replace('/(?:(e)ntire (s)cene( version)?)/i', '<strong class="color-darkblue">$1ntire $2cene</strong>$3', $label);
-    $label = preg_replace('/(?:(s)eparate (v)ector(s)?)/i', '<strong class="color-darkblue">$1eparate $2ector$3</strong>', $label);
+    $label = preg_replace('/(f)ull[- ](b)od(?:y|ied)( version)?/i', '<strong class="color-darkblue">$1ull $2ody</strong>$3', $label);
+    $label = preg_replace('/(f)ace[- ](o)nly( version)?/i', '<strong class="color-darkblue">$1ace $2nly</strong>$3', $label);
+    $label = preg_replace('/(f)ull (s)cene( version)?/i', '<strong class="color-darkblue">$1ull $2cene</strong>$3', $label);
+    $label = preg_replace('/(e)ntire (s)cene( version)?/i', '<strong class="color-darkblue">$1ntire $2cene</strong>$3', $label);
+    $label = preg_replace('/(s)eparate (v)ector(s)?/i', '<strong class="color-darkblue">$1eparate $2ector$3</strong>', $label);
     $label = preg_replace('/\[([\w\s]+ intensifies)]/i', '<span class="intensify">$1</span>', $label);
 
     return $label;

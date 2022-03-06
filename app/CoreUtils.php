@@ -17,7 +17,6 @@ use DOMDocument;
 use DOMElement;
 use Elasticsearch\Client;
 use Elasticsearch\ClientBuilder;
-use ElephantIO\Engine\SocketIO\Version2X as SocketIOEngine;
 use enshrined\svgSanitize\data\AllowedAttributes;
 use enshrined\svgSanitize\data\AttributeInterface;
 use enshrined\svgSanitize\data\TagInterface;
@@ -514,10 +513,8 @@ class CoreUtils {
    * @param string $item
    * @param string $relpath
    * @param string $type
-   *
-   * @return string
    */
-  private static function _formatFilePath(string &$item, string $relpath, string $type) {
+  private static function _formatFilePath(string &$item, string $relpath, string $type): void {
     $pathStart = APPATH.$relpath;
     $item .= ".$type";
     if (!file_exists("$pathStart/$item"))
@@ -535,7 +532,8 @@ class CoreUtils {
    *
    * @return string
    */
-  public static function pad($input, $pad_length = 2, $pad_string = '0', $pad_type = STR_PAD_LEFT) {
+  public static function pad(mixed $input, int $pad_length = 2, string $pad_string = '0', int $pad_type = STR_PAD_LEFT): string
+  {
     return str_pad((string)$input, $pad_length, $pad_string, $pad_type);
   }
 
@@ -1164,24 +1162,6 @@ class CoreUtils {
     $strlen = mb_strlen($str);
 
     return $strlen > $len ? self::trim(mb_substr($str, 0, $len - 1)).'…' : $str;
-  }
-
-  public static function socketEvent(string $event, array $data = [], string $origin = ORIGIN) {
-    $elephant = new \ElephantIO\Client(new SocketIOEngine("https://".self::env('WS_SERVER_HOST'), [
-      'context' => [
-        'http' => [
-          'header' => [
-            'Cookie: access='.urlencode(self::env('WS_SERVER_KEY')),
-            "Origin: $origin",
-          ],
-        ],
-        'ssl' => ['verify_peer' => self::env('SOCKET_SSL_VERIFY_PEER')],
-      ],
-    ]));
-
-    $elephant->initialize();
-    $elephant->emit($event, $data);
-    $elephant->close();
   }
 
   public const VECTOR_APPS = [

@@ -78,9 +78,7 @@
         outputStyle: 'expanded',
         errLogToConsole: true,
       }))
-      .pipe(autoprefixer({
-        browsers: ['last 2 versions', 'not ie <= 11'],
-      }))
+      .pipe(autoprefixer())
       .pipe(cleanCss({
         processImport: false,
         compatibility: '-units.pc,-units.pt',

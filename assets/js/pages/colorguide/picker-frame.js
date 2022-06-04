@@ -1,5 +1,5 @@
 /* Color Picker | by @SeinopSys + Trildar & Masem | for gh:MLP-VectorClub/Winterchilla */
-(function($, undefined) {
+(function($) {
   'use strict';
 
   if (parent === window){

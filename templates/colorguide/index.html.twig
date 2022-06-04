@@ -21,9 +21,6 @@
       <a class='btn link typcn typcn-arrow-forward' href="/cg/blending">Blending Calculator</a>
       <a class='btn link typcn typcn-pipette' href="/cg/picker">Color Picker</a>
       <a class='btn link typcn typcn-tags' href="/cg/tags">Tags</a>
-      {% if permission('staff') %}
-        <button class='blue typcn typcn-adjust-contrast cg-sprite-colors'>Sprite Color Checkup</button>
-      {% endif %}
       {% if permission('developer') %}
         <button class='blue typcn typcn-download cg-export'>Export</button>
         <button class='orange typcn typcn-database cg-reindex'>Re-index</button>

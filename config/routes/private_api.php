@@ -21,7 +21,6 @@ $private_api_endpoint('/cg/appearances', 'AppearanceController#autocomplete');
 $private_api_endpoint('/cg/appearance/[i:id]?', 'AppearanceController#api');
 $private_api_endpoint('/cg/appearance/[i:id]/colorgroups', 'AppearanceController#colorGroupsApi');
 $private_api_endpoint('/cg/appearance/[i:id]/sprite', 'AppearanceController#spriteApi');
-$private_api_endpoint('/cg/appearance/[i:id]/sprite/check-colors', 'AppearanceController#checkColors');
 $private_api_endpoint('/cg/appearance/[i:id]/relations', 'AppearanceController#relationsApi');
 $private_api_endpoint('/cg/appearance/[i:id]/cutiemarks', 'AppearanceController#cutiemarkApi');
 $private_api_endpoint('/cg/appearance/[i:id]/tagged', 'AppearanceController#taggedApi');
@@ -30,7 +29,6 @@ $private_api_endpoint('/cg/appearance/[i:id]/sanitize-svg', 'AppearanceControlle
 $private_api_endpoint('/cg/appearance/[i:id]/selective', 'AppearanceController#selectiveClear');
 $private_api_endpoint('/cg/appearance/[i:id]/guide-relations', 'AppearanceController#guideRelationsApi');
 $private_api_endpoint('/cg/appearance/[i:id]/pin', 'AppearanceController#pinApi');
-$private_api_endpoint('/cg/sprite-color-checkup', 'ColorGuideController#spriteColorCheckup');
 $private_api_endpoint('/cg/full/reorder', 'ColorGuideController#reorderFullList');
 $private_api_endpoint('/cg/export', 'ColorGuideController#export');
 $private_api_endpoint('/cg/reindex', 'ColorGuideController#reindex');

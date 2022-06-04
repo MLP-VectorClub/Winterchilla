@@ -90,16 +90,4 @@
       ),
     );
   });
-
-  $('#server-side-check').on('click', e => {
-    e.preventDefault();
-
-    $.Dialog.wait('Server-side sprite color check');
-
-    $.API.post(`/cg/appearance/${AppearanceID}/sprite/check-colors`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      $.Dialog.segway(false, this.message);
-    });
-  });
 })();

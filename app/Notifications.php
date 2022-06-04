@@ -50,27 +50,4 @@ class Notifications
       'wrap' => $wrap,
     ]);
   }
-
-  public static function markRead(int $nid, ?string $action = null)
-  {
-    $notif = Notification::find($nid);
-    if (!empty($notif)) {
-      $notif->read_at = date('c');
-      if ($action) {
-        $notif->read_action = $action;
-      }
-      $notif->save();
-    }
-  }
-
-  public static function safeMarkRead(int $nid, ?string $action = null, bool $silent = false)
-  {
-    try {
-      self::markRead($nid, $action);
-    } catch (Exception $e) {
-      CoreUtils::logError("Mark read error\n" . $e->getMessage() . "\n" . $e->getTraceAsString());
-      if (!$silent)
-        Response::fail('Mark read error: ' . $e->getMessage());
-    }
-  }
 }

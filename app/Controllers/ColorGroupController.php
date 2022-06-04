@@ -204,7 +204,6 @@ class ColorGroupController extends ColorGuideController {
           $check_colors_of[$this->colorgroup->appearance_id] = $this->colorgroup->appearance;
         $isCMGroup = $this->colorgroup->label === 'Cutie Mark';
         foreach ($check_colors_of as $appearance){
-          $appearance->checkSpriteColors();
           $appearance->clearRenderedImages([Appearance::CLEAR_CMDIR, Appearance::CLEAR_PALETTE, Appearance::CLEAR_PREVIEW]);
           if ($isCMGroup)
             $appearance->clearRenderedImages([Appearance::CLEAR_CM]);
@@ -267,8 +266,6 @@ class ColorGroupController extends ColorGuideController {
           'label' => $this->colorgroup->label,
           'order' => $this->colorgroup->order,
         ]);
-
-        $Appearance->checkSpriteColors();
 
         Response::success('Color group deleted successfully');
       break;

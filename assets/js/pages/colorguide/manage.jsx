@@ -1512,7 +1512,7 @@
             imgsrc = $this.find('img').attr('src');
             hasSprite = imgsrc.indexOf('blank-pixel.png') === -1;
             $this[hasSprite ? 'removeClass' : 'addClass']('nosprite');
-            $.ctxmenu.setDefault($this, hasSprite ? 1 : 4);
+            $.ctxmenu.setDefault($this, hasSprite ? 1 : 3);
           };
         $this.uploadZone({
           requestKey: 'sprite',

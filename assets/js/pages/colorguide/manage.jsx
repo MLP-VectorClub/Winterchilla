@@ -19,20 +19,6 @@
     });
   });
 
-  $('.cg-sprite-colors').on('click', function() {
-    $.Dialog.confirm($(this).text(), 'Run a check on all sprites & look for missing colors?', function(sure) {
-      if (!sure) return;
-
-      $.Dialog.wait(false, 'Checking all sprite colors (this might take a while)');
-
-      $.API.post('/cg/sprite-color-checkup', function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
-        $.Dialog.success(false, this.message, true);
-      });
-    });
-  });
-
   const
     {
       HEX_COLOR_PATTERN,
@@ -1550,13 +1536,6 @@
               if (imgsrc.indexOf('blank-pixel.png') !== -1)
                 return $.Dialog.fail('Copy image URL', 'This appearance lacks a sprite image');
               $.copy($.toAbsoluteURL($this.find('img').attr('src')));
-            },
-          },
-          {
-            text: 'Check sprite colors', icon: 'adjust-contrast', click: function() {
-              if (imgsrc.indexOf('blank-pixel.png') !== -1)
-                return $.Dialog.fail('Check sprite colors', 'This appearance lacks a sprite image');
-              $.Navigation.visit(`${PGRq}/cg/sprite/${appearanceID}`);
             },
           },
           {

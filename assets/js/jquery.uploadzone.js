@@ -1,5 +1,4 @@
 /* Image upload plugin w/ drag'n'drop support | by @SeinopSys | for gh:MLP-VectorClub/Winterchilla */
-/* global File */
 (function() {
   'use strict';
   let defaults = {

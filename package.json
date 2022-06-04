@@ -4,6 +4,7 @@
   "homepage": "https://mlpvector.club",
   "dependencies": {
     "@babel/core": "^7.12.3",
+    "@babel/eslint-parser": "^7.18.2",
     "@babel/plugin-proposal-class-properties": "^7.12.1",
     "@babel/plugin-proposal-object-rest-spread": "^7.12.1",
     "@babel/plugin-proposal-private-methods": "^7.12.1",
@@ -12,7 +13,6 @@
     "@babel/preset-react": "^7.12.1",
     "@mr-hope/gulp-sass": "^2.0.0",
     "acorn": "^6.4.2",
-    "babel-eslint": "^10.1.0",
     "chalk": "^2.4.0",
     "del": "^3.0.0",
     "dotenv": "^6.1.0",
@@ -32,8 +32,8 @@
   "devDependencies": {
     "@shopify/draggable": "1.0.0-beta.8",
     "blueimp-md5": "2.10.0",
-    "eslint": "^8.11.0",
-    "eslint-plugin-react": "^7.29.4",
+    "eslint": "^8.17.0",
+    "eslint-plugin-react": "^7.30.0",
     "fluidbox": "2.0.5",
     "gulp-cli": "^2.3.0",
     "jquery": "^3.6.0",
@@ -51,6 +51,7 @@
   "scripts": {
     "build": "gulp default",
     "watch": "gulp watch",
+    "lint": "eslint \"assets/js/**/*.{js,jsx}\"",
     "api:schema": "php -f scripts/generate_api_schema.php"
   },
   "browserslist": ["last 2 versions"]

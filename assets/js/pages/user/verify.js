@@ -1,4 +1,5 @@
 (function() {
+  "use strict";
   const { verifyHash, verifyAction } = window;
   const $content = $('#content');
   const $verifyStatusWrap = $('#verify-status-wrap');

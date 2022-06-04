@@ -1,4 +1,4 @@
-/* global moment,ace,discordInviteLink */
+/* global discordInviteLink */
 (function() {
   'use strict';
 
@@ -453,7 +453,7 @@
 						</div>
 					</li>
 					<li class="content-colors">
-						
+
 					</li>
 				</ul>
 			</div>`,

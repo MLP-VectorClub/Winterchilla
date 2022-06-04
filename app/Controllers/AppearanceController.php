@@ -364,14 +364,6 @@ class AppearanceController extends ColorGuideController {
           'owner_id' => $this->appearance->owner_id,
         ]);
 
-        /** @var $spriteColorNotifs Notification[] */
-        $spriteColorNotifs = DB::$instance
-          ->where('type', 'sprite-colors')
-          ->where("data->'appearance_id'", $this->appearance->id)
-          ->get(Notification::$table_name);
-        foreach ($spriteColorNotifs as $notif)
-          $notif->safeMarkRead();
-
         if ($this->appearance->owner_id !== null){
           PCGSlotHistory::record($this->appearance->owner_id, 'appearance_del', null, [
             'id' => $this->appearance->id,
@@ -576,41 +568,6 @@ class AppearanceController extends ColorGuideController {
     }
   }
 
-  public function sprite($params):void {
-    if (Permission::insufficient('member'))
-      CoreUtils::noPerm();
-
-    $this->load_appearance($params);
-    $this->appearance->enforceManagePermission();
-
-    $pcg = $this->appearance->owner_id !== null;
-    if ($pcg)
-      $params['name'] = $this->appearance->owner->name;
-    $this->_initialize($params);
-
-    $Map = CGUtils::getSpriteImageMap($this->appearance->id, $pcg);
-    if (empty($Map))
-      CoreUtils::notFound();
-
-    [$Colors] = $this->appearance->getSpriteRelevantColors();
-
-    $SafeLabel = $this->appearance->getURLSafeLabel();
-    CoreUtils::fixPath("{$this->path}/sprite/{$this->appearance->id}-$SafeLabel");
-
-    CoreUtils::loadPage('ColorGuideController::sprite', [
-      'title' => "Sprite of {$this->appearance->label}",
-      'css' => [true],
-      'js' => [true],
-      'import' => [
-        'appearance' => $this->appearance,
-        'colors' => $Colors,
-        'map' => $Map,
-        'guide' => $this->guide,
-        'owner' => $this->appearance->owner,
-      ],
-    ]);
-  }
-
   public function spriteApi($params):void {
     $this->load_appearance($params);
     $this->appearance->enforceManagePermission();
@@ -624,7 +581,6 @@ class AppearanceController extends ColorGuideController {
         CGUtils::processUploadedImage('sprite', $final_path, ['image/png'], [300], [700, 300]);
         $this->appearance->clearRenderedImages();
         $this->appearance->regenerateSpriteHash();
-        $this->appearance->checkSpriteColors();
 
         Response::done(['path' => $this->appearance->getSpriteURL()]);
       break;
@@ -977,21 +933,6 @@ class AppearanceController extends ColorGuideController {
     $svgel = CGUtils::untokenizeSvg($tokenized_svg, $this->appearance->id, $warnings);
 
     Response::done(['svgel' => $svgel, 'svgdata' => $svgdata, 'keep_dialog' => true, 'warnings' => $warnings]);
-  }
-
-  public function checkColors($params):void {
-    if ($this->action !== 'POST')
-      CoreUtils::notAllowed();
-
-    if (Permission::insufficient('staff'))
-      Response::fail();
-
-    $this->load_appearance($params, false);
-
-    if ($this->appearance->checkSpriteColors())
-      Response::success('One or more color issues were found.');
-
-    Response::success("There doesn't seem to be seem to be any color issues.");
   }
 
   public function guideRelationsApi($params):void {

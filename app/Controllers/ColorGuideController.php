@@ -418,18 +418,4 @@ class ColorGuideController extends Controller {
       ],
     ]);
   }
-
-  public function spriteColorCheckup():void {
-    if ($this->action !== 'POST')
-      CoreUtils::notAllowed();
-
-    if (Permission::insufficient('staff'))
-      Response::fail();
-
-    CoreUtils::callScript('sprite_color_checkup');
-
-    $nag_da_user = DeviantartUser::find(Appearances::SPRITE_NAG_USER_ID);
-    $The_authorities = Appearances::SPRITE_NAG_USER_ID === Auth::$user->id ? 'You' : $nag_da_user->user->toAnchor();
-    Response::success('Checkup started.'.($nag_da_user !== null ? " $The_authorities will be notified if there are any issues." : ''));
-  }
 }

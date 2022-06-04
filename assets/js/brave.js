@@ -1,4 +1,5 @@
 (() => {
+  "use strict";
 
   const isBrave = 'brave' in navigator && typeof navigator.brave.isBrave === 'function';
   if (!isBrave) return;

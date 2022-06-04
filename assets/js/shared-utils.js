@@ -1031,7 +1031,7 @@
     }
 
     has(k) {
-      return this.cache.hasOwnProperty(k);
+      return k in this.cache;
     }
 
     clear() {

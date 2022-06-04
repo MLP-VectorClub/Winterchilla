@@ -96,7 +96,7 @@
       this.$imageSelectFileInput = this.$imageSelect.children('input').on('change', e => {
         const input = e.target;
         if (input.files && input.files[0]){
-          this.fileName = input.files[0].name.split(/[\/]/g).pop();
+          this.fileName = input.files[0].name.split(/[\\/]/g).pop();
           const reader = new FileReader();
           reader.onload = e => {
             this.backupImage.src = e.target.result;

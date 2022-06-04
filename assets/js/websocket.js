@@ -171,7 +171,7 @@
           return;
 
         let nid = $el.attr('data-id'),
-          data = { read_action: $el.attr('data-value') },
+          data = {},
           title = $el.attr('data-action') || 'Mark notification as read',
           send = () => {
             $el.siblings('.mark-read').addBack().addClass('disabled');
@@ -192,15 +192,7 @@
             });
           };
 
-        if (data.read_action && $el.hasAttr('data-confirm'))
-          $.Dialog.confirm('Actionable notification', `Please confirm your choice: <strong class="color-${$el.attr('class').replace(/^.*variant-(\w+)\b.*$/, '$1')}">${$el.attr('title')}</strong>`, ['Confirm', 'Cancel'], sure => {
-            if (!sure) return;
-
-            $.Dialog.wait(title);
-
-            send();
-          });
-        else send();
+        send();
       });
     }
 

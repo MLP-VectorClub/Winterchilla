@@ -6,7 +6,9 @@ use App\CoreUtils;
 use App\DB;
 use App\JSON;
 use App\Notifications;
+use App\Response;
 use App\Twig;
+use Exception;
 use RuntimeException;
 
 /**
@@ -16,7 +18,6 @@ use RuntimeException;
  * @property string $data
  * @property string $created_at
  * @property string $read_at
- * @property string $read_action
  * @property User   $recipient
  * @property array  $actions    (Via magic method)
  * @method static Notification find(int $id)
@@ -29,7 +30,7 @@ class Notification extends NSModel {
   ];
 
   public function get_actions() {
-    return self::ACTIONABLE_NOTIF_OPTIONS[$this->type] ?? null;
+    return null;
   }
 
   /** @var Post|null */
@@ -64,28 +65,10 @@ class Notification extends NSModel {
     return $this->appearance;
   }
 
-  public const ACTIONABLE_NOTIF_OPTIONS = [
-    'sprite-colors' => [
-      'recheck' => [
-        'label' => 'Recheck',
-        'icon' => 'refresh',
-        'color' => 'lavender',
-        'confirm' => false,
-        'action' => 'Recheck sprite colors',
-      ],
-      'deny' => [
-        'label' => 'Ignore',
-        'icon' => 'times',
-        'color' => 'orange',
-        'action' => 'Ignore color issues',
-      ],
-    ],
-  ];
   public const NOTIF_TYPES = [
     #---------------# (max length)
     'post-finished' => true,
     'post-approved' => true,
-    'sprite-colors' => true,
   ];
 
   public static function send(string $recipient_id, string $type, $data) {
@@ -113,8 +96,15 @@ class Notification extends NSModel {
     return 0;
   }
 
-  public function safeMarkRead(?string $action = null, bool $silent = true) {
-    Notifications::safeMarkRead($this->id, $action, $silent);
+  public function safeMarkRead(bool $silent = true) {
+    try {
+      $this->read_at = date('c');
+      $this->save();
+    } catch (Exception $e) {
+      CoreUtils::logError("Mark read error\n{$e->getMessage()}\n{$e->getTraceAsString()}");
+      if (!$silent)
+        Response::fail("Mark read error: {$e->getMessage()}");
+    }
   }
 
   public function getViewName() {

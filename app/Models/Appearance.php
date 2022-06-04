@@ -286,7 +286,7 @@ class Appearance extends NSModel implements Linkable {
         ? "<a href='{$show->toURL()}'>".CoreUtils::aposEncode(ShowHelper::shortenTitlePrefix($show->formatTitle(AS_ARRAY, 'title'))).'</a>'
         : "<strong>{$a[0]}</strong>";
     }, $notes_rend);
-    $notes_rend = preg_replace_callback('/(^|\s(?!\\\\))(?:#(\d+))(\'s?)?\b/', function ($a) {
+    $notes_rend = preg_replace_callback('/(^|\s(?!\\\\))#(\d+)(\'s?)?\b/', function ($a) {
 
       $appearance = DB::$instance->where('id', $a[2])->getOne('appearances');
 
@@ -649,63 +649,6 @@ class Appearance extends NSModel implements Linkable {
     ],
   ];
 
-  public function getSpriteRelevantColors():array {
-    $Colors = [];
-    foreach ([0, $this->id] as $AppearanceID){
-      $ColorGroups = ColorGroup::find_all_by_appearance_id($AppearanceID);
-      uasort($ColorGroups, function (ColorGroup $a, ColorGroup $b) {
-        return $a->order <=> $b->order;
-      });
-      $SortedColorGroups = [];
-      foreach ($ColorGroups as $cg)
-        $SortedColorGroups[$cg->id] = $cg;
-
-      $AllColors = CGUtils::getColorsForEach($ColorGroups);
-      if ($AllColors !== null && count($AllColors) > 0){
-        foreach ($AllColors as $cg){
-          /** @var $cg Color[] */
-          foreach ($cg as $c)
-            $Colors[] = [
-              'hex' => $c->hex,
-              'label' => $SortedColorGroups[$c->group_id]->label.' | '.$c->label,
-              'mandatory' => $AppearanceID !== 0,
-            ];
-        }
-      }
-    }
-    if ($this->owner_id === null)
-      $Colors = array_merge($Colors, self::STATIC_RELEVANT_COLORS);
-
-    return [$Colors, $ColorGroups ?? null, $AllColors ?? null];
-  }
-
-  public function spriteHasColorIssues():bool {
-    if (empty($this->getSpriteURL()))
-      return false;
-
-    /** @var $SpriteColors int[] */
-    $SpriteColors = array_flip(CGUtils::getSpriteImageMap($this->id, $this->owner_id !== null)['colors']);
-
-    foreach ($this->getSpriteRelevantColors()[0] as $c){
-      if ($c['mandatory'] && !isset($SpriteColors[$c['hex']]))
-        return true;
-    }
-
-    return false;
-  }
-
-  public function checkSpriteColors():bool {
-    $check_who = $this->owner_id ?? Appearances::SPRITE_NAG_USER_ID;
-    $has_color_issues = $this->spriteHasColorIssues();
-    $old_notifs = Appearances::getSpriteColorIssueNotifications($this->id, $check_who);
-    if ($has_color_issues && empty($old_notifs))
-      Notification::send($check_who, 'sprite-colors', ['appearance_id' => $this->id]);
-    else if (!$has_color_issues && !empty($old_notifs))
-      Appearances::clearSpriteColorIssueNotifications($old_notifs);
-
-    return $has_color_issues;
-  }
-
   /**
    * @param bool $treatHexNullAsEmpty
    *
@@ -1014,8 +957,6 @@ class Appearance extends NSModel implements Linkable {
     $this->sprite_hash = null;
     $this->save();
     $this->clearRenderedImages();
-    if ($this->owner_id === null)
-      Appearances::clearSpriteColorIssueNotifications($this->id, 'del', null);
   }
 
   public static function checkCreatePermission(User $user, bool $personal) {

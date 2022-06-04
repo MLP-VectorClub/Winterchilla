@@ -43,7 +43,6 @@ $private_api_endpoint('/show/[i:id]?', 'ShowController#api');
 $private_api_endpoint('/show/[i:id]/posts', 'ShowController#postList');
 $private_api_endpoint('/show/[i:id]/vote', 'ShowController#voteApi');
 $private_api_endpoint('/show/[i:id]/guide-relations', 'ShowController#guideRelationsApi');
-$private_api_endpoint('/show/[i:id]/synopsis', 'ShowController#synopsis');
 $private_api_endpoint('/show/next', 'ShowController#next');
 $private_api_endpoint('/show/prefill', 'ShowController#prefill');
 $private_api_endpoint('/event/[i:id]?', 'EventController#api');

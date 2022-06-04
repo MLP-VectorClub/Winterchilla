@@ -10,7 +10,6 @@ use App\Permission;
 use App\Posts;
 use App\Regexes;
 use App\ShowHelper;
-use App\TMDBHelper;
 use RuntimeException;
 use function count;
 
@@ -27,7 +26,6 @@ use function count;
  * @property int              $no
  * @property string|null      $score                 (Uses magic method)
  * @property string           $notes
- * @property DateTime         $synopsis_last_checked
  * @property string           $generation
  * @property bool             $is_episode            (Via magic method)
  * @property bool             $displayed             (Via magic method)
@@ -424,32 +422,5 @@ class Show extends NSModel implements Linkable {
     if ($user === null) return null;
 
     return ShowVote::findFor($this, $user);
-  }
-
-  /**
-   * Get synopses for the episode from TMDb
-   *
-   * @return array[]
-   */
-  public function getSynopses():array {
-    $client = TMDBHelper::getClient();
-    $show_id = TMDBHelper::getShowId();
-    $ep_data = TMDBHelper::getEpisodes($client, $this);
-    $synopses = [];
-    foreach ($ep_data as $item){
-      $append = [
-        'id' => $item['id'],
-        'overview' => $item['overview'],
-        'url' => "https://www.themoviedb.org/tv/{$show_id}/season/{$item['season_number']}/episode/{$item['episode_number']}",
-      ];
-
-      if (!empty($item['still_path'])){
-        $append['image'] = TMDBHelper::getImageUrl($client, $item['still_path']);
-      }
-
-      $synopses[] = $append;
-    }
-
-    return $synopses;
   }
 }

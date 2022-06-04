@@ -80,12 +80,6 @@ class UserSettingForm {
         'desc' => '<span class="typcn typcn-home">&nbsp;Home</span> should open latest episode (instead of preferred color guide)',
       ],
     ],
-    'ep_hidesynopses' => [
-      'type' => 'checkbox',
-      'options' => [
-        'desc' => 'Hide the synopsis section from episode pages',
-      ],
-    ],
     'ep_noappprev' => [
       'type' => 'checkbox',
       'options' => [
@@ -209,6 +203,8 @@ class UserSettingForm {
         $checked = $value ? ' checked' : '';
 
         return "<input type='checkbox' name='value' value='1' $checked $disabled>";
+      default:
+        throw new RuntimeException("Unsupported input type $type");
     }
   }
 

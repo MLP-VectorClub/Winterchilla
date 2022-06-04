@@ -42,7 +42,6 @@ PHP-rendered classic web app powering the MLP Vector Club's website since 2015.
    [IPTools](https://github.com/S1lentium/IPTools),
    [svg-sanitizer](https://github.com/darylldoyle/svg-sanitizer),
    [svgo](https://github.com/svg/svgo),
-   [php-tmdb/api](https://github.com/php-tmdb/api)
  - Development tools:
    [Gulp](http://gulpjs.com/),
    [Terser](https://github.com/terser/terser),
@@ -66,5 +65,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
   - MD. Nur A Alam Dipu ([@Dipu1A](http://twitter.com/Dipu1A)) for responsibly disclosing an open redirect vulnerability in the application
   - [tjhorner](https://github.com/tjhorner) and [SlvrEagle23](https://github.com/SlvrEagle23) for showing me that quotes around attribute values is a good idea
   - [DASPRiD](https://github.com/DASPRiD) for his contributions and bug reports
-  - [parclytaxel](https://gitlab.com/parclytaxel) and [Trildar](https://github.com/Trildar) for their help with math-related code and numerous bug reports 
+  - [parclytaxel](https://gitlab.com/parclytaxel) and [Trildar](https://github.com/Trildar) for their help with math-related code and numerous bug reports
   - The members of our Discord server who continue to report issues and suggest features, making the site better for everyone

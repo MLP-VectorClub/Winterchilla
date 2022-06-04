@@ -381,30 +381,6 @@ class ShowController extends Controller {
     }
   }
 
-  public function synopsis($params) {
-    $this->load_show($params);
-
-    try {
-      $synopses = $this->show->getSynopses();
-    }
-    catch (Throwable $exception){
-      $message = $exception->getMessage();
-      if (strpos($message, '503 Service Temporarily Unavailable') !== false){
-        Response::fail('The TMDB API is experiencing a temporary outage, synopsis data is currently unavailable.');
-      }
-    }
-
-    Response::done([
-      'html' => Twig::$env->render('show/_synopsis.html.twig', [
-        'current_episode' => $this->show,
-        'synopses' => $synopses,
-        'wrap' => false,
-        'lazyload' => false,
-        'signed_in' => Auth::$signed_in,
-      ]),
-    ]);
-  }
-
   public function next():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

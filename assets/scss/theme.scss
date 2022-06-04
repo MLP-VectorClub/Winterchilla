@@ -292,9 +292,16 @@
   }
   #main {
     padding-left: $SidebarWidth + $MainMargin;
+
+    @media print {
+      padding-left: $MainMargin;
+    }
   }
   #above-content {
     padding-left: $SidebarWidth;
+    @media print {
+      padding-left: 0;
+    }
 
     #breadcrumbs {
       position: relative;
@@ -311,6 +318,10 @@
         height: $size;
         background: url('/img/sidebar-corner.svg') no-repeat top left;
         background-size: $size * 2;
+
+        @media print {
+          display: none;
+        }
       }
     }
   }
@@ -348,8 +359,11 @@
 // Page layout
 body {
   margin: 0;
-  padding-top: $HeaderHeight;
   font-family: $RegularFont;
+
+  @media screen {
+    padding-top: $HeaderHeight;
+  }
 }
 
 // Page layout - Header
@@ -512,6 +526,10 @@ header, #sidebar .mobile-nav {
   display: block;
   margin: 0;
 
+  @media print {
+    display: none;
+  }
+
   &:empty {
     display: none;
   }
@@ -632,6 +650,10 @@ header, #sidebar .mobile-nav {
   text-align: center;
   overflow: auto;
   will-change: left, width;
+
+  @media print {
+    display: none;
+  }
 
   button, .btn {
     &:not(:hover):not(:active) {
@@ -1384,5 +1406,14 @@ kbd {
     margin: 10px 0 5px;
     padding: 0 0 .1em .1em;
     box-sizing: border-box;
+  }
+}
+
+// Fix print styles
+@media print {
+  a[href]::after {
+    content: " [" attr(href) "]";
+    color: #000 !important;
+    text-decoration: none !important;
   }
 }

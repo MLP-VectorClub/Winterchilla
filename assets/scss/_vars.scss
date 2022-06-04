@@ -9,6 +9,10 @@ $ContentBG: rgba(255, 255, 255, .75);
 @mixin navfoot {
   color: #fff;
   box-sizing: border-box;
+
+  @media print {
+    display: none;
+  }
 }
 
 // Don't forget to update sidebar-corner.svg
@@ -53,9 +57,11 @@ $PickerStatusbarHeight: 29px + 1px;
 
 //noinspection CssOptimizeSimilarProperties
 @mixin white-grid {
-  background-color: #fff;
-  background-image: url('/img/grid-16x16.svg?v=2'),
-  url('/img/grid-4x4.svg?v=2');
+  @media screen {
+    background-color: #fff;
+    background-image: url('/img/grid-16x16.svg?v=2'),
+    url('/img/grid-4x4.svg?v=2');
+  }
 }
 
 // Links

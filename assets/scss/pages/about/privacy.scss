@@ -7,6 +7,13 @@
   max-width: 21cm;
   margin: 0 auto;
 
+  @media print {
+    box-shadow: none !important;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
   h1, h2, p, blockquote {
     font-family: serif !important;
   }

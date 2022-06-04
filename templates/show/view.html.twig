@@ -62,9 +62,6 @@
           {%- endif -%}
         </div>
       </div>
-      {% if current_episode.generation == constant('\\App\\ShowHelper::GEN_FIM') %}
-        {% include 'show/_synopsis.html.twig' %}
-      {% endif %}
       <section class="about-res">
         <h2>What Vector Reservations Are{% if permission('staff') %}
           <button class="blue typcn typcn-pencil" id="edit-about_reservations">Edit</button>{% endif %}</h2>

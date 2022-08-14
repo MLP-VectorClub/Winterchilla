@@ -67,3 +67,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
   - [DASPRiD](https://github.com/DASPRiD) for his contributions and bug reports
   - [parclytaxel](https://gitlab.com/parclytaxel) and [Trildar](https://github.com/Trildar) for their help with math-related code and numerous bug reports
   - The members of our Discord server who continue to report issues and suggest features, making the site better for everyone
+  - Gaurang Maheta for the responsible disclosure of an open redirect vulnerability in the application

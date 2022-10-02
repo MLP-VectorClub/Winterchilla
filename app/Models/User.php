@@ -641,20 +641,6 @@ class User extends NSModel implements Linkable {
     return Permission::sufficient($role, $this->role);
   }
 
-  public function assignCorrectRole():bool {
-    $da_user = $this->deviantart_user;
-    $club_member = $da_user->isClubMember();
-    if ($club_member){
-      $club_role = $da_user->getClubRole();
-      if ($club_role !== $this->role)
-        return $this->updateRole($club_role);
-    }
-    else if (Permission::sufficient('member', $this->role))
-      return $this->updateRole('user');
-
-    return $this->save();
-  }
-
   public function getPasswordSet():bool {
     return $this->password !== null;
   }

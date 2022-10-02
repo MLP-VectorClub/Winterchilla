@@ -350,9 +350,6 @@ class DeviantArt {
       }
     }
 
-    if (!$first_user && $da_user->user->role !== 'developer')
-      $da_user->user->assignCorrectRole();
-
     if ($refresh)
       Auth::$session->update_attributes($session_data);
     else {
@@ -515,17 +512,6 @@ class DeviantArt {
     $cache->update($usernames);
 
     return $usernames;
-  }
-
-  /**
-   * @param string $username
-   *
-   * @return null|string
-   */
-  public static function getClubRoleByName(string $username):?string {
-    $usernames = self::getMemberList();
-
-    return $usernames[$username] ?? null;
   }
 
   public static function favmeHttpsUrl(string $favme_id):string {

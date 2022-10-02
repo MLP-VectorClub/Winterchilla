@@ -109,14 +109,11 @@ class Users {
         'user_id' => $user->id,
       ]);
     }
-    else $user = $da_user->user;
 
     $da_user->name = $user_data['username'];
     $da_user->avatar_url = URL::makeHttps($user_data['usericon']);
     if ($da_user->save())
       $save_success = true;
-
-    $user->assignCorrectRole();
 
     if (!$save_success)
       throw new RuntimeException('Saving user data failed'.(Permission::sufficient('developer') ? ': '.DB::$instance->getLastError() : ''));

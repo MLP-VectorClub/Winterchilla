@@ -141,20 +141,5 @@ class UsersController extends APIController {
     ]);
   }
 
-  function membership() {
-    if ($this->action !== 'GET')
-      CoreUtils::notAllowed();
-
-    $name = strtolower(CoreUtils::trim($_GET['name']));
-
-    $member_list = DeviantArt::getMemberList();
-    foreach ($member_list as $k => $v) {
-      if (strtolower($k) === $name)
-        HTTP::tempRedirect('/img/approved.svg');
-    }
-
-    HTTP::tempRedirect('/img/blank-pixel.png');
-  }
-
   // TODO Endpoint for changing user settings
 }

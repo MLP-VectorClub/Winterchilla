@@ -60,19 +60,6 @@ class DeviantartUser extends NSModel implements Linkable {
   }
 
   /**
-   * Checks if a user is a club member
-   *
-   * @return bool
-   */
-  public function isClubMember():bool {
-    return $this->getClubRole() !== null;
-  }
-
-  public function getClubRole():?string {
-    return DeviantArt::getClubRoleByName($this->name);
-  }
-
-  /**
    * Returns whether the user has permissions for the specified role
    * @deprecated
    *

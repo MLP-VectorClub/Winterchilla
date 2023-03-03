@@ -32,8 +32,6 @@
     "erusev/parsedown": "^1.7",
     "ezyang/htmlpurifier": "^4.8",
     "fightbulc/moment": "^1.28",
-    "google/apiclient": "^2.0",
-    "google/apiclient-services": "^0.50.0",
     "illuminate/container": "^8.28",
     "illuminate/hashing": "^8.28",
     "league/uri": "^6.2",

@@ -29,7 +29,7 @@ The site is known to work with the following set of software, assuming correct c
 | Source Control    | Git<br><small>(the site shows the commit data in the footer, so the binary should be runnable by the application)</small> |
 | SSL Certificate   | Self-signed ([get a pair here](https://seinopsys.dev/selfsigned))<br><small>(required to use the site through HTTPS while developing)</small> |
 
-If you can get it to work on some other setup then congratulations, but I cannot guarantee that everything will function as intended. 
+If you can get it to work on some other setup then congratulations, but I cannot guarantee that everything will function as intended.
 
 ## Configuration
 
@@ -73,15 +73,11 @@ You will need to add OAuth application keys for the following services to your `
 
  - [DeviantArt](https://www.deviantart.com/developers/register):  `DA_CLIENT`, `DA_SECRET`
  - [Discord](https://discordapp.com/developers/applications/me): `DISCORD_CLIENT`, `DISCORD_SECRET`
- 
-##### API keys
-
-If you want to test broken YouTube video removal you will need a Google API key from the [Google API Console](https://console.developers.google.com) that has the [YouTube Data v3 API](https://console.developers.google.com/apis/library/youtube.googleapis.com/) enabled. This key should be set as the value of the `GOOGLE_API_KEY` constant. 
 
 #### Dependencies
 
 Be sure to run `composer install` to download all the dependencies and see if you need to install/enable any other extensions for the site to work.
- 
+
 #### Directory permissions
 
 The `fs` and the `vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache`folders must be writable by PHP.
@@ -144,7 +140,7 @@ Git `post-receive` hooks are used for deploying to the production server. This r
 ```
 $ cd /path/to/repo
 $ cp setup/post-receive.sh .git/hooks/post-receive
-$ chmod +x .git/hooks/post-receive 
+$ chmod +x .git/hooks/post-receive
 $ git config receive.denyCurrentBranch updateInstead
 ```
 

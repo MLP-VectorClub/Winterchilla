@@ -21,10 +21,11 @@ use Wohali\OAuth2\Client\Provider\Exception\DiscordIdentityProviderException;
  * @property string   $name
  * @property int      $user_id
  * @property string   $username
+ * @property string   $display_name
  * @property string   $nick
  * @property string   $avatar_hash
  * @property DateTime $joined_at
- * @property string   $discriminator
+ * @property number   $discriminator
  * @property string   $access        (oAuth)
  * @property string   $refresh       (oAuth)
  * @property string   $scope         (oAuth)
@@ -42,18 +43,20 @@ class DiscordMember extends NSModel {
   ];
 
   public function get_name() {
-    return !empty($this->nick) ? $this->nick : $this->username;
+    return !empty($this->nick) ? $this->nick : ($this->display_name ?? $this->username);
   }
 
   public function get_discord_tag() {
-    return "{$this->username}#{$this->discriminator}";
+    return $this->discriminator  === 0 ? "@{$this->username}" : "{$this->username}#{$this->discriminator}";
   }
 
   public function get_avatar_url() {
-    if (empty($this->avatar_hash))
-      return 'https://cdn.discordapp.com/embed/avatars/'.($this->discriminator % 5).'.png';
+    if (empty($this->avatar_hash)) {
+      $file_name = $this->discriminator === 0 ? ($this->id >> 22) : $this->discriminator;
+      return "https://cdn.discordapp.com/embed/avatars/$file_name.png";
+    }
 
-    $ext = strpos($this->avatar_hash, "a_") === 0 ? 'gif' : 'png';
+    $ext = str_starts_with($this->avatar_hash, "a_") ? 'gif' : 'png';
 
     return "https://cdn.discordapp.com/avatars/{$this->id}/{$this->avatar_hash}.$ext";
   }
@@ -78,7 +81,7 @@ class DiscordMember extends NSModel {
       ]);
     }
     catch (CommandClientException $e){
-      if ($e->getResponse()->getStatusCode() !== 404)
+      if ($e->getResponse()?->getStatusCode() !== 404)
         throw $e;
     }
     if (!empty($member)){
@@ -108,6 +111,7 @@ class DiscordMember extends NSModel {
 
   public function updateFromApi(DiscordResourceOwner $user, bool $save = true) {
     $this->username = $user->getUsername();
+    $this->display_name = $user->toArray()['global_name'];
     $this->discriminator = $user->getDiscriminator();
     $this->avatar_hash = $user->getAvatarHash();
     if ($save)

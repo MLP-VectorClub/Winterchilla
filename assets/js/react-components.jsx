@@ -1,4 +1,4 @@
-(function() {
+(function () {
   'use strict';
 
   class SplitSelector extends React.Component {
@@ -125,10 +125,10 @@
               type="text"
               placeholder="Search"
               onChange={this.handleSearch}
-              spellCheck={false}/>
+              spellCheck={false} />
             <button className="typcn typcn-times red"
-              onClick={this.handleClearSearch}
-              disabled={query === ''}>
+                    onClick={this.handleClearSearch}
+                    disabled={query === ''}>
               Clear
             </button>
           </div>
@@ -139,8 +139,8 @@
             </select>
           </div>
           <div className="buttons">
-            <button className="typcn typcn-chevron-left green" title="Link selected" onClick={this.handleLink}/>
-            <button className="typcn typcn-chevron-right red" title="Unlink selected" onClick={this.handleUnlink}/>
+            <button className="typcn typcn-chevron-left green" title="Link selected" onClick={this.handleLink} />
+            <button className="typcn typcn-chevron-right red" title="Unlink selected" onClick={this.handleUnlink} />
           </div>
           <div className="split-select">
             <span>Available</span>
@@ -153,7 +153,133 @@
     }
   }
 
+  const WSS = ({ responseTimeHistorySize }) => {
+    const [responseTimes, setResponseTimes] = React.useState([]);
+    const [statusClass, setStatusClass] = React.useState('info');
+    const [statusString, setStatusString] = React.useState('Checking status…');
+    const [networks, setNetworks] = React.useState([]);
+    const connsRef = React.useRef({});
+    const [heartBeat, setHeartBeat] = React.useState(false);
+    const [heartDead, setHeartDead] = React.useState(false);
+    const intervalRef = React.useRef(null);
+    const connectionListRef = React.useRef(null);
+    const updateStatus = React.useCallback(() => {
+      setHeartBeat(false);
+      const startTime = new Date().getTime();
+      if ($.WS.down || $.WS.conn.disconnected) {
+        if (intervalRef.current !== null)
+          return;
+        intervalRef.current = setInterval(updateStatus, 1000);
+        setStatusClass('fail');
+        setStatusString(
+          $.WS.down
+            ? 'Socket.IO server is down and/or client library failed to load'
+            : 'Disconnected',
+        );
+        setHeartDead(true);
+        return;
+      }
+      else if (intervalRef !== false) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        setStatusClass('success');
+        setHeartDead(false);
+      }
+      const $connectionList = $(connectionListRef.current);
+      if ($connectionList.is(':hover')) {
+        setTimeout(updateStatus, 500);
+        setStatusString('Paused while hovering entries');
+        return;
+      }
+      else setStatusString('Connected');
+
+      $.WS.devquery('status', {}, function (data) {
+        setHeartBeat(true);
+        if (data.clients) {
+          connsRef.current = {};
+          Object.values(data.clients).forEach(client => {
+            if (!connsRef.current[client.network])
+              connsRef.current[client.network] = [];
+            connsRef.current[client.network].push(client);
+          });
+          setNetworks(Object.keys(connsRef.current));
+        }
+        else {
+          setNetworks([]);
+        }
+        const endTime = new Date().getTime();
+        setResponseTimes([...responseTimes, endTime - startTime].slice(-responseTimeHistorySize));
+        setTimeout(updateStatus, 1000);
+      });
+    }, []);
+
+    const heartClass = React.useMemo(() => {
+      const classes = [];
+      if (heartBeat) classes.push('beat');
+      if (heartDead) classes.push('dead');
+      return classes.length > 0 ? classes.join(' ') : undefined;
+    }, [heartBeat, heartDead]);
+
+    React.useEffect(() => {
+      updateStatus();
+
+      return () => {
+        if (intervalRef.current !== null) {
+          clearInterval(intervalRef.current);
+        }
+      };
+    }, []);
+
+    return <>
+      <h2>Status <span id="wss-heartbeat" className={heartClass}>&hearts;</span> <span id="wss-response-time">{responseTimes.length === 0 ? '…' : `${$.average(responseTimes).toFixed(0)}ms`}</span></h2>
+      <div className={`notice ${statusClass}`} id="wss-status">{statusString}</div>
+      <ul id="connection-list" ref={connectionListRef}>{networks.map(network => {
+        const networkConnections = connsRef.current[network];
+        const pages = networkConnections.reduce((data, conn) => conn.page ? {
+          ...data, [conn.page]: {
+            since: conn.connectedSince,
+          },
+        } : data, {});
+        const users = networkConnections.reduce((data, conn) => conn.user ? {
+          ...data,
+          [conn.user.id]: conn.user.id in data ? {
+            ...data[conn.user.id],
+            count: data[conn.user.id].count + 1,
+          } : {
+            ...conn.user,
+            count: 1,
+          },
+        } : data, {});
+        const userIds = Object.keys(users);
+        const pageKeys = Object.keys(pages);
+        return <li key={network}>
+          <h3>{network}</h3>
+          {userIds.length > 0 && <>
+            <p><strong>Users:</strong></p>
+            <ul>
+              {userIds.map(id => {
+                const { count, name } = users[id];
+                return <li key={id}>
+                  <a href={`/users/${id}`} target="_blank" rel="noreferrer">{name}</a>{count > 1 ? <> ({count})</> : null}
+                </li>;
+              })}
+            </ul>
+          </>}
+          {pageKeys.length > 0 && <>
+            <p><strong>Pages:</strong></p>
+            <ul>{pageKeys.map(el => {
+              return <li key={el}>
+                <a href={el} target="_blank" rel="noreferrer">{el}</a> ({pages[el].since})
+              </li>;
+            })}</ul>
+          </>}
+        </li>;
+      })}</ul>
+    </>;
+  };
+
   window.reactComponents = {
     SplitSelector,
+    WSS,
   };
 })();

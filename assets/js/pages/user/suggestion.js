@@ -20,6 +20,7 @@
           e.preventDefault();
 
           $btn.disable();
+          $loadNotice.hide();
 
           $.API.get('/post/request/suggestion', { already_loaded: already_loaded.join(',') }, function() {
             if (!this.status){

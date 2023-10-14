@@ -49,8 +49,8 @@ class HTTP {
     $response_code = curl_getinfo($r, CURLINFO_HTTP_CODE);
     $header_size = curl_getinfo($r, CURLINFO_HEADER_SIZE);
 
-    $response_headers = rtrim(mb_substr($response, 0, $header_size));
-    $response = mb_substr($response, $header_size);
+    $response_headers = rtrim(substr($response, 0, $header_size));
+    $response = substr($response, $header_size);
     $curl_error = curl_error($r);
     curl_close($r);
 

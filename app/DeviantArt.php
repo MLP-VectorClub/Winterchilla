@@ -97,8 +97,8 @@ class DeviantArt {
     $responseCode = curl_getinfo($r, CURLINFO_HTTP_CODE);
     $headerSize = curl_getinfo($r, CURLINFO_HEADER_SIZE);
 
-    $responseHeaders = rtrim(mb_substr($response, 0, $headerSize));
-    $response = mb_substr($response, $headerSize);
+    $responseHeaders = rtrim(substr($response, 0, $headerSize));
+    $response = substr($response, $headerSize);
     $http_response_header = array_map('rtrim', explode("\n", $responseHeaders));
     $curlError = curl_error($r);
     curl_close($r);
@@ -107,7 +107,8 @@ class DeviantArt {
       throw new CURLRequestException(rtrim("cURL fail for URL \"$requestURI\"", ' ;'), $responseCode, $curlError);
 
     if (empty($response)){
-      CoreUtils::logError(__METHOD__.": Empty response (HTTP $responseCode)\nURI: $requestURI\nResponse headers:\n$http_response_header\ncURL error: $curlError");
+      $headers = var_export($http_response_header, true);
+      CoreUtils::logError(__METHOD__.": Empty response (HTTP $responseCode)\nURI: $requestURI\nResponse headers:\n$headers\ncURL error: $curlError");
 
       return null;
     }

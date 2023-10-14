@@ -12,7 +12,7 @@ Running <strong><a href='{{ constant('GITHUB_URL') }}' title='Visit the GitHub r
 {%- endif -%}
   {%- if commit_time is defined %}
     created {{ time_tag(commit_time) }}
-  {%- else %}
+  {%- elseif not env('PRODUCTION') %}
     (version information unavailable)
   {%- endif -%}
 </span>

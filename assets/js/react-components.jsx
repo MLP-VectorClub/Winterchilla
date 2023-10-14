@@ -167,6 +167,9 @@
       setHeartBeat(false);
       const startTime = new Date().getTime();
       if ($.WS.down || $.WS.conn.disconnected) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
         intervalRef.current = setInterval(updateStatus, 1000);
         setStatusClass('fail');
         setStatusString(

@@ -234,7 +234,7 @@
     return <>
       <h2>Status <span id="wss-heartbeat" className={heartClass}>&hearts;</span> <span id="wss-response-time">{responseTimes.length === 0 ? '…' : `${$.average(responseTimes).toFixed(0)}ms`}</span></h2>
       <div className={`notice ${statusClass}`} id="wss-status">{statusString}</div>
-      <ul id="connection-list" ref={connectionListRef}>{networks.map(network => {
+      <ul id="connection-list" ref={connectionListRef}>{networks.map((network, networkIndex) => {
         const networkConnections = connsRef.current[network];
         const pages = networkConnections.reduce((data, conn) => conn.page ? {
           ...data, [conn.page]: {
@@ -257,10 +257,12 @@
             },
           };
         }, {});
+        const isCurrent = networkConnections.some(conn => conn.current);
         const userIds = Object.keys(users);
         const pageKeys = Object.keys(pages);
         return <li key={network}>
-          <h3>{network}</h3>
+          <h3>Network {networkIndex + 1}{isCurrent && <> <span className="typcn typcn-location current-icon" title="Your network" /></>}</h3>
+          <p><strong>ID:</strong> <code>{network}</code></p>
           {userIds.length > 0 && <>
             <p><strong>Users:</strong></p>
             <ul>

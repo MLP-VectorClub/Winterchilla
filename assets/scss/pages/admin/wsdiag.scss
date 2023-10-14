@@ -42,6 +42,10 @@
   padding: 0;
   flex-flow: row wrap;
 
+  .current-icon {
+    color: $NRed;
+  }
+
   > li {
     flex: 1 1 auto;
     display: block;
@@ -53,9 +57,10 @@
 
     h3 {
       margin: 0 0 10px 0;
+    }
+
+    code {
       font-family: $monospace;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     ul {

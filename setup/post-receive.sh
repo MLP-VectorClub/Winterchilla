@@ -5,7 +5,7 @@ echo "Push triggered update to revision $newrev ($refname)"
 
 RUN_FOR_REF="refs/heads/master"
 if [[ "$refname" ==  "$RUN_FOR_REF" ]]; then
-  GIT="env -i git"
+  GIT="sudo -u www-data env -i git"
   CMD_CD="cd $(readlink -nf "$PWD/..")"
   CMD_FETCH="$GIT fetch"
   CMD_COMPOSER="if [ -d vendor/ ]; then sudo chmod -R ug+rw vendor/; fi; sudo -u www-data composer install --no-dev 2>&1"

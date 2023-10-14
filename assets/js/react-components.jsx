@@ -167,8 +167,6 @@
       setHeartBeat(false);
       const startTime = new Date().getTime();
       if ($.WS.down || $.WS.conn.disconnected) {
-        if (intervalRef.current !== null)
-          return;
         intervalRef.current = setInterval(updateStatus, 1000);
         setStatusClass('fail');
         setStatusString(
@@ -240,16 +238,22 @@
             since: conn.connectedSince,
           },
         } : data, {});
-        const users = networkConnections.reduce((data, conn) => conn.user ? {
-          ...data,
-          [conn.user.id]: conn.user.id in data ? {
-            ...data[conn.user.id],
-            count: data[conn.user.id].count + 1,
-          } : {
-            ...conn.user,
-            count: 1,
-          },
-        } : data, {});
+        const users = networkConnections.reduce((data, conn) => {
+          if (!conn.user || !conn.user.name) {
+            return data;
+          }
+
+          return {
+            ...data,
+            [conn.user.id]: conn.user.id in data ? {
+              ...data[conn.user.id],
+              count: data[conn.user.id].count + 1,
+            } : {
+              ...conn.user,
+              count: 1,
+            },
+          };
+        }, {});
         const userIds = Object.keys(users);
         const pageKeys = Object.keys(pages);
         return <li key={network}>
@@ -259,6 +263,7 @@
             <ul>
               {userIds.map(id => {
                 const { count, name } = users[id];
+                if (!name) return null;
                 return <li key={id}>
                   <a href={`/users/${id}`} target="_blank" rel="noreferrer">{name}</a>{count > 1 ? <> ({count})</> : null}
                 </li>;

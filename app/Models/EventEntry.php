@@ -59,10 +59,13 @@ class EventEntry extends NSModel {
   public function getListItemPreview($submission = null):?string {
     if ($submission === null)
       $submission = DeviantArt::getCachedDeviation($this->sub_id, $this->sub_prov);
-    if ($this->sub_prov === 'fav.me' && $submission->preview !== null && $submission->fullsize !== null)
-      return self::_getPreviewDiv($submission->fullsize, $submission->preview, $submission->type);
-    if ($this->prev_thumb !== null && $this->prev_full !== null)
-      return self::_getPreviewDiv($this->prev_full, $this->prev_thumb, $submission->type);
+
+    if ($submission) {
+      if ($this->sub_prov === 'fav.me' && $submission->preview !== null && $submission->fullsize !== null)
+        return self::_getPreviewDiv($submission->fullsize, $submission->preview, $submission->type);
+      if ($this->prev_thumb !== null && $this->prev_full !== null)
+        return self::_getPreviewDiv($this->prev_full, $this->prev_thumb, $submission->type);
+    }
 
     return '';
   }

@@ -50,15 +50,15 @@ class Session extends NSModel {
   public static $attr_protected = ['data'];
 
   public function get_access() {
-    return $this->deviantart_user->access;
+    return $this->deviantart_user?->access;
   }
 
   public function get_refresh() {
-    return $this->deviantart_user->refresh;
+    return $this->deviantart_user?->refresh;
   }
 
   public function get_expires() {
-    return $this->deviantart_user->access_expires;
+    return $this->deviantart_user?->access_expires;
   }
 
   public function get_expired(): bool {

@@ -241,7 +241,7 @@ class CoreUtils {
     'websocket',
   ];
   public const DEFAULT_LIBS = [
-    'polyfill-io',
+    // 'polyfill-io',
     'dragscroll',
     'jquery',
     'moment',

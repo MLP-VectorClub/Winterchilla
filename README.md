@@ -24,8 +24,7 @@ PHP-rendered classic web app powering the MLP Vector Club's website since 2015.
    [FileSaver.js](https://github.com/eligrey/FileSaver.js),
    [paste.js](https://github.com/layerssss/paste.js),
    [Draggable](https://github.com/Shopify/Draggable),
-   [cuid](https://github.com/ericelliott/cuid),
-   [Polyfill.io](https://polyfill.io)
+   [cuid](https://github.com/ericelliott/cuid)
  - Back-end:
    [moment.php](https://github.com/fightbulc/moment.php),
    [PostgresDb](https://github.com/SeinopSys/PHP-PostgreSQL-Database-Class),

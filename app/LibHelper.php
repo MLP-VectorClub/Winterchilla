@@ -26,7 +26,7 @@ class LibHelper {
     'moment' => self::TYPE_JS,
     'no-ui-slider' => self::TYPE_JS_CSS,
     'paste' => self::TYPE_JS,
-    // 'polyfill-io' => self::TYPE_JS,
+    'polyfill-io' => self::TYPE_JS,
     'react' => self::TYPE_JS,
     'sortable' => self::TYPE_JS,
     'typicons' => self::TYPE_CSS,

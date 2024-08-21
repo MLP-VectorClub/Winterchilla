@@ -31,7 +31,7 @@ class HTTP {
       CURLOPT_BINARYTRANSFER => true,
       CURLOPT_FOLLOWLOCATION => true,
       CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0',
+      CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0',
     ];
     if (isset($referrer))
       $curl_opt[CURLOPT_REFERER] = $referrer;

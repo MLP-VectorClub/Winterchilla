@@ -478,8 +478,11 @@
           return $.Dialog.fail(`Cannot load post ${postId}`, this.message);
         }
 
-        $.loadImages(this.html).then(function(resp) {
-          $el.trigger(resp.e).closest('.image').replaceWith(resp.$el);
+        $.loadImages(this.html).then(function (resp) {
+          if (resp.e) {
+            $el.trigger(resp.e);
+          }
+          $el.closest('.image').replaceWith(resp.$el);
         });
       });
     });
@@ -645,6 +648,4 @@
       });
     }
   }
-
-  $.WS.recvPostUpdates(true);
 })(jQuery);

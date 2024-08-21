@@ -225,6 +225,19 @@ class DeviantArt {
     return $deviation;
   }
 
+  private static function getDeviationUrlFromFavmeLink(string $url): string
+  {
+    try {
+      $target = HTTP::findRedirectTarget($url);
+      if ($target !== null) {
+        return $target;
+      }
+    } catch (\Exception $e) {
+      CoreUtils::logError(__METHOD__ . ': ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+    }
+    return $url;
+  }
+
   /**
    * Makes a call to the dA oEmbed API to get public info about an artwork
    * $type defaults to 'fav.me'
@@ -240,8 +253,12 @@ class DeviantArt {
 
     if ($type === 'sta.sh')
       $ID = self::nomralizeStashID($ID);
+
+    $url = "http://$type/$ID";
+    if ($type === 'fav.me')
+      $url = self::getDeviationUrlFromFavmeLink($url);
     try {
-      $data = self::request('https://backend.deviantart.com/oembed?url='.urlencode("http://$type/$ID"), false);
+      $data = self::request('https://backend.deviantart.com/oembed?url='.urlencode($url), false);
     }
     catch (CURLRequestException $e){
       if ($e->getCode() === 404)

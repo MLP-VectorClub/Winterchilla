@@ -17,7 +17,7 @@ class HTTP {
    * @return array
    * @throws CURLRequestException
    */
-  public static function legitimateRequest($url, $cookies = null, $referrer = null, bool $skipBody = false):array {
+  public static function legitimateRequest($url, $cookies = null, $referrer = null, bool $skipBody = false, bool $allowRedirects = false):array {
     $r = curl_init($url);
     $curl_opt = [
       CURLOPT_HTTPHEADER => [
@@ -54,7 +54,7 @@ class HTTP {
     $curl_error = curl_error($r);
     curl_close($r);
 
-    if ($response_code < 200 || $response_code >= 300)
+    if ($response_code < 200 || $response_code >= ($allowRedirects ? 400 : 300))
       throw new CURLRequestException("cURL fail for URL \"$url\". Response headers:\n$response_headers", $response_code, $curl_error);
 
     global $http_response_header;
@@ -91,7 +91,7 @@ class HTTP {
         $cookies[$name] = $value;
       }
 
-    $request = self::legitimateRequest($url, $cookies, $referrer, true);
+    $request = self::legitimateRequest($url, $cookies, $referrer, skipBody: true, allowRedirects: true);
 
     return preg_match('/Location:\s+([^\r\n]+)/', $request['responseHeaders'], $_match) ? CoreUtils::trim($_match[1]) : null;
   }

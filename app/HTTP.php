@@ -17,7 +17,7 @@ class HTTP {
    * @return array
    * @throws CURLRequestException
    */
-  public static function legitimateRequest($url, $cookies = null, $referrer = null, bool $skipBody = false, bool $allowRedirects = false):array {
+  public static function legitimateRequest($url, $cookies = null, $referrer = null, bool $skipBody = false, bool $allowRedirects = false, bool $followRedirects = true):array {
     $r = curl_init($url);
     $curl_opt = [
       CURLOPT_HTTPHEADER => [
@@ -29,7 +29,7 @@ class HTTP {
       ],
       CURLOPT_HEADER => true,
       CURLOPT_BINARYTRANSFER => true,
-      CURLOPT_FOLLOWLOCATION => true,
+      CURLOPT_FOLLOWLOCATION => $followRedirects,
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0',
     ];
@@ -91,7 +91,7 @@ class HTTP {
         $cookies[$name] = $value;
       }
 
-    $request = self::legitimateRequest($url, $cookies, $referrer, skipBody: true, allowRedirects: true);
+    $request = self::legitimateRequest($url, $cookies, $referrer, skipBody: true, allowRedirects: true, followRedirects: false);
 
     return preg_match('/Location:\s+([^\r\n]+)/', $request['responseHeaders'], $_match) ? CoreUtils::trim($_match[1]) : null;
   }

@@ -3,7 +3,7 @@ echo "##### post-receive hook #####"
 read oldrev newrev refname
 echo "Push triggered update to revision $newrev ($refname)"
 
-RUN_FOR_REF="refs/heads/master"
+RUN_FOR_REF="refs/heads/main"
 if [[ "$refname" ==  "$RUN_FOR_REF" ]]; then
   GIT="sudo -u www-data env -i git"
   CMD_CD="cd $(readlink -nf "$PWD/..")"

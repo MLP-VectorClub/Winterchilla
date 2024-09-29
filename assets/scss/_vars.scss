@@ -1,3 +1,6 @@
+@use "sass:color";
+@use "sass:math";
+
 // Page colors
 $HeaderBlue: #1E3DB3;
 $HeaderHeight: 50px;
@@ -16,7 +19,7 @@ $ContentBG: rgba(255, 255, 255, .75);
 }
 
 // Don't forget to update sidebar-corner.svg
-$SidebarBackground: darken($HeaderFooterBG, 20);
+$SidebarBackground: color.adjust($HeaderFooterBG, $lightness: -20%);
 $SidebarBackgroundMobile: rgba($SidebarBackground, .95);
 $SidebarWidth: 330px;
 $MainMargin: 8px;
@@ -66,9 +69,9 @@ $PickerStatusbarHeight: 29px + 1px;
 
 // Links
 $Link: #337287;
-$LinkHover: desaturate(lighten($Link, 13), 7);
-$LinkLight: lighten($Link, 30);
-$LinkHoverLight: lighten($LinkHover, 37);
+$LinkHover: color.adjust($Link, $lightness: 13%, $saturation: -7%);
+$LinkLight: color.adjust($Link, $lightness: 30%);
+$LinkHoverLight: color.adjust($LinkHover, $lightness: 37%);
 
 // Notices & buttons
 $NBlue: #0070e9;
@@ -76,8 +79,8 @@ $NBlueBG: #eef;
 $NDarkBlue: #02a;
 $NDarkBlueBG: #ddf;
 $_lh: 50;
-$NLavender: adjust_hue($NBlue, $_lh);
-$NLavenderBG: adjust_hue($NBlueBG, $_lh);
+$NLavender: color.adjust($NBlue, $hue: $_lh);
+$NLavenderBG: color.adjust($NBlueBG, $hue: $_lh);
 $NTeal: #008080;
 $NTealBG: #dff;
 $NGreen: #008000;
@@ -205,7 +208,7 @@ $NoScrollbar: false;
 
   > * {
     flex: 1 1 auto;
-    width: 100%/$howmany;
+    width: math.div(100%, $howmany);
   }
 }
 

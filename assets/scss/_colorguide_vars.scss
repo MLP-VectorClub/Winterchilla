@@ -1,18 +1,19 @@
+@use "sass:color";
 @import "vars";
 
 $_TBase: #0c70b1;
 $TDefault: gray;
 $TCategory: $_TBase;
-$TSpecies: adjust_hue($_TBase, -80);
-$TGender: adjust_hue($_TBase, 60);
-$TClothing: adjust_hue($_TBase, 120);
-$TWarning: adjust_hue($_TBase, 160);
-$TEpisode: adjust_hue($_TBase, 190);
-$TCharacter: adjust_hue($_TBase, 240);
+$TSpecies: color.adjust($_TBase, $hue: -80);
+$TGender: color.adjust($_TBase, $hue: 60);
+$TClothing: color.adjust($_TBase, $hue: 120);
+$TWarning: color.adjust($_TBase, $hue: 160);
+$TEpisode: color.adjust($_TBase, $hue: 190);
+$TCharacter: color.adjust($_TBase, $hue: 240);
 
 @mixin tag-style($color:$TDefault, $icon:false) {
-  color: darken($color, 5) !important;
-  background-color: lighten($color, 50) !important;
+  color: color.adjust($color, $lightness: -5%) !important;
+  background-color: color.adjust($color, $lightness: 50%) !important;
   @if ($icon != false) {
     &:before {
       content: $icon
@@ -22,8 +23,8 @@ $TCharacter: adjust_hue($_TBase, 240);
 
 @mixin tag-button-style($color:$TDefault) {
   button {
-    background-color: darken($color, 5);
-    color: lighten($color, 50);
+    background-color: color.adjust($color, $lightness: -5%);
+    color: color.adjust($color, $lightness: 50%);
   }
 }
 
@@ -339,7 +340,7 @@ $TCharacter: adjust_hue($_TBase, 240);
   //noinspection CssOptimizeSimilarProperties
   .img {
     $CMSize: $SquareSize * 0.42;
-    $margin: ($SquareSize - $CMSize)/2;
+    $margin: ($SquareSize - $CMSize)*0.5;
 
     position: absolute;
     top: $margin;

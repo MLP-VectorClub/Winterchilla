@@ -195,17 +195,18 @@
     display: inline-block;
     margin: .142em;
     padding: .142em;
+    color: $NBlue;
+    border: 1px solid;
+    border-radius: 5px;
+    background: $NBlueBG;
+    cursor: move;
+
     @media all and (min-width: $Breakpoint) {
       font-size: 14px;
     }
     @media all and (max-width: $Breakpoint) {
       font-size: 18px;
     }
-    color: $NBlue;
-    border: 1px solid;
-    border-radius: 5px;
-    background: $NBlueBG;
-    cursor: move;
 
     &.draggable-source--is-dragging {
       opacity: 0;
@@ -276,9 +277,9 @@
     }
 
     > li {
-      @include pony-cm;
       display: inline-block !important;
       margin: 0 auto 10px;
+      @include pony-cm;
 
       &:not(:last-child) {
         margin-right: 10px;

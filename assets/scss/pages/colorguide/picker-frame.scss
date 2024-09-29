@@ -1,3 +1,5 @@
+@use "sass:color";
+@use "sass:math";
 @import url('https://fonts.googleapis.com/css?family=PT+Sans&display=swap');
 @import "../../vars";
 @import "../../shared-utils";
@@ -193,7 +195,7 @@ body {
   z-index: 3;
   top: $PickerMenubarHeight;
   height: $PickerTabbarHeight;
-  background: darken($PickerUIBackground, 3);
+  background: color.adjust($PickerUIBackground, $lightness: -3%);
   color: $PickerUIColor;
   padding: 0 1px;
   margin: 0;
@@ -234,7 +236,7 @@ body {
 
     &:not(.active) {
       opacity: .6;
-      background: darken($PickerUIBackground, 10);
+      background: color.adjust($PickerUIBackground, $lightness: -10%);
       height: $PickerTabbarHeight - $PickerTabTopMargin - ($PickerTabBorder*2) - $PickerTabInactiveTopOffset;
       margin-top: $PickerTabTopMargin + $PickerTabInactiveTopOffset;
     }
@@ -373,7 +375,7 @@ body {
 %panel {
   position: absolute;
   z-index: 4;
-  background-color: rgba(darken($PickerUIBackground, 6), .9);
+  background-color: rgba(color.adjust($PickerUIBackground, $lightness: -6%), .9);
   color: $PickerUIColor;
   border: 1px solid $PickerUIBorders;
   cursor: default;
@@ -394,7 +396,7 @@ body {
   $handleSize: 4px;
 
   body.area-list-resizing & .resize-handle, .resize-handle:hover {
-    $color: darken(deepskyblue, 7);
+    $color: color.adjust(deepskyblue, $lightness: -7%);
     background-color: $color;
     box-shadow: 0 0 10px black;
   }
@@ -403,7 +405,7 @@ body {
     position: absolute;
     z-index: 3;
     top: 0;
-    left: -$handleSize/2;
+    left: -$handleSize*0.5;
     height: 100%;
     width: $handleSize;
     background-color: transparent;
@@ -735,7 +737,7 @@ body {
 
       > .label {
         position: absolute;
-        top: $label-size/1.5;
+        top: math.div($label-size, 1.5);
         left: 0;
         width: 100%;
         font-size: $label-size;
@@ -917,8 +919,8 @@ body {
   .loader {
     position: absolute;
     $size: 128px;
-    top: calc(50% - #{$size/2});
-    left: calc(50% - #{$size/2});
+    top: calc(50% - #{$size*0.5});
+    left: calc(50% - #{$size*0.5});
 
     @include loading-indicator($size);
   }

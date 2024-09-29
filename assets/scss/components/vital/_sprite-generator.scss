@@ -127,7 +127,7 @@
 
         &.color-null > span {
           $middleWidth: 10%;
-          background: linear-gradient(to bottom right, white #{50%-$middleWidth/2}, red #{50%-$middleWidth/2}, red #{50%+$middleWidth/2}, white #{50%+$middleWidth/2});
+          background: linear-gradient(to bottom right, white #{50%-$middleWidth*0.5}, red #{50%-$middleWidth*0.5}, red #{50%+$middleWidth*0.5}, white #{50%+$middleWidth*0.5});
         }
 
         > span {

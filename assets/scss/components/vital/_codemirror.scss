@@ -1,9 +1,11 @@
+@use "sass:color";
+
 // Custom Theme
 .CodeMirror.cm-s-custom {
   color: #000;
   height: 180px;
   border: 1px solid $Border;
-  background-color: lighten($Background, 10);
+  background-color: color.adjust($Background, $lightness: 10%);
   text-align: left !important;
   font-family: $monospace !important;
   font-size: 14px !important;

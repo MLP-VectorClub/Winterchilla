@@ -1,4 +1,11 @@
 %post-ul {
+  padding: 0;
+  margin: 15px 0 20px 0;
+  list-style: none;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+
   @media all and (max-width: $Breakpoint) {
     text-align: center;
 
@@ -40,13 +47,6 @@
       }
     }
   }
-
-  padding: 0;
-  margin: 15px 0 20px 0;
-  list-style: none;
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: flex-start;
 
   li {
     padding: 10px;

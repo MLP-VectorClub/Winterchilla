@@ -1,3 +1,4 @@
+@use "sass:color";
 @import "../../vars";
 @import "../../components/optional/fluidbox";
 @import "../../components/optional/post-list";
@@ -281,7 +282,7 @@
       color: $DefaultUIColor;
 
       h2 {
-        color: lighten($DefaultUIColor, 50);
+        color: color.adjust($DefaultUIColor, $lightness: 50%);
         background-color: $DefaultUIColor;
 
         &:after {
@@ -559,7 +560,7 @@
   $bottommargin: 50px;
   margin: $topmargin 0 $bottommargin;
   $polewidth: 4%;
-  $halfpolewidth: $polewidth/2;
+  $halfpolewidth: $polewidth*0.5;
   position: relative;
   z-index: 1;
   display: flex;
@@ -570,7 +571,7 @@
   > .sign-wrap {
     background-color: #060;
     border-radius: $radius;
-    padding: $radius/2;
+    padding: $radius*0.5;
     color: #fff;
     position: relative;
     z-index: 2;
@@ -586,7 +587,7 @@
 
     > .sign-inner {
       $RightArrowSize: 32px;
-      border: $radius/2 solid white;
+      border: $radius*0.5 solid white;
       border-radius: $radius * .75;
       padding: $radius $radius*1.5;
       display: flex;
@@ -615,10 +616,10 @@
     display: block;
     position: absolute;
     z-index: 1;
-    top: -$topmargin/2;
+    top: -$topmargin*0.5;
     left: 50%-$halfpolewidth;
     width: $polewidth;
-    height: calc(100% + #{$bottommargin+($topmargin/2)});
+    height: calc(100% + #{$bottommargin+($topmargin*0.5)});
     background: gray;
     background: linear-gradient(to right, gray 0%, silver 50%, gray 100%);
 
@@ -626,7 +627,7 @@
       content: '';
       $height: 4px;
       position: absolute;
-      top: -$height/2;
+      top: -$height*0.5;
       left: 0;
       width: 100%;
       height: $height;

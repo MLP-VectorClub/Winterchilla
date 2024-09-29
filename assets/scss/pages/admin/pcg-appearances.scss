@@ -1,3 +1,4 @@
+@use "sass:math";
 @import "../../colorguide_vars";
 
 #pcg-appearances-table {
@@ -51,7 +52,7 @@
     flex: 0 0 100%;
     margin-bottom: 10px;
     max-height: 64px;
-    max-width: 64px * 16 / 9;
+    max-width: 64px * math.div(16, 9);
   }
 
   > span {

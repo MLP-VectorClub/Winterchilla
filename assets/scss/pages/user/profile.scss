@@ -1,3 +1,4 @@
+@use "sass:color";
 @import "../../vars";
 @import "../../components/optional/browser-icons";
 @import "../../components/optional/post-list";
@@ -95,7 +96,7 @@
         }
 
         path {
-          fill: darken($DeviantArtGreen, 10);
+          fill: color.adjust($DeviantArtGreen, $lightness: -10%);
           transition: fill .2s linear;
         }
 

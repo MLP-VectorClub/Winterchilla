@@ -1,3 +1,5 @@
+@use "sass:color";
+
 :disabled, [disabled], .disabled {
   cursor: not-allowed;
   opacity: .5;
@@ -154,7 +156,7 @@ input[readonly] {
 
             border: 1px solid;
             color: $DefaultUIColor;
-            background-color: lighten($DefaultUIColor, 70);
+            background-color: color.adjust($DefaultUIColor, $lightness: 70%);
 
             transition-property: background-color, opacity;
             transition-duration: .1s;
@@ -165,7 +167,7 @@ input[readonly] {
           }
 
           &:checked ~ span {
-            background-color: lighten($DefaultUIColor, 60)
+            background-color: color.adjust($DefaultUIColor, $lightness: 60%)
           }
 
           &:checked:not(:disabled) ~ span {

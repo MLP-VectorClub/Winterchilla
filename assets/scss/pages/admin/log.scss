@@ -1,3 +1,4 @@
+@use "sass:color";
 @import "../../vars";
 
 $TableHeadingFontSize: 16px;
@@ -230,11 +231,11 @@ $expanded: rgba(0, 0, 0, .05);
 
       &:not(.no-colors) {
         ins {
-          background: desaturate(lighten($NGreen, 40), 20)
+          background: color.adjust($NGreen, $lightness: 40%, $saturation: -20%);
         }
 
         del {
-          background: desaturate(lighten($NRed, 40), 20)
+          background: color.adjust($NRed, $lightness: 40%, $saturation: -20%)
         }
       }
     }

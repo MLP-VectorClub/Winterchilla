@@ -266,7 +266,7 @@ class DeviantArt {
         case 404:
           throw new RuntimeException('Image not found. The URL may be incorrect or the image has been deleted.', $errorCode, previous: $e);
         case 403:
-          throw new RuntimeException("Got access denied while loading image. Response headers:\n{$e->responseHeaders}\nResponse body:\n{$e->response}", $errorCode, previous: $e);
+          throw new RuntimeException('Got access denied while loading image', $errorCode, previous: $e);
         default:
           throw new RuntimeException('Image could not be retrieved; '.$e->getMessage(), $e->getCode(), previous: $e);
       }

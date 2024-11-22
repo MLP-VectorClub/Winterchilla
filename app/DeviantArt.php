@@ -104,7 +104,7 @@ class DeviantArt {
     curl_close($r);
 
     if ($responseCode < 200 || $responseCode >= 300)
-      throw new CURLRequestException(rtrim("cURL fail for URL \"$requestURI\"", ' ;'), $responseCode, $curlError);
+      throw new CURLRequestException(rtrim("cURL fail for URL \"$requestURI\"", ' ;'), $responseCode, $curlError, $responseHeaders, $response);
 
     if (empty($response)){
       $headers = var_export($http_response_header, true);
@@ -261,9 +261,15 @@ class DeviantArt {
       $data = self::request('https://backend.deviantart.com/oembed?url='.urlencode($url), false);
     }
     catch (CURLRequestException $e){
-      if ($e->getCode() === 404)
-        throw new RuntimeException('Image not found. The URL may be incorrect or the image has been deleted.', 404);
-      else throw new RuntimeException('Image could not be retrieved; '.$e->getMessage(), $e->getCode());
+      $errorCode = $e->getCode();
+      switch ($errorCode) {
+        case 404:
+          throw new RuntimeException('Image not found. The URL may be incorrect or the image has been deleted.', $errorCode, previous: $e);
+        case 403:
+          throw new RuntimeException("Got access denied while loading image. Response headers:\n{$e->responseHeaders}\nResponse body:\n{$e->response}", $errorCode, previous: $e);
+        default:
+          throw new RuntimeException('Image could not be retrieved; '.$e->getMessage(), $e->getCode(), previous: $e);
+      }
     }
 
     return $data;

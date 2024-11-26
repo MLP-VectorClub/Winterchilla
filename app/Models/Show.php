@@ -354,18 +354,10 @@ class Show extends NSModel implements Linkable {
       'limit' => 1,
     ]);
 
-    if (!empty($initial_query) || $this->type !== 'episode')
-      return $initial_query;
+    if (empty($initial_query) && $this->type === 'episode')
+      return null;
 
-    if ($dir === self::PREVIOUS) return null;
-
-    return self::find('first', [
-      'conditions' => [
-        "type $is 'episode'",
-      ],
-      'order' => "$col $sql_dir",
-      'limit' => 1,
-    ]);
+    return $initial_query;
   }
 
   /**

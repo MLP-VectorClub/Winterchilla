@@ -5,15 +5,15 @@ echo "Push triggered update to revision $newrev ($refname)"
 
 RUN_FOR_REF="refs/heads/main"
 if [[ "$refname" ==  "$RUN_FOR_REF" ]]; then
-  GIT="sudo -u www-data env -i git"
+  GIT="env -i git"
   CMD_CD="cd $(readlink -nf "$PWD/..")"
   CMD_FETCH="$GIT fetch"
-  CMD_COMPOSER="if [ -d vendor/ ]; then sudo chmod -R ug+rw vendor/; fi; sudo -u www-data composer install --no-dev 2>&1"
-  CMD_MIGRATE="sudo -u www-data vendor/bin/phinx migrate"
-  CMD_NPM="sudo -u www-data npm ci --production --no-save"
-  CMD_BUILD="sudo -u www-data npm run build"
-  CMD_REDIS_CLEAR="sudo -u www-data php -f scripts/clear_redis_keys.php commit_info"
-  CMD_API_DOCS="sudo -u www-data npm run api:schema"
+  CMD_COMPOSER="if [ -d vendor/ ]; then sudo chmod -R ug+rw vendor/; fi; composer install --no-dev 2>&1"
+  CMD_MIGRATE="vendor/bin/phinx migrate"
+  CMD_NPM="npm ci --production --no-save"
+  CMD_BUILD="npm run build"
+  CMD_REDIS_CLEAR="php -f scripts/clear_redis_keys.php commit_info"
+  CMD_API_DOCS="npm run api:schema"
 
   echo "$ $CMD_CD"
   eval ${CMD_CD}

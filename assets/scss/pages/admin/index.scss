@@ -3,34 +3,6 @@
 
 #content {
   > section {
-    &.mass-approve {
-      @media all and (max-width: $Breakpoint) {
-        display: none;
-      }
-
-      .textarea {
-        width: 200px;
-        height: 2em;
-        line-height: 1em;
-        border: 1px solid black;
-        background: white;
-        overflow: hidden;
-        padding: 10px;
-        cursor: text;
-        font-family: $monospace;
-
-        &:before {
-          content: "Paste here";
-          position: absolute;
-          color: rgba(black, .5);
-        }
-
-        > * {
-          display: none
-        }
-      }
-    }
-
     &.elastic-status pre {
       overflow: auto;
     }

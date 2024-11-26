@@ -951,10 +951,7 @@ class AppearanceController extends ColorGuideController {
         $query = DB::$instance
           ->orderBy('season', 'DESC')
           ->orderBy('episode', 'DESC')
-          ->orderBy('no', 'DESC')
-          ->where('generation', null);
-        if (isset(CGUtils::GUIDE_GENERATION_MAP[$this->appearance->guide]))
-          $query = $query->orWhere('generation', CGUtils::GUIDE_GENERATION_MAP[$this->appearance->guide]);
+          ->orderBy('no', 'DESC');
         /** @var $raw_entries Show[] */
         $raw_entries = $query->get('show');
         $entries = [];
@@ -983,18 +980,6 @@ class AppearanceController extends ColorGuideController {
         ]))->out() ?? [];
 
         $existing_relation_ids = array_map(fn($p) => $p->id, $this->appearance->related_shows);
-
-        // Prevent relations to guide for a different generation
-        if (in_array($this->appearance->guide, [CGUtils::GUIDE_FIM, CGUtils::GUIDE_PL], true)) {
-          /** @var $can_relate_to_shows Show[] */
-          $can_relate_to_shows = DB::$instance
-            ->where('type', 'episode')
-            ->where('generation', CGUtils::GUIDE_GENERATION_MAP[$this->appearance->guide])
-            ->get(Show::$table_name, null, 'id');
-
-          $can_relate_to_ids = array_map(fn(Show $show) => $show->id, $can_relate_to_shows);
-          $show_ids = array_intersect($can_relate_to_ids, $show_ids);
-        }
 
         $created_relations = array_diff($show_ids, $existing_relation_ids);
         if (!empty($created_relations)){

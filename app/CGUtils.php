@@ -31,30 +31,21 @@ use function is_array;
 class CGUtils {
   public const GUIDE_FIM = 'pony';
   public const GUIDE_EQG = 'eqg';
-  public const GUIDE_PL = 'pl';
 
   public const GUIDE_MAP = [
     self::GUIDE_FIM => 'Friendship is Magic',
     self::GUIDE_EQG => 'Equestria Girls',
-    self::GUIDE_PL => 'Pony Life',
-  ];
-
-  public const GUIDE_GENERATION_MAP = [
-    self::GUIDE_FIM => ShowHelper::GEN_FIM,
-    self::GUIDE_PL => ShowHelper::GEN_PL,
   ];
 
   /** Used in Twig */
   public const ADD_NEW_NOUN = [
     self::GUIDE_FIM => 'Pony',
     self::GUIDE_EQG => 'Character',
-    self::GUIDE_PL => 'Pony',
   ];
 
   public const FULL_LIST_NOUN = [
     self::GUIDE_FIM => 'FiM Pony',
     self::GUIDE_EQG => 'EQG Character',
-    self::GUIDE_PL => 'Pony Life Character',
   ];
 
   public const GROUP_TAG_IDS_ASSOC = [
@@ -79,25 +70,6 @@ class CGUtils {
     ],
     self::GUIDE_EQG => [
       76 => 'Humans',
-      -1 => 'Other',
-    ],
-    self::GUIDE_PL => [
-      664 => 'Main Cast',
-      45 => 'Cutie Mark Crusaders',
-      59 => 'Royalty',
-      666 => 'Student Six',
-      9 => 'Antagonists',
-      44 => 'Foals',
-      78 => 'Original Characters',
-      1 => 'Unicorns',
-      3 => 'Pegasi',
-      2 => 'Earth Ponies',
-      10 => 'Pets',
-      437 => 'Non-pony Characters',
-      385 => 'Creatures',
-      96 => 'Outfits & Clothing',
-      // add other tags here
-      64 => 'Objects',
       -1 => 'Other',
     ],
   ];
@@ -903,7 +875,7 @@ class CGUtils {
 			#
 			# Exported at: $export_ts
 			#
-			
+
 			GPL;
 
     $file .= implode("\n", array_map(static function ($arr) {

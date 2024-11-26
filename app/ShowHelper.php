@@ -23,15 +23,6 @@ class ShowHelper {
     'special' => 'Special',
   ];
 
-  public const GEN_FIM = 'pony';
-  public const GEN_PL = 'pl';
-  public const GENERATIONS = [
-    self::GEN_FIM => 'Friendship is Magic',
-    self::GEN_PL => 'Pony Life',
-  ];
-
-  public const REQUESTS_NOT_ALLOWED = 'We are not accepting requests for this episode yet, please check back later.';
-
   /**
    * Returns all episodes from the database, properly sorted
    *
@@ -71,7 +62,7 @@ class ShowHelper {
    * @return Show|null
    * @throws InvalidArgumentException
    */
-  public static function getActual(?string $generation, int $season, int $episode, bool $allowMovies = false, $cache = false) {
+  public static function getActual(int $season, int $episode, bool $allowMovies = false, $cache = false) {
     $cache_key = "$season-$episode";
     if (!$allowMovies && $season === 0)
       throw new InvalidArgumentException('This action cannot be performed on movies');
@@ -79,11 +70,11 @@ class ShowHelper {
     if ($cache && isset(self::$episodeCache[$cache_key]))
       return self::$episodeCache[$cache_key];
 
-    $ep = Show::find_by_generation_and_season_and_episode($generation, $season, $episode);
+    $ep = Show::find_by_season_and_episode($season, $episode);
     if (!empty($ep))
       return $ep;
 
-    $part_1 = Show::find_by_generation_and_season_and_episode($generation, $season, $episode - 1);
+    $part_1 = Show::find_by_season_and_episode($season, $episode - 1);
     $output = !empty($part_1) && $part_1->parts === 2
       ? $part_1
       : null;
@@ -242,18 +233,6 @@ class ShowHelper {
         Input::ERROR_MISSING => "$field_name is missing",
         Input::ERROR_INVALID => "$field_name (@value) is invalid",
         Input::ERROR_RANGE => "$field_name must be between @min and @max",
-      ],
-    ]))->out();
-  }
-
-  public static function validateGeneration($optional = false) {
-    return (new Input('generation', function ($value) {
-      if (!isset(ShowHelper::GENERATIONS[$value]))
-        return Input::ERROR_INVALID;
-    }, [
-      Input::IS_OPTIONAL => $optional,
-      Input::CUSTOM_ERROR_MESSAGES => [
-        Input::ERROR_INVALID => 'Invalid generation: @value',
       ],
     ]))->out();
   }

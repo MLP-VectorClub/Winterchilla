@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  const { showTypes, episodeTitleRegex, generations, showId } = window;
+  const { showTypes, episodeTitleRegex, showId } = window;
   let $tables = $('#content').find('table');
 
   /*!
@@ -18,14 +18,7 @@
   const sat_day = saturday.format('dddd');
 
   function EpisodeForm(id) {
-    const generationOptions = [];
     const typeOptions = [];
-    $.each(generations, (generation, name) => {
-      generationOptions.push(`<label>
-				<input type="radio" name="generation" required value="${generation}">
-				<span class="generation-option">${name}</span>
-			</label>`);
-    });
     $.each(showTypes, (type, name) => {
       if (type === 'episode')
         return '';
@@ -45,12 +38,6 @@
 			<label class="episode-only"><input type="checkbox" name="twoparter"> Has two parts</label>
 			<div class="notice info align-center episode-only">
 				<p>If this is checked, enter the episode number of the first part</p>
-			</div>
-			<div class="label episode-only create-only">
-				<span>Generation</span><br>
-				<div class="generation-selector">
-          ${generationOptions.join('')}
-				</select>
 			</div>
 			<div class="label movie-only">
 				<span>Type</span>
@@ -209,11 +196,7 @@
         $EditEpForm.find(`:input[name=${k}]`).val(v);
       });
 
-      let type = show.type;
-      if (show.generation)
-        type = `${generations[show.generation]} ${type}`;
-
-      $.Dialog.request(`Editing ${type} #${show.id}`, $EditEpForm, 'Save', function($form) {
+      $.Dialog.request(`Editing ${show.type} #${show.id}`, $EditEpForm, 'Save', function($form) {
         let notesEditor = $.renderCodeMirror({
           $el: $form.find('.code-editor'),
           mode: 'html',

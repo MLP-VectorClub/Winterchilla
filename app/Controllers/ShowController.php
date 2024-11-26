@@ -32,7 +32,7 @@ class ShowController extends Controller {
     $episodes_pagination = new Pagination($base_path, 8, Show::count(['conditions' => "type = 'episode'"]), 'ep');
     $show_pagination = new Pagination($base_path, 8, Show::count(['conditions' => "type != 'episode'"]));
 
-    DB::$instance->orderBy('generation', 'DESC')->orderBy('no', 'DESC');
+    DB::$instance->orderBy('no', 'DESC');
     $episodes = ShowHelper::get($episodes_pagination->getLimit(), "type = 'episode'", true);
     DB::$instance->orderBy('no', 'DESC');
     $movies = ShowHelper::get($show_pagination->getLimit(), "type != 'episode'", true);
@@ -59,7 +59,6 @@ class ShowController extends Controller {
       $settings['import']['export'] = [
         'episodeTitleRegex' => Regexes::$ep_title,
         'showTypes' => ShowHelper::VALID_TYPES,
-        'generations' => ShowHelper::GENERATIONS,
       ];
     }
     CoreUtils::loadPage(__METHOD__, $settings);
@@ -79,15 +78,11 @@ class ShowController extends Controller {
     if (empty($params['id']))
       CoreUtils::notFound();
 
-    $generation = $params['gen'] ?? null;
-    if (!isset(ShowHelper::GENERATIONS[$generation]))
-      $generation = ShowHelper::GEN_FIM;
-
     $ep_data = Show::parseID($params['id']);
 
     $current_episode = empty($ep_data)
       ? ShowHelper::getLatest()
-      : ShowHelper::getActual($generation, $ep_data['season'], $ep_data['episode']);
+      : ShowHelper::getActual($ep_data['season'], $ep_data['episode']);
 
     ShowHelper::loadPage($current_episode);
   }
@@ -116,12 +111,8 @@ class ShowController extends Controller {
 
     switch ($only){
       case ONLY_REQUESTS:
-        if ($this->show->generation === ShowHelper::GEN_PL)
-          $rendered = '';
-        else {
-          $requests = $this->show->getRequests();
-          $rendered = Posts::getRequestsSection($requests);
-        }
+        $requests = $this->show->getRequests();
+        $rendered = Posts::getRequestsSection($requests);
       break;
       case ONLY_RESERVATIONS:
         $reservations = $this->show->getReservations();
@@ -162,15 +153,7 @@ class ShowController extends Controller {
           $update['season'] = ShowHelper::validateSeason(ShowHelper::ALLOW_MOVIES);
           $update['episode'] = ShowHelper::validateEpisode(!$is_episode);
 
-          if ($this->creating){
-            $update['generation'] = ShowHelper::validateGeneration();
-
-            $matching_id = Show::find_by_generation_and_season_and_episode($update['generation'], $update['season'], $update['episode']);
-            if ($matching_id !== null){
-              Response::fail('An episode with the same season and episode number already exists in this generation');
-            }
-          }
-          else {
+          if (!$this->creating) {
             $season_changed = $update['season'] !== $this->show->season;
             $episode_changed = $update['episode'] !== $this->show->episode;
             if ($season_changed || $episode_changed){

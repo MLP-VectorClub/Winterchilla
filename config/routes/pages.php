@@ -59,8 +59,8 @@ $router->map('GET', '/discord-connect/begin', 'DiscordAuthController#begin');
 $router->map('GET', '/discord-connect/end', 'DiscordAuthController#end');
 # ShowController
 $router->map('GET', '/episode/[gen:gen]?/[epid:id]', 'ShowController#viewEpisode');
-$router->map('GET', '/episode/[gen:gen]/[epid:id]-?', 'ShowController#viewEpisode');
-$router->map('GET', '/episode/[gen:gen]/[epid:id]-[adi]?', 'ShowController#viewEpisode');
+$router->map('GET', '/episode/[gen:gen]?/[epid:id]-?', 'ShowController#viewEpisode');
+$router->map('GET', '/episode/[gen:gen]?/[epid:id]-[adi]?', 'ShowController#viewEpisode');
 $router->map('GET', '/episode/latest', 'ShowController#latest');
 $router->map('GET', '/episodes/[i]?', 'ShowController#index');
 $router->map('GET', '/[st]/[i:id][adi]?', 'ShowController#viewById');

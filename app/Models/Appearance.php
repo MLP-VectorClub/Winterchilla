@@ -269,10 +269,9 @@ class Appearance extends NSModel implements Linkable {
   private function processNotes():string {
     $notes_rend = CoreUtils::sanitizeHtml($this->notes_src);
     $notes_rend = preg_replace('/(\s)(&gt;&gt;(\d+))(\D|$)/', "$1<a href='https://derpibooru.org/$3'>$2</a>$4", $notes_rend);
-    if (in_array($this->guide, [CGUtils::GUIDE_PL, CGUtils::GUIDE_FIM], true)){
-      $generation = CGUtils::GUIDE_GENERATION_MAP[$this->guide];
-      $notes_rend = preg_replace_callback('/'.EPISODE_ID_PATTERN.'/', function ($a) use ($generation) {
-        $episode = ShowHelper::getActual($generation, (int)$a[1], (int)$a[2]);
+    if ($this->guide === CGUtils::GUIDE_FIM){
+      $notes_rend = preg_replace_callback('/'.EPISODE_ID_PATTERN.'/', function ($a) {
+        $episode = ShowHelper::getActual((int)$a[1], (int)$a[2]);
 
         return !empty($episode)
           ? "<a href='{$episode->toURL()}'>".CoreUtils::aposEncode($episode->formatTitle(AS_ARRAY, 'title')).'</a>'

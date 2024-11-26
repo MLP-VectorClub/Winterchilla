@@ -344,48 +344,6 @@ class AdminController extends Controller {
     Response::done();
   }
 
-  public function massApprove() {
-    if ($this->action !== 'POST')
-      CoreUtils::notAllowed();
-
-    $ids = (new Input('ids', 'int[]', [
-      Input::CUSTOM_ERROR_MESSAGES => [
-        Input::ERROR_MISSING => 'List of deviation IDs is missing',
-        Input::ERROR_INVALID => 'List of deviation IDs (@value) is invalid',
-      ],
-    ]))->out();
-
-    $list = [];
-    foreach ($ids as $id)
-      $list[] = 'd'.base_convert($id, 10, 36);
-
-    /** @var $Posts Post[] */
-    $Posts = DB::$instance->where('deviation_id', $list)->where('lock', false)->get('posts');
-
-    if (empty($Posts))
-      Response::success('There were no posts in need of marking as approved');
-
-    $approved = 0;
-    $notInCLub = 0;
-    foreach ($Posts as $p){
-      if (CoreUtils::isDeviationInClub($p->deviation_id) !== true){
-        $notInCLub++;
-        continue;
-      }
-
-      $p->approve();
-      $approved++;
-    }
-
-    if ($approved === 0){
-      if ($notInCLub === 0)
-        Response::success('All identified posts have already been approved');
-      else Response::fail('None of the posts have been added to the gallery yet');
-    }
-
-    Response::success('Marked '.CoreUtils::makePlural('post', $approved, PREPEND_NUMBER).' as approved.', ['html' => Posts::getMostRecentList(NOWRAP)]);
-  }
-
   public function wsdiag() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

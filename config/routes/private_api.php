@@ -14,7 +14,6 @@ $private_api_endpoint('/admin/logs/details/[i:id]', 'AdminController#logDetail')
 $private_api_endpoint('/admin/usefullinks/[i:id]?', 'AdminController#usefulLinksApi');
 $private_api_endpoint('/admin/usefullinks/reorder', 'AdminController#reorderUsefulLinks');
 $private_api_endpoint('/admin/wsdiag/hello', 'AdminController#wshello');
-$private_api_endpoint('/admin/mass-approve', 'AdminController#massApprove');
 $private_api_endpoint('/admin/notices/[i:id]?', 'AdminController#noticesApi');
 $private_api_endpoint('/admin/stat-cache', 'AdminController#statCacheApi');
 $private_api_endpoint('/cg/appearances', 'AppearanceController#autocomplete');

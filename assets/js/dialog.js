@@ -89,7 +89,9 @@
 
       if (reactAvailable && React.isValidElement(params.content)){
         $contentAdd.addClass(reactMountedClass);
-        ReactDOM.render(params.content, $contentAdd[0]);
+        const root = ReactDOM.createRoot();
+        $contentAdd.data(reactMountedClass, root);
+        root.render(params.content, $contentAdd[0]);
       }
       else $contentAdd.append(params.content);
 
@@ -438,7 +440,10 @@
       this.$dialogOverlay.siblings().prop('inert', false);
       if (reactAvailable)
         this.$dialogContent.children(`.${reactMountedClass}`).each((_, el) => {
-          ReactDOM.unmountComponentAtNode(el);
+          const root = $(el).data(reactMountedClass);
+          if (root) {
+            root.unmount();
+          }
         });
       this.$dialogOverlay.remove();
       this._open = undefined;

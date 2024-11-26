@@ -365,8 +365,6 @@ class PostController extends Controller {
         $show = Show::find($show_id);
         if (empty($show))
           Response::fail('The specified show entry does not exist');
-        if (!$is_reservation && $show->generation === ShowHelper::GEN_PL)
-          Response::fail(ShowHelper::REQUESTS_NOT_ALLOWED);
         $post->show_id = $show_id;
 
         $by_id = Auth::$user->id;

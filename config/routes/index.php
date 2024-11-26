@@ -19,7 +19,7 @@ $router->addMatchTypes([
   'cgimg' => '[spfc]',
   'cgext' => '(png|svg|json|gpl)',
   'guide' => '('.implode('|', array_keys(CGUtils::GUIDE_MAP)).')',
-  'gen' => '('.implode('|', array_keys(ShowHelper::GENERATIONS)).')',
+  'gen' => '(pony|pl)',
   'favme' => 'd[a-z\d]{6}',
   'gsd' => '([gs]et|del)',
   'sett' => '(u|settings)',

@@ -37,7 +37,6 @@ use function count;
  * @property Appearance[]     $related_appearances   (Via relations)
  * @property User             $poster                (Via relations)
  * @method static Show find_by_season_and_episode(int $season, int $episode)
- * @method static Show find_by_generation_and_season_and_episode(string $generation, int $season, int $episode)
  * @method static Show|Show[] find(...$params)
  */
 class Show extends NSModel implements Linkable {
@@ -217,7 +216,7 @@ class Show extends NSModel implements Linkable {
   public function willHaveAiredBy():int {
     $airtime = $this->airs->getTimestamp();
     if ($this->is_episode) {
-      $add_minutes = $this->generation === ShowHelper::GEN_PL ? 15 : ($this->parts * 30);
+      $add_minutes = $this->parts * 30;
     }
     else $add_minutes = 120;
 
@@ -263,7 +262,7 @@ class Show extends NSModel implements Linkable {
 
   public function toURL():string {
     if ($this->is_episode)
-      $url = "/episode/{$this->generation}/{$this->getID()}";
+      $url = "/episode/{$this->getID()}";
     else $url = "/{$this->type}/{$this->id}";
 
     if (!empty($this->title))
@@ -348,8 +347,7 @@ class Show extends NSModel implements Linkable {
 
     $initial_query = self::find('first', [
       'conditions' => [
-        "type $is 'episode' AND generation = ? AND $col $dir ?",
-        $this->generation,
+        "type $is 'episode' AND $col $dir ?",
         $this->{$col},
       ],
       'order' => "$col $sql_dir",
@@ -359,35 +357,15 @@ class Show extends NSModel implements Linkable {
     if (!empty($initial_query) || $this->type !== 'episode')
       return $initial_query;
 
-    // Special handling for cross-generation navigation
-    switch ($this->generation) {
-      case ShowHelper::GEN_FIM:
-        if ($dir === self::PREVIOUS) return null;
+    if ($dir === self::PREVIOUS) return null;
 
-        return self::find('first', [
-          'conditions' => [
-            "type $is 'episode' AND generation = ?",
-            ShowHelper::GEN_PL,
-          ],
-          'order' => "$col $sql_dir",
-          'limit' => 1,
-        ]);
-      break;
-      case ShowHelper::GEN_PL:
-        if ($dir === self::NEXT) return null;
-
-        return self::find('first', [
-          'conditions' => [
-            "type $is 'episode' AND generation = ?",
-            ShowHelper::GEN_FIM,
-          ],
-          'order' => "$col $sql_dir",
-          'limit' => 1,
-        ]);
-      break;
-      default:
-        throw new RuntimeException("Unhandled show generation $this->generation");
-    }
+    return self::find('first', [
+      'conditions' => [
+        "type $is 'episode'",
+      ],
+      'order' => "$col $sql_dir",
+      'limit' => 1,
+    ]);
   }
 
   /**

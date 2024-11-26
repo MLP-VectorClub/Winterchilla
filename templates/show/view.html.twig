@@ -31,7 +31,6 @@
             <div>
               <a href="{{ prev_episode.toURL }}" class="btn link ep-button typcn typcn-media-rewind">
                 <span class="typcn typcn-media-rewind"></span>
-                {%- include 'show/_generation_logo.html.twig' with { current: current_episode, adjacent: prev_episode } -%}
                 <span>{{- cutoff(prev_episode.get_short_title, constant('App\\ShowHelper::TITLE_CUTOFF')) -}}</span>
               </a>
             </div>
@@ -52,7 +51,6 @@
           {%- if next_episode is not empty -%}
             <div>
               <a href="{{ next_episode.toURL }}" class="btn link ep-button typcn typcn-media-fast-forward">
-                {%- include 'show/_generation_logo.html.twig' with { current: current_episode, adjacent: next_episode } -%}
                 <span>{{ cutoff(next_episode.get_short_title, constant('App\\ShowHelper::TITLE_CUTOFF')) }}</span>{#
                 #}<span class="typcn typcn-media-fast-forward"></span>
               </a>
@@ -90,13 +88,7 @@
         {{ export_vars({ 'showTypes': constant('App\\ShowHelper::VALID_TYPES') }) }}
       {% endif %}
       {% include 'show/_reservations.html.twig' with { 'arranged': current_episode.reservations, lazyload: true } %}
-      {% if current_episode.generation == constant('\\App\\ShowHelper::GEN_PL') %}
-        <br>
-        <br>
-        <div class="notice info">{{ constant('\\App\\ShowHelper::REQUESTS_NOT_ALLOWED') }}</div>
-      {% else %}
-        {% include 'show/_requests.html.twig' with { 'arranged': current_episode.requests, lazyload: true } %}
-      {% endif %}
+      {% include 'show/_requests.html.twig' with { 'arranged': current_episode.requests, lazyload: true } %}
       {{ export_vars({
         showId: current_episode.id,
         showType: current_episode.type,
@@ -109,7 +101,6 @@
 
   {{ export_vars({
     isEpisodePage: true,
-    generations: constant('\\App\\ShowHelper::GENERATIONS'),
   }) -}}
   {% if ep_title_regex is defined %}
     {{ export_vars({ episodeTitleRegex: ep_title_regex }) -}}

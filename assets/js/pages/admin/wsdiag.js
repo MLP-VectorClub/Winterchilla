@@ -1,6 +1,7 @@
 (function() {
   'use strict';
 
+  const { WSS } = window.reactComponents;
   const wssRoot = ReactDOM.createRoot(document.getElementById('wsdiag'));
-  wssRoot.render(<window.reactComponents.WSS responseTimeHistorySize={6} />);
+  wssRoot.render(<WSS responseTimeHistorySize={6} />);
 })();

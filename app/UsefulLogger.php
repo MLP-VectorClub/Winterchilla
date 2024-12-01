@@ -2,13 +2,14 @@
 
 namespace App;
 
+use Monolog\DateTimeImmutable;
 use Monolog\Logger;
 
 class UsefulLogger extends Logger {
   /**
    * @inheritdoc
    */
-  public function addRecord($level, $message, array $context = array()) {
+  public function addRecord(int $level, string $message, array $context = [], ?DateTimeImmutable $datetime = null): bool {
     $context['ip'] = $_SERVER['REMOTE_ADDR'] ?? null;
     $context['referrer'] = $_SERVER['HTTP_REFERER'] ?? null;
     $context['request_uri'] = $_SERVER['REQUEST_URI'] ?? null;

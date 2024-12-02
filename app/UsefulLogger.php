@@ -20,6 +20,6 @@ class UsefulLogger extends Logger {
       'name' => Auth::$user->name,
       'session' => Auth::$session->id,
     ] : null;
-    parent::addRecord($level, $message, $context);
+    return parent::addRecord($level, $message, $context);
   }
 }

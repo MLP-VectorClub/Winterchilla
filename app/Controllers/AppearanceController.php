@@ -393,7 +393,7 @@ class AppearanceController extends ColorGuideController {
       Response::fail('Applying the template failed. Reason: '.$e->getMessage());
     }
 
-    Response::done(['cgs' => $this->appearance->getColorsHTML(!$this->appearance_page, NOWRAP)]);
+    Response::done(['cgs' => $this->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)]);
   }
 
   public function selectiveClear($params):void {
@@ -561,7 +561,7 @@ class AppearanceController extends ColorGuideController {
           'newgroups' => $newCGs,
         ]);
 
-        Response::done(['cgs' => $this->appearance->getColorsHTML(!$this->appearance_page, NOWRAP)]);
+        Response::done(['cgs' => $this->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)]);
       break;
       default:
         CoreUtils::notAllowed();

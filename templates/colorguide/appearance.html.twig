@@ -76,7 +76,7 @@
             <button class="darkblue typcn typcn typcn-document-add apply-template">Apply template</button>
           </div>
         {% endif %}
-        {{ appearance.colorsHTML(false) }}
+        {{ appearance.colorsHTML(false, is_owner) }}
       </section>
       {% if appearance.owner_id is null %}
         {{ appearance.relatedHTML }}

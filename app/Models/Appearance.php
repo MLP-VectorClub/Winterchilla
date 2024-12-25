@@ -325,12 +325,9 @@ class Appearance extends NSModel implements Linkable {
   /**
    * Returns the markup of the color list for a specific appearance
    *
-   * @param bool $compact
-   * @param bool $wrap
-   *
    * @return string
    */
-  public function getColorsHTML(bool $compact = true, bool $wrap = WRAP):string {
+  public function getColorsHTML(bool $compact = true, bool $is_owner = false, bool $wrap = WRAP):string {
     if ($placeholder = $this->getPendingPlaceholder())
       return $placeholder;
 
@@ -338,6 +335,7 @@ class Appearance extends NSModel implements Linkable {
       'color_groups' => $this->color_groups,
       'all_colors' => CGUtils::getColorsForEach($this->color_groups),
       'compact' => $compact,
+      'is_owner' => $is_owner,
       'wrap' => $wrap,
     ]);
   }

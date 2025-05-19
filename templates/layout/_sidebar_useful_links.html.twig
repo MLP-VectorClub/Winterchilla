@@ -1,0 +1,20 @@
+{# @var useful_links \App\Models\UsefulLink[] #}
+{%- if useful_links is defined and useful_links is not empty -%}
+  {%- if wrap is not defined or wrap %}
+    <section class="sb-useful-links">
+      <p class="sb-useful-links-title">Useful links</p>
+      <ul>
+  {% endif -%}
+  {% for l in useful_links -%}
+    {%- if l.minrole == 'guest' or (current_user is not null and current_user.perm(l.minrole)) -%}
+      {%- set href = l.url starts with '#' ? "class='action--" ~ (l.url | slice(1)) ~ "'" : "href='" ~ (l.url | apos_encode) ~ "'" -%}
+      {%- set title = l.title is not empty ? "title='" ~ (l.title | apos_encode) ~ "'" : "" %}
+      {%- set external = l.url starts with 'http' ? " rel='noopener noreferrer' target='_blank'" : "" -%}
+      <li id='ufl-link-{{ l.id }}'><a {{ href }} {{ title ~ external }}>{{ l.label }}</a></li>
+    {% endif -%}
+  {%- endfor %}
+  {%- if wrap is not defined or wrap %}
+      </ul>
+    </section>
+  {% endif %}
+{% endif %}

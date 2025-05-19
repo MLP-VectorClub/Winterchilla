@@ -1,0 +1,32 @@
+{# @controller \App\Controllers\EventController::list #}
+{# @var events \App\Models\Event[] #}
+{# @var pagination \App\Pagination #}
+{% extends 'layout/base.html.twig' %}
+
+{% block content %}
+  <div id="content">
+    <h1>Events</h1>
+    <p>Organized by the club staff</p>
+
+    {% apply spaceless %}
+      <ul id='event-list'>
+        {% for event in events %}
+          {% apply spaceless %}
+            <li id="event-{{ event.id }}">
+              <strong class="title">
+                <a href='{{ event.toURL }}' class="event-name">{{ event.name | escape }}</a>
+              </strong>
+              <span class="added">Added {{ time_tag(event.created_at) }}</span>
+              <ul>
+                <li><strong>Collaboration</strong></li>
+                <li><strong>Start:</strong>&nbsp;{{ time_tag(event.starts_at, constant('App\\Time::TAG_EXTENDED')) }} (<span class="dynt-el"></Span>)</li>
+                <li><strong>End:</strong>&nbsp;{{ time_tag(event.ends_at, constant('App\\Time::TAG_EXTENDED')) }} (<span class="dynt-el"></Span>)</li>
+                <li><strong>Duration:</strong> {{ event.durationString }}</li>
+              </ul>
+            </li>
+          {% endapply %}
+        {% endfor %}
+      </ul>
+    {% endapply %}
+  </div>
+{% endblock %}

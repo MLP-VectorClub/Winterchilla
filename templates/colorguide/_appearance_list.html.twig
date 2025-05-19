@@ -1,0 +1,57 @@
+{# @var appearances \App\Models\Appearance[] #}
+{# @var wrap bool #}
+{# @var upload_permission bool #}
+{% if upload_permission is not defined %}
+  {% set upload_permission = permission('staff') %}
+{% endif %}
+{% if wrap is not defined or wrap %}
+<ul id='list' class='appearance-list'>
+  {% endif %}
+
+  {% if appearances is not empty %}
+    {% for p in appearances %}
+      <li id='p{{ p.id }}'>
+        {{ p.spriteHTML(upload_permission) }}
+        <div class="data">
+          {% apply spaceless %}
+            <div class="appearance-header">
+              {% if p.private %}
+                <span class="prefix-icon typcn typcn-lock-closed color-orange"></span>
+              {% endif %}
+              {% if p.pinned %}
+                <span class="prefix-icon typcn typcn-pin color-ui" title="Pinned"></span>
+              {% endif %}
+              <a href='{{ p.toURL }}' class="appearance-name {%- if p.owner_id %} pcg-name{% endif %}">{{ p.babelLabel | escape }}</a>
+              <div class="button-block">
+                <a class='btn link typcn typcn-image' title='View as PNG' href='{{ p.paletteURL }}' target='_blank'></a>
+                <button class='teal typcn typcn-brush get-swatch' title='Download swatch file'></button>
+                {% if upload_permission %}
+                  <button class='edit-appearance typcn typcn-pencil darkblue' title='Edit'></button>
+                  {% if not p.pinned %}
+                    {% if p.owner_id is null %}
+                      <button class='pin-appearance typcn typcn-pin darkblue' title='Pin'></button>
+                    {% endif %}
+                    <button class='delete-appearance typcn typcn-trash red' title='Delete'></button>
+                  {% elseif p.owner_id is null %}
+                    <button class='unpin-appearance typcn typcn-pin-outline orange' title='Unpin'></button>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+          {% endapply %}
+          {{ p.updatesHTML }}
+          {{ p.notesHTML }}
+          {% if p.owner_id is null and not p.pinned %}
+            {{ p.tagsHTML }}
+          {% endif %}
+          {{ p.colorsHTML }}
+        </div>
+      </li>
+    {% endfor %}
+  {% else %}
+    <div class='notice info align-center'><label>No appearances to show</label></div>
+  {% endif %}
+
+  {% if wrap is not defined or wrap %}
+</ul>
+{% endif %}

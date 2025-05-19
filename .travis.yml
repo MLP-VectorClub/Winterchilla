@@ -1,0 +1,18 @@
+language: php
+php:
+  - '7.4'
+before_install:
+  - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+install:
+  - cp .env.example .env
+  - composer install
+services:
+  - postgresql
+before_script:
+  - psql -c 'CREATE DATABASE "winterchilla";' -U postgres
+  - psql -c "CREATE USER \"winterchilla\" WITH LOGIN PASSWORD 'example-password'" -U postgres
+  - psql "winterchilla" < ./setup/create_extensions.pg.sql
+  - vendor/bin/phinx migrate
+dist: bionic
+addons:
+  postgresql: "10"

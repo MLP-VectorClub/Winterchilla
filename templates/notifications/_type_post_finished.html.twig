@@ -1,0 +1,8 @@
+{# @var notif \App\Models\Notification #}
+{% apply spaceless %}
+  {% if notif.post is not null %}
+    Your <a href='{{ notif.post.toURL }}'>request</a> under {{ notif.post.show.getID }} has been fulfilled
+  {% else %}
+    Your request has been fulfilled
+  {% endif %}
+{% endapply %}

@@ -1,0 +1,4 @@
+{# @var notif \App\Models\Notification #}
+{% apply spaceless %}
+  A <a href='{{ notif.post.toURL }}'>post</a> you reserved under {{ notif.post.show.getID }} has been added to the club gallery
+{% endapply %}

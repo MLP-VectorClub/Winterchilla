@@ -1,0 +1,564 @@
+//noinspection CssUnknownTarget
+@import "../../colorguide_vars";
+@import "../../components/optional/ctxmenu";
+// Mobile-only
+@media all and (max-width: $Breakpoint) {
+  .appearance-list > li {
+    display: block !important;
+    text-align: center;
+
+    > div {
+      &.sprite {
+        display: inline-block !important;
+        margin-bottom: 8px;
+      }
+
+      &.data {
+        display: block !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        text-align: left;
+      }
+
+      .appearance-header {
+        text-align: center;
+
+        .appearance-name {
+          display: block;
+        }
+
+        .button-block {
+          button, a {
+            &:after {
+              content: " " attr(title);
+            }
+          }
+        }
+      }
+
+      div.tags {
+        display: flex;
+        flex-flow: row wrap;
+        width: 100%;
+
+        &:empty {
+          display: none
+        }
+
+        > * {
+          flex: 1 1 auto;
+
+          margin: 2.5px !important;
+        }
+      }
+
+      ul.colors {
+        border-color: rgba(black, .3);
+        border-style: solid;
+        border-width: 1px 0 0 1px;
+        display: flex;
+        flex-wrap: wrap;
+        margin-top: 5px;
+        width: 100%;
+
+        li {
+          border-width: 0 1px 1px 0;
+          box-sizing: border-box;
+          display: block;
+          flex: 1 0 auto;
+          margin: 0;
+          max-width: 100%;
+          text-align: center;
+
+          .cat {
+            text-align: right;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Desktop-only
+@media all and (min-width: $Breakpoint) {
+  .appearance-list > li > div {
+    &.sprite {
+      margin-right: 10px;
+    }
+
+    &.data:not(:first-child) {
+      max-width: calc(100% - 160px)
+    }
+
+    .appearance-header {
+      align-items: center;
+      display: flex;
+      flex-flow: row wrap;
+
+      .appearance-name {
+        margin-right: .5em;
+      }
+    }
+
+    .update time {
+      border-bottom: 1px dashed
+    }
+  }
+
+  #search-form {
+    font-size: 1.7em;
+  }
+}
+
+#content > p {
+  margin: 0 0 5px
+}
+
+.appearance-list {
+  margin: 0;
+  padding: 0;
+
+  .pagination:empty + & {
+    margin-top: 8px;
+  }
+
+  .pagination + &:empty:before {
+    content: "There are no appearances on this page";
+    display: block;
+    font-size: 1.4em;
+    font-style: italic;
+    text-align: center;
+  }
+
+  > li {
+    background-color: rgba(black, .03);
+    border: 1px solid rgba(black, .3);
+    color: #434343;
+    display: flex;
+    flex-flow: row nowrap;
+    padding: 10px;
+
+    &:not(:last-child) {
+      margin-bottom: 10px
+    }
+
+    > * {
+      flex: 0 0 auto;
+      max-width: 100%;
+    }
+
+    > div {
+      &.sprite img {
+        max-height: 150px;
+        max-width: 100%;
+        min-width: 150px;
+      }
+
+      .appearance-header {
+        .prefix-icon {
+          margin-right: .2em;
+        }
+
+        .appearance-name, .prefix-icon {
+          font-size: 1.5em;
+        }
+      }
+
+      > .update {
+        font-size: .8em;
+        margin-top: 5px;
+
+        &:empty {
+          display: none
+        }
+      }
+
+      > .notes {
+        margin-top: 6px;
+
+        .notes-text {
+          white-space: pre-wrap;
+        }
+
+        &:empty {
+          display: none
+        }
+
+        span:not(:last-child) {
+          border-right: 1px solid;
+          margin-right: 5px;
+          padding-right: 5px;
+        }
+      }
+    }
+  }
+}
+
+@import "../../components/optional/jquery.uploadzone";
+
+#content .upload-wrap:not(.uploading):not(.nosprite) > .helper {
+  &:before {
+    content: '\e00b'
+  }
+
+  &:after {
+    content: "Open in new tab"
+  }
+}
+
+div.tags {
+  margin-top: 6px;
+  user-select: none;
+}
+
+.tag, div.tags .twitter-typeahead {
+  margin: 0 6px 6px 0;
+  vertical-align: top;
+}
+
+.tag {
+  border: 1px solid;
+  box-sizing: border-box;
+  cursor: default;
+  display: inline-block;
+  font-weight: bold;
+  height: 26px;
+  padding: 3px 5px;
+
+  &:before {
+    //noinspection CssNoGenericFontName
+    font-family: 'Typicons';
+    margin-right: 5px;
+  }
+
+  &:not(:last-child) {
+    margin-right: 5px
+  }
+
+  &:not([class*=typ-]) {
+    @include tag-style($TDefault)
+  }
+
+  &.typ-cat {
+    @include tag-style($TCategory, '\e083')
+  }
+
+  &.typ-spec {
+    @include tag-style($TSpecies, '\e148')
+  }
+
+  &.typ-gen {
+    @include tag-style($TGender, '\e10f')
+  }
+
+  &.typ-app {
+    @include tag-style($TClothing, '\e07e')
+  }
+
+  &.typ-ep {
+    @include tag-style($TEpisode, '\e131')
+  }
+
+  &.typ-char {
+    @include tag-style($TCharacter, '\e12c')
+  }
+
+  &.typ-warn {
+    @include tag-style($TWarning, '\e137')
+  }
+
+  &.synonym {
+    font-size: .9em;
+    font-weight: normal !important;
+    letter-spacing: -.8px;
+    opacity: .8;
+
+    > .uses .typcn {
+      margin-right: 4px
+    }
+  }
+}
+
+#universal {
+  margin-bottom: 10px;
+}
+
+div.colors-pending, ul.colors:empty:before {
+  border: 1px dashed rgba(black, .5);
+  box-sizing: border-box;
+  display: block;
+  padding: .2em;
+  text-align: center;
+  width: 100%;
+}
+
+div.colors-pending {
+  color: $NDarkBlue;
+  font-size: 1.2em;
+}
+
+ul.colors {
+  display: block;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  white-space: initial !important;
+
+  &:empty:before {
+    content: "There are no color groups for this appearance";
+    font-size: 1.4em;
+    font-style: italic;
+    margin-top: 5px;
+  }
+
+  &:not(.full) {
+    user-select: none;
+
+    &:empty:before {
+      font-size: 18px;
+    }
+  }
+
+  &.compact {
+    .color-group {
+      align-items: center;
+      display: inline-flex;
+      justify-content: center;
+
+      > :not(:last-child) {
+        margin-right: 4px;
+      }
+
+      .color-list {
+        align-items: flex-start;
+        display: flex;
+        flex-flow: row wrap;
+
+        .color {
+          margin: 2px;
+        }
+      }
+    }
+  }
+
+  .color-group {
+    background-color: rgba(black, .05);
+    border: 1px solid rgba(black, .2);
+    display: inline-block;
+    font-size: 16px;
+    margin: 5px 5px 0 0;
+    padding: 4px;
+
+    .color {
+      @include colored-square(16px, 1px)
+    }
+  }
+}
+
+// Sidebar - hash copy checkbox
+#hash-copy {
+  user-select: none;
+
+  label {
+    cursor: pointer;
+    display: block;
+    margin-top: 10px;
+
+    input {
+      background-color: rgba(white, .1);
+      border-color: rgba(white, .3);
+      margin-right: 7px;
+
+      &:before {
+        color: $NGreenBG;
+      }
+    }
+  }
+}
+
+#search-form {
+  display: flex;
+  flex-flow: row;
+  margin: 0 auto 10px;
+  max-width: 700px;
+  text-align: center;
+  width: 100%;
+
+  > * {
+    border-radius: 0;
+  }
+
+  button, input {
+    box-sizing: border-box;
+
+    @media (max-width: $Breakpoint) {
+      height: 1.8rem !important;
+    }
+
+    @media (min-width: $Breakpoint) {
+      height: 3rem !important;
+    }
+  }
+
+  $radius: 8px;
+
+  button:last-of-type {
+    border-bottom-right-radius: $radius;
+    border-top-right-radius: $radius;
+  }
+
+  $SearchBorder: #333;
+  $SearchButtonBG: #ddd;
+
+  input {
+    background-color: $BackgroundLight;
+    border-color: $SearchBorder;
+    box-shadow: inset 0 1px 1px 1px rgba($SearchBorder, .1);
+    font-size: 1em;
+    $padding: .3em;
+    height: 1em;
+    line-height: .9em;
+    margin: 0;
+    padding: $padding;
+    width: calc(100% - 2px);
+  }
+
+  .algolia-autocomplete {
+    display: block !important;
+
+    + button {
+      margin-left: -1px;
+    }
+  }
+
+  > input, .algolia-autocomplete {
+    flex: 1 1 70%;
+    width: 70%;
+  }
+
+  input, .algolia-autocomplete {
+    border-bottom-left-radius: $radius;
+    border-top-left-radius: $radius;
+  }
+
+  button {
+    border: 1px solid $SearchBorder;
+    border-left: 0;
+    flex: 0 0 auto;
+    font-size: .8em;
+    margin: 0;
+    padding-left: 7px;
+    padding-right: 7px;
+    transform: none !important;
+    vertical-align: baseline;
+    position: relative;
+    z-index: 2;
+
+    &:before {
+      line-height: 1em
+    }
+
+    &:not(:hover) {
+      background-color: $SearchButtonBG !important;
+      color: $SearchBorder !important;
+    }
+  }
+
+  .algolia-autocomplete {
+    background-color: $BackgroundLight;
+
+    .aa-dataset-appearance {
+      border: 1px solid $SearchBorder;
+      border-radius: $radius 0 $radius $radius;
+      box-shadow: 0 1px 5px rgba($HeaderBlue, .2);
+      margin-top: -1px;
+      overflow: hidden;
+
+      .aa-header {
+        background-color: $SearchButtonBG;
+        border-bottom: 1px solid $SearchBorder;
+        box-sizing: border-box;
+        font-size: 14px;
+        line-height: 1.4em;
+        padding: 5px;
+        user-select: none;
+        width: 100%;
+      }
+
+      .aa-suggestions {
+        background: $BackgroundLight;
+        box-sizing: border-box;
+        font-size: 1.5rem;
+        overflow: hidden;
+        width: 100%;
+
+        .aa-suggestion {
+          display: block;
+
+          &.aa-cursor a {
+            background-color: $LinkHover;
+            color: white;
+          }
+
+          a {
+            align-items: center;
+            color: inherit !important;
+            cursor: pointer;
+            display: flex;
+            $suggestion-padding: 8px;
+            flex-flow: row nowrap;
+            justify-content: flex-start;
+            padding: $suggestion-padding;
+            transition: none;
+
+            &:not(:last-child) {
+              border-bottom: 1px solid rgba(black, .2);
+            }
+
+            .ac-appearance-image {
+              background: $BackgroundLight;
+              border-radius: 4px;
+              $base-size: 1.5em;
+              display: block;
+              flex: 0 0 auto;
+              margin-right: $suggestion-padding;
+              max-height: $base-size;
+              max-width: 100%;
+              min-width: $base-size;
+            }
+
+            .ac-appearance-label {
+              flex: 1 1 auto;
+              overflow: hidden;
+              text-align: left;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+#swatch-save {
+  .section .btn {
+    padding: 2px 3px;
+    vertical-align: baseline;
+  }
+
+  .responsive-embed {
+    border: 1px solid;
+    margin-top: 15px;
+  }
+}
+
+body.nutshell-names {
+  #search-form input, .appearance-name:not(.pcg-name), .algolia-autocomplete .aa-suggestions {
+    @include meme-font;
+  }
+
+  .algolia-autocomplete .aa-suggestions a {
+    color: inherit !important;
+  }
+}

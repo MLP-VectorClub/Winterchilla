@@ -1,0 +1,133 @@
+{# @controller \App\Controllers\UserController::profile #}
+{# @var user \App\Models\User #}
+{# @var current_user \App\Models\User #}
+{# @var same_user bool #}
+{# @var is_staff bool #}
+{# @var can_edit bool #}
+{# @var dev_on_dev bool #}
+{# @var sessions \App\Models\Session[] #}
+{# @var discord_membership \App\Models\DiscordMember #}
+{# @var error string #}
+{# @var sub_error string #}
+{# @var da_logo string #}
+{# @var current_session \App\Models\Session #}
+{% extends 'layout/base.html.twig' %}
+
+{% block content %}
+  <div id="content">
+    {% if error is defined and error is not null %}
+      <h1>{{ error }}</h1>
+      {% if sub_error is defined and sub_error is not null %}
+        <p>{{ sub_error }}</p>
+      {% endif %}
+    {% else %}
+      <div class="briefing">
+        {% include 'layout/_avatar_wrap.html.twig' with { 'current_user': user } %}
+        <div class="title">
+          {% apply spaceless %}
+            <h1>
+              <span class="username">{{ user.name }}</span>
+              <a class="da" title="Visit DeviantArt profile" href="{{ user.deviantart_user.toURL }}">{{ da_logo }}</a>
+              {{ user.vectorAppIcon }}
+              {% if user.isDiscordServerMember %}
+                <img class="discord-logo" src="/img/discord-logo.svg?v=2" alt="Discord logo" title="This user is a member of our Discord server{{ discord_membership.get_name != user.name ? (' as ' ~ discord_membership.get_name) | escape : '' }}">
+              {% endif %}
+            </h1>
+          {% endapply %}
+          <p>
+            <span class='role-label'>{{ user.maskedRoleLabel }}</span>
+            {% if dev_on_dev %}
+              <span id="change-dev-role-mask" class="inline-btn typcn typcn-edit" title="Change developer's displayed role"></span>
+            {% endif %}
+            {% if can_edit -%}
+              <button id='change-role' class='blue typcn typcn-spanner' title='Change {{ posess(user.name) }} role' data-for='{{ user.id }}'></button>
+            {% endif %}
+            {% if permission('developer') %}
+              {% if user.boundToDeviantartUser %}
+                &bullet; <span class='da-user-id'>{{ user.deviantart_user.id }}</span>
+              {% endif %}
+              {% if user.boundToDiscordMember %}
+                &bullet; <span class='discord-id'>{{ discord_membership.id }}</span>
+              {% endif %}
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="details section-container">
+        {% if old_names is not empty %}
+          <section class="old-names">
+            <h2>{{ same_user ? constant('App\\Users::PROFILE_SECTION_PRIVACY_LEVEL').staff : '' }}Previous DeviantArt usernames <span class="typcn typcn-info color-blue cursor-help" title="Upper/lower-case letters may not match"></span></h2>
+            <div>{{ old_names }}</div>
+          </section>
+        {% endif %}
+        {% include 'user/_profile_contributions.html.twig' %}
+        {% include 'user/_profile_personal_guide.html.twig' %}
+
+        {% set is_user_member = user.perm('member') %}
+        {% if signed_in %}
+          {{ user.pendingReservationsHTML(same_user, is_user_member) }}
+        {% endif %}
+        {% if is_user_member %}
+          {% include 'user/_profile_awaiting_approval.html.twig' %}
+        {% endif %}
+      </div>
+      {% if same_user or is_staff %}
+        <div id="settings" class="section-container">
+          <h2>Preferences</h2>
+          {% set staff_privacy = same_user ? constant('App\\Users::PROFILE_SECTION_PRIVACY_LEVEL').staff : '' %}
+          <section class="guide-settings">
+            <h3>{{ staff_privacy }}Color Guide</h3>
+            {{ setting_form('cg_defaultguide', user) }}
+            {{ setting_form('cg_itemsperpage', user) }}
+            {{ setting_form('cg_hidesynon',    user) }}
+            {{ setting_form('cg_hideclrinfo',  user) }}
+            {{ setting_form('cg_fulllstprev',  user) }}
+            {{ setting_form('cg_nutshell',  user) }}
+          </section>
+          <section class="eppage-settings">
+            <h3>{{ staff_privacy }}Episode pages</h3>
+            {{ setting_form('ep_noappprev',  user) }}
+            {{ setting_form('ep_revstepbtn', user) }}
+          </section>
+          <section class="personal-settings">
+            <h3>{{ staff_privacy }}Personal</h3>
+            {{ setting_form('p_vectorapp',    user) }}
+            {{ setting_form('p_hidediscord',  user) }}
+            {{ setting_form('p_hidepcg',      user) }}
+            {{ setting_form('p_homelastep',   user) }}
+          </section>
+          <section class="staff-limits">
+            <h3>{{ staff_privacy }}Account limitations</h3>
+            {{ setting_form('a_pcgearn',   user, 'staff') }}
+            {{ setting_form('a_pcgmake',   user, 'staff') }}
+            {{ setting_form('a_pcgsprite', user, 'staff') }}
+            {{ setting_form('a_postreq',   user, 'staff') }}
+            {{ setting_form('a_postres',   user, 'staff') }}
+            {{ setting_form('a_reserve',   user, 'staff') }}
+          </section>
+          <section class="account-settings">
+            <h3>Account Settings</h3>
+            <p>Session and account management-related optios have been moved to a dedicated page, accessible via the button below.</p>
+            <br>
+            <div class="align-center">
+              <a href="{{ user.accountPagePath }}" class="btn large link">
+                <span class="typcn typcn-arrow-right"></span>
+                Go to Account Settings
+              </a>
+            </div>
+          </section>
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  {% if export_roles is defined %}
+    {{ export_vars({ 'ROLES': export_roles }) }}
+  {% endif %}
+  {% if user is not empty %}
+    {{ export_vars({
+      username: user.name,
+      userId: user.id,
+    }) }}
+  {% endif %}
+{% endblock %}

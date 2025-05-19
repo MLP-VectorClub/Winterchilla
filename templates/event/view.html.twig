@@ -1,0 +1,32 @@
+{# @controller \App\Controllers\EventController::view #}
+{# @var heading string #}
+{# @var start_ts string #}
+{# @var event \App\Models\Event #}
+{# @var user_entries \App\Models\EventEntry[] #}
+{% extends 'layout/base.html.twig' %}
+
+{% block content %}
+  <div id="content" class="section-container">
+    <h1>{{ heading }}</h1>
+    <p>Collaboration for {{ event.entryRoleName }} &bull; Ended {{ time_tag(event.ends_at) }}</p>
+
+    <section>
+      <h2><span class="typcn typcn-image"></span>Finished image</h2>
+      {{ event.winnerHTML }}
+    </section>
+
+    <section>
+      <h2><span class='typcn typcn-info-large'></span>Description</h2>
+      <div id="description">
+        {{ event.desc_rend }}
+        <p>Entries will be accepted until {{ time_tag(event.ends_at, constant('App\\Time::TAG_EXTENDED'), constant('App\\Time::TAG_STATIC_DYNTIME')) }}. Entrants can submit {{ event.max_entries is not null ?  'a maximum of ' ~ make_plural('entry', event.max_entries, constant('PREPEND_NUMBER')) : 'an unlimited number of entries' }} each.</p>
+        <p class='color-blue'>This event has concluded. Thank you to everyone who participated!</p>
+      </div>
+    </section>
+
+    <section>
+      <h2><span class='typcn typcn-group'></span>Entries</h2>
+      {{ event.entriesHTML(true) }}
+    </section>
+  </div>
+{% endblock %}

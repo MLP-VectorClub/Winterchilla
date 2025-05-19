@@ -1,0 +1,13 @@
+{# @controller \App\Controllers\AdminController::wsdiag #}
+{% extends 'layout/base.html.twig' %}
+
+{% block content %}
+  <div id="content" class="section-container">
+    <h1>WebSocket Server Diagnostics</h1>
+    <div class='align-center button-block'>
+      <a class='btn link typcn typcn-arrow-back' href="/admin">Back to Admin Area</a>
+    </div>
+
+    <section id="wsdiag"></section>
+  </div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{# @controller \App\Controllers\ColorGuideController::guide #}
+{# @var heading string #}
+{# @var guide string #}
+{# @var elastic_avail bool #}
+{# @var pagination \App\Pagination #}
+{# @var ponies array #}
+{# @var owner \App\Models\User|array #}
+{# @var hex_color_regex \App\RegExp #}
+{# @var max_upload_size string #}
+{# @var pinned_appearances \App\Models\Appeareance[] #}
+{% extends "layout/base.html.twig" %}
+
+{% block content %}
+  {% set eqg = guide == 'eqg' %}
+  <div id="content">
+    <h1>{{ heading }}</h1>
+    <p>A searchable list of character colors from the {{ eqg ? 'movies' : 'series' }}</p>
+    <p class="align-center">
+      We add characters based on demand, please <a class="send-feedback">let us know</a> if you'd like us to make a guide for a character.<br>
+      <small>Alternatively, use the old color guides: <a href="https://sta.sh/0kic0ngp3fy">Pony</a> / <a href="http://fav.me/d7120l1">EQG</a></small><br>
+      Can't find links that were here previously? Some links were moved to the <a href="/cg">guide list</a>.
+    </p>
+    <div class="align-center button-block">
+      {% if permission('staff') %}
+        <button class="green typcn typcn-plus" id="new-appearance-btn">Add new {{ constant('\App\\CGUtils::ADD_NEW_NOUN')[guide] }}</button>
+      {% endif %}
+      <a class="btn link typcn typcn-th-menu" href="/cg/{{ guide }}/full">Full List</a>
+      <a class="btn link typcn typcn-warning" href="/cg/{{ guide }}/changes">Major Changes</a>
+    </div>
+    {% if pinned_appearances is not empty %}
+      <ul id="universal" class="appearance-list">
+        {% include 'colorguide/_appearance_list.html.twig' with { 'appearances': pinned_appearances, 'wrap': false } %}
+      </ul>
+    {% endif %}
+    {% if elastic_avail %}
+      <form id="search-form">
+        <input name="q" title="Search"{{ search_query is not empty ? 'value="' ~ (search_query | apos_encode) ~ '"' }} autofocus>
+        <button type="submit" class="blue">Search</button>
+        <button type="submit" name="btnl" class="green typcn typcn-flash" title="I'm feeling lucky"></button>
+        <button type="reset" class="red typcn typcn-times" title="Clear"{{ search_query is empty ? ' disabled' : '' }}></button>
+      </form>
+    {% else %}
+      <div class="notice warn align-center">
+        <span class="typcn typcn-warning"></span> <strong>ElasticSearch server is down!</strong> Please <a class="send-feedback">let us know</a>, and in the meantime, use the <a class="btn link typcn typcn-th-menu" href="/cg/{{ guide }}/full">Full List</a> to find appearances faster. Sorry for the inconvenience.
+      </div>
+    {% endif %}
+    {{ pagination }}
+    {% include 'colorguide/_appearance_list.html.twig' %}
+    {{ pagination }}
+  </div>
+
+  {{ export_vars({
+    'GUIDE': guide,
+    'AppearancePage': false,
+    'OwnerId': owner.id ?? false,
+  }) }}
+  {% if permission('staff') %}
+    {{ export_vars({
+      'TAG_TYPES_ASSOC': constant('App\\Tags::TAG_TYPES'),
+      'MAX_SIZE': max_upload_size,
+      'HEX_COLOR_PATTERN': hex_color_regex,
+    }) }}
+  {% endif %}
+{% endblock %}
+
+{% block widgets %}
+  {% include 'colorguide/_widget_hash_copy.html.twig' %}
+{% endblock %}

@@ -1,0 +1,3 @@
+{% set features = ['IntersectionObserver','HTMLCanvasElement.prototype.toBlob'] %}
+{% set min =  env('PRODUCTION') ? '.min' : '' %}
+<script src="https://cdnjs.cloudflare.com/polyfill/v2/polyfill{{ min }}.js?features={{ features | join(',') }}"></script>

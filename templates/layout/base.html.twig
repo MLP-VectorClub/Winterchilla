@@ -1,0 +1,83 @@
+{# @var view_name string #}
+{# @var view_class string #}
+{# @var title string #}
+{# @var heading string #}
+{# @var signed_in bool #}
+{# @var current_user \App\Models\User #}
+{# @var current_session \App\Models\Session #}
+{# @var remote_addr string #}
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns#">
+<head>
+  {% include 'layout/_head.html.twig' %}
+</head>
+<body {% if is_2020_event %}class="nutshell-names"{% endif %}>
+<header>
+  {% include 'layout/_header.html.twig' %}
+
+</header>
+
+{% apply spaceless %}
+  <aside id="sidebar">
+    <div class='mobile-nav'>
+      <nav>
+        <ul>{% include 'layout/_navigation_links.html.twig' with { sidebar: true } %}</ul>
+      </nav>
+    </div>
+
+    {% include 'layout/_sidebar_logged_in.html.twig' %}
+
+    {% if fatal_error is defined %}
+      <section class="login">
+        <h2>Welcome!</h2>
+        <p>Signing in is not possible at the moment. Please check back later.</p>
+      </section>
+    {% else %}
+      {% if signed_in %}
+        <section class="notifications"{% if not have_notifs %} style="display:none"{% endif %}>
+          <h2>Unread notifications</h2>
+          {{ notifications }}
+        </section>
+      {% endif %}
+      <section class="{{ signed_in ? 'welcome' : 'login' }}">
+        <h2 class="hidden">Welcome!</h2>
+        {% include 'layout/_sidebar_useful_links.html.twig' %}
+        <div class="button-block">
+          {% if signed_in %}
+            <button id="signout" class="typcn typcn-arrow-back large">Sign out</button>
+          {% else %}
+            <button class="typcn btn-da da-login large" id="signin">Sign in</button>
+          {% endif %}
+        </div>
+
+        {% if not user_pref('p_hidediscord') and (not signed_in or not current_user.isDiscordServerMember) %}
+          <a class="btn typcn btn-discord discord-join" href="{{ constant('DISCORD_INVITE_LINK') }}">Join Discord</a>
+        {% endif %}
+      </section>
+      {% block widgets %}{% endblock %}
+      {# @var happening_soon string #}
+      {% if happening_soon is defined and happening_soon is not empty %}
+        {{ happening_soon }}
+      {% endif %}
+    {% endif %}
+  </aside>
+{% endapply %}
+
+<div id="above-content">
+  <ol id="breadcrumbs" itemscope itemtype="http://schema.org/BreadcrumbList">{{ breadcrumbs }}</ol>
+  <div id="notices">
+    {% include 'layout/_notices.html.twig' %}
+  </div>
+</div>
+
+<div id="main">
+  {% block content %}{% endblock %}
+</div>
+
+<footer>
+  {% include 'layout/_footer.html.twig' %}
+</footer>
+
+{% include 'layout/_scripts.html.twig' %}
+</body>
+</html>

@@ -1,0 +1,201 @@
+@use "sass:color";
+@import "../../vars";
+@import "../../components/optional/browser-icons";
+@import "../../components/optional/post-list";
+
+// Mobile styles
+@media all and (max-width: $Breakpoint) {
+  h1 > * {
+    display: inline-block;
+    vertical-align: bottom;
+  }
+  #suggestion {
+    &:before {
+      margin-right: 0 !important;
+    }
+
+    > span {
+      display: none;
+    }
+  }
+}
+
+// Desktop styles
+@media all and (min-width: $Breakpoint) {
+  .briefing {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: center;
+    text-align: left;
+    margin-bottom: 10px;
+
+    .avatar-wrap {
+      flex: 0 0 auto;
+      height: auto;
+      margin-bottom: 0;
+    }
+
+    .title {
+      flex: 1 1 100%;
+      justify-self: stretch;
+      align-self: stretch;
+      display: flex;
+      flex-flow: column nowrap;
+      justify-content: space-around;
+      padding: 0 10px;
+
+      > * {
+        text-align: left !important;
+      }
+
+      h1 {
+        font-size: 1.6em !important;
+        line-height: 1.2em;
+
+        > * {
+          display: inline-block;
+          vertical-align: bottom;
+        }
+      }
+
+      p {
+        margin-bottom: 0 !important;
+        font-size: 1.2em !important;
+
+        button {
+          vertical-align: middle;
+        }
+      }
+    }
+  }
+}
+
+#content {
+  .briefing {
+    .avatar-wrap {
+      border-width: 3px;
+
+      .avatar {
+        display: block;
+      }
+
+      &, .avatar {
+        width: 75px;
+        height: 75px;
+      }
+    }
+
+    h1 {
+      .da {
+        line-height: 1em;
+        width: .6em;
+
+        svg {
+          height: 100%;
+        }
+
+        path {
+          fill: color.adjust($DeviantArtGreen, $lightness: -10%);
+          transition: fill .2s linear;
+        }
+
+        &:hover path {
+          fill: $DeviantArtGreen
+        }
+      }
+
+      .da, .vectorapp-logo, .discord-logo {
+        height: 1em;
+        margin-left: .3em;
+      }
+    }
+
+    p {
+      .da-user-id, .discord-id {
+        letter-spacing: -1px;
+        font-size: .8em;
+      }
+    }
+  }
+
+  .details {
+    > section:not(:last-child) {
+      margin-bottom: 15px
+    }
+
+    .contributions {
+      ul {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+
+        li {
+          display: block;
+
+          .amt {
+            font-weight: bold;
+            margin: 0 4px;
+          }
+        }
+      }
+    }
+
+    .personal-cg .personal-cg-appearances {
+      @extend %appearance-ul;
+      margin: 10px 0;
+      padding: 0;
+      list-style: none;
+
+      li:not(:last-child) {
+        margin-right: 10px;
+      }
+    }
+
+    .pending-reservations, .awaiting-approval {
+      ul {
+        @extend %post-ul;
+        margin: 10px 0;
+
+        &:empty:before {
+          content: "You should never see this. If you do it's due to a bug. Please contact us and report this issue.";
+        }
+      }
+    }
+
+    .awaiting-approval:empty:before {
+      content: "";
+      display: block;
+      width: 80px;
+      height: 80px;
+      margin: 0 auto;
+      background: url('/img/loading-ring.svg') no-repeat center;
+      background-size: contain;
+    }
+  }
+
+  #settings {
+    margin-top: 15px;
+    border-top: 2px dashed $ContentOutline;
+    padding-top: 10px;
+    text-align: center;
+
+    form {
+      &:not(:last-child) {
+        margin-bottom: 10px;
+      }
+
+      label {
+        display: inline-block;
+
+        input, button, select {
+          vertical-align: middle;
+        }
+
+        .save {
+          margin: 0 0 0 5px;
+        }
+      }
+    }
+  }
+}

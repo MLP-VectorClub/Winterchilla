@@ -1,0 +1,130 @@
+@import "../../vars";
+
+#content > h1 + p select {
+  font: inherit
+}
+
+#full-list {
+  display: block;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  &:empty:before {
+    font-size: 1.4em;
+    font-style: italic;
+    content: "No appearances to show";
+    display: block;
+    text-align: center;
+  }
+
+  &.sorting {
+    section > ul {
+      font-size: 0;
+
+      li {
+        &.draggable-source--is-dragging {
+          opacity: 0;
+        }
+
+        &.draggable-mirror {
+          background-color: #fff;
+        }
+
+        > a {
+          cursor: move;
+          border-color: initial;
+        }
+      }
+    }
+  }
+
+  section {
+    h2 > button {
+      margin-left: 1em;
+      display: inline;
+      margin-top: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    ul {
+      $spacing: 6px;
+      list-style: none;
+      padding: 0;
+      margin: 0 0 0 #{-$spacing};
+      display: flex;
+      flex-flow: row wrap;
+      justify-content: flex-start;
+
+      &.justify {
+        justify-content: space-between;
+
+        &:after {
+          content: '';
+          flex: auto;
+        }
+      }
+
+      li {
+        flex: 0 1 auto;
+        margin: $spacing*0.5 0 $spacing*0.5 $spacing;
+        position: relative;
+        box-sizing: border-box;
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: flex-start;
+
+        > a {
+          padding: 5px;
+          border: 1px solid;
+          display: flex;
+          flex-flow: column nowrap;
+          align-items: center;
+          justify-content: space-around;
+          font-size: 1.25rem;
+
+          &:not(:last-child) a {
+            margin-right: .8em
+          }
+
+          img, .appearance-preview-promise {
+            height: 100px;
+            display: block;
+            margin: 0 auto 10px;
+          }
+
+          .appearance-preview-promise {
+            @include loading-indicator(100px, .25);
+          }
+
+          img.border {
+            border: 1px solid;
+          }
+
+          .name {
+            display: inline-block;
+            padding: 1px 3px;
+            border: 2px solid transparent;
+            margin-bottom: 1px;
+
+            .typcn, .typcn:before {
+              display: inline !important;
+              font-size: 1em !important;
+            }
+          }
+
+          .aka {
+            font-size: .5em;
+            color: black;
+          }
+        }
+      }
+    }
+  }
+}
+
+body.nutshell-names #full-list .event-label {
+  @include meme-font;
+}

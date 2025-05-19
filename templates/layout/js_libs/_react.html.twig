@@ -1,0 +1,9 @@
+{% if env('PRODUCTION') %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js" integrity="sha512-QVs8Lo43F9lSuBykadDb0oSXDL/BbZ588urWVCRwSIoewQv/Ewg1f84mK3U790bZ0FfhFa1YSQUmIhG+pIRKeg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js" integrity="sha512-6a1107rTlA4gYpgHAqbwLAtxmWipBdJFcq8y5S/aTge3Bp+VAklABm2LO+Kg51vOWR9JMZq1Ovjl5tpluNpTeQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js" integrity="sha512-M1OTu9xD1JPdXo2cOeJI+Z/f8P6E/pqK9ug3G8PRNLw1caUePewEmpFYKSYh4LEz483qnyB/UTlgX1Q4VCEsKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% else %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.development.min.js" integrity="sha512-0/F/LhpRyzR2Zp0y5+OIpcPFFd6kT7zia0k7vtvXZFBRyyOJFstxmbxdDc6AlGz+ZmvyXESKzvs8LEkjPbGScg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.development.min.js" integrity="sha512-aTIGujEp0xIZSXrXXFjXL3YiozmMRYjKmll3rLYTmUIGaaidsrQNn+ii04E+VwlpIUNZOF3UBoXRmNQBEdD/qQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.js" integrity="sha512-Y1I7EwGGjtHaioSQ70oCoWR73HqUN2YdVmSFf9G0u2cnUToGIZRPkW+QNEZ77afq8hxao7cD+CugWdZI3SQULg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% endif %}

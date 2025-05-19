@@ -1,0 +1,19 @@
+{# @var fullsize string #}
+{# @var preview string #}
+{# @var file_type string #}
+{% apply spaceless %}
+  <div class='preview'>
+    <a href='{{ fullsize }}' target='_blank' rel='noopener'>
+      <img src='{{ preview }}' alt='event entry preview'>
+    </a>
+    {% if file_type is not empty %}
+      <span class='file-type'>
+      {%- if file_type == 'zip' or file_type == 'rar' -%}
+        svg<span class="star-info" title="{{ file_type | upper }} archives are assumed to be SVG files">*</span>
+      {%- else -%}
+        {{ file_type }}
+      {%- endif -%}
+      </span>
+    {% endif %}
+  </div>
+{% endapply %}

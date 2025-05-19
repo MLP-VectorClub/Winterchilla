@@ -1,4 +1,4 @@
-/* Color Picker | by @SeinopSys + Trildar & Masem | for gh:MLP-VectorClub/Winterchilla */
+/* Color Picker | with help from Trildar & Masem | for gh:MLP-VectorClub/Winterchilla */
 (function($) {
   'use strict';
 

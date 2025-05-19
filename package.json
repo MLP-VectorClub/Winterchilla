@@ -49,7 +49,7 @@
     "tar": ">=4.4.18",
     "typicons.font": "^2.0.9"
   },
-  "author": "SeinopSys <david@seinopsys.dev> (https://github.com/SeinopSys)",
+  "author": "WentTheFox (https://went.tf)",
   "license": "MIT",
   "private": true,
   "scripts": {

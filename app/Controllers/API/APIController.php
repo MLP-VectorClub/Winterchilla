@@ -13,7 +13,7 @@ use OpenApi\Annotations as OA;
  *     version="0.1",
  *     description="A temporary API which allows programmatic access to some existing features of the [MLPVector.Club](https://mlpvector.club) website. Will be superseded by the [next version](https://api.mlpvector.club) whenever its development is finished.",
  *     @OA\License(name="MIT"),
- *     @OA\Contact(name="David Joseph Guzsik", url="https://seinopsys.dev", email="david@seinopsys.dev"),
+ *     @OA\Contact(name="WentTheFox", url="https://went.tf"),
  *   ),
  *   @OA\Server(url="/api/v0", description="Unstable API"),
  *   @OA\Tag(name="authentication", description="Endpoints related to getting a user logged in or out, as well as checking logged in status"),

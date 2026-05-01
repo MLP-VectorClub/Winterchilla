@@ -1245,7 +1245,10 @@ class CoreUtils {
     if ($elastiClient !== null)
       return $elastiClient;
 
-    $elastiClient = ClientBuilder::create()->setHosts(['127.0.0.1:9200'])->build();
+    $elastiClient = ClientBuilder::create()
+      ->setHosts([self::env('ELASTIC_HOST') ?: '127.0.0.1:9200'])
+      ->setConnectionParams(['client' => ['timeout' => 15, 'connect_timeout' => 5]])
+      ->build();
 
     return $elastiClient;
   }

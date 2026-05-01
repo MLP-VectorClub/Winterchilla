@@ -1227,7 +1227,7 @@ class CGUtils {
     try {
       $elastic_avail = CoreUtils::elasticClient()->ping();
     }
-    catch (NoNodesAvailableException|ServerErrorResponseException $e){
+    catch (\Throwable $e){
       return false;
     }
 

@@ -13,8 +13,13 @@ class ReformSessions extends AbstractMigration {
 			ALTER "refresh" DROP NOT NULL,
 			ALTER "scope" DROP NOT NULL,
 			ALTER "scope" DROP DEFAULT');
-    $this->query('ALTER TABLE sessions ALTER COLUMN id DROP DEFAULT, ALTER COLUMN id TYPE uuid USING (uuid_generate_v4()), ALTER COLUMN id SET DEFAULT uuid_generate_v4()');
-    $this->query('DROP SEQUENCE sessions_id_seq');
+    $this->query('ALTER TABLE sessions ALTER COLUMN id DROP IDENTITY');
+    $this->query('ALTER TABLE sessions ALTER COLUMN id DROP DEFAULT');
+    $this->query(<<<SQL
+    ALTER TABLE sessions
+    ALTER COLUMN id TYPE uuid USING uuid_generate_v4(),
+    ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+    SQL);
     $this->table('sessions')
       ->addColumn('data', 'text', ['null' => true])
       ->update();

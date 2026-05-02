@@ -1,6 +1,7 @@
 <?php
 
 use Phinx\Seed\AbstractSeed;
+use Ramsey\Uuid\Uuid;
 
 class TestSeeder extends AbstractSeed {
   public function getDependencies(): array {
@@ -17,7 +18,7 @@ class TestSeeder extends AbstractSeed {
     // DeviantArt linked accounts (access_expires far in the future to avoid token refresh)
     $this->table('deviantart_users')->insert([
       [
-        'id'             => '999000001',
+        'id'             => Uuid::uuid4(),
         'name'           => 'TestUser',
         'avatar_url'     => null,
         'user_id'        => 9001,
@@ -28,7 +29,7 @@ class TestSeeder extends AbstractSeed {
         'created_at'     => date('c'),
       ],
       [
-        'id'             => '999000002',
+        'id'             => Uuid::uuid4(),
         'name'           => 'TestAdmin',
         'avatar_url'     => null,
         'user_id'        => 9002,
@@ -74,7 +75,6 @@ class TestSeeder extends AbstractSeed {
     $this->table('events')->insert([[
       'id'          => 1,
       'name'        => 'Test Coloring Event',
-      'type'        => 'coloring',
       'entry_role'  => 'user',
       'vote_role'   => null,
       'starts_at'   => date('c', strtotime('-1 day')),

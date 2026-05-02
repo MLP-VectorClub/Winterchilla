@@ -121,7 +121,7 @@ class DeviantArt {
    *
    * @return array
    */
-  public static function request($endpoint, $token = null, $postdata = null) {
+  public static function request($endpoint, $token = null, $postdata = null, $proxy = null):?array {
     global $http_response_header;
 
     $requestHeaders = ['Accept-Encoding: gzip', 'User-Agent: Winterchilla @ '.GITHUB_URL];
@@ -146,6 +146,9 @@ class DeviantArt {
       foreach ($postdata as $k => $v) $query[] = urlencode($k).'='.urlencode($v);
       $curl_opt[CURLOPT_POST] = count($postdata);
       $curl_opt[CURLOPT_POSTFIELDS] = implode('&', $query);
+    }
+    if ($proxy !== null) {
+      $curl_opt[CURLOPT_PROXY] = $proxy;
     }
     curl_setopt_array($r, $curl_opt);
 
@@ -315,7 +318,7 @@ class DeviantArt {
       $url = self::getDeviationUrlFromFavmeLink($url);
     try {
       $app_token = self::getApplicationToken();
-      $data = self::request('https://backend.deviantart.com/oembed?url='.urlencode($url), $app_token ?? false);
+      $data = self::request('https://backend.deviantart.com/oembed?url='.urlencode($url), $app_token ?? false, proxy: CoreUtils::env('OEMBED_PROXY_URL'));
     }
     catch (CURLRequestException $e){
       $errorCode = $e->getCode();

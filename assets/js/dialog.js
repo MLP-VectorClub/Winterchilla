@@ -89,9 +89,9 @@
 
       if (reactAvailable && React.isValidElement(params.content)){
         $contentAdd.addClass(reactMountedClass);
-        const root = ReactDOM.createRoot();
+        const root = ReactDOM.createRoot($contentAdd[0]);
         $contentAdd.data(reactMountedClass, root);
-        root.render(params.content, $contentAdd[0]);
+        root.render(params.content);
       }
       else $contentAdd.append(params.content);
 

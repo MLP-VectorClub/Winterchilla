@@ -88,7 +88,9 @@
       const entriesByGroup = Object.keys(groups).reduce((a, c) => ({ ...a, [c]: [] }), {});
       entries.forEach(entry => {
         const group = this.props.findGroup(entry);
-        entriesByGroup[group].push(entry);
+        if (Array.isArray(entriesByGroup[group])) {
+          entriesByGroup[group].push(entry);
+        }
       });
 
       const linkedGroups = [];

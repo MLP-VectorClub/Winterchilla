@@ -40,65 +40,8 @@ class DeviantArt {
     'access_denied' => 'You decided not to allow the site to verify your identity',
   ];
 
-  private const APP_TOKEN_CACHE_KEY = 'da_app_token';
-  private const APP_TOKEN_LOCK_KEY = 'da_app_token_lock';
-
   /** @var DeviantArtProvider */
   private static $_OAuthProviderInstance;
-
-  /**
-   * Returns a cached application-level access token obtained via client credentials grant.
-   * Uses a Redis lock so parallel requests don't each trigger a separate token fetch.
-   */
-  public static function getApplicationToken(): ?string {
-    $cached = RedisHelper::get(self::APP_TOKEN_CACHE_KEY);
-    if ($cached !== null)
-      return $cached;
-
-    $redis = RedisHelper::getInstance();
-
-    // No Redis - just fetch directly, accepting the race
-    if ($redis === null)
-      return self::_fetchApplicationToken();
-
-    $lock_value = bin2hex(random_bytes(8));
-
-    // Atomic SET NX: only one caller gets true
-    if ($redis->set(self::APP_TOKEN_LOCK_KEY, $lock_value, ['NX', 'PX' => 10000])) {
-      try {
-        return self::_fetchApplicationToken();
-      }
-      finally {
-        // Release only if we still own the lock
-        $lua = "if redis.call('get',KEYS[1])==ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
-        $redis->eval($lua, [self::APP_TOKEN_LOCK_KEY, $lock_value], 1);
-      }
-    }
-
-    // Another process is fetching — wait for it to populate the cache
-    for ($i = 0; $i < 30; $i++) {
-      usleep(100_000); // 100 ms
-      $cached = RedisHelper::get(self::APP_TOKEN_CACHE_KEY);
-      if ($cached !== null)
-        return $cached;
-    }
-
-    // Fallback: lock holder may have failed, try once ourselves
-    return self::_fetchApplicationToken();
-  }
-
-  private static function _fetchApplicationToken(): ?string {
-    try {
-      $token = self::OAuthProviderInstance()->getAccessToken('client_credentials');
-      $access = $token->getToken();
-      RedisHelper::set(self::APP_TOKEN_CACHE_KEY, $access, 3300);
-      return $access;
-    }
-    catch (Throwable $e) {
-      CoreUtils::logError('Failed to get DA application token: '.$e->getMessage());
-      return null;
-    }
-  }
 
   /** @return DeviantArtProvider */
   public static function OAuthProviderInstance() {
@@ -317,8 +260,7 @@ class DeviantArt {
     if ($type === 'fav.me')
       $url = self::getDeviationUrlFromFavmeLink($url);
     try {
-      $app_token = self::getApplicationToken();
-      $data = self::request('https://backend.deviantart.com/oembed?url='.urlencode($url), $app_token ?? false, proxy: CoreUtils::env('OEMBED_PROXY_URL'));
+      $data = self::request('https://backend.deviantart.com/oembed?url='.urlencode($url), false, proxy: CoreUtils::env('OEMBED_PROXY_URL'));
     }
     catch (CURLRequestException $e){
       $errorCode = $e->getCode();

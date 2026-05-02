@@ -85,22 +85,32 @@ async function main() {
 
   console.log('[watch] Watching for changes...');
 
-  chokidar.watch('assets/js/**/*.{js,jsx}', { ignoreInitial: true })
+  chokidar.watch('assets/js', { ignoreInitial: true })
     .on('change', file => {
+      if (!/\.jsx?$/.test(file)) return;
+
       console.log(`[js] ${file}`);
       buildJS(file).catch(e => console.error('[js] Error:', e.message));
     })
     .on('add', file => {
+      if (!/\.jsx?$/.test(file)) return;
+
+      console.log(`[js] ${file}`);
       buildJS(file).catch(e => console.error('[js] Error:', e.message));
     });
 
   // Rebuild all SCSS on any change since partials affect multiple output files
-  chokidar.watch('assets/scss/**/*.scss', { ignoreInitial: true })
+  chokidar.watch('assets/scss', { ignoreInitial: true })
     .on('change', file => {
+      if (!/\.scss$/.test(file)) return;
+
       console.log(`[scss] ${file}`);
       buildAllSCSS().catch(e => console.error('[scss] Error:', e.message));
     })
-    .on('add', () => {
+    .on('add', file => {
+      if (!/\.scss$/.test(file)) return;
+
+      console.log(`[scss] ${file}`);
       buildAllSCSS().catch(e => console.error('[scss] Error:', e.message));
     });
 }

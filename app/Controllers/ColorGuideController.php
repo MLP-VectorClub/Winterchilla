@@ -21,8 +21,8 @@ use App\Response;
 use App\Time;
 use App\UserPrefs;
 use League\Uri\Components\Query;
+use League\Uri\Modifier;
 use League\Uri\Uri;
-use League\Uri\UriModifier;
 
 class ColorGuideController extends Controller {
   /** @var bool */
@@ -134,9 +134,9 @@ class ColorGuideController extends Controller {
     }
     $appearances = Appearances::get($this->guide, null, null, 'id,label,private');
 
-    $path = Uri::createFromString("{$this->path}/full");
+    $path = Uri::new("{$this->path}/full");
     if ($sort_by !== 'relevance')
-      $path = UriModifier::appendQuery($path, Query::createFromParams(['sort_by'=>$sort_by]));
+      $path = Modifier::wrap($path)->appendQuery(Query::fromVariable(['sort_by'=>$sort_by]))->unwrap();
 
     if (CoreUtils::isJSONExpected())
       Response::done([
@@ -288,7 +288,7 @@ class ColorGuideController extends Controller {
     $path = $pagination->toURI();
     $remove_params = null;
     if (!empty($search_query))
-      $path = UriModifier::appendQuery($path, Query::createFromParams(['q' => $search_query]));
+      $path = Modifier::wrap($path)->appendQuery(Query::fromVariable(['q' => $search_query]))->unwrap();
     else $remove_params = ['q'];
     CoreUtils::fixPath($path, $remove_params);
     $heading = CGUtils::GUIDE_MAP[$this->guide].' Color Guide';

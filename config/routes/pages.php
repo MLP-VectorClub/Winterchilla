@@ -108,3 +108,7 @@ $router->map('GET', '/manifest', 'ManifestController#json');
 # DiagnoseController
 $router->map('GET', '/diagnose/ex/[a:type]', 'DiagnoseController#exception');
 $router->map('GET', '/diagnose/lt/[i:time]', 'DiagnoseController#loadtime');
+# TestController — only registered in TEST_MODE
+if (\App\CoreUtils::env('TEST_MODE')) {
+  $router->map('GET', '/test-login/[i:user_id]', 'TestController#loginAs');
+}

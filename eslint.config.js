@@ -1,15 +1,14 @@
 import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import globals from 'globals';
-import parser from '@babel/eslint-parser';
 
 export default [
   js.configs.recommended,
   react.configs.flat.recommended,
   {
     languageOptions: {
-      parser,
       globals: {
+        process: false,
         window: true,
         setTimeout: true,
         clearTimeout: true,
@@ -46,7 +45,7 @@ export default [
       },
       'parserOptions': {
         'sourceType': 'module',
-        'ecmaVersion': 6,
+        'ecmaVersion': 'latest',
         'ecmaFeatures': {
           'jsx': true,
         },

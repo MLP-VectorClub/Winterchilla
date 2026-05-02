@@ -20,7 +20,7 @@ use App\Response;
 use Elasticsearch\Common\Exceptions\NoNodesAvailableException;
 use IPTools\IP;
 use League\Uri\Components\Query;
-use League\Uri\UriModifier;
+use League\Uri\Modifier;
 use SeinopSys\PostgresDb;
 use Throwable;
 use function in_array;
@@ -168,7 +168,7 @@ class AdminController extends Controller {
 
     $path = $pagination->toURI();
     if (!empty($query_params))
-      $path = UriModifier::appendQuery($path, Query::createFromParams($query_params));
+      $path = Modifier::wrap($path)->appendQuery(Query::fromVariable($query_params))->unwrap();
     CoreUtils::fixPath($path, $remove_params);
 
     foreach ($where_args as $arg)

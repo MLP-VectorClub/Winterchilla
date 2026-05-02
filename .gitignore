@@ -18,4 +18,4 @@ conf.php
 /setup/*.pg.sql
 !/setup/create_extensions.pg.sql
 /vendor
-.phpunit.result.cache
+.phpunit*.cache

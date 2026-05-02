@@ -8,8 +8,8 @@ use App\CoreUtils;
 use App\File;
 use App\Permission;
 use League\Uri\Components\Query;
+use League\Uri\Modifier;
 use League\Uri\Uri;
-use League\Uri\UriModifier;
 
 /**
  * @property int            $id
@@ -140,7 +140,7 @@ class Cutiemark extends NSModel {
    * @noinspection PhpUnused
    */
   public function getDownloadURL($source = false):string {
-    $url = Uri::createFromString("/cg/cutiemark/download/{$this->id}");
+    $url = Uri::new("/cg/cutiemark/download/{$this->id}");
     $query_params = [];
     if (!empty($_GET['token']))
       $query_params['token'] = $_GET['token'];
@@ -148,7 +148,7 @@ class Cutiemark extends NSModel {
       $query_params['source'] = null;
 
     if (!empty($query_params))
-      $url = UriModifier::appendQuery($url, Query::createFromParams($query_params));
+      $url = Modifier::wrap($url)->appendQuery(Query::fromVariable($query_params))->unwrap();
 
     return (string) $url;
   }

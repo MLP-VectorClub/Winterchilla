@@ -56,6 +56,37 @@ PHP-rendered classic web app powering the MLP Vector Club's website since 2015.
 
 Please check the site's [About](https://mlpvector.club/about) page for additional credits.
 
+## Testing
+
+### Unit tests
+
+```bash
+vendor/bin/pest --configuration phpunit.xml
+```
+
+### Browser tests
+
+Browser tests use [Playwright](https://playwright.dev/) and require a running PostgreSQL instance.
+
+**First-time setup:**
+
+```bash
+npm install playwright
+npx playwright install chromium --with-deps
+```
+
+**Reset the test database and run:**
+
+```bash
+# Rebuild the test DB (uses TEST_DB_NAME from .env, defaults to winterchilla_test)
+bash scripts/reset-test-db.sh
+
+# Run tests (TEST_MODE enables the /test-login route used by browser tests)
+TEST_MODE=true vendor/bin/pest
+```
+
+`TEST_DB_NAME` and `TEST_MODE` can be set in your `.env` file so you don't need to pass them on every command. Never set `TEST_MODE=true` in a production environment.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).

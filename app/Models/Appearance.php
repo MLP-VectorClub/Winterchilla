@@ -25,8 +25,8 @@ use Elasticsearch\Common\Exceptions\NoNodesAvailableException as ElasticNoNodesA
 use Elasticsearch\Common\Exceptions\ServerErrorResponseException as ElasticServerErrorResponseException;
 use Exception;
 use League\Uri\Components\Query;
+use League\Uri\Modifier;
 use League\Uri\Uri;
-use League\Uri\UriModifier;
 use RuntimeException;
 use SeinopSys\RGBAColor;
 use function count;
@@ -191,7 +191,7 @@ class Appearance extends NSModel implements Linkable {
   public function getSpriteURL(?int $size = null, string $fallback = ''):string {
     if ($this->hasSprite()){
       $sprite_hash = $this->sprite_hash ?? $this->regenerateSpriteHash();
-      $url = Uri::createFromString(PUBLIC_API_V0_PATH."/appearances/{$this->id}/sprite");
+      $url = Uri::new(PUBLIC_API_V0_PATH."/appearances/{$this->id}/sprite");
       $query_params = [];
       if (!empty($sprite_hash))
         $query_params['hash'] = $sprite_hash;
@@ -201,7 +201,7 @@ class Appearance extends NSModel implements Linkable {
         $query_params['token'] = $_GET['token'];
 
       if (!empty($query_params))
-        $url = UriModifier::appendQuery($url, Query::createFromParams($query_params));
+        $url = Modifier::wrap($url)->appendQuery(Query::fromVariable($query_params))->unwrap();
 
       return (string)$url;
     }
@@ -210,10 +210,10 @@ class Appearance extends NSModel implements Linkable {
   }
 
   public function getStaticSpriteURL() {
-    $url = Uri::createFromString("/img/sprites/{$this->id}.png");
+    $url = Uri::new("/img/sprites/{$this->id}.png");
     $sprite_hash = $this->sprite_hash ?? $this->regenerateSpriteHash();
     if (!empty($sprite_hash))
-      $url = UriModifier::appendQuery($url, Query::createFromParams(['hash' => $sprite_hash]));
+      $url = Modifier::wrap($url)->appendQuery(Query::fromVariable(['hash' => $sprite_hash]))->unwrap();
 
     return (string)$url;
   }

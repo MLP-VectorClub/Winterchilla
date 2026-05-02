@@ -21,17 +21,15 @@ class HTTP {
     $r = curl_init($url);
     $curl_opt = [
       CURLOPT_HTTPHEADER => [
-        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Encoding: gzip, deflate, br',
-        'Accept-Language: en-GB,en;q=0.5',
-        'Connection: keep-alive',
+        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Encoding: gzip',
+        'Accept-Language: en-GB,en-US;q=0.9,en;q=0.8',
         'Cache-Control: no-cache',
       ],
       CURLOPT_HEADER => true,
-      CURLOPT_BINARYTRANSFER => true,
       CURLOPT_FOLLOWLOCATION => $followRedirects,
       CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0',
+      CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0',
     ];
     if (isset($referrer))
       $curl_opt[CURLOPT_REFERER] = $referrer;

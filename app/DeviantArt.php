@@ -139,7 +139,6 @@ class DeviantArt {
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_HTTPHEADER => $requestHeaders,
       CURLOPT_HEADER => true,
-      CURLOPT_BINARYTRANSFER => true,
       CURLOPT_FOLLOWLOCATION => true,
     ];
     if (!empty($postdata)){

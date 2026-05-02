@@ -40,8 +40,8 @@ class EmailVerification extends NSModel {
   }
 
   public function getVerificationPath(bool $block = false): string {
-    $url = Uri::createFromString(ORIGIN.'/users/verify');
-    $query = Query::createFromParams([
+    $url = Uri::new(ORIGIN.'/users/verify');
+    $query = Query::fromVariable([
       'hash' => $this->hash,
       'action' => $block ? 'block' : 'verify',
     ]);

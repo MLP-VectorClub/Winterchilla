@@ -5,8 +5,8 @@ namespace App;
 use ActiveRecord\SQLBuilder;
 use HtmlGenerator\HtmlTag;
 use League\Uri\Components\Query;
+use League\Uri\Modifier;
 use League\Uri\Uri;
-use League\Uri\UriModifier;
 use RuntimeException;
 
 /**
@@ -121,9 +121,9 @@ class Pagination {
     if (isset($get["{$this->query_prefix}page"]))
       unset($get["{$this->query_prefix}page"]);
 
-    $query = Query::createFromParams($get);
+    $query = Query::fromVariable($get);
 
-    return (string) UriModifier::appendQuery($href, $query);
+    return Modifier::wrap($href)->appendQuery($query)->toString();
   }
 
   private function _makeItem(int $i, &$currentIndex = null, $nr = null) {
@@ -265,10 +265,10 @@ class Pagination {
 
   public function toURI(bool $force_fixpath_empty = true, $force_page = null): Uri {
     $query_string = $this->getPageQueryString($force_page, $force_fixpath_empty);
-    $url = Uri::createFromString($this->base_path);
+    $url = Uri::new($this->base_path);
 
     if ($query_string !== null)
-      $url = UriModifier::appendQuery($url, $query_string);
+      $url = Modifier::wrap($url)->appendQuery($query_string)->unwrap();
 
     return $url;
   }

@@ -175,7 +175,7 @@ class CoreUtilsTest extends TestCase {
 
     $object = new stdClass();
     CoreUtils::set($object, 'key', 'value');
-    self::assertObjectHasAttribute('key', $object);
+    self::assertObjectHasProperty('key', $object);
     self::assertEquals('value', $object->key);
   }
 

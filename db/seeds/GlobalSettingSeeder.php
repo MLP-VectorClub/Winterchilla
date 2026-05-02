@@ -3,7 +3,7 @@
 use Phinx\Seed\AbstractSeed;
 
 class GlobalSettingSeeder extends AbstractSeed {
-  public function run() {
+  public function run(): void {
     $data = [
       [
         'key' => 'about_reservations',
@@ -24,7 +24,7 @@ class GlobalSettingSeeder extends AbstractSeed {
       ],
     ];
 
-    $this->table('global_settings')
+    $this->table('settings')
       ->insert($data)
       ->save();
   }

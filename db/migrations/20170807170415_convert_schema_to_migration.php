@@ -11,7 +11,7 @@ use Phinx\Util\Literal;
 
 class ConvertSchemaToMigration extends AbstractMigration {
   /** @var Table[] */
-  protected $tables = [];
+  protected array $tables = [];
 
   public function up() {
     $table = 'appearances';

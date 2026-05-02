@@ -1,0 +1,223 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  TEST_DB_NAME: winterchilla_test
+  DB_HOST: 127.0.0.1
+  DB_USER: winterchilla
+  DB_PASS: winterchilla
+
+jobs:
+  lint:
+    name: JS Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: winterchilla
+          POSTGRES_PASSWORD: winterchilla
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, redis, gd, mbstring, xml, dom, curl, zlib, posix, pcntl
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Write .env
+        run: |
+          cat > .env << 'EOF'
+          PRODUCTION=false
+          DB_HOST=${{ env.DB_HOST }}
+          DB_USER=${{ env.DB_USER }}
+          DB_PASS=${{ env.DB_PASS }}
+          DB_NAME=${{ env.TEST_DB_NAME }}
+          TEST_DB_NAME=${{ env.TEST_DB_NAME }}
+          TEST_MODE=false
+          LOG_PATH=error.log
+          DA_CLIENT=fake
+          DA_SECRET=fake
+          REDIS_HOST=127.0.0.1
+          REDIS_PORT=6379
+          WS_SERVER_HOST=
+          WS_SERVER_KEY=
+          CSP_ENABLED=false
+          SOCKET_SSL_VERIFY_PEER=false
+          NPM_BUILD_LOCK_FILE_PATH=fs/gulp.lock
+          EOF
+
+      - name: Create test database and extensions
+        run: |
+          export PGPASSWORD=${{ env.DB_PASS }}
+          psql -h ${{ env.DB_HOST }} -U ${{ env.DB_USER }} -d postgres \
+            -c "CREATE DATABASE \"${{ env.TEST_DB_NAME }}\";"
+          psql -h ${{ env.DB_HOST }} -U ${{ env.DB_USER }} \
+            -d "${{ env.TEST_DB_NAME }}" \
+            -f setup/create_extensions.pg.sql
+
+      - name: Run migrations
+        run: DB_NAME=${{ env.TEST_DB_NAME }} vendor/bin/phinx migrate -e local
+
+      - name: Seed global settings
+        run: DB_NAME=${{ env.TEST_DB_NAME }} vendor/bin/phinx seed:run -s GlobalSettingSeeder -e local
+
+      - name: Create required directories
+        run: mkdir -p fs/tmp/twig_cache fs/tmp/sanitize logs
+
+      - name: Run unit tests
+        run: vendor/bin/pest --configuration phpunit.xml
+
+  browser-tests:
+    name: Browser Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: winterchilla
+          POSTGRES_PASSWORD: winterchilla
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, redis, gd, mbstring, xml, dom, curl, zlib, posix, pcntl
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
+      - name: Write .env
+        run: |
+          cat > .env << 'EOF'
+          PRODUCTION=false
+          DB_HOST=${{ env.DB_HOST }}
+          DB_USER=${{ env.DB_USER }}
+          DB_PASS=${{ env.DB_PASS }}
+          DB_NAME=${{ env.TEST_DB_NAME }}
+          TEST_DB_NAME=${{ env.TEST_DB_NAME }}
+          TEST_MODE=true
+          LOG_PATH=error.log
+          DA_CLIENT=fake
+          DA_SECRET=fake
+          REDIS_HOST=127.0.0.1
+          REDIS_PORT=6379
+          WS_SERVER_HOST=
+          WS_SERVER_KEY=
+          CSP_ENABLED=false
+          SOCKET_SSL_VERIFY_PEER=false
+          NPM_BUILD_LOCK_FILE_PATH=fs/gulp.lock
+          EOF
+
+      - name: Create test database and extensions
+        run: |
+          export PGPASSWORD=${{ env.DB_PASS }}
+          psql -h ${{ env.DB_HOST }} -U ${{ env.DB_USER }} -d postgres \
+            -c "CREATE DATABASE \"${{ env.TEST_DB_NAME }}\";"
+          psql -h ${{ env.DB_HOST }} -U ${{ env.DB_USER }} \
+            -d "${{ env.TEST_DB_NAME }}" \
+            -f setup/create_extensions.pg.sql
+
+      - name: Run migrations and seed test data
+        run: |
+          DB_NAME=${{ env.TEST_DB_NAME }} vendor/bin/phinx migrate -e local
+          DB_NAME=${{ env.TEST_DB_NAME }} vendor/bin/phinx seed:run -e local
+
+      - name: Create required directories
+        run: mkdir -p fs/tmp/twig_cache fs/tmp/sanitize logs
+
+      - name: Start PHP built-in server
+        run: |
+          php -S 127.0.0.1:8765 -t public/ &>/dev/null &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8765/ -o /dev/null && echo "Server ready" && break
+            sleep 0.5
+          done
+
+      - name: Run browser tests
+        run: vendor/bin/pest
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: tests/Browser/screenshots/
+          if-no-files-found: ignore

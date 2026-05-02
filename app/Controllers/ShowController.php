@@ -23,7 +23,8 @@ use App\ShowHelper;
 use App\Twig;
 use DateInterval;
 use Exception;
-use League\Uri\UriModifier;
+use League\Uri\Components\Query;
+use League\Uri\Modifier;
 use Throwable;
 
 class ShowController extends Controller {
@@ -38,7 +39,7 @@ class ShowController extends Controller {
     $movies = ShowHelper::get($show_pagination->getLimit(), "type != 'episode'", true);
 
     $path = $episodes_pagination->toURI();
-    $path = UriModifier::appendQuery($path, $show_pagination->getPageQueryString());
+    $path = Modifier::wrap($path)->appendQuery($show_pagination->getPageQueryString())->unwrap();
     CoreUtils::fixPath($path);
     $heading = 'Episodes & Movies';
 

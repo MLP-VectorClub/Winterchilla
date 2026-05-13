@@ -5,11 +5,14 @@
 
   function setupDegradedMode() {
     console.log('%c[WS] Server down!', 'color:red');
-    $sidebar.find('.notif-list').on('click', '.mark-read', e => {
-      e.preventDefault();
+    const $sb = $('#sidebar');
+    if ($sb.length) {
+      $sb.find('.notif-list').on('click', '.mark-read', e => {
+        e.preventDefault();
 
-      $.Dialog.fail('Mark notification read', 'The notification server appears to be down. Please <a class="send-feedback">let us know</a>, and sorry for the inconvenience.');
-    });
+        $.Dialog.fail('Mark notification read', 'The notification server appears to be down. Please <a class="send-feedback">let us know</a>, and sorry for the inconvenience.');
+      });
+    }
   }
 
   if (!scriptEl) {

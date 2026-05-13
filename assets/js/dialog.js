@@ -196,7 +196,8 @@
           }
         }
         if (obj.className) $button.addClass(obj.className);
-        $button.val(obj.label).on('click', function(e) {
+        const testId = obj.testId ?? ('dialog-btn-' + obj.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+        $button.attr('data-testid', testId).val(obj.label).on('click', function(e) {
           e.preventDefault();
 
           $.callCallback(obj.action, [e]);
@@ -337,11 +338,13 @@
 
       let buttons = [
         new DialogButton(btnTextArray[0], {
+          testId: 'dialog-btn-confirm',
           action: () => {
             handlerFunc(true);
           },
         }),
         new DialogButton(btnTextArray[1], {
+          testId: 'dialog-btn-cancel',
           action: () => {
             handlerFunc(false);
             this._closeButton.action();

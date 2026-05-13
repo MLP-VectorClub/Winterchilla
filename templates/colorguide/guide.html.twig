@@ -22,7 +22,7 @@
     </p>
     <div class="align-center button-block">
       {% if permission('staff') %}
-        <button class="green typcn typcn-plus" id="new-appearance-btn">Add new {{ constant('\App\\CGUtils::ADD_NEW_NOUN')[guide] }}</button>
+        <button class="green typcn typcn-plus" id="new-appearance-btn" data-testid="create-appearance-btn">Add new {{ constant('\App\\CGUtils::ADD_NEW_NOUN')[guide] }}</button>
       {% endif %}
       <a class="btn link typcn typcn-th-menu" href="/cg/{{ guide }}/full">Full List</a>
       <a class="btn link typcn typcn-warning" href="/cg/{{ guide }}/changes">Major Changes</a>

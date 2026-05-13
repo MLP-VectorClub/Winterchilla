@@ -10,7 +10,7 @@
   {% set is_staff = permission('staff') %}
   {% set owner_or_staff = is_owner or is_staff %}
   <div id="content">
-    <div class="sprite-wrap">{{ appearance.spriteHTML(owner_or_staff) }}</div>
+    <div class="sprite-wrap" data-testid="sprite-wrap">{{ appearance.spriteHTML(owner_or_staff) }}</div>
     <h1><span class="appearance-name {%- if appearance.owner_id %} pcg-name{% endif %}">{{ heading | escape }}</span></h1>
     <p>from {% if owner is defined -%}
         {{ owner.toAnchor ~ posess(owner.name, true) }} <a href='{{ owner.toURL }}/cg'>Personal Color Guide</a>
@@ -28,9 +28,9 @@
         <button class='get-swatch typcn typcn-brush teal'>Download swatch file</button>
         <button class='blue share typcn typcn-export'{{ appearance.private ? ' data-private="true"' : '' }} data-url="{{ appearance.shareURL(owner_or_staff) }}">Share</button>
         {% if owner_or_staff %}
-          <button class='darkblue edit-appearance typcn typcn-pencil'>Edit metadata</button>
+          <button class='darkblue edit-appearance typcn typcn-pencil' data-testid="edit-appearance-btn">Edit metadata</button>
           {% if not appearance.pinned %}
-            <button class='red delete-appearance typcn typcn-trash'>Delete appearance</button>
+            <button class='red delete-appearance typcn typcn-trash' data-testid="delete-appearance-btn">Delete appearance</button>
           {% endif %}
         {% endif %}
       </div>
@@ -43,7 +43,7 @@
             {{ appearance.tagsHTML() }}
             {% if is_staff %}
               <div class="button-block">
-                <button id="edit-tags-btn" class="darkblue typcn typcn-pencil">Edit tags</button>
+                <button id="edit-tags-btn" data-testid="edit-tags-btn" class="darkblue typcn typcn-pencil">Edit tags</button>
                 <!-- <a class="btn link typcn typcn-document" href="/cg/tag-changes/{{ appearance.id }}">Tag changes</a> -->
               </div>
             {% endif %}
@@ -72,7 +72,7 @@
           <h2 class="admin">Color groups</h2>
           <div class="admin button-block">
             <button class="darkblue typcn typcn-arrow-unsorted reorder-cgs">Re-order groups</button>
-            <button class="green typcn typcn-plus create-cg">Create group</button>
+            <button class="green typcn typcn-plus create-cg" data-testid="create-colorgroup-btn">Create group</button>
             <button class="darkblue typcn typcn typcn-document-add apply-template">Apply template</button>
           </div>
         {% endif %}

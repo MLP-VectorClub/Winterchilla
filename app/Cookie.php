@@ -24,7 +24,7 @@ class Cookie {
     $success = setcookie($name, $value, [
       'expires' => $expire,
       'path' => $path,
-      'domain' => $_SERVER['HTTP_HOST'],
+      'domain' => parse_url('http://' . $_SERVER['HTTP_HOST'], PHP_URL_HOST),
       'secure' => HTTPS,
       'httponly' => $http_only,
       'samesite' => 'Lax',
@@ -39,7 +39,7 @@ class Cookie {
     $success = setcookie($name, '', [
       'expires' => time() - 3600,
       'path' => $path,
-      'domain' => $_SERVER['HTTP_HOST'],
+      'domain' => parse_url('http://' . $_SERVER['HTTP_HOST'], PHP_URL_HOST),
     ]);
     if ($success)
       unset($_COOKIE[$name]);

@@ -556,6 +556,8 @@ class Appearance extends NSModel implements Linkable {
   }
 
   public function updateIndex() {
+    if (CoreUtils::env('TEST_MODE'))
+      return;
     if ($this->pinned) {
       $this->clearIndex();
       return;
@@ -839,6 +841,8 @@ class Appearance extends NSModel implements Linkable {
   }
 
   public function clearIndex() {
+    if (CoreUtils::env('TEST_MODE'))
+      return;
     if ($this->owner_id === null){
       try {
         CoreUtils::elasticClient()->delete($this->toElasticArray(true));

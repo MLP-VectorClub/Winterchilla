@@ -32,7 +32,9 @@ class Appearances {
       self::_order();
       if ($guide !== null) {
         $pinned_ids = PinnedAppearance::getAllIds();
-        DB::$instance->where('guide', $guide)->where('id', $pinned_ids, '!=');
+        DB::$instance->where('guide', $guide);
+        if (!empty($pinned_ids))
+          DB::$instance->where('id', $pinned_ids, '!=');
       }
     }
     if ($cols === self::COUNT_COL)

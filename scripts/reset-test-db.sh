@@ -28,4 +28,12 @@ $PSQL -d "$DB" -f setup/create_extensions.pg.sql
 DB_NAME="$DB" vendor/bin/phinx migrate
 DB_NAME="$DB" vendor/bin/phinx seed:run
 
+# Reset sequences so new rows don't collide with explicitly-seeded IDs
+$PSQL -d "$DB" -c "
+  SELECT setval(pg_get_serial_sequence('users', 'id'),        (SELECT COALESCE(MAX(id), 1) FROM users));
+  SELECT setval(pg_get_serial_sequence('show', 'id'),         (SELECT COALESCE(MAX(id), 1) FROM show));
+  SELECT setval(pg_get_serial_sequence('appearances', 'id'),  (SELECT COALESCE(MAX(id), 1) FROM appearances));
+  SELECT setval(pg_get_serial_sequence('events', 'id'),       (SELECT COALESCE(MAX(id), 1) FROM events));
+"
+
 echo "Done."

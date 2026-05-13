@@ -1224,6 +1224,8 @@ class CGUtils {
   }
 
   public static function isElasticAvailable():bool {
+    if (CoreUtils::env('TEST_MODE'))
+      return false;
     try {
       $elastic_avail = CoreUtils::elasticClient()->ping();
     }

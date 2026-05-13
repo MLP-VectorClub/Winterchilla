@@ -2,19 +2,17 @@
 
 namespace Tests\Browser\Helpers;
 
-use function Pest\Browser\page;
-
 trait AuthHelper {
-  public function loginAs(int $userId): void {
-    page()->goto(TestSeederConstants::BASE_URL . "/test-login/$userId");
-    page()->waitForURL(TestSeederConstants::BASE_URL . '/');
+  protected function loginAs(int $userId, string $path = '/'): mixed {
+    return visit(TestSeederConstants::BASE_URL . '/test-login/' . $userId)
+      ->navigate(TestSeederConstants::BASE_URL . $path);
   }
 
-  public function loginAsRole(string $role): void {
-    $this->loginAs(match ($role) {
-      'user'  => TestSeederConstants::USER_ID,
-      'admin' => TestSeederConstants::ADMIN_ID,
-      default => throw new \InvalidArgumentException("Unknown test role: $role"),
-    });
+  protected function loginAsAdmin(string $path = '/'): mixed {
+    return $this->loginAs(TestSeederConstants::ADMIN_ID, $path);
+  }
+
+  protected function loginAsUser(string $path = '/'): mixed {
+    return $this->loginAs(TestSeederConstants::USER_ID, $path);
   }
 }

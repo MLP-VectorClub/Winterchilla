@@ -87,7 +87,7 @@ class Event extends NSModel implements Linkable {
   }
 
   public function getEntryRoleName():string {
-    return self::SPECIAL_ENTRY_ROLES[$this->entry_role];
+    return self::SPECIAL_ENTRY_ROLES[$this->entry_role] ?? 'All Users';
   }
 
   public function getEntriesHTML(bool $lazyload = false, bool $wrap = WRAP):string {
@@ -100,6 +100,9 @@ class Event extends NSModel implements Linkable {
   }
 
   public function getWinnerHTML(bool $wrap = WRAP):string {
+    if ($this->result_favme === null)
+      return '';
+
     $deviation = DeviantArt::getCachedDeviation($this->result_favme);
     if ($deviation){
       $HTML = '<div id="final-image"><div>'.$deviation->toLinkWithPreview().'</div></div>';

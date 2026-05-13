@@ -73,7 +73,7 @@
       .append(
         `<label>
 					<span>Name (2-70 chars.)</span>
-					<input type="text" name="label" placeholder="Enter a name" pattern="${PRINTABLE_ASCII_PATTERN.replace('+', '{2,70}')}" required maxlength="70">
+					<input type="text" name="label" data-testid="form-label-input" placeholder="Enter a name" pattern="${PRINTABLE_ASCII_PATTERN.replace('+', '{2,70}')}" required maxlength="70">
 				</label>
 				<div class="label">
 					<span>Additional notes (1000 chars. max, optional)</span>
@@ -393,6 +393,7 @@
         $colorInput:
           $.mk('input').attr({
             'class': 'clri',
+            'data-testid': 'form-color-hex',
             autocomplete: 'off',
             spellcheck: 'false',
           }).patternAttr(HEX_COLOR_PATTERN).on('keyup change input', (e, override) => {
@@ -405,6 +406,7 @@
         $colorLabel:
           $.mk('input').attr({
             'class': 'clrl',
+            'data-testid': 'form-color-label',
             list: 'common-color-names',
             pattern: PRINTABLE_ASCII_PATTERN.replace('+', '{3,30}'),
             maxlength: 30,
@@ -456,6 +458,7 @@
           $.mk('input').attr({
             type: 'text',
             name: 'label',
+            'data-testid': 'form-label-input',
             pattern: PRINTABLE_ASCII_PATTERN.replace('+', '{2,30}'),
             required: true,
             list: 'common-cg-names',

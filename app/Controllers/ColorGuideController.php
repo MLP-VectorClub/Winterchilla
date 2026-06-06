@@ -372,9 +372,6 @@ class ColorGuideController extends Controller {
   }
 
   public function blendingReverse():void {
-    if (Permission::insufficient('staff'))
-      CoreUtils::noPerm();
-
     CoreUtils::fixPath('/cg/blending-reverse');
 
     CoreUtils::loadPage(__METHOD__, [

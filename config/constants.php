@@ -5,9 +5,6 @@ use App\RegExp;
 
 // Configuration \\
 define('HTTPS', !empty($_SERVER['HTTPS']));
-define('ORIGIN', (HTTPS ? 'https' : 'http').'://'.($_SERVER['SERVER_NAME'] ?? 'localhost'));
-const WS_LOCAL_ORIGIN = 'http://localhost';
-const ABSPATH = ORIGIN.'/';
 require __DIR__.'/init/path-constants.php';
 define('POST_REQUEST', ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST');
 const GITHUB_PROJECT_NAME = 'MLP-VectorClub/Winterchilla';
@@ -20,6 +17,8 @@ const API_SCHEMA_PATH = 'dist/api.json';
 const PRIVATE_API_PATH = '/api/private';
 
 require __DIR__.'/init/env.php';
+define('ORIGIN', $_ENV['APP_URL'] ?? ((HTTPS ? 'https' : 'http').'://'.($_SERVER['SERVER_NAME'] ?? 'localhost')));
+const ABSPATH = ORIGIN.'/';
 
 // Some constants \\
 # integer

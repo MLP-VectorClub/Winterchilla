@@ -1132,7 +1132,7 @@ class CGUtils {
 
   public static function getExportData() {
     $json = [
-      '$schema' => ORIGIN.'/dist/mlpvc-colorguide-schema.json',
+      '$schema' => ABSPATH.'dist/mlpvc-colorguide-schema.json',
       'Appearances' => [],
       'Tags' => [],
     ];

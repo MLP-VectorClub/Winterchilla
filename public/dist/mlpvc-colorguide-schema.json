@@ -51,6 +51,10 @@
         "private": {
           "type": "boolean"
         },
+        "Sprite": {
+          "type": "string",
+          "description": "Relative URL to the sprite image for this appearance. Only present when a sprite is available."
+        },
         "CutieMark": {
           "type": "object",
           "additionalProperties": {

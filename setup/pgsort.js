@@ -2,22 +2,22 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
-import glob from 'glob';
+import { glob } from 'glob';
 
 const cwd = path.dirname(url.fileURLToPath(import.meta.url));
 const parseRow = row => {
 	let match = row.match(/VALUES \((\d+)(?:, (\d+|NULL))?[, )]/);
 	return match ? [match[1], match[2]] : [];
 };
-glob('*.pg.sql', { cwd, dot: false, absolute: true }, function(err, files) {
-	if (err) throw err;
+const files = await glob('*.pg.sql', { cwd, dot: false, absolute: true });
 
-	for (const fpath of files)
+for (const fpath of files) {
+	await new Promise((resolve, reject) => {
 		fs.readFile(fpath, 'utf8', function(err, data) {
-			if (err) throw err;
+			if (err) return reject(err);
 			let test = /INSERT INTO ((?:public\.)?[a-z_-]+)(?:\s+\([^)]+\))?\s+VALUES\s*\((\d+),[\s\S]+?;(?:\r|\r\n|\n)/g;
 			if (!test.test(data))
-				return;
+				return resolve();
 			let Tables = {},
 				TableCounters = {};
 			data.replace(test, function(row, table) {
@@ -52,7 +52,9 @@ glob('*.pg.sql', { cwd, dot: false, absolute: true }, function(err, files) {
 			data = data.replace(/\r\n?/g, '\n');
 
 			fs.writeFile(fpath, data, function(err) {
-				if (err) throw err;
+				if (err) return reject(err);
+				resolve();
 			});
 		});
-});
+	});
+}

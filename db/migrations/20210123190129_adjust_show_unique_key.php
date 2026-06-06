@@ -13,7 +13,6 @@ class AdjustShowUniqueKey extends AbstractMigration {
   public function down() {
     $this->query('ALTER TABLE show DROP CONSTRAINT IF EXISTS "show_season_episode_generation"');
     $this->table('show')
-      ->removeIndex(['season', 'episode', 'generation'])
       ->addIndex(['season', 'episode'], ['unique' => true])
       ->update();
   }

@@ -205,7 +205,8 @@ class CGUtils {
     if (empty($aka))
       $aka = '';
 
-    $HTML .= "<li><a href='$url'>$preview<span class='name'>$sprite<span class='event-label'>{$appearance->getBabelLabel()}</span></span>$aka</a></li>";
+    $added = '<span class="added"><span class="typcn typcn-time"></span> '.Time::tag($appearance->created_at).'</span>';
+    $HTML .= "<li><a href='$url'>$preview<span class='name'>$sprite<span class='event-label'>{$appearance->getBabelLabel()}</span></span>$aka$added</a></li>";
   }
 
   /**

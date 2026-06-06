@@ -132,7 +132,7 @@ class ColorGuideController extends Controller {
         DB::$instance->orderBy('created_at', 'DESC');
       break;
     }
-    $appearances = Appearances::get($this->guide, null, null, 'id,label,private');
+    $appearances = Appearances::get($this->guide, null, null, 'id,label,private,created_at');
 
     $path = Uri::new("{$this->path}/full");
     if ($sort_by !== 'relevance')

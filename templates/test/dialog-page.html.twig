@@ -1,0 +1,60 @@
+{# @controller \App\Controllers\TestController::dialogPage #}
+{# @var title string #}
+{% extends "layout/base.html.twig" %}
+
+{% block content %}
+<div id="content">
+  <h1>{{ title }}</h1>
+
+  <div class="align-center" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:16px">
+    <button data-testid="trigger-fail"
+            onclick="$.Dialog.fail('Error Title', 'Error message content')">
+      Open fail dialog
+    </button>
+    <button data-testid="trigger-success"
+            onclick="$.Dialog.success('Success Title', 'Success message', true)">
+      Open success dialog
+    </button>
+    <button data-testid="trigger-wait"
+            onclick="$.Dialog.wait('Wait Title', 'Please hold')">
+      Open wait dialog
+    </button>
+    <button data-testid="trigger-request"
+            onclick="$.Dialog.request('Form Title', jQuery('<form id=&quot;test-form&quot;><label>Name<input type=&quot;text&quot; name=&quot;name&quot;></label></form>'), 'Submit', function($form){ window.__lastRequestForm = $form[0]; })">
+      Open request dialog
+    </button>
+    <button data-testid="trigger-confirm"
+            onclick="$.Dialog.confirm('Confirm Title', 'Are you sure?', ['Yes', 'No'], function(sure){ window.__lastConfirmResult = sure; })">
+      Open confirm dialog
+    </button>
+    <button data-testid="trigger-info"
+            onclick="$.Dialog.info('Info Title', 'Info message')">
+      Open info dialog
+    </button>
+    <button data-testid="trigger-segway"
+            onclick="window.__segwayFired = false; $.Dialog.segway('Nav Title', 'Navigation pending', 'Go', function(){ window.__segwayFired = true; })">
+      Open segway dialog
+    </button>
+    <button data-testid="trigger-request-for-inline"
+            onclick="openRequestWithInlineTriggers()">
+      Open request for inline test
+    </button>
+  </div>
+</div>
+
+<script nonce="{{ constant('CSP_NONCE') }}">
+function openRequestWithInlineTriggers() {
+  var $form = jQuery('<form id="inline-form"><div style="display:flex;gap:6px;flex-wrap:wrap;padding:4px 0">' +
+    '<button type="button" data-testid="dialog-trigger-inline-fail" ' +
+    'onclick="$.Dialog.fail(false, \'Inline fail notice\')">Trigger inline fail</button>' +
+    '<button type="button" data-testid="dialog-trigger-inline-fail-titled" ' +
+    'onclick="$.Dialog.fail(\'Notice Title\', \'Titled notice\')">Trigger titled fail</button>' +
+    '<button type="button" data-testid="dialog-trigger-inline-wait" ' +
+    'onclick="$.Dialog.wait(false, \'Loading inline\')">Trigger inline wait</button>' +
+    '<button type="button" data-testid="dialog-trigger-clear-notice" ' +
+    'onclick="$.Dialog.clearNotice()">Clear notice</button>' +
+    '</div></form>');
+  $.Dialog.request('Request Dialog', $form, 'Submit');
+}
+</script>
+{% endblock %}

@@ -1157,7 +1157,7 @@ class CGUtils {
 
       $sprite_url = $p->getSpriteURL();
       if ($sprite_url !== '')
-        $append_appearance['Sprite'] = $sprite_url;
+        $append_appearance['Sprite'] = ORIGIN.$sprite_url;
 
       $cms = Cutiemarks::get($p);
       if (!empty($cms)){

@@ -1132,7 +1132,7 @@ class CGUtils {
 
   public static function getExportData() {
     $json = [
-      '$schema' => ABSPATH.'dist/mlpvc-colorguide-schema.json',
+      '$schema' => ABSPATH.'dist/mlpvc-colorguide-schema.json?v1.1',
       'Appearances' => [],
       'Tags' => [],
     ];
@@ -1154,6 +1154,10 @@ class CGUtils {
         'added' => gmdate('Y-m-d\TH:i:s\Z', $p->created_at->getTimestamp()),
         'private' => $p->private,
       ];
+
+      $sprite_url = $p->getSpriteURL();
+      if ($sprite_url !== '')
+        $append_appearance['Sprite'] = $sprite_url;
 
       $cms = Cutiemarks::get($p);
       if (!empty($cms)){

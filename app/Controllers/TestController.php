@@ -16,6 +16,14 @@ class TestController extends Controller {
       CoreUtils::notFound();
   }
 
+  public function dialogPage(): void {
+    CoreUtils::checkNutshell();
+    CoreUtils::loadPage(__METHOD__, [
+      'title'   => 'Dialog Test Page',
+      'noindex' => true,
+    ]);
+  }
+
   public function loginAs(array $params): void {
     $user = User::find((int)($params['user_id'] ?? 0));
     if ($user === null)

@@ -152,12 +152,17 @@ class ColorGuideController extends Controller {
     if ($is_staff)
       $libs[] = 'sortable';
 
+    $json_export_url = CoreUtils::cachedAssetLink('mlpvc-colorguide', 'dist', 'json');
+    $json_export_time = Time::tag((int)explode('?', $json_export_url)[1]);
+
     $import = [
       'guide' => $this->guide,
       'appearances' => $appearances,
       'sort_by' => $sort_by,
       'is_staff' => $is_staff,
       'full_list' => CGUtils::getFullListHTML($appearances, $sort_by, $this->guide),
+      'json_export_url' => $json_export_url,
+      'json_export_time' => $json_export_time,
     ];
     if ($is_staff){
       $import['max_upload_size'] = CoreUtils::getMaxUploadSize();
@@ -297,6 +302,9 @@ class ColorGuideController extends Controller {
     if (!file_exists(CGUtils::GUIDE_EXPORT_PATH))
       CGUtils::saveExportData();
 
+    $json_export_url = CoreUtils::cachedAssetLink('mlpvc-colorguide', 'dist', 'json');
+    $json_export_time = Time::tag((int)explode('?', $json_export_url)[1]);
+
     $settings = [
       'title' => $title,
       'heading' => $heading,
@@ -311,6 +319,8 @@ class ColorGuideController extends Controller {
         'elastic_avail' => $elastic_avail,
         'pinned_appearances' => PinnedAppearance::getGuideAppearances($this->guide),
         'search_query' => $search_query ?? null,
+        'json_export_url' => $json_export_url,
+        'json_export_time' => $json_export_time,
       ],
     ];
     if (Permission::sufficient('staff')){

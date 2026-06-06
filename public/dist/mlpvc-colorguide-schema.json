@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "MLP Vector Club Color Guide Export",
+  "required": ["Appearances", "Tags"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "Appearances": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Appearance"
+      }
+    },
+    "Tags": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Tag"
+      }
+    }
+  },
+  "definitions": {
+    "Appearance": {
+      "type": "object",
+      "required": ["id", "order", "label", "notes", "guide", "added", "private", "ColorGroups", "TagIDs", "RelatedAppearances"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "guide": {
+          "type": "string",
+          "enum": ["pony", "eqg"]
+        },
+        "added": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "private": {
+          "type": "boolean"
+        },
+        "CutieMark": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/CutieMark"
+          }
+        },
+        "ColorGroups": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": ["_hidden"],
+              "additionalProperties": false,
+              "properties": {
+                "_hidden": {
+                  "type": "boolean",
+                  "enum": [true]
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/ColorGroup"
+              }
+            }
+          ]
+        },
+        "TagIDs": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "RelatedAppearances": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "CutieMark": {
+      "type": "object",
+      "required": ["facing", "svg"],
+      "additionalProperties": false,
+      "properties": {
+        "facing": {
+          "type": "string",
+          "enum": ["left", "right"]
+        },
+        "svg": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "format": "uri"
+        },
+        "contributor": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "ColorGroup": {
+      "type": "object",
+      "required": ["id", "label", "order", "Colors"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "Colors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Color"
+          }
+        }
+      }
+    },
+    "Color": {
+      "type": "object",
+      "required": ["order", "label", "hex"],
+      "additionalProperties": false,
+      "properties": {
+        "order": {
+          "type": "integer"
+        },
+        "label": {
+          "type": "string"
+        },
+        "hex": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        }
+      }
+    },
+    "Tag": {
+      "type": "object",
+      "required": ["id", "name", "title", "type", "uses", "synonym_of", "created_at", "updated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "title": {
+          "type": ["string", "null"]
+        },
+        "type": {
+          "type": ["string", "null"],
+          "enum": ["app", "cat", "gen", "spec", "char", "warn", null]
+        },
+        "uses": {
+          "type": "integer"
+        },
+        "synonym_of": {
+          "type": ["integer", "null"]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

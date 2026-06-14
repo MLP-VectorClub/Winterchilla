@@ -85,9 +85,12 @@ class AuthController extends Controller {
   /**
    * @OA\Post(
    *   path="/da-auth/sign-out",
-   *   description="Signs the current user out by deleting their session. If 'everywhere' is set, deletes all of the current user's sessions, or (with staff permission) all sessions belonging to a specified target user.",
+   *   description="Signs the current user out by deleting their session. If 'everywhere' is set, deletes all of the current user's sessions, or (with staff permission) all sessions belonging to a specified target user. If no session cookie is present, this is a no-op that still returns a success response.",
    *   tags={"authentication"},
-   *   security={},
+   *   security={
+   *     {"SessionCookie": {}},
+   *     {}
+   *   },
    *   @OA\RequestBody(
    *     required=false,
    *     @OA\MediaType(
@@ -177,9 +180,12 @@ class AuthController extends Controller {
   /**
    * @OA\Get(
    *   path="/da-auth/status",
-   *   description="Checks the current sign-in/session status. If the DeviantArt access token has expired, this may trigger a background refresh and report that the session is updating.",
+   *   description="Checks the current sign-in/session status. If the DeviantArt access token has expired, this may trigger a background refresh and report that the session is updating. If no session cookie is present, this reports a logged-out status.",
    *   tags={"authentication"},
-   *   security={},
+   *   security={
+   *     {"SessionCookie": {}},
+   *     {}
+   *   },
    *   @OA\Response(
    *     response="200",
    *     description="OK",

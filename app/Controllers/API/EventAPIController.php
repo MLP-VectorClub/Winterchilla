@@ -75,6 +75,7 @@ class EventAPIController extends APIController {
    *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
    *   @OA\Response(response="403", description="Insufficient permissions, or editing events is currently disallowed",
    *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="404", description="Event not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
    * )
    * @OA\Delete(
    *   path="/event/{id}",

@@ -1551,9 +1551,7 @@ class CoreUtils {
     $openapi = scan([
       PROJPATH.'app/Controllers/API',
       PROJPATH.'app/Controllers/EventController.php',
-      PROJPATH.'app/Controllers/EventEntryController.php',
       PROJPATH.'app/Controllers/UserController.php',
-      PROJPATH.'app/Controllers/PreferenceController.php',
       PROJPATH.'app/Controllers/PersonalGuideController.php',
       PROJPATH.'app/Controllers/AuthController.php',
       PROJPATH.'app/Controllers/AboutController.php',
@@ -1563,8 +1561,6 @@ class CoreUtils {
       PROJPATH.'app/Controllers/TagController.php',
       PROJPATH.'app/Controllers/ColorGuideController.php',
       PROJPATH.'app/Controllers/AdminController.php',
-      PROJPATH.'app/Controllers/NotificationsController.php',
-      PROJPATH.'app/Controllers/SettingController.php',
     ]);
     if (!$openapi->validate())
       throw new RuntimeException("Invalid OpenAPI schema, could not generate $output_path");

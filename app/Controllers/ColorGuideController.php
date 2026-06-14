@@ -23,6 +23,7 @@ use App\UserPrefs;
 use League\Uri\Components\Query;
 use League\Uri\Modifier;
 use League\Uri\Uri;
+use OpenApi\Annotations as OA;
 
 class ColorGuideController extends Controller {
   /** @var bool */
@@ -177,6 +178,30 @@ class ColorGuideController extends Controller {
     ]);
   }
 
+  /**
+   * @OA\Post(
+   *   path="/cg/full/reorder",
+   *   description="Reorder the appearances in a guide's full list. Staff only.",
+   *   tags={"color guide"},
+   *   @OA\RequestBody(required=true, @OA\JsonContent(
+   *     required={"list"},
+   *     @OA\Property(property="list", type="array", description="Appearance IDs in the desired order", @OA\Items(ref="#/components/schemas/OneBasedId")),
+   *     @OA\Property(property="ordering", type="string", enum={"label","relevance","added"}, description="Sort order used to render the returned list")
+   *   )),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(allOf={
+   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(type="object", additionalProperties=false,
+   *         @OA\Property(property="html", type="string", description="Rendered HTML of the full list")
+   *       )
+   *     })
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function reorderFullList($params):void {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
@@ -331,6 +356,19 @@ class ColorGuideController extends Controller {
     CoreUtils::loadPage(__METHOD__, $settings);
   }
 
+  /**
+   * @OA\Get(
+   *   path="/cg/export",
+   *   description="Download the full color guide export data as a JSON file. Developer permission required.",
+   *   tags={"color guide"},
+   *   @OA\Response(
+   *     response="200",
+   *     description="The color guide export JSON file",
+   *     @OA\MediaType(mediaType="application/json")
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function export():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -341,6 +379,15 @@ class ColorGuideController extends Controller {
     CoreUtils::downloadAsFile(CGUtils::getExportData(), 'mlpvc-colorguide.json');
   }
 
+  /**
+   * @OA\Post(
+   *   path="/cg/reindex",
+   *   description="Trigger a full reindex of the color guide search index. Developer permission required.",
+   *   tags={"color guide"},
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function reindex():void {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();

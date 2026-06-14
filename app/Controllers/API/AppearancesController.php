@@ -185,6 +185,12 @@ class AppearancesController extends APIController {
    * @OA\Schema(
    *   schema="SlimGuideTag",
    *   type="object",
+   *   required={
+   *     "id",
+   *     "name",
+   *     "type"
+   *   },
+   *   additionalProperties=false,
    *   @OA\Property(
    *     property="id",
    *     ref="#/components/schemas/OneBasedId"
@@ -196,6 +202,13 @@ class AppearancesController extends APIController {
    *     maxLength=255,
    *     example="mane six",
    *     description="Tag name (all lowercase)"
+   *   ),
+   *   @OA\Property(
+   *     property="type",
+   *     type="string",
+   *     nullable=true,
+   *     enum={"app", "cat", "gen", "spec", "char", "warn", null},
+   *     description="Category this tag belongs to, or null if uncategorized"
    *   )
    * )
    * @param Tag $t

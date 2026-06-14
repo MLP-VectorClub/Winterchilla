@@ -22,10 +22,37 @@ use App\Response;
 use App\Twig;
 use App\UserPrefs;
 use App\Users;
+use OpenApi\Annotations as OA;
 use RuntimeException;
 use Throwable;
 use function count;
 
+/**
+ * @OA\Schema(
+ *   schema="Session",
+ *   type="object",
+ *   description="Represents a login session for a user",
+ *   required={
+ *     "id",
+ *     "user_id",
+ *     "platform",
+ *     "browser_name",
+ *     "browser_ver",
+ *     "created",
+ *     "last_visit",
+ *     "expired"
+ *   },
+ *   additionalProperties=false,
+ *   @OA\Property(property="id", type="integer"),
+ *   @OA\Property(property="user_id", type="integer"),
+ *   @OA\Property(property="platform", type="string", nullable=true),
+ *   @OA\Property(property="browser_name", type="string", nullable=true),
+ *   @OA\Property(property="browser_ver", type="string", nullable=true),
+ *   @OA\Property(property="created", type="string", format="date-time"),
+ *   @OA\Property(property="last_visit", type="string", format="date-time"),
+ *   @OA\Property(property="expired", type="boolean")
+ * )
+ */
 class UserController extends Controller {
   use UserLoaderTrait;
 
@@ -210,6 +237,34 @@ class UserController extends Controller {
     ]);
   }
 
+  /**
+   * @OA\Delete(
+   *   path="/user/session/{id}",
+   *   description="Deletes one of the current user's login sessions, or any session if the current user is staff",
+   *   tags={"users"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="Session successfully removed",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="The session does not belong to the current user and they are not staff",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="No session found with this ID, or missing ID",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function sessionApi($params):void {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();
@@ -228,6 +283,52 @@ class UserController extends Controller {
     Response::success('Session successfully removed');
   }
 
+  /**
+   * @OA\Put(
+   *   path="/user/{id}/role",
+   *   description="Changes the role of the specified user. Requires staff permission, the target user must be in the same or a lower-level group than the requester, and a user cannot change their own role.",
+   *   tags={"users"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\RequestBody(
+   *     required=true,
+   *     @OA\MediaType(
+   *       mediaType="application/x-www-form-urlencoded",
+   *       @OA\Schema(
+   *         required={"value"},
+   *         @OA\Property(property="value", ref="#/components/schemas/UserRole", description="The new role to assign to the user")
+   *       )
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="Role updated successfully (or already in that role, in which case 'already_in' is true)",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(
+   *           type="object",
+   *           @OA\Property(property="already_in", type="boolean")
+   *         )
+   *       }
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission, or attempting to change own role, or attempting to change a higher-level user's role",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="User not found",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function roleApi($params):void {
     if ($this->action !== 'PUT')
       CoreUtils::notAllowed();
@@ -261,6 +362,39 @@ class UserController extends Controller {
     Response::done();
   }
 
+  /**
+   * @OA\Post(
+   *   path="/user/password",
+   *   description="Sets a new password for the currently signed in user. Requires staff permission. If a password is already set, the current password must be provided for verification. On success, all existing sessions of the user are deleted.",
+   *   tags={"users","authentication"},
+   *   @OA\RequestBody(
+   *     required=true,
+   *     @OA\MediaType(
+   *       mediaType="application/x-www-form-urlencoded",
+   *       @OA\Schema(
+   *         required={"new_password"},
+   *         @OA\Property(property="current_password", type="string", description="The user's current password, required if a password is already set"),
+   *         @OA\Property(property="new_password", type="string", minLength=8, maxLength=300, description="The new password to set")
+   *       )
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="Password successfully changed",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="401",
+   *     description="Not signed in, or current password is incorrect",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission (staff required)",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function passwordApi():void {
     if ($this->action !== 'POST'){
       CoreUtils::notAllowed();
@@ -327,6 +461,45 @@ class UserController extends Controller {
     Response::success('Your new password has been set successfully. As a security precaution your existing sessions have been deleted, so you will need to log in again.');
   }
 
+  /**
+   * @OA\Post(
+   *   path="/user/{id}/email",
+   *   description="Requests an e-mail address change (or resend of a pending verification e-mail) for the specified user. Requires staff permission. When changing the address of the requester's own account, the current password must be set and verified first.",
+   *   tags={"users"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\RequestBody(
+   *     required=true,
+   *     @OA\MediaType(
+   *       mediaType="application/x-www-form-urlencoded",
+   *       @OA\Schema(
+   *         @OA\Property(property="resend", type="boolean", description="If true, resends the existing pending verification e-mail instead of requesting a new address change"),
+   *         @OA\Property(property="new_email", type="string", minLength=3, maxLength=128, description="The new e-mail address to verify, required unless 'resend' is true"),
+   *         @OA\Property(property="current_password", type="string", description="The user's current password, required when changing their own e-mail address")
+   *       )
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="A confirmation e-mail has been sent",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="401",
+   *     description="Not signed in",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission (staff required)",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function emailApi($params):void {
     if ($this->action !== 'POST'){
       CoreUtils::notAllowed();
@@ -391,6 +564,39 @@ class UserController extends Controller {
     Response::success('A confirmation e-mail has been sent to the specified address with a link to verify your address. Click the link to update the address in your account.');
   }
 
+  /**
+   * @OA\Post(
+   *   path="/user/verify",
+   *   description="Verifies or blocks an e-mail address based on a verification hash sent to that address. Requires staff permission.",
+   *   tags={"users"},
+   *   @OA\RequestBody(
+   *     required=true,
+   *     @OA\MediaType(
+   *       mediaType="application/x-www-form-urlencoded",
+   *       @OA\Schema(
+   *         required={"hash","action"},
+   *         @OA\Property(property="hash", type="string", minLength=128, maxLength=128, description="The verification hash sent to the e-mail address"),
+   *         @OA\Property(property="action", type="string", enum={"verify","block"}, description="Whether to verify the e-mail address for the account, or add it to the do-not-send list")
+   *       )
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="The e-mail address was successfully verified or blocked",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="400",
+   *     description="The verification hash is invalid or expired, or the e-mail address could not be updated",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission (staff required)",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function verifyApi():void {
     if ($this->action !== 'POST'){
       CoreUtils::notAllowed();
@@ -513,6 +719,43 @@ class UserController extends Controller {
     Response::done(['html' => $CachedDeviation->toLinkWithPreview()]);
   }
 
+  /**
+   * @OA\Delete(
+   *   path="/user/{id}/contrib-cache",
+   *   description="Clears the cached contributions list of the specified user and returns the freshly rendered contributions HTML. Requires staff permission.",
+   *   tags={"users"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="Contributions cache successfully cleared",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(
+   *           type="object",
+   *           required={"html"},
+   *           @OA\Property(property="html", type="string", description="Rendered contributions section HTML")
+   *         )
+   *       }
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission (staff required)",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="The specified user does not exist, or missing ID",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function contribCacheApi($params):void {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();
@@ -614,6 +857,38 @@ class UserController extends Controller {
     ]);
   }
 
+  /**
+   * @OA\Get(
+   *   path="/user/{id}/avatar-wrap",
+   *   description="Returns rendered HTML for the avatar of the specified user",
+   *   tags={"users"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(
+   *           type="object",
+   *           required={"html"},
+   *           @OA\Property(property="html", type="string", description="Rendered avatar wrapper HTML")
+   *         )
+   *       }
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="The specified user does not exist",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function avatarWrap($params):void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

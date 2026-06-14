@@ -882,9 +882,11 @@ class CoreUtils {
    */
   public static function getFooterGitInfoRaw():array {
     $commit_info = RedisHelper::get('commit_info');
-    if ($commit_info === null || !self::env('PRODUCTION')){
-      $commit_info = rtrim(shell_exec('git log -1 --date=short --pretty="format:%h;%ci"'));
-      RedisHelper::set('commit_info', $commit_info);
+    if (empty($commit_info) || !self::env('PRODUCTION')){
+      // -c safe.directory=* avoids "detected dubious ownership" errors when the
+      // files are owned by a different user than the one running the web server
+      $commit_info = rtrim(shell_exec('git -c safe.directory=* log -1 --date=short --pretty="format:%h;%ci" 2>/dev/null'));
+      if (!empty($commit_info)) RedisHelper::set('commit_info', $commit_info);
     }
 
     $data = [];
@@ -1545,7 +1547,25 @@ class CoreUtils {
     $output_path = APPATH.API_SCHEMA_PATH;
     if ($only_if_missing && file_exists($output_path))
       return;
-    $openapi = scan(PROJPATH.'app/Controllers/API');
+    $openapi = scan([
+      PROJPATH.'app/Controllers/API',
+      PROJPATH.'app/Controllers/EventController.php',
+      PROJPATH.'app/Controllers/EventEntryController.php',
+      PROJPATH.'app/Controllers/UserController.php',
+      PROJPATH.'app/Controllers/PreferenceController.php',
+      PROJPATH.'app/Controllers/PersonalGuideController.php',
+      PROJPATH.'app/Controllers/AuthController.php',
+      PROJPATH.'app/Controllers/AboutController.php',
+      PROJPATH.'app/Controllers/ShowController.php',
+      PROJPATH.'app/Controllers/PostController.php',
+      PROJPATH.'app/Controllers/AppearanceController.php',
+      PROJPATH.'app/Controllers/TagController.php',
+      PROJPATH.'app/Controllers/ColorGroupController.php',
+      PROJPATH.'app/Controllers/ColorGuideController.php',
+      PROJPATH.'app/Controllers/AdminController.php',
+      PROJPATH.'app/Controllers/NotificationsController.php',
+      PROJPATH.'app/Controllers/SettingController.php',
+    ]);
     if (!$openapi->validate())
       throw new RuntimeException("Invalid OpenAPI schema, could not generate $output_path");
     self::createFoldersFor($output_path);

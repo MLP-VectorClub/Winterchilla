@@ -15,7 +15,6 @@ const DISCORD_INVITE_LINK = 'https://discord.mlpvector.club';
 define('CSP_NONCE', base64_encode(random_bytes(16)));
 const API_SCHEMA_PATH = 'dist/api.json';
 const PUBLIC_API_V0_PATH = '/api/v0';
-const PRIVATE_API_PATH = '/api/private';
 
 require __DIR__.'/init/env.php';
 define('ORIGIN', $_ENV['APP_URL'] ?? ((HTTPS ? 'https' : 'http').'://'.($_SERVER['SERVER_NAME'] ?? 'localhost')));

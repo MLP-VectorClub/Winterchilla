@@ -71,8 +71,7 @@ class UsersController extends APIController {
    *   additionalProperties=false,
    *   @OA\Property(
    *     property="id",
-   *     type="string",
-   *     format="uuid"
+   *     ref="#/components/schemas/OneBasedId"
    *   ),
    *   @OA\Property(
    *     property="name",

@@ -7,6 +7,7 @@ use App\Models\Session;
 use App\Permission;
 use App\Response;
 use Monolog\Logger;
+use OpenApi\Annotations as OA;
 
 class AboutController extends Controller {
   public function index() {
@@ -52,6 +53,27 @@ class AboutController extends Controller {
     ]);
   }
 
+  /**
+   * @OA\Get(
+   *   path="/about/upcoming",
+   *   description="Returns rendered HTML for the sidebar's list of upcoming episodes/events",
+   *   tags={"server info"},
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(
+   *           type="object",
+   *           required={"html"},
+   *           @OA\Property(property="html", type="string", description="Rendered upcoming items HTML")
+   *         )
+   *       }
+   *     )
+   *   )
+   * )
+   */
   public function upcoming() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

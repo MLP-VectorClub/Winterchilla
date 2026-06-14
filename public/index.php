@@ -16,6 +16,7 @@ $safe_uri = preg_replace('/[^ -~]/', '', $request_uri);
 CoreUtils::fixPath($safe_uri);
 
 require CONFPATH.'routes/index.php';
+/** @var $router AltoRouter */
 /** @var $match array */
 $match = $router->match($safe_uri);
 if (!isset($match['target']))

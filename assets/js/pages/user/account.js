@@ -128,7 +128,7 @@
 
     $.Dialog.wait('Syncing');
 
-    $.post(`/discord-connect/sync/${userId}`, $.mkAjaxHandler(function() {
+    $.API.post(`/discord-connect/sync/${userId}`, function() {
       if (!this.status){
         if (this.segway)
           $.Dialog.segway(false, $.mk('div').attr('class', 'color-red').html(this.message));
@@ -137,7 +137,7 @@
       }
 
       $.Navigation.reload(true);
-    }));
+    });
   });
   $discordConnect.find('.unlink').on('click', function(e) {
     e.preventDefault();
@@ -154,11 +154,11 @@
 
         $.Dialog.wait(false);
 
-        $.post(`/discord-connect/unlink/${userId}`, $.mkAjaxHandler(function() {
+        $.API.post(`/discord-connect/unlink/${userId}`, function() {
           if (!this.status) return $.Dialog.fail(false, this.message);
 
           $.Dialog.segway(false, this.message);
-        }));
+        });
       },
     );
   });

@@ -72,6 +72,7 @@ class PostController extends Controller {
    *   path="/post/{id}/reload",
    *   description="Reload a post's list item, checking whether its image is still available and merging the broken image with a Derpibooru match if possible. Marks the post as broken if its image cannot be found.",
    *   tags={"posts"},
+   *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Parameter(name="from", in="query", required=false, @OA\Schema(type="string", enum={"profile"}), description="If set to 'profile', renders the list item for the profile page context"),
    *   @OA\Parameter(name="cache", in="query", required=false, @OA\Schema(type="string"), description="If present, cached data may be used when rendering the list item"),
@@ -448,6 +449,7 @@ class PostController extends Controller {
    *   path="/post/{id}",
    *   description="Get information about a single post for editing purposes. The user must have permission to edit the post (be the requester/reserver, or staff).",
    *   tags={"posts"},
+   *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Response(
    *     response="200",
@@ -513,6 +515,7 @@ class PostController extends Controller {
    *   path="/post/{id}",
    *   description="Update an existing post's details (image, label, etc). The user must have permission to edit the post (be the requester/reserver, or staff).",
    *   tags={"posts"},
+   *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(
    *     @OA\JsonContent(
@@ -679,7 +682,7 @@ class PostController extends Controller {
    * )
    * @OA\Delete(
    *   path="/post/{id}/finish",
-   *   description="Unmark a finished post (remove its finished image), or delete the reservation entirely if `unbind` is set. Requires the user to be the reserver or staff.",
+   *   description="Unmark a finished post (remove its finished image), or delete the reservation entirely if `unbind` is set. Requires member permission and the user to be the reserver or staff.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Parameter(name="unbind", in="query", required=false, @OA\Schema(type="string"), description="If present, removes the reservation from the post entirely (or deletes the post if it's a manually added reservation)"),
@@ -788,6 +791,7 @@ class PostController extends Controller {
    *   path="/post/{id}/locate",
    *   description="Locate a post's page/section given its ID, for use with old shortlink-style URLs. Returns either a redirect target (castle/show info) or a `refresh` instruction if the post belongs to the currently viewed show.",
    *   tags={"posts"},
+   *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Parameter(name="show_id", in="query", required=false, @OA\Schema(ref="#/components/schemas/OneBasedId"), description="ID of the show currently being viewed, to check whether the post belongs to it"),
    *   @OA\Response(
@@ -1107,6 +1111,7 @@ class PostController extends Controller {
    *   path="/post/{id}/lazyload",
    *   description="Get the rendered HTML for a post's finished image, for lazy loading on the page",
    *   tags={"posts"},
+   *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Parameter(name="viewonly", in="query", required=false, @OA\Schema(type="string"), description="If present, renders the image in a view-only context (without editing controls)"),
    *   @OA\Response(

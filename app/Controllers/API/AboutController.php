@@ -45,6 +45,7 @@ class AboutController extends APIController {
   /**
    * @OA\Get(
    *   path="/about/server",
+   *   security={},
    *   tags={"server info"},
    *   @OA\Response(
    *     response="200",

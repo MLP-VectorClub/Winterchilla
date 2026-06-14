@@ -94,7 +94,7 @@ input[readonly] {
 
 #dialogContent {
   > div:not(#dialogButtons) {
-    > form[id] {
+    form[id] {
       > * {
         display: block;
         margin: 0 auto 10px;

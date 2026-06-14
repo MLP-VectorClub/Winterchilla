@@ -1252,7 +1252,7 @@ class CGUtils {
    * @throws BadRequest400Exception
    * @throws ServerErrorResponseException
    */
-  public static function searchGuide(Pagination $pagination, string $guide, bool $searching = true, string &$title = null):array {
+  public static function searchGuide(Pagination $pagination, string $guide, bool $searching = true, ?string &$title = null):array {
     $search = new ElasticsearchDSL\Search();
     $in_order = true;
 
@@ -1398,7 +1398,7 @@ class CGUtils {
    *
    * @return string
    */
-  public static function redirectToPreferredGuidePath(?User $user = null):string {
+  public static function redirectToPreferredGuidePath(?User $user = null):void {
     $pref = UserPrefs::get('cg_defaultguide', $user);
 
     HTTP::tempRedirect('/cg'.($pref === null ? '' : "/$pref"));

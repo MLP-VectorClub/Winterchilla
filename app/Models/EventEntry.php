@@ -70,7 +70,7 @@ class EventEntry extends NSModel {
     return '';
   }
 
-  public function toListItemHTML(Event $event = null, bool $lazyload = false, bool $wrap = true):string {
+  public function toListItemHTML(?Event $event = null, bool $lazyload = false, bool $wrap = true):string {
     if ($event === null)
       $event = $this->event;
 

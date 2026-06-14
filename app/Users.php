@@ -436,7 +436,7 @@ class Users {
     return new HashManager($container);
   }
 
-  public static function validateCurrentPassword(User $user, HashManager $hash_manager = null) {
+  public static function validateCurrentPassword(User $user, ?HashManager $hash_manager = null) {
     $current_password = (new Input('current_password', 'string', [
       Input::IS_OPTIONAL => false,
       Input::CUSTOM_ERROR_MESSAGES => [
@@ -456,7 +456,7 @@ class Users {
     }
   }
 
-  public static function sendEmailValidation(User $user, string $email = null): bool {
+  public static function sendEmailValidation(User $user, ?string $email = null): bool {
     $recipient = $email ?? $user->email;
 
     $block_entry = BlockedEmail::find_by_email($recipient);

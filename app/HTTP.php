@@ -146,7 +146,7 @@ class HTTP {
    * @param string $url  Redirection target URL
    * @param int    $code HTTP status code
    */
-  private static function _redirect(string $url, int $code):void {
+  private static function _redirect(string $url, int $code):never {
     header("Location: $url", true, $code);
     $url_enc = CoreUtils::aposEncode($url);
     die("<h1>HTTP $code ".self::STATUS_CODES[$code]."</h1><p>Click <a href='$url_enc'>here</a> if you aren't redirected.</p>");
@@ -157,7 +157,7 @@ class HTTP {
    *
    * @param string $url Redirection target URL
    */
-  public static function tempRedirect(string $url):void {
+  public static function tempRedirect(string $url):never {
     self::_redirect($url, 302);
   }
 
@@ -166,7 +166,7 @@ class HTTP {
    *
    * @param string $url Redirection target URL
    */
-  public static function permRedirect(string $url):void {
+  public static function permRedirect(string $url):never {
     self::_redirect($url, 301);
   }
 

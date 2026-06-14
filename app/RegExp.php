@@ -45,19 +45,19 @@ class RegExp {
    *
    * @return bool
    */
-  public function match(string $text, array &$matches = null):bool {
+  public function match(string $text, ?array &$matches = null):bool {
     return (bool)preg_match($this->__toString(), $text, $matches);
   }
 
   /**
-   * @param string $with
-   * @param string $in
-   * @param int    $limit
-   * @param int    $count
+   * @param string   $with
+   * @param string   $in
+   * @param int      $limit
+   * @param int|null $count
    *
    * @return string|array
    */
-  public function replace(string $with, string $in, int $limit = -1, int &$count = null) {
+  public function replace(string $with, string $in, int $limit = -1, ?int &$count = null) {
     return preg_replace($this->__toString(), $with, $in, $limit, $count);
   }
 

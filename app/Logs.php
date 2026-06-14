@@ -429,7 +429,7 @@ class Logs {
     ]))->out();
   }
 
-  public static function diff(string $old, string $new, $type = 'inline', FineDiff\Granularity\Granularity $gran = null, ?callable $transformer = null):string {
+  public static function diff(string $old, string $new, $type = 'inline', ?FineDiff\Granularity\Granularity $gran = null, ?callable $transformer = null):string {
     if (!isset($gran))
       $gran = new FineDiff\Granularity\Character;
     else if ($gran instanceof FineDiff\Granularity\Paragraph)

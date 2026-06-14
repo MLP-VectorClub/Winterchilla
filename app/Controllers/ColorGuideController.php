@@ -3,17 +3,14 @@
 namespace App\Controllers;
 
 use App\Appearances;
-use App\Auth;
 use App\CGUtils;
+use App\Controllers\Traits\ColorGuideAccessTrait;
 use App\CoreUtils;
 use App\DB;
 use App\HTTP;
-use App\Input;
-use App\Models\Appearance;
-use App\Models\MajorChange;
 use App\Models\DeviantartUser;
+use App\Models\MajorChange;
 use App\Models\PinnedAppearance;
-use App\Models\User;
 use App\Pagination;
 use App\Permission;
 use App\Regexes;
@@ -23,68 +20,14 @@ use App\UserPrefs;
 use League\Uri\Components\Query;
 use League\Uri\Modifier;
 use League\Uri\Uri;
-use OpenApi\Annotations as OA;
 
 class ColorGuideController extends Controller {
-  /** @var bool */
-  protected bool $appearance_page = false;
-  /** @var string|null Guide identifier or null for personal color guides */
-  protected ?string $guide = 'pony';
-
-  protected ?User $owner = null;
-  protected bool $is_owner = false;
+  use ColorGuideAccessTrait;
 
   public function __construct() {
     parent::__construct();
 
-    $this->appearance_page = isset($_REQUEST['APPEARANCE_PAGE']);
-    if (isset($_REQUEST['owner_id']))
-      $this->guide = null;
-  }
-
-  protected function _initialize($params):void {
-    if (!empty($params['guide']) && isset(CGUtils::GUIDE_MAP[$params['guide']])) {
-      $this->guide = $params['guide'];
-    }
-    $user_id_set = isset($params['user_id']);
-
-    if ($user_id_set){
-      $this->owner = User::find($params['user_id']);
-      if (empty($this->owner))
-        CoreUtils::notFound();
-      $this->guide = null;
-    }
-    $this->is_owner = $user_id_set ? (Auth::$signed_in && Auth::$user->id === $this->owner->id) : false;
-
-    if ($user_id_set)
-      $this->path = "{$this->owner->toURL()}/cg";
-    else $this->path = rtrim("/cg/{$this->guide}", '/');
-  }
-
-  protected ?Appearance $appearance;
-
-  public function load_appearance($params, bool $set_properties = true):void {
-    if (!isset($params['id']))
-      Response::fail('Missing appearance ID');
-    $this->appearance = Appearance::find($params['id']);
-    if (empty($this->appearance))
-      CoreUtils::notFound();
-    if (!$set_properties)
-      return;
-
-    if ($this->appearance->owner_id !== null) {
-      $this->guide = null;
-      $this->owner = $this->appearance->owner;
-    }
-    if ($this->guide === null){
-      $owner_path = $this->appearance->owner->toURL();
-      $this->path = "$owner_path/cg";
-      $this->is_owner = Auth::$signed_in && ($this->appearance->owner_id === Auth::$user->id);
-    }
-    else if ($this->guide !== $this->appearance->guide){
-      $this->guide = $this->appearance->guide;
-      $this->path = '/cg/eqg';
-    }
+    $this->_initAppearancePageState();
   }
 
   protected const GUIDE_MANAGE_JS = [
@@ -176,53 +119,6 @@ class ColorGuideController extends Controller {
       'js' => [true],
       'import' => $import,
     ]);
-  }
-
-  /**
-   * @OA\Post(
-   *   path="/cg/full/reorder",
-   *   description="Reorder the appearances in a guide's full list. Staff only.",
-   *   tags={"color guide"},
-   *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"list"},
-   *     @OA\Property(property="list", type="array", description="Appearance IDs in the desired order", @OA\Items(ref="#/components/schemas/OneBasedId")),
-   *     @OA\Property(property="ordering", type="string", enum={"label","relevance","added"}, description="Sort order used to render the returned list")
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
-   *         @OA\Property(property="html", type="string", description="Rendered HTML of the full list")
-   *       )
-   *     })
-   *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
-   * )
-   */
-  public function reorderFullList($params):void {
-    if ($this->action !== 'POST')
-      CoreUtils::notAllowed();
-
-    $this->_initialize($params);
-
-    if (Permission::insufficient('staff'))
-      Response::fail();
-
-    Appearances::reorder((new Input('list', 'int[]', [
-      Input::CUSTOM_ERROR_MESSAGES => [
-        Input::ERROR_MISSING => 'The list of IDs is missing',
-        Input::ERROR_INVALID => 'The list of IDs is not formatted properly',
-      ],
-    ]))->out());
-
-    $ordering = (new Input('ordering', 'string', [
-      Input::IS_OPTIONAL => true,
-    ]))->out();
-
-    Response::done(['html' => CGUtils::getFullListHTML(Appearances::get($this->guide), $ordering, $this->guide, NOWRAP)]);
   }
 
   public function changeList($params):void {
@@ -354,47 +250,6 @@ class ColorGuideController extends Controller {
       $settings['import']['hex_color_regex'] = Regexes::$hex_color;
     }
     CoreUtils::loadPage(__METHOD__, $settings);
-  }
-
-  /**
-   * @OA\Get(
-   *   path="/cg/export",
-   *   description="Download the full color guide export data as a JSON file. Developer permission required.",
-   *   tags={"color guide"},
-   *   @OA\Response(
-   *     response="200",
-   *     description="The color guide export JSON file",
-   *     @OA\MediaType(mediaType="application/json")
-   *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
-   * )
-   */
-  public function export():void {
-    if ($this->action !== 'GET')
-      CoreUtils::notAllowed();
-
-    if (Permission::insufficient('developer'))
-      CoreUtils::noPerm();
-
-    CoreUtils::downloadAsFile(CGUtils::getExportData(), 'mlpvc-colorguide.json');
-  }
-
-  /**
-   * @OA\Post(
-   *   path="/cg/reindex",
-   *   description="Trigger a full reindex of the color guide search index. Developer permission required.",
-   *   tags={"color guide"},
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
-   * )
-   */
-  public function reindex():void {
-    if ($this->action !== 'POST')
-      CoreUtils::notAllowed();
-
-    if (Permission::insufficient('developer'))
-      Response::fail();
-    Appearances::reindex();
   }
 
   public function blending():void {

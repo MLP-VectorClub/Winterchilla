@@ -1,20 +1,16 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers\API;
 
-use App\Appearances;
 use App\Auth;
 use App\CoreUtils;
-use App\Input;
-use App\JSON;
-use App\Models\Appearance;
 use App\Models\Notification;
 use App\Notifications;
 use App\Response;
 use OpenApi\Annotations as OA;
 use Throwable;
 
-class NotificationsController extends Controller {
+class NotificationAPIController extends APIController {
   public function __construct() {
     parent::__construct();
 

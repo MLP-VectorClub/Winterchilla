@@ -1561,7 +1561,6 @@ class CoreUtils {
       PROJPATH.'app/Controllers/PostController.php',
       PROJPATH.'app/Controllers/AppearanceController.php',
       PROJPATH.'app/Controllers/TagController.php',
-      PROJPATH.'app/Controllers/ColorGroupController.php',
       PROJPATH.'app/Controllers/ColorGuideController.php',
       PROJPATH.'app/Controllers/AdminController.php',
       PROJPATH.'app/Controllers/NotificationsController.php',

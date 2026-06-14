@@ -53,9 +53,9 @@ use OpenApi\Annotations as OA;
  */
 
 /**
- * UsersController
+ * UsersAPIController
  */
-class UsersController extends APIController {
+class UsersAPIController extends APIController {
   /**
    * @OA\Schema(
    *   schema="User",

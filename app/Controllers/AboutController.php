@@ -5,9 +5,7 @@ namespace App\Controllers;
 use App\CoreUtils;
 use App\Models\Session;
 use App\Permission;
-use App\Response;
 use Monolog\Logger;
-use OpenApi\Annotations as OA;
 
 class AboutController extends Controller {
   public function index() {
@@ -51,35 +49,6 @@ class AboutController extends Controller {
         'browser' => $browser,
       ],
     ]);
-  }
-
-  /**
-   * @OA\Get(
-   *   path="/about/upcoming",
-   *   description="Returns rendered HTML for the sidebar's list of upcoming episodes/events",
-   *   tags={"server info"},
-   *   security={}
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
-   *           type="object",
-   *           required={"html"},
-   *           @OA\Property(property="html", type="string", description="Rendered upcoming items HTML")
-   *         )
-   *       }
-   *     )
-   *   )
-   * )
-   */
-  public function upcoming() {
-    if ($this->action !== 'GET')
-      CoreUtils::notAllowed();
-
-    Response::done(['html' => CoreUtils::getSidebarUpcoming(NOWRAP)]);
   }
 
   public function privacy() {

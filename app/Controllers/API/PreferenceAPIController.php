@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers\API;
 
 use App\Auth;
 use App\CoreUtils;
@@ -24,7 +24,7 @@ use OpenApi\Annotations as OA;
  *   )
  * )
  */
-class PreferenceController extends Controller {
+class PreferenceAPIController extends APIController {
   public function __construct() {
     parent::__construct();
 

@@ -241,6 +241,7 @@ class CoreUtils {
   ];
   public const DEFAULT_LIBS = [
     'polyfill-io',
+    'socket-io',
     'dragscroll',
     'jquery',
     'moment',

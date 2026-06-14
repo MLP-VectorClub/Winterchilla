@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  const scriptEl = document.getElementById('wss');
+  const scriptEl = document.querySelector('script[src*="socket.io"][src$=".js"]');
 
   function setupDegradedMode() {
     console.log('%c[WS] Server down!', 'color:red');
@@ -15,12 +15,12 @@
     }
   }
 
-  if (!scriptEl) {
+  if (!window.wsServerHost) {
     setupDegradedMode();
     return;
   }
 
-  const connpath = scriptEl.getAttribute('src').replace(/^(.*?:\d+\/).*$/, '$1');
+  const connpath = window.wsServerHost;
 
   function initWebSocket() {
     let wsdecoder = f =>

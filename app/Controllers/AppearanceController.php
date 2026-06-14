@@ -1528,6 +1528,7 @@ class AppearanceController extends ColorGuideController {
   /**
    * @OA\Get(
    *   path="/cg/appearances",
+   *   security={},
    *   description="Search appearances by label for autocomplete purposes. Returns an empty array if the query or guide is missing.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="q", in="query", required=true, description="Search query", @OA\Schema(ref="#/components/schemas/QueryString")),

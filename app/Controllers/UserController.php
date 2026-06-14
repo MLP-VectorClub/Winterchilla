@@ -862,6 +862,7 @@ class UserController extends Controller {
    *   path="/user/{id}/avatar-wrap",
    *   description="Returns rendered HTML for the avatar of the specified user",
    *   tags={"users"},
+   *   security={},
    *   @OA\Parameter(
    *     name="id",
    *     in="path",

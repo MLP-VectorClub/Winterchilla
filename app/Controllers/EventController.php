@@ -95,7 +95,7 @@ class EventController extends Controller {
   /**
    * @OA\Get(
    *   path="/event/{id}",
-   *   description="Fetch the details of an event. Requires staff permissions. Currently always fails.",
+   *   description="Fetch the details of an event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Response(
@@ -115,7 +115,7 @@ class EventController extends Controller {
    * )
    * @OA\Post(
    *   path="/event",
-   *   description="Create a new event. Requires staff permissions. Currently always fails.",
+   *   description="Create a new event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\RequestBody(
    *     required=true,
@@ -136,7 +136,7 @@ class EventController extends Controller {
    * )
    * @OA\Put(
    *   path="/event/{id}",
-   *   description="Edit an existing event. Requires staff permissions. Currently always fails.",
+   *   description="Edit an existing event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(
@@ -159,7 +159,7 @@ class EventController extends Controller {
    * )
    * @OA\Delete(
    *   path="/event/{id}",
-   *   description="Delete an existing event. Requires staff permissions. Currently always fails.",
+   *   description="Delete an existing event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
@@ -191,7 +191,7 @@ class EventController extends Controller {
   /**
    * @OA\Post(
    *   path="/event/{id}/finalize",
-   *   description="Finalize an event, locking in the winning entry. Requires staff permissions. Currently always fails.",
+   *   description="Finalize an event, locking in the winning entry. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),

@@ -144,6 +144,7 @@ class PersonalGuideController extends ColorGuideController {
    *   path="/user/{id}/pcg/slots",
    *   description="Checks whether the specified user is eligible to add a new Personal Color Guide appearance. Fails if PCG appearance creation is disabled for the user, or if they have fewer than 10 available slots.",
    *   tags={"personal color guide"},
+   *   security={},
    *   @OA\Parameter(
    *     name="id",
    *     in="path",

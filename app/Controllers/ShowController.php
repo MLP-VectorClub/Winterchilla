@@ -126,6 +126,7 @@ class ShowController extends Controller {
    *   path="/show/{id}/posts",
    *   description="Get the rendered HTML for the requests or reservations section of a show's page",
    *   tags={"shows","posts"},
+   *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Parameter(name="section", in="query", required=true, @OA\Schema(type="string", enum={"requests","reservations"})),
    *   @OA\Response(
@@ -175,6 +176,7 @@ class ShowController extends Controller {
    *   path="/show/{id}",
    *   description="Get information about a single show entry",
    *   tags={"shows"},
+   *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Response(
    *     response="200",
@@ -413,6 +415,7 @@ class ShowController extends Controller {
    *   path="/show/{id}/vote",
    *   description="Get the current voting status/results for an episode, either as rendered HTML (if `html` is set) or as vote counts grouped by score",
    *   tags={"shows"},
+   *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Parameter(name="html", in="query", required=false, @OA\Schema(type="string"), description="If present, returns the rendered sidebar voting HTML instead of vote counts"),
    *   @OA\Response(
@@ -664,6 +667,7 @@ class ShowController extends Controller {
    *   path="/show/next",
    *   description="Get information about the next upcoming episode that hasn't aired yet",
    *   tags={"shows"},
+   *   security={},
    *   @OA\Response(
    *     response="200",
    *     description="OK",

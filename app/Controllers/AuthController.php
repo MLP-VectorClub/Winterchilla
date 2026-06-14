@@ -87,6 +87,7 @@ class AuthController extends Controller {
    *   path="/da-auth/sign-out",
    *   description="Signs the current user out by deleting their session. If 'everywhere' is set, deletes all of the current user's sessions, or (with staff permission) all sessions belonging to a specified target user.",
    *   tags={"authentication"},
+   *   security={},
    *   @OA\RequestBody(
    *     required=false,
    *     @OA\MediaType(
@@ -178,6 +179,7 @@ class AuthController extends Controller {
    *   path="/da-auth/status",
    *   description="Checks the current sign-in/session status. If the DeviantArt access token has expired, this may trigger a background refresh and report that the session is updating.",
    *   tags={"authentication"},
+   *   security={},
    *   @OA\Response(
    *     response="200",
    *     description="OK",

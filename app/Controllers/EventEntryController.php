@@ -290,6 +290,7 @@ class EventEntryController extends EventController {
    *   path="/event/entry/{entryid}/lazyload",
    *   description="Get the lazily-loaded preview HTML for an entry. Does not require the user to be signed in.",
    *   tags={"events"},
+   *   security={},
    *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Response(
    *     response="200",

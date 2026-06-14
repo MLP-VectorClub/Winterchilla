@@ -10,10 +10,10 @@ if [[ "$refname" ==  "$RUN_FOR_REF" ]]; then
   CMD_FETCH="$GIT fetch"
   CMD_COMPOSER="if [ -d vendor/ ]; then sudo chmod -R ug+rw vendor/; fi; composer install --no-dev 2>&1"
   CMD_MIGRATE="vendor/bin/phinx migrate"
-  CMD_NPM="npm ci --production --no-save"
-  CMD_BUILD="npm run build"
+  CMD_NPM="pnpm install --prod --frozen-lockfile"
+  CMD_BUILD="pnpm run build"
   CMD_REDIS_CLEAR="php -f scripts/clear_redis_keys.php commit_info"
-  CMD_API_DOCS="npm run api:schema"
+  CMD_API_DOCS="pnpm run api:schema"
 
   echo "$ $CMD_CD"
   eval ${CMD_CD}
@@ -24,7 +24,7 @@ if [[ "$refname" ==  "$RUN_FOR_REF" ]]; then
   echo "$ $CMD_MIGRATE"
   eval ${CMD_MIGRATE}
 
-  if $GIT diff --name-only $oldrev $newrev | grep "^package-lock.json"; then
+  if $GIT diff --name-only $oldrev $newrev | grep "^pnpm-lock.yaml"; then
     UPDATE_PACKAGES="yes"
     REBUILD_ASSETS="yes"
   else

@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers\API;
 
 use App\Auth;
 use App\CGUtils;
+use App\Controllers\Traits\ColorGuideAccessTrait;
 use App\CoreUtils;
 use App\Cutiemarks;
 use App\DB;
@@ -48,7 +49,9 @@ use function count;
  *   @OA\Property(property="Colors", type="array", description="Only present in the GET response", @OA\Items(ref="#/components/schemas/PrivateColor"))
  * )
  */
-class ColorGroupController extends ColorGuideController {
+class ColorGroupAPIController extends APIController {
+  use ColorGuideAccessTrait;
+
   /** @var ColorGroup|null */
   private $colorgroup;
 

@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers\API;
 
 use App\Auth;
+use App\Controllers\Traits\EventLoaderTrait;
 use App\CoreUtils;
 use App\Exceptions\MismatchedProviderException;
 use App\Exceptions\UnsupportedProviderException;
@@ -29,7 +30,8 @@ use OpenApi\Annotations as OA;
  *   @OA\Property(property="prev_src", type="string", format="uri", nullable=true, description="URL of the custom preview image, if one was provided"),
  * )
  */
-class EventEntryController extends EventController {
+class EventEntryAPIController extends APIController {
+  use EventLoaderTrait;
 
   private ?EventEntry $entry;
 

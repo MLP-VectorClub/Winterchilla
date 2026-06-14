@@ -7,9 +7,9 @@ use App\HTTP;
 use App\Response;
 
 /**
- * AboutController
+ * AboutAPIController
  */
-class AboutController extends APIController {
+class AboutAPIController extends APIController {
   /**
    * @OA\Schema(
    *   schema="GitInfo",
@@ -85,5 +85,34 @@ class AboutController extends APIController {
     Response::done([
       'git' => self::mapGit($git),
     ]);
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/about/upcoming",
+   *   description="Returns rendered HTML for the sidebar's list of upcoming episodes/events",
+   *   tags={"server info"},
+   *   security={}
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(
+   *           type="object",
+   *           required={"html"},
+   *           @OA\Property(property="html", type="string", description="Rendered upcoming items HTML")
+   *         )
+   *       }
+   *     )
+   *   )
+   * )
+   */
+  public function upcoming() {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    Response::done(['html' => CoreUtils::getSidebarUpcoming(NOWRAP)]);
   }
 }

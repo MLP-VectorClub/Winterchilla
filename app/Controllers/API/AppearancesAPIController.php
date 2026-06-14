@@ -62,9 +62,9 @@ use function count;
  */
 
 /**
- * AppearancesController
+ * AppearancesAPIController
  */
-class AppearancesController extends APIController {
+class AppearancesAPIController extends APIController {
   /**
    * @OA\Schema(
    *   schema="SlimAppearance",

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers\API;
 
 use App\CoreUtils;
 use App\GlobalSettings;
@@ -9,7 +9,7 @@ use App\Response;
 use Exception;
 use OpenApi\Annotations as OA;
 
-class SettingController extends Controller {
+class SettingAPIController extends APIController {
   public function __construct() {
     parent::__construct();
 

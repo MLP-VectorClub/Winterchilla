@@ -117,6 +117,7 @@ jobs:
   browser-tests:
     name: Browser Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:16

@@ -214,11 +214,11 @@ class User extends NSModel implements Linkable {
   }
 
   /**
-   * @param Pagination $Pagination
+   * @param Pagination|null $Pagination
    *
    * @return Appearance[]|null
    */
-  public function getPCGAppearances(Pagination $Pagination = null):?array {
+  public function getPCGAppearances(?Pagination $Pagination = null):?array {
     $limit = isset($Pagination) ? $Pagination->getLimit() : null;
     DB::$instance->orderBy('order');
 
@@ -233,11 +233,11 @@ class User extends NSModel implements Linkable {
   }
 
   /**
-   * @param Pagination $Pagination
+   * @param Pagination|null $Pagination
    *
    * @return PCGSlotHistory[]
    */
-  public function getPCGSlotHistoryEntries(Pagination $Pagination = null):?array {
+  public function getPCGSlotHistoryEntries(?Pagination $Pagination = null):?array {
     $limit = isset($Pagination) ? $Pagination->getLimit() : null;
     DB::$instance->orderBy('created_at', 'desc')->orderBy('id', 'desc');
 
@@ -321,12 +321,12 @@ class User extends NSModel implements Linkable {
   }
 
   /**
-   * @param bool       $count      Returns the count if true
-   * @param Pagination $pagination Pagination object used for getting the LIMIT part of the query
+   * @param bool            $count      Returns the count if true
+   * @param Pagination|null $pagination Pagination object used for getting the LIMIT part of the query
    *
    * @return int|array
    */
-  public function getCMContributions(bool $count = true, Pagination $pagination = null) {
+  public function getCMContributions(bool $count = true, ?Pagination $pagination = null) {
     $cols = $count ? 'COUNT(*) as cnt' : 'c.appearance_id, c.favme';
     $query =
       "SELECT $cols
@@ -352,13 +352,13 @@ class User extends NSModel implements Linkable {
   }
 
   /**
-   * @param bool       $requests   Boolean indicating whether we want to get requests (true) or reservations (false)
-   * @param bool       $count      Returns the count if true
-   * @param Pagination $pagination Pagination object used for getting the LIMIT part of the query
+   * @param bool            $requests   Boolean indicating whether we want to get requests (true) or reservations (false)
+   * @param bool            $count      Returns the count if true
+   * @param Pagination|null $pagination Pagination object used for getting the LIMIT part of the query
    *
    * @return int|Post[]
    */
-  private function _getPostContributions(bool $requests, bool $count = true, Pagination $pagination = null) {
+  private function _getPostContributions(bool $requests, bool $count = true, ?Pagination $pagination = null) {
     if ($requests)
       DB::$instance->where('requested_by', $this->id);
     else DB::$instance->where('reserved_by', $this->id)->where('requested_by IS NULL');
@@ -372,22 +372,22 @@ class User extends NSModel implements Linkable {
   }
 
   /**
-   * @param bool       $count      Returns the count if true
-   * @param Pagination $pagination Pagination object used for getting the LIMIT part of the query
+   * @param bool            $count      Returns the count if true
+   * @param Pagination|null $pagination Pagination object used for getting the LIMIT part of the query
    *
    * @return int|Post[]
    */
-  public function getRequestContributions(bool $count = true, Pagination $pagination = null) {
+  public function getRequestContributions(bool $count = true, ?Pagination $pagination = null) {
     return $this->_getPostContributions(true, $count, $pagination);
   }
 
   /**
-   * @param bool       $count      Returns the count if true
-   * @param Pagination $pagination Pagination object used for getting the LIMIT part of the query
+   * @param bool            $count      Returns the count if true
+   * @param Pagination|null $pagination Pagination object used for getting the LIMIT part of the query
    *
    * @return int|Post[]
    */
-  public function getReservationContributions(bool $count = true, Pagination $pagination = null) {
+  public function getReservationContributions(bool $count = true, ?Pagination $pagination = null) {
     return $this->_getPostContributions(false, $count, $pagination);
   }
 
@@ -412,12 +412,12 @@ class User extends NSModel implements Linkable {
   }
 
   /**
-   * @param bool       $count      Returns the count if true
-   * @param Pagination $pagination Pagination object used for getting the LIMIT part of the query
+   * @param bool            $count      Returns the count if true
+   * @param Pagination|null $pagination Pagination object used for getting the LIMIT part of the query
    *
    * @return int|Post[]
    */
-  public function getApprovedFinishedRequestContributions(bool $count = true, Pagination $pagination = null) {
+  public function getApprovedFinishedRequestContributions(bool $count = true, ?Pagination $pagination = null) {
 
     DB::$instance
       ->where('requested_by IS NOT NULL') // Requests only

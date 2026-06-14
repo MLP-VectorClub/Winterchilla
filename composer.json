@@ -57,11 +57,12 @@
     "zircote/swagger-php": "^3.0"
   },
   "require-dev": {
+    "ext-pcntl": "*",
     "kint-php/kint": "^2.2",
     "pestphp/pest": "^4.0",
     "pestphp/pest-plugin-browser": "^4.0",
-    "roave/security-advisories": "dev-latest",
-    "ext-pcntl": "*"
+    "phpstan/phpstan": "^2.2",
+    "roave/security-advisories": "dev-latest"
   },
   "autoload": {
     "psr-4": {

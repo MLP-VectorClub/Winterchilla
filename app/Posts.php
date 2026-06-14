@@ -13,13 +13,13 @@ class Posts {
    * Retrieves requests & reservations for the episode specified
    * Optionally lists broken posts
    *
-   * @param int  $show_id
-   * @param int  $only
-   * @param bool $showBroken
+   * @param int      $show_id
+   * @param int|null $only
+   * @param bool     $showBroken
    *
    * @return Post[]|Post[][]
    */
-  public static function get(int $show_id, int $only = null, bool $showBroken = false) {
+  public static function get(int $show_id, ?int $only = null, bool $showBroken = false) {
     $return = [];
     if ($only !== ONLY_RESERVATIONS){
       // If we don't want reservations only, grab requests
@@ -169,7 +169,7 @@ class Posts {
    *
    * @return array
    */
-  public static function checkPostFinishingImage(?int $reserver_id = null) {
+  public static function checkPostFinishingImage(?int $reserver_id = null): array {
     $deviation_url = (new Input('deviation', 'string', [
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_MISSING => 'Please specify a deviation URL',

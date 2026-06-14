@@ -153,7 +153,7 @@ class DiscordMember extends NSModel {
     return ($this->last_synced === null || $this->last_synced->getTimestamp() + self::SYNC_COOLDOWN <= time()) && $this->isLinked();
   }
 
-  public function sync(Discord $provider = null, bool $force = false, bool $auto_unlink = true):bool {
+  public function sync(?Discord $provider = null, bool $force = false, bool $auto_unlink = true):bool {
     if (!$force && !$this->canBeSynced())
       return true;
 

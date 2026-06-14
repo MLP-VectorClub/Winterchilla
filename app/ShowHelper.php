@@ -110,9 +110,9 @@ class ShowHelper {
    * Loads the episode page
    *
    * @param null|Show $current_episode
-   * @param Post      $linked_post Linked post (when sharing)
+   * @param Post|null $linked_post Linked post (when sharing)
    */
-  public static function loadPage(?Show $current_episode = null, Post $linked_post = null) {
+  public static function loadPage(?Show $current_episode = null, ?Post $linked_post = null) {
     if ($current_episode === null)
       CoreUtils::notFound();
 

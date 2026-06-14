@@ -494,7 +494,7 @@ class DeviantArt {
         break;
       $off += 100;
     }
-    unset($dom, $xp);
+    unset($dom);
 
     // Get staff
     $requri = 'http://www.deviantart.com/global/difi/?c%5B%5D=%22GrusersModules%22%2C%22displayModule%22%2C%5B%2217450764%22%2C%22374037863%22%2C%22generic%22%2C%7B%7D%5D&iid=576m8f040364c99a7d9373611b4a9414d434-j2asw8mn-1.1&mp=2&t=json';

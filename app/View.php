@@ -236,5 +236,6 @@ class View {
 
         return $bc;
     }
+    return null;
   }
 }

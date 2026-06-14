@@ -27,7 +27,7 @@ class ImageProvider {
 
   private $_ignore_mime, $_require_image;
 
-  public function __construct(string $url = null, ?array $reqProv = null, bool $ignoreMime = false, bool $requireImage = true) {
+  public function __construct(?string $url = null, ?array $reqProv = null, bool $ignoreMime = false, bool $requireImage = true) {
     if (!empty($url)){
       $provider = self::getProvider(DeviantArt::trimOutgoingGateFromUrl(CoreUtils::trim($url)));
       if (!empty($reqProv)){

@@ -134,7 +134,7 @@ class Post extends NSModel implements Linkable {
     return "post-{$this->id}";
   }
 
-  public function toURL(Show $Episode = null):string {
+  public function toURL(?Show $Episode = null):string {
     if (empty($Episode))
       $Episode = $this->show;
 
@@ -149,7 +149,7 @@ class Post extends NSModel implements Linkable {
     return "<a class='post-link with-preview' href='{$this->toURL()}'><img src='{$this->preview}' alt='$alt'><span>$slabel</span></a>";
   }
 
-  public function toAnchor(string $label = null, Show $Episode = null, $newtab = false):string {
+  public function toAnchor(?string $label = null, ?Show $Episode = null, $newtab = false):string {
     if ($Episode === null)
       $Episode = $this->show;
     $link = $this->toURL($Episode);

@@ -77,7 +77,7 @@ class EventController extends Controller {
 
   public function list() {
     CoreUtils::fixPath('/events');
-    $heading = 'Events';
+    $heading = 'Events Archive';
 
     $events = Event::find('all');
 

@@ -6,9 +6,14 @@ use App\Controllers\Controller;
 use RuntimeException;
 
 class RouteHelper {
-  public static function processHandler(string $handler, $params):void {
-    [$class, $method] = explode('#', $handler);
-    $class = "App\\Controllers\\$class";
+  /**
+   * @param array{0: class-string, 1: string} $target
+   * @param mixed $params
+   *
+   * @return void
+   */
+  public static function processHandler(array $target, $params):void {
+    [$class, $method] = $target;
     $controller = new $class();
     if (false === $controller instanceof Controller)
       throw new RuntimeException("$class must be an instance of ".Controller::class);

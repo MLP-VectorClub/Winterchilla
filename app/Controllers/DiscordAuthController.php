@@ -126,6 +126,9 @@ class DiscordAuthController extends Controller {
   }
 
   public function sync($params) {
+    if ($this->action !== 'POST')
+      CoreUtils::notAllowed();
+
     $this->setTarget($params);
 
     $discordUser = $this->target->discord_member;
@@ -140,6 +143,9 @@ class DiscordAuthController extends Controller {
   }
 
   public function unlink($params) {
+    if ($this->action !== 'POST')
+      CoreUtils::notAllowed();
+
     $this->setTarget($params);
 
     $discord_user = $this->target->discord_member;
@@ -150,6 +156,7 @@ class DiscordAuthController extends Controller {
           'body' => http_build_query([
             'token' => $discord_user->refresh,
             'token_type_hint' => 'refresh_token',
+            'client_id' => CoreUtils::env('DISCORD_CLIENT'),
           ]),
           'headers' => [
             'Content-Type' => 'application/x-www-form-urlencoded',

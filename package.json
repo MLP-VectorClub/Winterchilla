@@ -20,7 +20,7 @@
     "@types/react-dom": "^18.2.13",
     "blueimp-md5": "2.10.0",
     "eslint": "^9.15.0",
-    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react": "^7.37.5",
     "fluidbox": "2.0.5",
     "globals": "^15.12.0",
     "jquery": "^3.6.0",

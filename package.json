@@ -10,7 +10,7 @@
     "esbuild": "^0.25.0",
     "glob": "^11.0.0",
     "normalize-scss": "^8.0.0",
-    "playwright": "^1.59.1",
+    "playwright": "^1.60.0",
     "postcss": "^8.4.0",
     "svgo": "^2.8.0"
   },

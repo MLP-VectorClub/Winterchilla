@@ -57,10 +57,9 @@
     isOpen: false,
     type: null,
     title: '',
-    content: null,
     color: '',
     buttons: [],
-    notices: [],
+    history: [],
     disableButtons: false,
     pendingCallback: null,
     focusedElement: null,
@@ -266,19 +265,22 @@
       if (typeof Time !== 'undefined') Time.update();
     }, [ds.isOpen, ds.type, ds.title]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Scroll to newest inline notice
+    // Scroll to newest content block / inline notice
+    const totalNotices = ds.history.reduce((acc, b) => acc + b.notices.length, 0);
     React.useEffect(() => {
-      if (!ds.isOpen || ds.notices.length === 0) return;
+      if (!ds.isOpen) return;
+      if (ds.history.length <= 1 && totalNotices === 0) return;
       requestAnimationFrame(() => {
         const overlay = document.getElementById('dialogOverlay');
-        const noticeEls = document.querySelectorAll('#dialogContent .notice');
-        const lastEl = noticeEls[noticeEls.length - 1];
-        if (overlay && lastEl) {
-          const top = lastEl.getBoundingClientRect().top - overlay.getBoundingClientRect().top + overlay.scrollTop;
-          $(overlay).stop().animate({ scrollTop: '+=' + top }, 'fast');
-        }
+        const contentEls = document.querySelectorAll('#dialogContent > div:not(#dialogButtons)');
+        const lastContent = contentEls[contentEls.length - 1];
+        if (!overlay || !lastContent) return;
+        const noticeEls = lastContent.querySelectorAll('.notice');
+        const lastEl = noticeEls.length > 0 ? noticeEls[noticeEls.length - 1] : lastContent;
+        const top = lastEl.getBoundingClientRect().top - overlay.getBoundingClientRect().top + overlay.scrollTop;
+        $(overlay).stop().animate({ scrollTop: '+=' + top }, 'fast');
       });
-    }, [ds.notices.length]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [ds.history.length, totalNotices]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (!ds.isOpen) return null;
 
@@ -291,7 +293,9 @@
                 {ds.title}
               </div>
               <div id="dialogContent" className={ds.color ? ds.color + '-border' : ''}>
-                <DialogContentRenderer content={ds.content} color={ds.color} notices={ds.notices} />
+                {ds.history.map((item, i) => (
+                  <DialogContentRenderer key={i} content={item.content} color={item.color} notices={item.notices} />
+                ))}
                 <DialogButtons
                   buttons={ds.buttons}
                   color={ds.color}
@@ -330,27 +334,43 @@
 
     if (appendingToRequest) {
       const newNotice = { type: params.type, content: params.content, hidden: false };
-      const existing = _state.notices;
+      const lastBlock = _state.history[_state.history.length - 1];
+      const existing = lastBlock.notices;
       const lastVisibleIdx = [...existing].map((n, i) => (!n.hidden ? i : -1)).filter(i => i >= 0).pop();
       const notices = lastVisibleIdx !== undefined
         ? existing.map((n, i) => i === lastVisibleIdx ? newNotice : n)
         : [...existing, newNotice];
+      const history = _state.history.map((b, i) => i === _state.history.length - 1 ? { ...b, notices } : b);
       const titleUpdate = typeof params.title === 'string' ? { title: params.title } : {};
-      _update({ notices, disableButtons: params.type === 'wait', ...titleUpdate });
+      _update({ history, disableButtons: params.type === 'wait', ...titleUpdate });
       return;
     }
 
     const focusedElement = _state.focusedElement ?? _captureFocus();
     const formId = _extractFormId(params.content);
+    const newBlock = { content: params.content, color: params.color, notices: [] };
+
+    if (_state.isOpen) {
+      _update({
+        type: params.type,
+        title: typeof params.title === 'string' ? params.title : _state.title,
+        history: [..._state.history, newBlock],
+        color: params.color,
+        buttons: params.buttons || [],
+        disableButtons: false,
+        pendingCallback: typeof params.callback === 'function' ? { fn: params.callback, formId } : null,
+        focusedElement,
+      });
+      return;
+    }
 
     _update({
       isOpen: true,
       type: params.type,
       title: typeof params.title === 'string' ? params.title : defaultTitles[params.type],
-      content: params.content,
+      history: [newBlock],
       color: params.color,
       buttons: params.buttons || [],
-      notices: [],
       disableButtons: false,
       pendingCallback: typeof params.callback === 'function' ? { fn: params.callback, formId } : null,
       focusedElement,
@@ -440,16 +460,19 @@
     },
 
     clearNotice(regexp) {
-      const notices = _state.notices;
+      if (_state.history.length === 0) return false;
+      const lastBlock = _state.history[_state.history.length - 1];
+      const notices = lastBlock.notices;
       const lastVisible = [...notices].reverse().find(n => !n.hidden);
       if (!lastVisible) return false;
 
       const noticeHtml = lastVisible.content;
       if (typeof regexp !== 'undefined' && !regexp.test(noticeHtml)) return false;
 
-      const updated = notices.map(n => n === lastVisible ? { ...n, hidden: true } : n);
+      const updatedNotices = notices.map(n => n === lastVisible ? { ...n, hidden: true } : n);
+      const history = _state.history.map((b, i) => i === _state.history.length - 1 ? { ...b, notices: updatedNotices } : b);
       _update({
-        notices: updated,
+        history,
         disableButtons: lastVisible.type === 'wait' ? false : _state.disableButtons,
       });
       return true;

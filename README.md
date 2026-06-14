@@ -71,8 +71,8 @@ Browser tests use [Playwright](https://playwright.dev/) and require a running Po
 **First-time setup:**
 
 ```bash
-npm install playwright
-npx playwright install chromium --with-deps
+pnpm add playwright
+pnpm exec playwright install chromium --with-deps
 ```
 
 **Reset the test database and run:**

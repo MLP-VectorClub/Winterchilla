@@ -92,7 +92,7 @@ class AboutAPIController extends APIController {
    *   path="/about/upcoming",
    *   description="Returns rendered HTML for the sidebar's list of upcoming episodes/events",
    *   tags={"server info"},
-   *   security={}
+   *   security={},
    *   @OA\Response(
    *     response="200",
    *     description="OK",

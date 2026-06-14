@@ -9,7 +9,21 @@ use App\Permission;
 use App\Response;
 use App\UserPrefs;
 use Exception;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Schema(
+ *   schema="PreferenceValue",
+ *   type="object",
+ *   description="The current (or newly set) value of a user preference",
+ *   required={"value"},
+ *   additionalProperties=false,
+ *   @OA\Property(
+ *     property="value",
+ *     description="The preference value. Type depends on the specified preference key."
+ *   )
+ * )
+ */
 class PreferenceController extends Controller {
   public function __construct() {
     parent::__construct();
@@ -37,6 +51,97 @@ class PreferenceController extends Controller {
     $this->value = UserPrefs::get($this->preference, $this->user);
   }
 
+  /**
+   * @OA\Get(
+   *   path="/user/{id}/preference/{key}",
+   *   description="Gets the value of a preference for the specified user. Requires user permission, and the requester must be the same user or staff.",
+   *   tags={"users"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Parameter(
+   *     name="key",
+   *     in="path",
+   *     required=true,
+   *     description="The preference key to retrieve",
+   *     @OA\Schema(type="string")
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(ref="#/components/schemas/PreferenceValue")
+   *       }
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission, or not the same user and not staff",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="The specified user does not exist, or missing user ID",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   * @OA\Put(
+   *   path="/user/{id}/preference/{key}",
+   *   description="Sets the value of a preference for the specified user. Requires user permission, and the requester must be the same user or staff.",
+   *   tags={"users"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Parameter(
+   *     name="key",
+   *     in="path",
+   *     required=true,
+   *     description="The preference key to update",
+   *     @OA\Schema(type="string")
+   *   ),
+   *   @OA\RequestBody(
+   *     required=true,
+   *     description="The new preference value, processed and validated according to the specified preference key",
+   *     @OA\MediaType(
+   *       mediaType="application/x-www-form-urlencoded",
+   *       @OA\Schema(type="object")
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(ref="#/components/schemas/PreferenceValue")
+   *       }
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="400",
+   *     description="The new preference value is invalid, or it could not be saved due to a database error",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission, or not the same user and not staff",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="The specified user does not exist, or missing user ID",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function api($params) {
     $this->load_preference($params);
 

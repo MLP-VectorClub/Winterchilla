@@ -31,5 +31,4 @@ $router->addMatchTypes([
 ]);
 
 require __DIR__.'/pages.php';
-require __DIR__.'/private_api.php';
 require __DIR__.'/public_api_v0.php';

@@ -19,6 +19,16 @@ use OpenApi\Annotations as OA;
  *   @OA\Tag(name="authentication", description="Endpoints related to getting a user logged in or out, as well as checking logged in status"),
  *   @OA\Tag(name="color guide", description="Endpoints related to the color guide section of the site"),
  *   @OA\Tag(name="appearances", description="Working with entries in the color guide"),
+ *   @OA\Tag(name="tags", description="Working with color guide tags"),
+ *   @OA\Tag(name="color groups", description="Working with color groups belonging to color guide appearances"),
+ *   @OA\Tag(name="shows", description="Working with shows/episodes and their associated posts"),
+ *   @OA\Tag(name="posts", description="Working with art posts, requests and reservations"),
+ *   @OA\Tag(name="events", description="Working with community events and their entries"),
+ *   @OA\Tag(name="users", description="Working with user accounts, sessions and preferences"),
+ *   @OA\Tag(name="personal color guide", description="Endpoints related to the Personal Color Guide (PCG) program"),
+ *   @OA\Tag(name="notifications", description="Endpoints related to user notifications"),
+ *   @OA\Tag(name="settings", description="Endpoints related to site-wide settings"),
+ *   @OA\Tag(name="admin", description="Endpoints restricted to staff members for administrative purposes"),
  *   @OA\Tag(name="server info", description="For diagnostic or informational data")
  * )
  * @OA\Schema(

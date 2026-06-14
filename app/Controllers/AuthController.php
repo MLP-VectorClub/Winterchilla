@@ -15,6 +15,7 @@ use App\Response;
 use App\Twig;
 use Exception;
 use Monolog\Logger;
+use OpenApi\Annotations as OA;
 
 class AuthController extends Controller {
   public function begin() {
@@ -81,6 +82,38 @@ class AuthController extends Controller {
     Twig::display('login_confirm');
   }
 
+  /**
+   * @OA\Post(
+   *   path="/da-auth/sign-out",
+   *   description="Signs the current user out by deleting their session. If 'everywhere' is set, deletes all of the current user's sessions, or (with staff permission) all sessions belonging to a specified target user.",
+   *   tags={"authentication"},
+   *   @OA\RequestBody(
+   *     required=false,
+   *     @OA\MediaType(
+   *       mediaType="application/x-www-form-urlencoded",
+   *       @OA\Schema(
+   *         @OA\Property(property="everywhere", type="string", description="If present, signs out of all sessions instead of just the current one"),
+   *         @OA\Property(property="user_id", ref="#/components/schemas/OneBasedId", description="When 'everywhere' is set, the ID of another user whose sessions should be deleted instead of the current user's. Requires staff permission.")
+   *       )
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK (also returned if the user wasn't signed in to begin with)",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="400",
+   *     description="Could not remove session information from the database",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission to sign out another user's sessions, or that user doesn't exist",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function signOut() {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
@@ -140,6 +173,29 @@ class AuthController extends Controller {
     HTTP::tempRedirect($return_url ?? '/');
   }
 
+  /**
+   * @OA\Get(
+   *   path="/da-auth/status",
+   *   description="Checks the current sign-in/session status. If the DeviantArt access token has expired, this may trigger a background refresh and report that the session is updating.",
+   *   tags={"authentication"},
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(
+   *           type="object",
+   *           @OA\Property(property="updating", type="boolean", description="True if the session's DeviantArt access token is being refreshed in the background"),
+   *           @OA\Property(property="retries_remaining", type="integer", description="Number of refresh attempts remaining before an immediate refresh is forced (only present while updating)"),
+   *           @OA\Property(property="deleted", type="boolean", description="True if the user is no longer signed in"),
+   *           @OA\Property(property="loggedIn", type="boolean", description="Whether the sidebar should display the user as logged in")
+   *         )
+   *       }
+   *     )
+   *   )
+   * )
+   */
   public function sessionStatus() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

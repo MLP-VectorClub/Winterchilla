@@ -21,6 +21,7 @@ use Elasticsearch\Common\Exceptions\NoNodesAvailableException;
 use IPTools\IP;
 use League\Uri\Components\Query;
 use League\Uri\Modifier;
+use OpenApi\Annotations as OA;
 use SeinopSys\PostgresDb;
 use Throwable;
 use function in_array;
@@ -197,6 +198,40 @@ class AdminController extends Controller {
     ]);
   }
 
+  /**
+   * @OA\Get(
+   *   path="/admin/logs/details/{id}",
+   *   description="Get the details of a log entry. Requires staff role",
+   *   tags={"admin"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(
+   *           type="object",
+   *           required={"details"},
+   *           @OA\Property(
+   *             property="details",
+   *             type="array",
+   *             description="A list of [label, value] pairs describing the log entry. Values may be strings, booleans, or other scalar types depending on the entry type",
+   *             @OA\Items(type="array", @OA\Items())
+   *           )
+   *         )
+   *       }
+   *     )
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="default", description="Entry not found, or has no details to show", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function logDetail($params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -240,6 +275,69 @@ class AdminController extends Controller {
     ]);
   }
 
+  /**
+   * @OA\Schema(
+   *   schema="UsefulLink",
+   *   type="object",
+   *   required={"label","url","title","minrole"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="label", type="string", minLength=3, maxLength=35),
+   *   @OA\Property(property="url", type="string", format="uri", minLength=3, maxLength=255),
+   *   @OA\Property(property="title", type="string", maxLength=255),
+   *   @OA\Property(property="minrole", ref="#/components/schemas/UserRole")
+   * )
+   * @OA\Schema(
+   *   schema="UsefulLinkInput",
+   *   type="object",
+   *   description="Used to create or update a useful link. 'title' is optional and defaults to an empty string if omitted",
+   *   required={"label","url","minrole"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="label", type="string", minLength=3, maxLength=35),
+   *   @OA\Property(property="url", type="string", format="uri", minLength=3, maxLength=255),
+   *   @OA\Property(property="title", type="string", maxLength=255),
+   *   @OA\Property(property="minrole", ref="#/components/schemas/UserRole")
+   * )
+   * @OA\Get(
+   *   path="/admin/usefullinks/{id}",
+   *   description="Get the details of a useful link. Requires staff role",
+   *   tags={"admin"},
+   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(allOf={
+   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(ref="#/components/schemas/UsefulLink")
+   *     })
+   *   ),
+   *   @OA\Response(response="default", description="Link does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   * @OA\Post(
+   *   path="/admin/usefullinks",
+   *   description="Create a new useful link. Requires staff role",
+   *   tags={"admin"},
+   *   @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/UsefulLinkInput")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="default", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   * @OA\Put(
+   *   path="/admin/usefullinks/{id}",
+   *   description="Update an existing useful link. Requires staff role",
+   *   tags={"admin"},
+   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/UsefulLinkInput")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="default", description="Validation error or link does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   * @OA\Delete(
+   *   path="/admin/usefullinks/{id}",
+   *   description="Delete a useful link. Requires staff role",
+   *   tags={"admin"},
+   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="default", description="Link does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function usefulLinksApi($params) {
     if (!$this->creating)
       $this->load_useful_link($params);
@@ -326,6 +424,25 @@ class AdminController extends Controller {
     }
   }
 
+  /**
+   * @OA\Post(
+   *   path="/admin/usefullinks/reorder",
+   *   description="Reorder useful links. Requires staff role",
+   *   tags={"admin"},
+   *   @OA\RequestBody(
+   *     required=true,
+   *     @OA\MediaType(
+   *       mediaType="application/x-www-form-urlencoded",
+   *       @OA\Schema(
+   *         required={"list"},
+   *         @OA\Property(property="list", type="string", description="Comma-separated list of useful link IDs in their new order", example="3,1,2")
+   *       )
+   *     )
+   *   ),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="default", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function reorderUsefulLinks() {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
@@ -476,6 +593,14 @@ class AdminController extends Controller {
     }
   }
 
+  /**
+   * @OA\Delete(
+   *   path="/admin/stat-cache",
+   *   description="Clear the PHP stat cache. Requires staff role",
+   *   tags={"admin"},
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function statCacheApi() {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();

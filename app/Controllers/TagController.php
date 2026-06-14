@@ -15,9 +15,32 @@ use App\Permission;
 use App\Regexes;
 use App\Response;
 use App\Tags;
+use OpenApi\Annotations as OA;
 use function count;
 use function in_array;
 
+/**
+ * @OA\Schema(
+ *   schema="Tag",
+ *   type="object",
+ *   description="Represents a color guide tag",
+ *   required={
+ *     "id",
+ *     "name",
+ *     "title",
+ *     "type",
+ *     "uses",
+ *     "synonym_of"
+ *   },
+ *   additionalProperties=false,
+ *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+ *   @OA\Property(property="name", type="string", description="The tag's name"),
+ *   @OA\Property(property="title", type="string", nullable=true, description="Optional human-friendly title for the tag"),
+ *   @OA\Property(property="type", type="string", description="The tag's type/category"),
+ *   @OA\Property(property="uses", type="integer", minimum=0, description="Number of appearances this tag is applied to"),
+ *   @OA\Property(property="synonym_of", ref="#/components/schemas/OneBasedId", nullable=true, description="ID of the tag this one is a synonym of, if any")
+ * )
+ */
 class TagController extends ColorGuideController {
   public function list() {
     $pagination = new Pagination('/cg/tags', 50, DB::$instance->count('tags'));
@@ -44,6 +67,33 @@ class TagController extends ColorGuideController {
     ]);
   }
 
+  /**
+   * @OA\Get(
+   *   path="/cg/tags",
+   *   description="Search tags for autocomplete purposes, or list tags for management. Staff only.",
+   *   tags={"tags"},
+   *   @OA\Parameter(name="not", in="query", description="Exclude a tag ID from the results", @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(name="action", in="query", description="Set to 'synon' to validate synonym selection (fails if a synonym already exists)", @OA\Schema(type="string")),
+   *   @OA\Parameter(name="s", in="query", description="When set, performs an autocomplete search by name", @OA\Schema(ref="#/components/schemas/QueryString")),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(type="array", @OA\Items(type="object", additionalProperties=false,
+   *       @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *       @OA\Property(property="name", type="string"),
+   *       @OA\Property(property="type", type="string", nullable=true, description="Tag type/category; when found via the 's' (autocomplete) search this is prefixed with 'typ-'"),
+   *       @OA\Property(property="uses", type="integer"),
+   *       @OA\Property(property="synonym_of", ref="#/components/schemas/OneBasedId", nullable=true),
+   *       @OA\Property(property="synonym_target", type="string", description="Name of the tag this one is a synonym of, only present when found via autocomplete")
+   *     ))
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="Tag is already a synonym of another tag", @OA\JsonContent(allOf={
+   *     @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *     @OA\Schema(type="object", @OA\Property(property="undo", type="boolean"))
+   *   }))
+   * )
+   */
   public function autocomplete() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -94,6 +144,29 @@ class TagController extends ColorGuideController {
     CGUtils::autocompleteRespond(empty($Tags) ? '[]' : $Tags);
   }
 
+  /**
+   * @OA\Post(
+   *   path="/cg/tags/recount-uses",
+   *   description="Recalculate the use counts of the given tags. Staff only.",
+   *   tags={"tags"},
+   *   @OA\RequestBody(required=true, @OA\JsonContent(
+   *     required={"tagids"},
+   *     @OA\Property(property="tagids", type="array", description="IDs of tags to recount", @OA\Items(ref="#/components/schemas/OneBasedId"))
+   *   )),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(allOf={
+   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(type="object", additionalProperties=false,
+   *         @OA\Property(property="counts", type="object", description="Map of tag ID to its new use count")
+   *       )
+   *     })
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function recountUses() {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
@@ -147,6 +220,86 @@ class TagController extends ColorGuideController {
     }
   }
 
+  /**
+   * @OA\Get(
+   *   path="/cg/tag/{id}",
+   *   description="Get a tag's details. Staff only.",
+   *   tags={"tags"},
+   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(allOf={
+   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(ref="#/components/schemas/Tag")
+   *     })
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   * @OA\Post(
+   *   path="/cg/tag",
+   *   description="Create a new tag, optionally adding it to an appearance. Staff only.",
+   *   tags={"tags"},
+   *   @OA\RequestBody(required=true, @OA\JsonContent(
+   *     required={"name"},
+   *     @OA\Property(property="name", type="string", description="Tag name"),
+   *     @OA\Property(property="type", type="string", description="Tag type/category"),
+   *     @OA\Property(property="title", type="string", maxLength=255, nullable=true, description="Optional human-friendly title"),
+   *     @OA\Property(property="addto", ref="#/components/schemas/ZeroBasedId", description="ID of an appearance to add the new tag to; 0 means the tag cannot be applied")
+   *   )),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK. If 'addto' was specified and valid, only a success message and 'tags' are returned (no tag fields); if 'addto' pointed to an invalid/untaggable appearance, only a success message is returned. Otherwise the submitted tag fields are echoed back (without id, uses or synonym_of).",
+   *     @OA\JsonContent(allOf={
+   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(type="object",
+   *         @OA\Property(property="name", type="string", description="Tag name, present when 'addto' was not specified or invalid"),
+   *         @OA\Property(property="type", type="string", description="Tag type/category, present when 'addto' was not specified or invalid"),
+   *         @OA\Property(property="title", type="string", nullable=true, description="Optional human-friendly title, present when 'addto' was not specified or invalid"),
+   *         @OA\Property(property="tags", type="string", description="Rendered HTML of the appearance's tags, present when addto was specified and valid")
+   *       )
+   *     })
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="A tag with the same name and type already exists, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   * @OA\Put(
+   *   path="/cg/tag/{id}",
+   *   description="Update an existing tag's name, type or title. Staff only.",
+   *   tags={"tags"},
+   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\RequestBody(required=true, @OA\JsonContent(
+   *     required={"name"},
+   *     @OA\Property(property="name", type="string", description="Tag name"),
+   *     @OA\Property(property="type", type="string", description="Tag type/category"),
+   *     @OA\Property(property="title", type="string", maxLength=255, nullable=true, description="Optional human-friendly title")
+   *   )),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(allOf={
+   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(ref="#/components/schemas/Tag")
+   *     })
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="A tag with the same name and type already exists, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   * @OA\Delete(
+   *   path="/cg/tag/{id}",
+   *   description="Delete a tag (or its synonym target if it's a synonym). Staff only. If the tag is in use, a confirmation must be sent via the 'sanitycheck' parameter.",
+   *   tags={"tags"},
+   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(name="sanitycheck", in="query", description="Set to confirm deletion of an in-use tag", @OA\Schema(type="string")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="Tag does not exist, or confirmation required", @OA\JsonContent(allOf={
+   *     @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *     @OA\Schema(type="object", @OA\Property(property="confirm", type="boolean"))
+   *   }))
+   * )
+   */
   public function api($params) {
     $this->load_tag($params);
 
@@ -234,6 +387,49 @@ class TagController extends ColorGuideController {
     }
   }
 
+  /**
+   * @OA\Put(
+   *   path="/cg/tag/{id}/synonym",
+   *   description="Mark a tag as a synonym of another tag, merging their usages. Staff only.",
+   *   tags={"tags"},
+   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\RequestBody(required=true, @OA\JsonContent(
+   *     required={"target_id"},
+   *     @OA\Property(property="target_id", ref="#/components/schemas/OneBasedId", description="ID of the tag to become a synonym of")
+   *   )),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(allOf={
+   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(type="object", additionalProperties=false,
+   *         @OA\Property(property="target", ref="#/components/schemas/Tag")
+   *       )
+   *     })
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="Tag does not exist, target does not exist, or either is already a synonym, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   * @OA\Delete(
+   *   path="/cg/tag/{id}/synonym",
+   *   description="Remove a tag's synonym relationship, restoring it as a standalone tag. Staff only.",
+   *   tags={"tags"},
+   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(name="keep_tagged", in="query", description="If present, the tag will be reapplied to all appearances tagged with its synonym target", @OA\Schema(type="string")),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(allOf={
+   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(type="object", additionalProperties=false,
+   *         @OA\Property(property="keep_tagged", type="boolean")
+   *       )
+   *     })
+   *   ),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="400", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   * )
+   */
   public function synonymApi($params) {
     $this->load_tag($params);
 

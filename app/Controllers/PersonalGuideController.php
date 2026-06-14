@@ -13,6 +13,7 @@ use App\Permission;
 use App\Regexes;
 use App\Response;
 use App\UserPrefs;
+use OpenApi\Annotations as OA;
 use function count;
 
 class PersonalGuideController extends ColorGuideController {
@@ -96,6 +97,34 @@ class PersonalGuideController extends ColorGuideController {
     ]);
   }
 
+  /**
+   * @OA\Post(
+   *   path="/user/{id}/pcg/point-history/recalc",
+   *   description="Recalculates the Personal Color Guide point history for the specified user. Requires developer permission.",
+   *   tags={"personal color guide"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission (developer required)",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="The specified user does not exist",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function pointRecalc($params) {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
@@ -110,6 +139,34 @@ class PersonalGuideController extends ColorGuideController {
     Response::done();
   }
 
+  /**
+   * @OA\Get(
+   *   path="/user/{id}/pcg/slots",
+   *   description="Checks whether the specified user is eligible to add a new Personal Color Guide appearance. Fails if PCG appearance creation is disabled for the user, or if they have fewer than 10 available slots.",
+   *   tags={"personal color guide"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="The user is allowed to add a new PCG appearance",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="400",
+   *     description="PCG appearance creation is disabled for this user, or the user has no available slots left",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="The specified user does not exist",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function slotsApi($params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -143,6 +200,85 @@ class PersonalGuideController extends ColorGuideController {
     }
   }
 
+  /**
+   * @OA\Get(
+   *   path="/user/{id}/pcg/points",
+   *   description="Gets the number of Personal Color Guide slot points the specified user has available to grant (their available points minus the 10 they need to keep). Requires staff permission.",
+   *   tags={"personal color guide"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       allOf={
+   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *         @OA\Schema(
+   *           type="object",
+   *           required={"amount"},
+   *           @OA\Property(property="amount", type="integer", description="The number of points available to be granted to or taken from the user")
+   *         )
+   *       }
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission (staff required)",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="The specified user does not exist",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   * @OA\Post(
+   *   path="/user/{id}/pcg/points",
+   *   description="Grants or takes Personal Color Guide slot points from the specified user, recording the change with a comment. Requires staff permission. The resulting available point total cannot go below 10.",
+   *   tags={"personal color guide"},
+   *   @OA\Parameter(
+   *     name="id",
+   *     in="path",
+   *     required=true,
+   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
+   *   ),
+   *   @OA\RequestBody(
+   *     required=true,
+   *     @OA\MediaType(
+   *       mediaType="application/x-www-form-urlencoded",
+   *       @OA\Schema(
+   *         required={"amount"},
+   *         @OA\Property(property="amount", type="integer", description="The (non-zero) number of points to grant (positive) or take (negative)"),
+   *         @OA\Property(property="comment", type="string", minLength=2, maxLength=140, description="An optional comment explaining the point change")
+   *       )
+   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="200",
+   *     description="The points were successfully given or taken",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="400",
+   *     description="The specified amount is 0, invalid, or would cause the user's points to go below 10, or the comment is invalid",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="403",
+   *     description="Insufficient permission (staff required)",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="404",
+   *     description="The specified user does not exist",
+   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *   )
+   * )
+   */
   public function pointsApi($params) {
     if (Permission::insufficient('staff'))
       Response::fail();

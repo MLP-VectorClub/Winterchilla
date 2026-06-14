@@ -2,10 +2,9 @@
   {% if signed_in %}
     <li><a href='/'><span class="typcn typcn-home"></span>&nbsp;Home</a></li>
   {% endif %}
+  <li><a href='/cg{% if signed_in %}/preferred{% endif %}'>Color Guides</a></li>
   <li><a href='/episode/latest'>Latest Episode</a></li>
   <li><a href='/show'>Show</a></li>
-  <li><a href='/cg{% if signed_in %}/preferred{% endif %}'>Color Guides</a></li>
-  <li><a href='/events'>Events</a></li>
   {% if signed_in %}
     {# @var current_user \App\Models\User #}
     <li><a href='{{ current_user.toURL() }}'>Account</a></li>

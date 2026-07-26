@@ -73,7 +73,12 @@ class DiscordMember extends NSModel {
   }
 
   public function checkServerMembership() {
-    $discordApi = new DiscordClient(['token' => CoreUtils::env('DISCORD_BOT_TOKEN')]);
+    global $logger;
+
+    $discordApi = new DiscordClient([
+      'token' => CoreUtils::env('DISCORD_BOT_TOKEN'),
+      'logger' => $logger,
+    ]);
     try {
       $member = $discordApi->guild->getGuildMember([
         'guild.id' => (int)CoreUtils::env('DISCORD_SERVER_ID'),
@@ -85,8 +90,8 @@ class DiscordMember extends NSModel {
         throw $e;
     }
     if (!empty($member)){
-      $this->nick = $member->nick ?? null;
-      $this->joined_at = $member->joined_at->format('c');
+      $this->nick = $member['nick'] ?? null;
+      $this->joined_at = (new DateTime($member['joined_at']))->format('c');
     }
     else {
       $this->nick = null;

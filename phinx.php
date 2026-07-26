@@ -9,7 +9,7 @@ return [
     'seeds' => '%%PHINX_CONFIG_DIR%%/db/seeds',
   ],
   'environments' => [
-    'default_database' => 'local',
+    'default_environment' => 'local',
     'local' => [
       'adapter' => 'pgsql',
       'host' => $_ENV['DB_HOST'],

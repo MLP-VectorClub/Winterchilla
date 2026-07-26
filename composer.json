@@ -50,7 +50,7 @@
     "seinopsys/postgresql-database-class": "^3.0",
     "seinopsys/rgbacolor": "1.*",
     "swiftmailer/swiftmailer": "^6.0",
-    "symfony/dotenv": "^6.0|^7.0",
+    "symfony/dotenv": "^8.1.0",
     "twig/twig": "^3.0",
     "whichbrowser/parser": "^2.0",
     "wohali/oauth2-discord-new": "^1.0",

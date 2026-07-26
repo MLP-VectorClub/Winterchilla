@@ -32,7 +32,6 @@ const POSTGRES_INTEGER_MAX = 2_147_483_647;
 define('FULL_LOG_PATH', PROJPATH.'logs/'.$_ENV['LOG_PATH']);
 const OAUTH_REDIRECT_URI = ABSPATH.'da-auth';
 const GDPR_IP_PLACEHOLDER = '127.168.80.82';
-const DA_AUTHORIZED_APPS_URL = 'https://www.deviantart.com/settings/apps';
 const SETTINGS_PAGE = '/settings';
 # boolean
 /** @see \App\HTTP::statusCode() */

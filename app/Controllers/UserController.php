@@ -210,6 +210,7 @@ class UserController extends Controller {
         'user' => $this->user,
         'sessions' => $sessions ?? null,
         'discord_membership' => $this->user->safelyGetDiscordMember(),
+        'authorized_apps_url' => DA_AUTHORIZED_APPS_URL,
       ],
     ]);
   }

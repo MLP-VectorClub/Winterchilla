@@ -58,7 +58,7 @@
   },
   "require-dev": {
     "ext-pcntl": "*",
-    "kint-php/kint": "^2.2",
+    "kint-php/kint": "^6.1",
     "pestphp/pest": "^4.0",
     "pestphp/pest-plugin-browser": "^4.0",
     "phpstan/phpstan": "^2.2",

@@ -308,6 +308,7 @@ class ColorGuideController extends Controller {
       'title' => 'Color Picker',
       'libs' => [
         'jquery',
+        'react',
         'ba-throttle-debounce',
         'md5',
         'dragscroll',

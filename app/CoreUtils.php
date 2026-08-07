@@ -306,6 +306,7 @@ class CoreUtils {
     $scope['default_js'] = !isset($options['default-js']) || $options['default-js'] === true;
     $scope['css'] = $scope['default_css'] ? self::DEFAULT_CSS : [];
     $scope['js'] = $scope['default_js'] ? self::DEFAULT_JS : [];
+    $requestedJs = !empty($options['js']) ? array_merge($scope['js'], $options['js']) : $scope['js'];
     self::_checkAssets($options, $scope['css'], 'css', $view);
     self::_checkAssets($options, $scope['js'], 'js', $view);
     $scope['is_2020_event'] = self::$useNutshellNames;
@@ -314,6 +315,11 @@ class CoreUtils {
     }
 
     // Libs
+    // The 'dialog' script depends on React regardless of 'default-libs', since
+    // pages that opt out of the default lib set could otherwise load 'dialog'
+    // without its React dependency (as picker-frame previously did).
+    if (in_array('dialog', $requestedJs, true))
+      $options['libs'] = array_unique(array_merge($options['libs'] ?? [], ['react']));
     LibHelper::process($scope, $options, self::DEFAULT_LIBS);
 
     // OpenGraph values

@@ -42,7 +42,7 @@
     "ongr/elasticsearch-dsl": "~7.0",
     "php-activerecord/php-activerecord": "dev-master",
     "psr/log": "^3.0.2",
-    "ramsey/uuid": "^3.9",
+    "ramsey/uuid": "^4.9",
     "restcord/restcord": "v9.x-dev#8646bdd6865e9cf1c8edb560e7a22622228e6e71",
     "robmorgan/phinx": "^0.16.0",
     "s1lentium/iptools": "^1.1",

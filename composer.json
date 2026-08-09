@@ -37,7 +37,7 @@
     "league/uri": "^7.0",
     "league/uri-components": "^7.0",
     "lefuturiste/monolog-discord-handler": "^0.3.1",
-    "monolog/monolog": "^2.10.0",
+    "monolog/monolog": "^3.10.0",
     "nojacko/email-validator": "~1.0",
     "ongr/elasticsearch-dsl": "~7.0",
     "php-activerecord/php-activerecord": "dev-master",

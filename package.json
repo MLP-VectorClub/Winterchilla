@@ -30,7 +30,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "sass": "^1.79.4",
-    "tar": ">=4.4.18",
+    "tar": ">=7.5.22",
     "typicons.font": "^2.0.9"
   },
   "author": "WentTheFox (https://went.tf)",

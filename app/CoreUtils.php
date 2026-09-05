@@ -288,8 +288,7 @@ class CoreUtils {
     // Variables
     $scope = $options['import'] ?? [];
     $fatal_error_page = isset($scope['fatal_error_page']);
-    if (!self::env('TEST_MODE'))
-      $scope['ws_server_host'] = self::env('WS_SERVER_HOST');
+    $scope['ws_server_host'] = self::env('TEST_MODE') ? null : self::env('WS_SERVER_HOST');
     $minimal = !empty($options['minimal']);
 
     // Add auth data

@@ -19,3 +19,4 @@ conf.php
 !/setup/create_extensions.pg.sql
 /vendor
 .phpunit*.cache
+/tests/Browser/Screenshots

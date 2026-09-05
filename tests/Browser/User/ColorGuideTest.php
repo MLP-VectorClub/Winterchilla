@@ -96,3 +96,34 @@ it('shows the new appearance button on guide page for admins', function () use (
     ->assertNoJavaScriptErrors()
     ->assertDontSee('Fatal error');
 });
+
+it('shows the reverse blending tool', function () use ($base) {
+  visit($base . '/cg/blending-reverse')
+    ->assertNoJavaScriptErrors()
+    ->assertDontSee('Fatal error');
+});
+
+it('canonicalizes non-"cg" spellings on the reverse blending tool URL', function () use ($base) {
+  visit($base . '/colorguide/blending-reverse')
+    ->assertPathIs('/cg/blending-reverse');
+});
+
+it('redirects /[cg]/preferred to the guest default guide', function () use ($base) {
+  visit($base . '/cg/preferred')
+    ->assertPathIs('/cg');
+});
+
+it('404s on the not-yet-implemented tag-changes page', function () use ($base, $appearanceId) {
+  visit($base . '/cg/pony/tag-changes/' . $appearanceId)
+    ->assertSee('404');
+});
+
+it('404s requesting a cutiemark SVG that has not been set', function () use ($base, $appearanceId) {
+  visit($base . '/cg/cutiemark/' . $appearanceId . '.svg')
+    ->assertSee('404');
+});
+
+it('404s downloading a cutiemark that has not been set', function () use ($base, $appearanceId) {
+  visit($base . '/cg/cutiemark/download/' . $appearanceId)
+    ->assertSee('404');
+});

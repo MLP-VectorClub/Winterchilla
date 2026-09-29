@@ -184,9 +184,15 @@ Tokens match DeviantArt's real lengths (the DB columns are `varchar(50)`/`varcha
 and stored under `fs/tmp/test-oauth/` (cleared by `scripts/reset-test-db.sh`); see `App\Testing\FakeOAuth`.
 Seeded users have fixed DA IDs (`TestSeederConstants::USER_DA_ID`/`ADMIN_DA_ID`).
 
-Not covered: the sign-in *popup* hand-off (`login_confirm` calling `window.opener.__authCallback`) —
-Pest's browser plugin can't drive popups, so the tests use the site's full-page redirect fallback
-(`/da-auth/begin?return=...`). Token refresh isn't exercised either (fake tokens outlive a test run).
+Not covered by Pest: the sign-in *popup* flow (`$.openAuthPopup` in `global.jsx`) — Pest's browser plugin
+can't drive popups, so the tests use the site's full-page redirect fallback (`/da-auth/begin?return=...`).
+It was verified manually with a standalone Playwright script instead. Background: DeviantArt's sign-in
+pages send `Cross-Origin-Opener-Policy`, which cuts the popup off from its opener — `popup.closed` then
+reads true while it's still open and `window.opener` is null in it. That used to make the main page
+redirect to DeviantArt too, and the popup never reported back. The popup's result pages (`login_confirm`,
+`pages/error/auth.js`) now report over a `BroadcastChannel` and close once acknowledged; the fake consent
+page sends the same COOP header so the local setup reproduces DA's behavior. Token refresh isn't exercised
+either (fake tokens outlive a test run).
 
 Found and fixed along the way: the account settings page (`/users/[id]/account`) fataled for every
 signed-in user — commit a9954636 removed the `DA_AUTHORIZED_APPS_URL` constant but left the controller

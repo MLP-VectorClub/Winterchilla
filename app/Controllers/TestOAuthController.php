@@ -66,6 +66,8 @@ class TestOAuthController extends Controller {
       die('Fake OAuth provider: expected response_type=code and a state');
     }
 
+    // Like DeviantArt's sign-in pages: severs the link to the sign-in popup's opener (see $.openAuthPopup)
+    header('Cross-Origin-Opener-Policy: same-origin');
     Twig::display('test/oauth-authorize', [
       'provider' => $provider,
       'redirect_uri' => self::validRedirectUri($_GET['redirect_uri'] ?? null),

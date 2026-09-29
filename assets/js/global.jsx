@@ -63,7 +63,7 @@
     let calcPos = popupCalcCenter(w, h),
       newWindow = window.open(url, title, `scrollbars=yes,width=${w},height=${h},top=${calcPos.top},left=${calcPos.left}`);
 
-    if (window.focus)
+    if (newWindow && window.focus)
       newWindow.focus();
 
     return newWindow;
@@ -73,6 +73,80 @@
     popup.resizeTo(w, h);
     popup.moveTo(calcpos.left, calcpos.top);
   };
+
+  // Shared with templates/login_confirm.html.twig and pages/error/auth.js
+  const AUTH_CHANNEL_NAME = 'mlpvc-da-auth';
+  /**
+   * Runs the DeviantArt sign-in flow in a popup opened by `openPopup`.
+   *
+   * The popup's final page (login_confirm or the auth error page) reports the outcome over a
+   * BroadcastChannel instead of window.opener: DeviantArt's sign-in pages cut the link between the two
+   * windows (Cross-Origin-Opener-Policy), after which the popup can't reach this window, and
+   * `popup.closed` reads true here even though the popup is still open. So `onClosed` may fire while the
+   * user is still signing in; it must never be treated as a failure, and a result can still arrive
+   * after it. We acknowledge each result so the popup knows it's safe to close itself.
+   *
+   * @return {boolean} false if the popup couldn't be opened at all (blocked)
+   */
+  $.openAuthPopup = (openPopup, { onSuccess, onFail, onClosed }) => {
+    let popup = null;
+    try {
+      popup = openPopup();
+    } catch (e){ /* blocked */
+    }
+    if (!popup)
+      return false;
+
+    let done = false,
+      closeCheck;
+    const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel(AUTH_CHANNEL_NAME) : null;
+    const handleResult = data => {
+      if (done)
+        return;
+      done = true;
+      clearInterval(closeCheck);
+      if (channel){
+        channel.postMessage({ type: 'ack' });
+        channel.close();
+      }
+      if (data.success)
+        onSuccess();
+      else onFail(data);
+    };
+    if (channel)
+      channel.onmessage = e => {
+        if (e.data && e.data.type === 'result')
+          handleResult(e.data);
+      };
+    // For popups that can still reach this window but lack BroadcastChannel support
+    window.__authCallback = () => handleResult({ success: true });
+
+    closeCheck = setInterval(() => {
+      let closed;
+      try {
+        closed = popup.closed;
+      } catch (e){
+        return;
+      }
+      if (closed){
+        clearInterval(closeCheck);
+        if (!done)
+          onClosed();
+      }
+    }, 500);
+    $w.on('beforeunload', () => {
+      if (!done)
+        try {
+          popup.close();
+        } catch (e){ /* ignore */
+        }
+    });
+
+    return true;
+  };
+  const authErrorHtml = ({ title, notice }) => title || notice
+    ? `<p class="align-center"><strong>${title || ''}</strong></p><p>${notice || ''}</p>`
+    : 'Sign in failed, check the popup window for details.';
   $d.on('click', '#turbo-sign-in', function(e) {
     e.preventDefault();
 
@@ -80,34 +154,24 @@
       origNotice = $this.parent().html();
     $this.disable();
 
-    let success = false,
-      closeCheck,
-      popup;
-    window.__authCallback = function() {
-      success = true;
-      if ($.Dialog._open.type === 'request')
-        $.Dialog.clearNotice(/Redirecting you to DeviantArt/);
-      else $.Dialog.close();
-      popup.close();
-    };
-    try {
-      popup = window.open('/da-auth/begin');
-    } catch (_){
+    const opened = $.openAuthPopup(() => window.open('/da-auth/begin'), {
+      onSuccess() {
+        if ($.Dialog._open && $.Dialog._open.type === 'request')
+          $.Dialog.clearNotice(/Redirecting you to DeviantArt/);
+        else $.Dialog.close();
+      },
+      onFail(data) {
+        $.Dialog.fail(false, authErrorHtml(data) + origNotice);
+      },
+      // Possibly still open (see $.openAuthPopup); bring the prompt back so the user can retry
+      onClosed() {
+        $.Dialog.fail(false, origNotice);
+      },
+    });
+    if (!opened)
       return $.Dialog.fail(false, 'Could not open login pop-up. Please open another page');
-    }
 
     $.Dialog.wait(false, 'Redirecting you to DeviantArt');
-    closeCheck = setInterval(function() {
-      try {
-        if (!popup || popup.closed){
-          clearInterval(closeCheck);
-          if (success)
-            return;
-          $.Dialog.fail(false, origNotice);
-        }
-      } catch (e){ /* ignore */
-      }
-    }, 500);
   });
 
   $.Navigation = {
@@ -745,73 +809,26 @@
 
     $.Dialog.wait('Sign-in process', 'Opening popup window');
 
-    let
-      success = false,
-      closeCheck,
-      popup,
-      opened = null,
-      waitForIt = false;
-    window.__authCallback = function(fail, openedWindow) {
-      clearInterval(closeCheck);
-      if (fail === true){
-        if (!openedWindow.jQuery)
-          $.Dialog.fail(false, 'Sign in failed, check popup for details.');
-        else {
-          const
-            pageTitle = openedWindow.$('#content').children('h1').html(),
-            noticeText = openedWindow.$('#content').children('.notice').html();
-          $.Dialog.fail(false, `<p class="align-center"><strong>${pageTitle}</strong></p><p>${noticeText}</p>`);
-          popup.close();
-        }
+    const opened = $.openAuthPopup(() => $.popupOpenCenter('/da-auth/begin', 'login', '1024', '768'), {
+      onSuccess() {
+        $.Dialog.success(false, 'Signed in successfully');
+        $.Navigation.reload(true);
+      },
+      onFail(data) {
+        $.Dialog.fail(false, authErrorHtml(data));
         $this.enable();
-        return;
-      }
-
-      success = true;
-      $.Dialog.success(false, 'Signed in successfully');
-      popup.close();
-      $.Navigation.reload(true);
-    };
-    try {
-      popup = $.popupOpenCenter('/da-auth/begin', 'login', '1024', '768');
-      opened = new Date();
-    } catch (e){ /* ignore */
-    }
-    // http://stackoverflow.com/a/25643792
-    let onWindowClosed = function() {
-      if (success) {
-        opened = null;
-        return;
-      }
-
-      // If the popup was open for less than Xms then try a redirect
-      // Otherwise it was likely closed intentionally
-      if (opened && (new Date()).getTime() - opened.getTime() < 4000){
-        opened = null;
-        $.Dialog.confirm(false, 'Popup-based login failed.');
-        redirect();
-        return;
-      }
-
-      opened = null;
-      $.Dialog.close();
-      $this.enable();
-    };
-    closeCheck = setInterval(function() {
-      try {
-        console.log(popup.closed);
-        if (!popup || popup.closed){
-          clearInterval(closeCheck);
-          onWindowClosed();
-        }
-      } catch (e){ /* ignore */
-      }
-    }, 500);
-    $w.on('beforeunload', function() {
-      success = true;
-      if (!waitForIt)
-        popup.close();
+      },
+      // Possibly still open (see $.openAuthPopup), so don't fall back to the redirect here — that used to
+      // send this page to DeviantArt too while the popup was still showing its sign-in page
+      onClosed() {
+        $.Dialog.close();
+        $this.enable();
+      },
     });
+    // Only an actually blocked popup falls back to signing in via a full-page redirect
+    if (!opened)
+      return redirect();
+
     $.Dialog.wait(false, 'Waiting for you to sign in');
   });
 

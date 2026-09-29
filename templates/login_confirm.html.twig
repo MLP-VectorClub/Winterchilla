@@ -4,11 +4,48 @@
   <meta charset="utf-8">
   <title>Sign-in process</title>
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <script nonce="{{ constant('CSP_NONCE') }}">
-    if (!document.querySelector('.xdebug-error'))
-      window.opener.__authCallback();
-    else console.log('xdebug error detected');
-  </script>
+  <style>
+    body { font-family: sans-serif; text-align: center; color: #2C73B1; padding: 40px 16px }
+    #close-hint { visibility: hidden }
+  </style>
 </head>
-<body></body>
+<body>
+<p><strong>You're signed in.</strong></p>
+<p id="close-hint">You can close this window now.</p>
+<script nonce="{{ constant('CSP_NONCE') }}">
+  (function() {
+    if (document.querySelector('.xdebug-error')){
+      console.log('xdebug error detected');
+      return;
+    }
+
+    // Tell the page that opened this sign-in popup (see $.openAuthPopup in global.jsx). window.opener
+    // is only a fallback: DeviantArt's sign-in pages cut the link between the two windows.
+    var reported = false;
+    if (typeof BroadcastChannel === 'function'){
+      var channel = new BroadcastChannel('mlpvc-da-auth');
+      channel.onmessage = function(e) {
+        if (e.data && e.data.type === 'ack'){
+          channel.close();
+          window.close();
+        }
+      };
+      channel.postMessage({ type: 'result', success: true });
+      reported = true;
+    }
+    if (!reported){
+      try {
+        window.opener.__authCallback();
+        window.close();
+      } catch (e){ /* opener unreachable */
+      }
+    }
+
+    // Still here (nothing acknowledged, or the browser refused to close the window)
+    setTimeout(function() {
+      document.getElementById('close-hint').style.visibility = 'visible';
+    }, 1500);
+  })();
+</script>
+</body>
 </html>

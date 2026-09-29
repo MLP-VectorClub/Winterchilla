@@ -36,4 +36,7 @@ $PSQL -d "$DB" -c "
   SELECT setval(pg_get_serial_sequence('events', 'id'),       (SELECT COALESCE(MAX(id), 1) FROM events));
 "
 
+# Tokens and Discord guild memberships issued by the fake OAuth provider (TestOAuthController)
+rm -rf fs/tmp/test-oauth
+
 echo "Done."

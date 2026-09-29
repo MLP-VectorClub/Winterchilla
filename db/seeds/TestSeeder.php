@@ -1,7 +1,6 @@
 <?php
 
 use Phinx\Seed\AbstractSeed;
-use Ramsey\Uuid\Uuid;
 
 class TestSeeder extends AbstractSeed {
   public function getDependencies(): array {
@@ -18,7 +17,8 @@ class TestSeeder extends AbstractSeed {
     // DeviantArt linked accounts (access_expires far in the future to avoid token refresh)
     $this->table('deviantart_users')->insert([
       [
-        'id'             => Uuid::uuid4(),
+        // Fixed IDs (TestSeederConstants::*_DA_ID) so the fake OAuth provider can sign in as these users
+        'id'             => '0f0e0d0c-0b0a-4000-8000-000000009001',
         'name'           => 'TestUser',
         'avatar_url'     => null,
         'user_id'        => 9001,
@@ -29,7 +29,7 @@ class TestSeeder extends AbstractSeed {
         'created_at'     => date('c'),
       ],
       [
-        'id'             => Uuid::uuid4(),
+        'id'             => '0f0e0d0c-0b0a-4000-8000-000000009002',
         'name'           => 'TestAdmin',
         'avatar_url'     => null,
         'user_id'        => 9002,

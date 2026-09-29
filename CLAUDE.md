@@ -12,8 +12,17 @@ and commit this file alongside the tests it describes.
 
 Tests live under `tests/Browser/`, written with Pest (`it(...)` blocks), driven against a real running
 app via `TestSeederConstants::BASE_URL` (see `tests/Browser/Helpers/`). `test-login/[user_id]` is the
-existing shortcut for authenticated flows — no route needs real DeviantArt/Discord OAuth to be tested
-except the OAuth begin/end endpoints themselves (see Stage 6).
+existing shortcut for authenticated flows. The OAuth begin/end endpoints themselves are driven against a
+TEST_MODE-only fake DeviantArt/Discord provider (see Stage 6).
+
+`ServerManager` starts the test server with `APP_URL` set to the test origin (so OAuth redirect URIs point
+back at it), `PHP_CLI_SERVER_WORKERS=4` (the app calls the fake OAuth provider on the same server
+mid-request, which deadlocks a single worker), and `opcache.revalidate_freq=0` (a CLI opcache with the
+default-ish 180s revalidation otherwise serves stale code right after an edit).
+
+Assertion gotcha: `assertDontSee('Fatal error')` does **not** catch a PHP fatal — the test server returns
+a bare 500 without those words. Assert real page content (a heading, a known string) instead. Several
+Stage 0 tests still rely on the weak pattern; see Stage 7.
 
 Route inventory source of truth: `config/routes/pages.php`.
 
@@ -67,7 +76,7 @@ it actually aborts the run.
 Already covered, no action needed unless a regression is found:
 - Dialog component — `tests/Browser/Dialog/DialogTest.php` (20 tests, all dialog types/states)
 - Auth via test-login — `tests/Browser/User/AuthTest.php`
-- Admin panel (index, logs+filter, useful links, notices, pcg-appearances, discord page, 403-to-guest) — `tests/Browser/Admin/AdminTest.php`
+- Admin panel (index, logs+filter, useful links, notices, pcg-appearances, 403-to-guest) — `tests/Browser/Admin/AdminTest.php`
 - Appearance CRUD + color group CRUD (admin) — `tests/Browser/Admin/AppearanceManagementTest.php`
 - Color guide index/guide/full-list/change-list, picker (file open + clipboard paste) — `tests/Browser/User/ColorGuideTest.php`
 - Episodes (list, detail, `/episode/latest` redirect) — `tests/Browser/User/EpisodeTest.php`
@@ -156,14 +165,33 @@ Lower-traffic or non-page routes — smoke-test (loads, no fatal error, no JS er
 - [ ] `/docs` (DocsController)
 - [ ] `/muffin-rating` (MuffinRatingController) — image endpoint, verify it returns a valid image response
 
-### Stage 6 — OAuth edges (research spike, not started)
+### Stage 6 — OAuth edges (done)
 
-- [ ] `/da-auth/begin`, `/da-auth/end` (AuthController)
-- [ ] `/discord-connect/begin`, `/discord-connect/end` (DiscordAuthController)
+- [x] `/da-auth/begin`, `/da-auth`, `/da-auth/end` (AuthController) — `tests/Browser/User/DeviantArtAuthTest.php`:
+      new-user sign-in, existing user by DA ID, `?return=` redirect, username change renames the local
+      user, deny, state mismatch, missing code/state, failed token exchange, failed-attempt lockout
+- [x] `/discord-connect/begin`, `/discord-connect/end` (DiscordAuthController) —
+      `tests/Browser/User/DiscordAuthTest.php`: guest 403, deny, state mismatch, linking with/without
+      server membership, already-linked short-circuit
 
-These hit a real external OAuth provider and can't be driven end-to-end without a stub/mock for
-DeviantArt/Discord. Needs a decision on approach (fake provider server? recorded fixture?) before
-tests can be written — don't attempt inline as part of another stage.
+Approach: a fake OAuth provider served by the app itself, only in TEST_MODE
+(`App\Controllers\TestOAuthController`, routes under `/test-oauth/...` mirroring the real providers'
+paths). In TEST_MODE the DA client (`App\Testing\TestDeviantArtProvider`), the Discord client
+(`host`/`apiDomain` options) and the restcord bot client (`apiUrl`) point there, so the app's real
+redirect/state/token-exchange/profile code runs unchanged. Its consent page picks the identity to sign in
+as (and, for Discord, server membership) and offers Approve / Deny / Approve-with-invalid-code.
+Tokens match DeviantArt's real lengths (the DB columns are `varchar(50)`/`varchar(40)`), so they're opaque
+and stored under `fs/tmp/test-oauth/` (cleared by `scripts/reset-test-db.sh`); see `App\Testing\FakeOAuth`.
+Seeded users have fixed DA IDs (`TestSeederConstants::USER_DA_ID`/`ADMIN_DA_ID`).
+
+Not covered: the sign-in *popup* hand-off (`login_confirm` calling `window.opener.__authCallback`) —
+Pest's browser plugin can't drive popups, so the tests use the site's full-page redirect fallback
+(`/da-auth/begin?return=...`). Token refresh isn't exercised either (fake tokens outlive a test run).
+
+Found and fixed along the way: the account settings page (`/users/[id]/account`) fataled for every
+signed-in user — commit a9954636 removed the `DA_AUTHORIZED_APPS_URL` constant but left the controller
+passing it to the template (which no longer used it). `UserProfileTest` missed it because of the weak
+`assertDontSee('Fatal error')` pattern; it now asserts real page content.
 
 ### Stage 7 — Closeout audit (not started)
 
@@ -172,6 +200,11 @@ tests can be written — don't attempt inline as part of another stage.
 - [x] Remove/merge `tests/Browser/User/PostsTest.php` duplication (done in Stage 4)
 - [ ] Decide whether `public_api_v0.php` endpoints need direct coverage beyond what's exercised
       incidentally through page-level UI flows
+- [ ] Replace remaining `assertDontSee('Fatal error')`-only assertions with real page content — they pass
+      on a 500 (see the assertion gotcha near the top)
+- [x] Removed the dead `/admin/discord` route (always 500'd): its page — a manual Discord member ↔ DA user
+      binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
+      survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above
 
 ## Working on this plan
 

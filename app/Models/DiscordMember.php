@@ -6,6 +6,7 @@ use ActiveRecord\DateTime;
 use App\Controllers\DiscordAuthController;
 use App\CoreUtils;
 use App\Response;
+use App\Testing\FakeOAuth;
 use App\Time;
 use App\UserPrefs;
 use GuzzleHttp\Command\Exception\CommandClientException;
@@ -75,10 +76,14 @@ class DiscordMember extends NSModel {
   public function checkServerMembership() {
     global $logger;
 
-    $discordApi = new DiscordClient([
-      'token' => CoreUtils::env('DISCORD_BOT_TOKEN'),
+    $client_options = [
+      'token' => (string)CoreUtils::env('DISCORD_BOT_TOKEN'),
       'logger' => $logger,
-    ]);
+    ];
+    // In TEST_MODE, talk to the fake provider (TestOAuthController) instead of discord.com
+    if (CoreUtils::env('TEST_MODE'))
+      $client_options['apiUrl'] = FakeOAuth::baseUrl('discord').'/api/';
+    $discordApi = new DiscordClient($client_options);
     try {
       $member = $discordApi->guild->getGuildMember([
         'guild.id' => (int)CoreUtils::env('DISCORD_SERVER_ID'),

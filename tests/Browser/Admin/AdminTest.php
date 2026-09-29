@@ -45,13 +45,6 @@ it('shows the PCG appearances admin page', function () use ($base) {
     ->assertDontSee('Fatal error');
 });
 
-it('shows the Discord admin page', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
-    ->navigate($base . '/admin/discord')
-    ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
-});
-
 it('shows the logs page with type filtering', function () use ($base) {
   visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
     ->navigate($base . '/logs')

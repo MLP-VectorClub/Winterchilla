@@ -26,7 +26,6 @@ $page_route('/admin', [\App\Controllers\AdminController::class, 'index']);
 $page_route('/logs/[i]?', [\App\Controllers\AdminController::class, 'log']);
 $page_route('/logs/[i]', [\App\Controllers\AdminController::class, 'log']);
 $page_route('/admin/logs/[i]?', [\App\Controllers\AdminController::class, 'log']);
-$page_route('/admin/discord', [\App\Controllers\AdminController::class, 'discord']);
 $page_route('/admin/usefullinks', [\App\Controllers\AdminController::class, 'usefulLinks']);
 $page_route('/admin/wsdiag', [\App\Controllers\AdminController::class, 'wsdiag']);
 $page_route('/admin/pcg-appearances/[i]?', [\App\Controllers\AdminController::class, 'pcgAppearances']);
@@ -123,4 +122,12 @@ $page_route('/diagnose/lt/[i:time]', [\App\Controllers\DiagnoseController::class
 if (\App\CoreUtils::env('TEST_MODE')) {
   $page_route('/test-login/[i:user_id]', [\App\Controllers\TestController::class, 'loginAs']);
   $page_route('/test-dialog', [\App\Controllers\TestController::class, 'dialogPage']);
+  # TestOAuthController — fake DeviantArt/Discord OAuth provider; paths mirror the real ones
+  $page_route('/test-oauth/[deviantart|discord:provider]/oauth2/authorize', [\App\Controllers\TestOAuthController::class, 'authorize']);
+  $page_route('/test-oauth/[deviantart|discord:provider]/decide', [\App\Controllers\TestOAuthController::class, 'decide']);
+  $router->map('POST', '/test-oauth/[deviantart:provider]/oauth2/token', [\App\Controllers\TestOAuthController::class, 'token']);
+  $router->map('POST', '/test-oauth/[discord:provider]/api/oauth2/token', [\App\Controllers\TestOAuthController::class, 'token']);
+  $page_route('/test-oauth/deviantart/api/v1/oauth2/user/whoami', [\App\Controllers\TestOAuthController::class, 'deviantartWhoami']);
+  $page_route('/test-oauth/discord/api/users/@me', [\App\Controllers\TestOAuthController::class, 'discordMe']);
+  $page_route('/test-oauth/discord/api/guilds/[i:guild_id]/members/[i:user_id]', [\App\Controllers\TestOAuthController::class, 'discordGuildMember']);
 }

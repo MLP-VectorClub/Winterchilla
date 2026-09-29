@@ -22,7 +22,9 @@ it('shows own account settings when logged in', function () use ($base) {
   visit($base . '/test-login/' . TestSeederConstants::USER_ID)
     ->navigate($base . '/users/' . TestSeederConstants::USER_ID . '/account')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    // A fatal renders a bare 500 without the words "Fatal error", so assert real page content
+    ->assertSee('Account Settings')
+    ->assertSee('DeviantArt Account');
 });
 
 it('shows 403 to guests on account settings', function () use ($base) {

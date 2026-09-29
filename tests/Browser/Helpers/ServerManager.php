@@ -22,16 +22,29 @@ class ServerManager {
       throw new \RuntimeException("Something is already listening on $host (likely a test server left over from an aborted run) — stop it first, e.g. `fuser -k 8765/tcp`");
     }
 
+    // variables_order=EGPCS exposes the environment below via $_ENV, where it takes precedence over .env
+    // (Symfony Dotenv never overwrites variables that are already set)
+    // opcache.revalidate_freq=0: a CLI opcache (if enabled) would otherwise keep serving stale code for
+    // a while after an edit, so a re-run right after changing app code could test the old version
+    $args = ['-d', 'variables_order=EGPCS', '-d', 'opcache.revalidate_freq=0', '-S', $host, '-t', $docRoot];
+    $env  = array_merge(getenv(), [
+      // Absolute URLs the app builds (e.g. OAuth redirect URIs) must point back at this server
+      'APP_URL'                => TestSeederConstants::BASE_URL,
+      // The fake OAuth provider (TestOAuthController) is served by this same server and called
+      // server-side mid-request, which would deadlock a single-worker server
+      'PHP_CLI_SERVER_WORKERS' => '4',
+    ]);
+
     $pid = pcntl_fork();
 
     if ($pid === -1) {
-      self::startViaProc($docRoot, $host);
+      self::startViaProc($args, $env);
       return;
     }
 
     if ($pid === 0) {
       // Child: become the PHP built-in server
-      pcntl_exec(PHP_BINARY, ['-S', $host, '-t', $docRoot]);
+      pcntl_exec(PHP_BINARY, $args, $env);
       exit(1);
     }
 
@@ -48,10 +61,9 @@ class ServerManager {
     register_shutdown_function([self::class, 'stop']);
   }
 
-  private static function startViaProc(string $docRoot, string $host): void {
-    $cmd = sprintf('%s -S %s -t %s', PHP_BINARY, $host, escapeshellarg($docRoot));
+  private static function startViaProc(array $args, array $env): void {
     // Store handle as a static property — if it goes out of scope PHP kills the child
-    self::$procHandle = proc_open($cmd, [], $pipes);
+    self::$procHandle = proc_open([PHP_BINARY, ...$args], [], $pipes, null, $env);
     if (self::$procHandle === false)
       throw new \RuntimeException('Failed to start PHP built-in server');
 

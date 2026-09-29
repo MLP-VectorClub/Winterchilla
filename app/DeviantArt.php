@@ -9,6 +9,7 @@ use App\Models\PreviousUsername;
 use App\Models\Session;
 use App\Models\DeviantartUser;
 use App\Models\User;
+use App\Testing\TestDeviantArtProvider;
 use DOMDocument;
 use DOMElement;
 use DOMText;
@@ -48,7 +49,10 @@ class DeviantArt {
     if (self::$_OAuthProviderInstance !== null)
       return self::$_OAuthProviderInstance;
 
-    return self::$_OAuthProviderInstance = new DeviantArtProvider([
+    // In TEST_MODE, talk to the fake provider (TestOAuthController) instead of deviantart.com
+    $provider_class = CoreUtils::env('TEST_MODE') ? TestDeviantArtProvider::class : DeviantArtProvider::class;
+
+    return self::$_OAuthProviderInstance = new $provider_class([
       'clientId' => CoreUtils::env('DA_CLIENT'),
       'clientSecret' => CoreUtils::env('DA_SECRET'),
       'redirectUri' => OAUTH_REDIRECT_URI,

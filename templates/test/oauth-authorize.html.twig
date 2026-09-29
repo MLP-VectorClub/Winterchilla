@@ -1,0 +1,63 @@
+{# @controller \App\Controllers\TestOAuthController::authorize #}
+{# @var provider string #}
+{# @var redirect_uri string #}
+{# @var state string #}
+{# @var scope string #}
+{# Standalone on purpose: this plays an external site, not a page of the app #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fake {{ provider }} authorization</title>
+  <style>
+    body { font-family: sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px }
+    label { display: block; margin: 8px 0 }
+    input[type=text] { width: 100%; box-sizing: border-box }
+    .buttons { display: flex; gap: 8px; margin-top: 16px }
+  </style>
+</head>
+<body>
+<h1 data-testid="oauth-provider">Fake {{ provider }}</h1>
+<p>An application is requesting access with scope <code data-testid="oauth-scope">{{ scope }}</code>.</p>
+<p>It will be sent back to <code>{{ redirect_uri }}</code>.</p>
+
+<form method="get" action="/test-oauth/{{ provider }}/decide">
+  <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+  <input type="hidden" name="state" value="{{ state }}">
+
+  <fieldset>
+    <legend>Sign in as</legend>
+    {% if provider == 'deviantart' %}
+      <label>User ID (UUID)
+        <input type="text" name="userid" value="0F0E0D0C-0B0A-4000-8000-00000000A001" data-testid="oauth-da-userid">
+      </label>
+      <label>Username
+        <input type="text" name="username" value="OAuthNewUser" data-testid="oauth-da-username">
+      </label>
+    {% else %}
+      <label>User ID (snowflake)
+        <input type="text" name="id" value="100000000000000001" data-testid="oauth-discord-id">
+      </label>
+      <label>Username
+        <input type="text" name="username" value="oauth_tester" data-testid="oauth-discord-username">
+      </label>
+      <label>Display name
+        <input type="text" name="global_name" value="OAuth Tester" data-testid="oauth-discord-global-name">
+      </label>
+      <label>
+        <input type="checkbox" name="in_guild" data-testid="oauth-discord-in-guild"> Member of the club's Discord server
+      </label>
+      <label>Server nickname
+        <input type="text" name="nick" value="" data-testid="oauth-discord-nick">
+      </label>
+    {% endif %}
+  </fieldset>
+
+  <div class="buttons">
+    <button type="submit" name="decision" value="approve" data-testid="oauth-approve">Approve</button>
+    <button type="submit" name="decision" value="deny" data-testid="oauth-deny">Deny</button>
+    <button type="submit" name="decision" value="invalid_code" data-testid="oauth-approve-invalid-code">Approve (with an invalid code)</button>
+  </div>
+</form>
+</body>
+</html>

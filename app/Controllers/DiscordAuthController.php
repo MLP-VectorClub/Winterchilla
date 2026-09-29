@@ -11,6 +11,7 @@ use App\Models\DiscordMember;
 use App\Models\User;
 use App\Permission;
 use App\Response;
+use App\Testing\FakeOAuth;
 use App\Time;
 use GuzzleHttp\Exception\RequestException;
 use Wohali\OAuth2\Client\Provider\Discord;
@@ -44,11 +45,18 @@ class DiscordAuthController extends Controller {
   }
 
   public static function getProvider():Discord {
-    return new Discord([
+    $options = [
       'clientId' => CoreUtils::env('DISCORD_CLIENT'),
       'clientSecret' => CoreUtils::env('DISCORD_SECRET'),
       'redirectUri' => ABSPATH.'discord-connect/end',
-    ]);
+    ];
+    // In TEST_MODE, talk to the fake provider (TestOAuthController) instead of discord.com
+    if (CoreUtils::env('TEST_MODE')){
+      $options['host'] = FakeOAuth::baseUrl('discord');
+      $options['apiDomain'] = FakeOAuth::baseUrl('discord').'/api';
+    }
+
+    return new Discord($options);
   }
 
   private function redirectIfAlreadyLinked():void {

@@ -81,11 +81,11 @@ pnpm exec playwright install chromium --with-deps
 # Rebuild the test DB (uses TEST_DB_NAME from .env, defaults to winterchilla_test)
 bash scripts/reset-test-db.sh
 
-# Run tests (TEST_MODE enables the /test-login route used by browser tests)
-TEST_MODE=true vendor/bin/pest
+# Run tests
+vendor/bin/pest
 ```
 
-`TEST_DB_NAME` and `TEST_MODE` can be set in your `.env` file so you don't need to pass them on every command. Never set `TEST_MODE=true` in a production environment.
+The browser tests start their own PHP server with `TEST_MODE=true` (enabling `/test-login` and the fake DeviantArt/Discord OAuth provider, and selecting the test database), so a local dev site can keep `TEST_MODE=false` in `.env` and sign in through the real DeviantArt. `TEST_DB_NAME` can be set in `.env`. Never set `TEST_MODE=true` in a production environment.
 
 ## Contributing
 

@@ -28,6 +28,9 @@ class ServerManager {
     // a while after an edit, so a re-run right after changing app code could test the old version
     $args = ['-d', 'variables_order=EGPCS', '-d', 'opcache.revalidate_freq=0', '-S', $host, '-t', $docRoot];
     $env  = array_merge(getenv(), [
+      // Test-only routes (test-login, the fake OAuth provider) and the test database, regardless of .env —
+      // so a local dev site can keep TEST_MODE off in .env and talk to the real DeviantArt/Discord
+      'TEST_MODE'              => 'true',
       // Absolute URLs the app builds (e.g. OAuth redirect URIs) must point back at this server
       'APP_URL'                => TestSeederConstants::BASE_URL,
       // The fake OAuth provider (TestOAuthController) is served by this same server and called

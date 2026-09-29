@@ -88,7 +88,7 @@ Make sure the `build-essential` package is installed, otherwise some required as
 
 ### Web Server (nginx)
 
-The `php7.3-fpm` package is used used by the provided `setup/nginx.conf` configuration file.
+The provided `setup/nginx.conf` configuration file expects the `php8.5-fpm` package's socket (adjust `fastcgi_pass` if your distro puts it elsewhere).
 
 Replace `domain.tld` with the domain of your choice, and change `/path/to/*` placeholders appropriately. `/path/to/www` is the `www` directory of this repository, and `/path/to/error.log` should point to a file in the `logs` directory. The site assumes that this isn't the only site running on your machine, so you'll have to add your domain to your `/etc/hosts` file (`C:\Windows\System32\drivers\etc\hosts` on Windows) on all machines where you want to reach the server from.
 
@@ -103,7 +103,7 @@ $ chown -R www-data:www-data vendor/ezyang/htmlpurifier/library/HTMLPurifier/Def
 $ chmod g+rw fs vendor/ezyang/htmlpurifier/library/HTMLPurifier/DefinitionCache/
 $ cp setup/nginx.conf /etc/nginx/sites-available/mlpvector.lc.conf
 $ ln -s /etc/nginx/sites-available/mlpvector.lc.conf /etc/nginx/sites-enabled/
-$ echo "127.0.0.1 domain.tld" > /etc/hosts
+$ echo "127.0.0.1 domain.tld" >> /etc/hosts
 $ nano /etc/nginx/sites-available/mlpvector.lc.conf # Make your changes
 $ service nginx reload
 ```

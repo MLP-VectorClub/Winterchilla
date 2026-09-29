@@ -26,6 +26,7 @@ use HTMLPurifier;
 use HTMLPurifier_Config;
 use HTMLPurifier_TagTransform_Simple;
 use Monolog\Logger;
+use OpenApi\Generator;
 use Parsedown;
 use RuntimeException;
 use TypeError;
@@ -39,7 +40,6 @@ use function is_array;
 use function is_int;
 use function is_object;
 use function is_string;
-use function OpenApi\scan;
 
 class CoreUtils {
   private static Inflector $inflector;
@@ -1559,7 +1559,7 @@ class CoreUtils {
     $output_path = APPATH.API_SCHEMA_PATH;
     if ($only_if_missing && file_exists($output_path))
       return;
-    $openapi = scan([
+    $openapi = (new Generator())->generate([
       PROJPATH.'app/Controllers/API',
       PROJPATH.'app/Controllers/EventController.php',
       PROJPATH.'app/Controllers/UserController.php',

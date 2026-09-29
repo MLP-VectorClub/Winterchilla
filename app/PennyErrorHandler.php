@@ -66,9 +66,17 @@ body { font-family: sans-serif }
 HTML;
   }
 
-  public function handleException($e) {
-    $this->outputErrorPage();
+  /**
+   * Monolog's own handleException() is private, so it can't be overridden to render the error page. It does
+   * call the previously registered exception handler after logging, so register the page renderer as that.
+   */
+  public function registerExceptionHandler(array $levelMap = [], bool $callPrevious = true):self {
+    $previous = set_exception_handler(function (\Throwable $e) use (&$previous):void {
+      $this->outputErrorPage();
+      if ($previous !== null)
+        $previous($e);
+    });
 
-    parent::handleException($e);
+    return parent::registerExceptionHandler($levelMap, true);
   }
 }

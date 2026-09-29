@@ -59,10 +59,10 @@ use function count;
  *   type="number",
  *   description="Used for displaying items in a specific order. The API guarantees that array return values are sorted in ascending order based on this property."
  * )
- */
-
-/**
+ 
+ *
  * AppearancesAPIController
+ 
  */
 class AppearancesAPIController extends APIController {
   /**

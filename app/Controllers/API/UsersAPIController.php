@@ -50,10 +50,10 @@ use OpenApi\Annotations as OA;
  *     description="If this value is true the DeviantArt access token expired and the backend is updating it in the background. Future requests should be made to the appropriate endpoint periodically (TODO) to check whether the session update was successful and the user should be logged out if it wasn't."
  *   )
  * )
- */
-
-/**
+ 
+ *
  * UsersAPIController
+ 
  */
 class UsersAPIController extends APIController {
   /**

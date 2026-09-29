@@ -1,9 +1,11 @@
 <?php
 
 use App\PennyErrorHandler;
-use App\UsefulLogger as Logger;
+use App\RequestContextProcessor;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+use Monolog\Logger;
 
 function monolog_setup() {
   global $logger;
@@ -17,14 +19,15 @@ function monolog_setup() {
   $stream_handler->setFormatter($formatter);
 
   $logger = new Logger('logger');
+  $logger->pushProcessor(new RequestContextProcessor());
   $logger->pushHandler($stream_handler);
 
   if (!empty($_ENV['DISCORD_LOG_WEBHOOK_URL'])){
     $discord_handler = new DiscordHandler\DiscordHandler(
       $_ENV['DISCORD_LOG_WEBHOOK_URL'],
-      null,
-      null,
-      Logger::WARNING
+      '',
+      '',
+      Level::Warning
     );
 
     $discord_handler->getConfig()

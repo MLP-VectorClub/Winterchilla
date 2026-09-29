@@ -67,6 +67,12 @@ Playwright's own browser build must match the installed `playwright` npm version
 `pnpm exec playwright install chromium`. A mismatch makes every test fail instantly with
 `PlaywrightOutdatedException` (no requests ever reach the server).
 
+Don't bump `playwright` past 1.60 while on `pestphp/pest-plugin-browser` 4.x (`package.json` pins `~1.59.1`).
+Playwright 1.61+ rejects local file paths from clients connected over a websocket, which is how the plugin
+connects, so `->attach()` fails with `localPaths are not allowed when the client is not local` (the color
+picker file-upload test). It's fixed only on the plugin's 5.x line (Pest 5, needs `symfony/process` ^8.1);
+that upgrade is what unblocks newer Playwright versions.
+
 Diagnosing the timeout issue above took a long time because both failure modes are *silent* — no PHP fatal, no Pest error,
 tests just report the standard 5s navigation timeout as if the app were slow. The fastest way to confirm
 either bug in the future: put an unconditional `throw` at the very top of the file in question and see if

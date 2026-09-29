@@ -7,6 +7,11 @@ use App\CoreUtils;
 use OpenApi\Annotations as OA;
 
 /**
+ * This controller handles all new API communication
+ *
+ * Shared OpenAPI definitions (info, tags, security scheme and common schemas) are declared below. They have to
+ * be part of this class's own docblock: swagger-php only reads docblocks attached to a class/method/property.
+ *
  * @OA\OpenApi(
  *   @OA\Info(
  *     title="MLP Vector Club API",
@@ -144,10 +149,6 @@ use OpenApi\Annotations as OA;
  *     @OA\Schema(ref="#/components/schemas/PageData")
  *   }
  * )
- */
-
-/**
- * This controller handles all new API communication
  */
 class APIController extends Controller {
   public function __construct() {

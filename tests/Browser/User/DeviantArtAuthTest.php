@@ -89,6 +89,18 @@ it('renames the local user when their DeviantArt username changed', function () 
     ->assertSeeIn('.logged-in .user-name', 'RenamedAdmin');
 });
 
+it('does not reuse the return URL of an abandoned sign-in', function () use ($base) {
+  // A full-page sign-in saves its return URL in the session, then gets abandoned on the consent page...
+  beginDeviantArtSignIn($base, '/about')
+    // ...and a popup sign-in (which never passes a return URL) completes later in the same session
+    ->navigate($base . '/da-auth/begin')
+    ->assertSee('Fake deviantart')
+    ->click('[data-testid="oauth-approve"]')
+    // It must end on the page that reports back to the opener, not on the stale return URL
+    ->assertPathIs('/da-auth/end')
+    ->assertSee("You're signed in");
+});
+
 // Keep last: leaves this IP locked out of signing in for the rest of the file
 it('locks sign-in out after repeated failed token exchanges', function () use ($base) {
   // One failure was already recorded by the invalid-code test above; five within a few minutes trip it

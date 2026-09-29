@@ -16,8 +16,11 @@ class AuthController extends Controller {
     $auth_url = DeviantArt::OAuthProviderInstance()->getAuthorizationUrl([
       'scope' => ['user'],
     ]);
+    // Always overwrite: a return URL left over from an abandoned full-page sign-in would otherwise make a
+    // later popup sign-in (which never passes one) redirect the popup there instead of reporting back
     if (isset($_GET['return']) && CoreUtils::isURLSafe($_GET['return']))
       Auth::$session->setData('return_url', $_GET['return']);
+    else Auth::$session->unsetData('return_url');
     Auth::$session->setData('da_state', DeviantArt::OAuthProviderInstance()->getState());
     HTTP::softRedirect($auth_url, "Checking whether you're logged in");
   }

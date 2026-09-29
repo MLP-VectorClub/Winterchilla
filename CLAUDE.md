@@ -15,8 +15,9 @@ app via `TestSeederConstants::BASE_URL` (see `tests/Browser/Helpers/`). `test-lo
 existing shortcut for authenticated flows. The OAuth begin/end endpoints themselves are driven against a
 TEST_MODE-only fake DeviantArt/Discord provider (see Stage 6).
 
-`ServerManager` starts the test server with `APP_URL` set to the test origin (so OAuth redirect URIs point
-back at it), `PHP_CLI_SERVER_WORKERS=4` (the app calls the fake OAuth provider on the same server
+`ServerManager` starts the test server with `TEST_MODE=true` regardless of `.env` (test-only routes, the
+fake OAuth provider and the test database — so a local dev site can keep `TEST_MODE=false` and use the real
+DeviantArt), `APP_URL` set to the test origin (so OAuth redirect URIs point back at it), `PHP_CLI_SERVER_WORKERS=4` (the app calls the fake OAuth provider on the same server
 mid-request, which deadlocks a single worker), and `opcache.revalidate_freq=0` (a CLI opcache with the
 default-ish 180s revalidation otherwise serves stale code right after an edit).
 
@@ -60,8 +61,8 @@ error, a server survived an aborted run; `fuser -k 8765/tcp` clears it. Don't re
 
 ### Fresh-machine setup for the browser suite
 
-Beyond `composer install`, `pnpm install && pnpm build`, a `.env` (with `TEST_MODE=true`) and running
-Postgres/Redis: the PHP `pdo_sqlite` extension must be enabled (composer platform requirement), and
+Beyond `composer install`, `pnpm install && pnpm build`, a `.env` (`TEST_MODE` there doesn't matter for the
+browser tests — `ServerManager` forces it on) and running Postgres/Redis: the PHP `pdo_sqlite` extension must be enabled (composer platform requirement), and
 Playwright's own browser build must match the installed `playwright` npm version —
 `pnpm exec playwright install chromium`. A mismatch makes every test fail instantly with
 `PlaywrightOutdatedException` (no requests ever reach the server).
@@ -169,7 +170,8 @@ Lower-traffic or non-page routes — smoke-test (loads, no fatal error, no JS er
 
 - [x] `/da-auth/begin`, `/da-auth`, `/da-auth/end` (AuthController) — `tests/Browser/User/DeviantArtAuthTest.php`:
       new-user sign-in, existing user by DA ID, `?return=` redirect, username change renames the local
-      user, deny, state mismatch, missing code/state, failed token exchange, failed-attempt lockout
+      user, deny, state mismatch, missing code/state, failed token exchange, a stale return URL from an
+      abandoned sign-in not hijacking a later popup sign-in, failed-attempt lockout
 - [x] `/discord-connect/begin`, `/discord-connect/end` (DiscordAuthController) —
       `tests/Browser/User/DiscordAuthTest.php`: guest 403, deny, state mismatch, linking with/without
       server membership, already-linked short-circuit
@@ -202,7 +204,7 @@ signed-in user — commit a9954636 removed the `DA_AUTHORIZED_APPS_URL` constant
 passing it to the template (which no longer used it). `UserProfileTest` missed it because of the weak
 `assertDontSee('Fatal error')` pattern; it now asserts real page content.
 
-### Stage 7 — Closeout audit (not started)
+### Stage 7 — Closeout audit (in progress)
 
 - [ ] Diff the full test suite's covered routes against `config/routes/pages.php` one more time to confirm
       nothing was missed

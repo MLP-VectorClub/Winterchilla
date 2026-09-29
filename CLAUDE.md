@@ -75,8 +75,8 @@ Already covered, no action needed unless a regression is found:
 - User profile (regular/admin view, own account settings, 403-to-guest) — `tests/Browser/User/UserProfileTest.php`
 - Guest smoke pages (homepage redirect, cg index, tags, blending, about, privacy, 404) — `tests/Browser/Guest/PublicPagesTest.php`
 
-Known cleanup item: `tests/Browser/User/PostsTest.php` duplicates `EpisodeTest.php` almost entirely —
-fold it in or delete it as part of whichever stage touches episodes next.
+Resolved: `tests/Browser/User/PostsTest.php` duplicated `EpisodeTest.php`; its one unique case (episode
+page as a logged-in user) was folded into `EpisodeTest.php` and the file deleted during Stage 4.
 
 Resolved: `AppearanceManagementTest > full color group lifecycle` used to time out clicking
 `[data-testid="edit-colorgroup-btn"]`. It wasn't a flake or a selector problem — it was a real app bug:
@@ -136,14 +136,15 @@ rejects, so SVG minification silently no-opped. Plugin selection now lives in `s
 `--config`), and a non-zero svgo exit throws instead of being ignored. The cutiemark render test asserts
 the minified output (width/height dropped, viewBox kept) so this can't silently regress again.
 
-### Stage 4 — ShowController movies/generic (not started)
+### Stage 4 — ShowController movies/generic (done)
 
-Only the episode side of this controller is tested.
-- [ ] `/movies` — movie list
-- [ ] `/show` — generic show index
-- [ ] `/[st]/[id][adi]?` — viewById for movie type specifically (episode/pony side already covered)
+- [x] `/movies` — not a separate list: shares `ShowController::index` and redirects to `/show`
+- [x] `/show` — episode and movie tables, staff-only admin controls (add/edit/delete) vs guest
+- [x] `/[st]/[id][adi]?` — movie page at its canonical `/movie/[id]-[title]` URL, wrong-type
+      canonicalization (`/special/[id]` → `/movie/...`), 404 for a missing ID
 
-Extend `tests/Browser/User/EpisodeTest.php` or rename to reflect broader "show" scope once both sides are covered.
+`TestSeeder` now also seeds a movie (`TestSeederConstants::MOVIE_ID`). Extended
+`tests/Browser/User/EpisodeTest.php` (kept the name; it covers the whole show side now).
 
 ### Stage 5 — Misc smoke coverage (not started)
 
@@ -168,7 +169,7 @@ tests can be written — don't attempt inline as part of another stage.
 
 - [ ] Diff the full test suite's covered routes against `config/routes/pages.php` one more time to confirm
       nothing was missed
-- [ ] Remove/merge `tests/Browser/User/PostsTest.php` duplication (see Stage 0 note)
+- [x] Remove/merge `tests/Browser/User/PostsTest.php` duplication (done in Stage 4)
 - [ ] Decide whether `public_api_v0.php` endpoints need direct coverage beyond what's exercised
       incidentally through page-level UI flows
 

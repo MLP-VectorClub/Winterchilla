@@ -41,7 +41,7 @@ class TestSeeder extends AbstractSeed {
       ],
     ])->save();
 
-    // A show entry (S01E01)
+    // Show entries: an episode (S01E01) and a movie
     $this->table('show')->insert([[
       'id'        => 1,
       'type'      => 'episode',
@@ -50,6 +50,18 @@ class TestSeeder extends AbstractSeed {
       'parts'     => 1,
       'title'     => 'Friendship is Magic, Part 1',
       'airs'      => '2010-10-10 00:00:00+00',
+      'no'        => 1,
+      'posted_by' => 9002,
+      'notes'     => null,
+    ], [
+      // A non-episode show entry (movie); must match TestSeederConstants::MOVIE_ID
+      'id'        => 2,
+      'type'      => 'movie',
+      'season'    => null,
+      'episode'   => null,
+      'parts'     => 1,
+      'title'     => 'Equestria Girls',
+      'airs'      => '2013-06-16 00:00:00+00',
       'no'        => 1,
       'posted_by' => 9002,
       'notes'     => null,

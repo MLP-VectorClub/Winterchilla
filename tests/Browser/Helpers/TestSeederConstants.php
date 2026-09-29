@@ -10,5 +10,6 @@ class TestSeederConstants {
   // Deliberately high: fs/ is shared with the dev environment, so a low ID could clobber a real cm_source file
   public const CUTIEMARK_ID = 900001;
   public const SHOW_ID = 1;
+  public const MOVIE_ID = 2;
   public const EVENT_ID = 1;
 }

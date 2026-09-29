@@ -43,7 +43,21 @@ Pest 4 way to apply a hook to every test in a directory is the fluent chain:
 uses this pattern now. If you ever add another nested `Pest.php`, use the same fluent form, not bare
 `beforeAll()`/`afterAll()` calls.
 
-Diagnosing this took a long time because both failure modes are *silent* — no PHP fatal, no Pest error,
+Caveat: in that fluent chain `beforeAll` fires but `afterAll` does **not** (verified by instrumenting both
+hooks). That used to orphan the `php -S` server after every run, and the next run's readiness check then
+silently reused the stale server. `ServerManager` now registers a `register_shutdown_function` to stop the
+server when the Pest process exits, and `start()` throws if port 8765 is already taken — if you see that
+error, a server survived an aborted run; `fuser -k 8765/tcp` clears it. Don't rely on `afterAll` for cleanup.
+
+### Fresh-machine setup for the browser suite
+
+Beyond `composer install`, `pnpm install && pnpm build`, a `.env` (with `TEST_MODE=true`) and running
+Postgres/Redis: the PHP `pdo_sqlite` extension must be enabled (composer platform requirement), and
+Playwright's own browser build must match the installed `playwright` npm version —
+`pnpm exec playwright install chromium`. A mismatch makes every test fail instantly with
+`PlaywrightOutdatedException` (no requests ever reach the server).
+
+Diagnosing the timeout issue above took a long time because both failure modes are *silent* — no PHP fatal, no Pest error,
 tests just report the standard 5s navigation timeout as if the app were slow. The fastest way to confirm
 either bug in the future: put an unconditional `throw` at the very top of the file in question and see if
 it actually aborts the run.
@@ -64,10 +78,11 @@ Already covered, no action needed unless a regression is found:
 Known cleanup item: `tests/Browser/User/PostsTest.php` duplicates `EpisodeTest.php` almost entirely —
 fold it in or delete it as part of whichever stage touches episodes next.
 
-Known flake: `AppearanceManagementTest > full color group lifecycle: create, edit, delete` reproducibly
-times out clicking `[data-testid="edit-colorgroup-btn"]` — the seeded appearance likely already has
-other color group(s), so the selector probably matches more than one element and Pest's strict-mode
-click never resolves. Not investigated further yet; needs the click scoped to the newly-created group.
+Resolved: `AppearanceManagementTest > full color group lifecycle` used to time out clicking
+`[data-testid="edit-colorgroup-btn"]`. It wasn't a flake or a selector problem — it was a real app bug:
+`ColorGroupAPIController` never called `_initAppearancePageState()` (lost in the API controllers refactor),
+so the `APPEARANCE_PAGE` flag was ignored and creating/editing a group on the appearance page swapped in
+compact HTML with no Edit/Delete buttons. Fixed in the controller; the test passes unchanged.
 
 ### Stage 1 — PersonalGuideController (done)
 
@@ -99,10 +114,12 @@ Extend `tests/Browser/User/UserProfileTest.php` or split into a new file if it g
 - [x] `/[cg]/[guide]/tag-changes/[id][adi]?` — tag-changes page (`AppearanceController::tagChanges` is an
       unfinished stub that unconditionally 404s — test asserts that current behavior; revisit once the
       feature is implemented)
-- [x] `/[cg]/cutiemark/[id].svg` — cutiemark SVG render (404-only coverage — no `cutiemarks` row exists
-      for the seeded appearance; a success-path render test needs a seeder addition — a `cutiemarks` row
-      plus a source SVG on disk per `Cutiemark::getSourceFilePath()` — before it can be written)
-- [x] `/[cg]/cutiemark/download/[id][adi]?` — cutiemark download (same 404-only caveat as above)
+- [x] `/[cg]/cutiemark/[id].svg` — cutiemark SVG render (404 + success path)
+- [x] `/[cg]/cutiemark/download/[id][adi]?` — cutiemark download (404, rendered download, guest `?source`)
+
+`TestSeeder` seeds cutie mark `TestSeederConstants::CUTIEMARK_ID` (900001 — deliberately high because
+`fs/` is shared with the dev environment) and copies `tests/Browser/fixtures/cutiemark.svg` to
+`fs/cm_source/`. Not yet covered: staff-only `?source` download of the original upload.
 
 Extended `tests/Browser/User/ColorGuideTest.php`.
 
@@ -110,6 +127,13 @@ Found and fixed along the way: `CoreUtils::loadPage()` omitted the `ws_server_ho
 whenever `TEST_MODE` was on, but `layout/_scripts.html.twig` referenced it unconditionally under
 `strict_variables` — so every page with `default_js` fataled (HTTP 500) in test mode. Fixed by always
 setting the variable (`null` in test mode) instead of omitting the key.
+
+Also found: `/cg` (the guide index) 500'd on a fresh checkout because `ColorGuideController::index()` read
+`public/dist/mlpvc-colorguide.json` without generating it first (the per-guide page did); fixed the same way.
+
+Known, not fixed: `CoreUtils::minifySvgData()` passes svgo 1.x `--disable`/`--enable` CLI flags, which
+svgo 2.x (the installed version) rejects, so SVG minification silently no-ops (sanitization still runs).
+Needs an svgo config file instead of CLI flags.
 
 ### Stage 4 — ShowController movies/generic (not started)
 

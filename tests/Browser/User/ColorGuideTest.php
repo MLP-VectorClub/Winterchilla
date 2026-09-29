@@ -4,6 +4,31 @@ use Tests\Browser\Helpers\TestSeederConstants;
 
 $base         = TestSeederConstants::BASE_URL;
 $appearanceId = TestSeederConstants::APPEARANCE_ID;
+$cutiemarkId  = TestSeederConstants::CUTIEMARK_ID;
+
+/**
+ * Plain HTTP GET (following redirects) for non-page responses like SVGs and downloads.
+ *
+ * @return array{status: int, headers: array<string, string>, body: string}
+ */
+function httpGet(string $url): array {
+  $body = file_get_contents($url, false, stream_context_create(['http' => ['ignore_errors' => true]]));
+  // The header list holds every redirect hop; only keep the final response's status/headers
+  $status = 0;
+  $headers = [];
+  foreach (http_get_last_response_headers() ?? [] as $line) {
+    if (preg_match('~^HTTP/\S+ (\d+)~', $line, $m)) {
+      $status = (int)$m[1];
+      $headers = [];
+    }
+    else if (str_contains($line, ':')) {
+      [$name, $value] = explode(':', $line, 2);
+      $headers[strtolower(trim($name))] = trim($value);
+    }
+  }
+
+  return ['status' => $status, 'headers' => $headers, 'body' => (string)$body];
+}
 
 it('shows the seeded appearance detail page', function () use ($base, $appearanceId) {
   visit($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
@@ -118,12 +143,45 @@ it('404s on the not-yet-implemented tag-changes page', function () use ($base, $
     ->assertSee('404');
 });
 
-it('404s requesting a cutiemark SVG that has not been set', function () use ($base, $appearanceId) {
-  visit($base . '/cg/cutiemark/' . $appearanceId . '.svg')
+it('404s requesting a cutiemark SVG that does not exist', function () use ($base) {
+  visit($base . '/cg/cutiemark/1.svg')
     ->assertSee('404');
 });
 
-it('404s downloading a cutiemark that has not been set', function () use ($base, $appearanceId) {
-  visit($base . '/cg/cutiemark/download/' . $appearanceId)
+it('404s downloading a cutiemark that does not exist', function () use ($base) {
+  visit($base . '/cg/cutiemark/download/1')
     ->assertSee('404');
+});
+
+it('lists the seeded cutiemark on the appearance page', function () use ($base, $appearanceId, $cutiemarkId) {
+  visit($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
+    ->assertNoJavaScriptErrors()
+    ->assertSee('Cutie Mark')
+    ->assertPresent('#cm' . $cutiemarkId)
+    ->assertSeeIn('#cm' . $cutiemarkId, 'Facing Left');
+});
+
+it('renders the seeded cutiemark SVG', function () use ($base, $cutiemarkId) {
+  $res = httpGet($base . '/cg/cutiemark/' . $cutiemarkId . '.svg');
+
+  expect($res['status'])->toBe(200)
+    ->and($res['headers']['content-type'] ?? '')->toContain('image/svg+xml')
+    ->and($res['body'])->toContain('<svg')
+    ->and(simplexml_load_string($res['body']))->not->toBeFalse();
+});
+
+it('downloads the rendered cutiemark SVG', function () use ($base, $cutiemarkId) {
+  $res = httpGet($base . '/cg/cutiemark/download/' . $cutiemarkId);
+
+  expect($res['status'])->toBe(200)
+    ->and($res['headers']['content-disposition'] ?? '')->toContain('attachment')
+    ->and($res['headers']['content-disposition'] ?? '')->toContain("Twilight Sparkle's Cutie Mark.svg")
+    ->and($res['body'])->toContain('<svg');
+});
+
+it('serves the rendered file instead of the source to guests requesting ?source', function () use ($base, $cutiemarkId) {
+  $res = httpGet($base . '/cg/cutiemark/download/' . $cutiemarkId . '?source');
+
+  expect($res['status'])->toBe(200)
+    ->and($res['headers']['content-disposition'] ?? '')->not->toContain('(source)');
 });

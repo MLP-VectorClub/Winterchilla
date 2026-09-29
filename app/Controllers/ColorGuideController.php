@@ -152,6 +152,9 @@ class ColorGuideController extends Controller {
     foreach ($guide_counts_raw as $item)
       $guide_counts[$item['guide']] = $item['count'];
 
+    if (!file_exists(CGUtils::GUIDE_EXPORT_PATH))
+      CGUtils::saveExportData();
+
     $json_export_url = CoreUtils::cachedAssetLink('mlpvc-colorguide', 'dist', 'json');
     $json_export_time = Time::tag((int)explode('?', $json_export_url)[1]);
     $settings = [

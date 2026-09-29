@@ -52,6 +52,12 @@ use function count;
 class ColorGroupAPIController extends APIController {
   use ColorGuideAccessTrait;
 
+  public function __construct() {
+    parent::__construct();
+
+    $this->_initAppearancePageState();
+  }
+
   /** @var ColorGroup|null */
   private $colorgroup;
 

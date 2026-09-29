@@ -71,6 +71,27 @@ class TestSeeder extends AbstractSeed {
       'last_cleared' => null,
     ]])->save();
 
+    // A cutie mark for the appearance above, backed by a source SVG fixture on disk.
+    // ID must match TestSeederConstants::CUTIEMARK_ID (kept high since fs/ is shared with dev).
+    $cutiemark_id = 900001;
+    $this->table('cutiemarks')->insert([[
+      'id'             => $cutiemark_id,
+      'appearance_id'  => 1,
+      'facing'         => 'left',
+      'favme'          => null,
+      'rotation'       => 0,
+      'contributor_id' => null,
+      'label'          => null,
+    ]])->save();
+    $fs = dirname(__DIR__, 2).'/fs/';
+    if (!is_dir($fs.'cm_source'))
+      mkdir($fs.'cm_source', 0777, true);
+    copy(dirname(__DIR__, 2).'/tests/Browser/fixtures/cutiemark.svg', $fs."cm_source/$cutiemark_id.svg");
+    // Drop derived files from any previous run so they get regenerated from the fixture
+    foreach (["cm_tokenized/$cutiemark_id.svg", "cg_render/cutiemark/$cutiemark_id.svg"] as $derived)
+      if (file_exists($fs.$derived))
+        unlink($fs.$derived);
+
     // An event
     $this->table('events')->insert([[
       'id'          => 1,

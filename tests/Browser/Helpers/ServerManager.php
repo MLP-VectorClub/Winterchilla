@@ -14,6 +14,14 @@ class ServerManager {
     $docRoot = dirname(__DIR__, 3) . '/public';
     $host    = '127.0.0.1:8765';
 
+    // A server orphaned by an aborted earlier run would pass waitUntilReady() below and silently
+    // serve this run instead of ours, so refuse to start rather than reuse it
+    $probe = @fsockopen('127.0.0.1', 8765, $errno, $errstr, 0.5);
+    if ($probe !== false) {
+      fclose($probe);
+      throw new \RuntimeException("Something is already listening on $host (likely a test server left over from an aborted run) — stop it first, e.g. `fuser -k 8765/tcp`");
+    }
+
     $pid = pcntl_fork();
 
     if ($pid === -1) {
@@ -28,7 +36,16 @@ class ServerManager {
     }
 
     self::$pid = $pid;
+    self::registerShutdown();
     self::waitUntilReady(TestSeederConstants::BASE_URL);
+  }
+
+  /**
+   * The afterAll() hook in tests/Browser/Pest.php does not reliably fire under Pest 4, which left
+   * the server orphaned after every run — stop it when the test process exits instead.
+   */
+  private static function registerShutdown(): void {
+    register_shutdown_function([self::class, 'stop']);
   }
 
   private static function startViaProc(string $docRoot, string $host): void {
@@ -40,6 +57,7 @@ class ServerManager {
 
     $status = proc_get_status(self::$procHandle);
     self::$pid = $status['pid'];
+    self::registerShutdown();
     self::waitUntilReady(TestSeederConstants::BASE_URL);
   }
 

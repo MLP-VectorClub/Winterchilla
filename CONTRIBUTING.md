@@ -135,25 +135,11 @@ If you plan to contribute, trying to conform to the project's code style should 
 
 ## Push-to-deploy setup
 
-Git `post-receive` hooks are used for deploying to the production server. This requires that a repository is used on the server. The hook script can be found in the `setup` folder. It needs to be copied to `/path/to/repo/.git/hooks/post-receive` and set to be executable. An additional command is required to allow pushing to the same branch on the server.
+Deploys go through [git-deploy-toolkit](https://github.com/WentTheFox/GitDeployToolkit): the server has a bare repository whose shared `post-receive` hook checks out `main` into the site's directory and runs the steps in [`deploy.conf`](deploy.conf). Either push to it:
 
 ```
-$ cd /path/to/repo
-$ cp setup/post-receive.sh .git/hooks/post-receive
-$ chmod +x .git/hooks/post-receive
-$ git config receive.denyCurrentBranch updateInstead
+$ git remote add deploy ssh://<user>@<host>/srv/git/winterchilla.git
+$ git push deploy main
 ```
 
-On your local machine, ensure that the SSH configuration is set properly, then add the remote and push changes.
-
-```
-$ cat /etc/hosts | grep production.vps
-192.0.2.1   production.vps
-$ cat ~/.ssh/config
-Host production.vps
-	Port <port>
-	User <user>
-	IdentityFile ~/.ssh/id_rsa
-$ git remote add production production.vps:/var/www/Winterchilla/
-$ git push production
-```
+or use the **Deploy** workflow in the repository's Actions tab. See the toolkit's README for the one-time server setup.

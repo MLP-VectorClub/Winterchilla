@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6cf7570cf7fbcf729cac38e35f737229",
+    "content-hash": "31895bcaae25aaf5c32de582c08442ac",
     "packages": [
         {
             "name": "airmanbzh/php-html-generator",
@@ -4185,26 +4185,26 @@
         },
         {
             "name": "seinopsys/oauth2-deviantart",
-            "version": "v1.1.0",
+            "version": "v1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SeinopSys/oauth2-deviantart.git",
-                "reference": "f406404e7bca84111ded7bab8720994624c967a7"
+                "reference": "22e75d07144390b173200c281bf67f3c7b894cf4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SeinopSys/oauth2-deviantart/zipball/f406404e7bca84111ded7bab8720994624c967a7",
-                "reference": "f406404e7bca84111ded7bab8720994624c967a7",
+                "url": "https://api.github.com/repos/SeinopSys/oauth2-deviantart/zipball/22e75d07144390b173200c281bf67f3c7b894cf4",
+                "reference": "22e75d07144390b173200c281bf67f3c7b894cf4",
                 "shasum": ""
             },
             "require": {
-                "league/oauth2-client": "^2.3",
+                "league/oauth2-client": "^2.7",
                 "php": ">=7.1"
             },
             "require-dev": {
-                "mockery/mockery": "^0.9.9",
-                "phpunit/phpunit": "^5.7",
-                "ramsey/uuid": "^3.0"
+                "mockery/mockery": "^1.6",
+                "phpunit/phpunit": "^11.0",
+                "ramsey/uuid": "^4.0"
             },
             "type": "library",
             "autoload": {
@@ -4225,9 +4225,9 @@
             "description": "DeviantArt OAuth 2.0 Client Provider for The PHP League OAuth2-Client",
             "support": {
                 "issues": "https://github.com/SeinopSys/oauth2-deviantart/issues",
-                "source": "https://github.com/SeinopSys/oauth2-deviantart/tree/master"
+                "source": "https://github.com/SeinopSys/oauth2-deviantart/tree/v1.2.0"
             },
-            "time": "2018-01-13T08:53:32+00:00"
+            "time": "2026-09-29T15:29:30+00:00"
         },
         {
             "name": "seinopsys/postgresql-database-class",

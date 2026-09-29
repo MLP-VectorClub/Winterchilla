@@ -22,6 +22,8 @@ class AuthController extends Controller {
       Auth::$session->setData('return_url', $_GET['return']);
     else Auth::$session->unsetData('return_url');
     Auth::$session->setData('da_state', DeviantArt::OAuthProviderInstance()->getState());
+    // PKCE code verifier for this attempt; its hash was sent as code_challenge in $auth_url
+    Auth::$session->setData('da_pkce_code', DeviantArt::OAuthProviderInstance()->getPkceCode());
     HTTP::softRedirect($auth_url, "Checking whether you're logged in");
   }
 
@@ -31,6 +33,8 @@ class AuthController extends Controller {
   }
 
   public function end() {
+    // Pulled up front like the state, so it never outlives this attempt
+    $pkce_code = Auth::$session->pullData('da_pkce_code');
     if (!isset($_GET['error']) && (empty($_GET['code']) || empty($_GET['state']) || $_GET['state'] !== Auth::$session->pullData('da_state')))
       $_GET['error'] = 'unauthorized_client';
     if (isset($_GET['error'])){
@@ -43,6 +47,8 @@ class AuthController extends Controller {
 
     if (FailedAuthAttempt::canAuthenticate()){
       try {
+        if ($pkce_code !== null)
+          DeviantArt::OAuthProviderInstance()->setPkceCode($pkce_code);
         $da_user = DeviantArt::exchangeForAccessToken($_GET['code']);
       }
       catch (Exception $e){

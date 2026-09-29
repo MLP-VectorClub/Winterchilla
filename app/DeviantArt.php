@@ -56,6 +56,8 @@ class DeviantArt {
       'clientId' => CoreUtils::env('DA_CLIENT'),
       'clientSecret' => CoreUtils::env('DA_SECRET'),
       'redirectUri' => OAUTH_REDIRECT_URI,
+      // DeviantArt requires PKCE for newly registered apps; AuthController keeps the verifier in the session
+      'pkceMethod' => DeviantArtProvider::PKCE_METHOD_S256,
     ]);
   }
 

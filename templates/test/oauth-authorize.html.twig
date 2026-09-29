@@ -3,6 +3,7 @@
 {# @var redirect_uri string #}
 {# @var state string #}
 {# @var scope string #}
+{# @var code_challenge string #}
 {# Standalone on purpose: this plays an external site, not a page of the app #}
 <!DOCTYPE html>
 <html lang="en">
@@ -24,6 +25,7 @@
 <form method="get" action="/test-oauth/{{ provider }}/decide">
   <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
   <input type="hidden" name="state" value="{{ state }}">
+  <input type="hidden" name="code_challenge" value="{{ code_challenge }}">
 
   <fieldset>
     <legend>Sign in as</legend>

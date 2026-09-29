@@ -65,6 +65,12 @@ class TestOAuthController extends Controller {
       header('Content-Type: text/plain');
       die('Fake OAuth provider: expected response_type=code and a state');
     }
+    // Like DeviantArt for newly registered apps, which require PKCE (it rejects the request on its own site)
+    if ($provider === 'deviantart' && (empty($_GET['code_challenge']) || ($_GET['code_challenge_method'] ?? null) !== 'S256')){
+      HTTP::statusCode(400);
+      header('Content-Type: text/plain');
+      die('Fake OAuth provider: invalid_request - The code_challenge parameter is required.');
+    }
 
     // Like DeviantArt's sign-in pages: severs the link to the sign-in popup's opener (see $.openAuthPopup)
     header('Cross-Origin-Opener-Policy: same-origin');
@@ -73,6 +79,7 @@ class TestOAuthController extends Controller {
       'redirect_uri' => self::validRedirectUri($_GET['redirect_uri'] ?? null),
       'state' => $_GET['state'],
       'scope' => $_GET['scope'] ?? '',
+      'code_challenge' => $_GET['code_challenge'] ?? '',
     ]);
   }
 
@@ -104,7 +111,11 @@ class TestOAuthController extends Controller {
             'mute' => false,
           ] : null);
         }
-        $query['code'] = FakeOAuth::encode(FakeOAuth::CODE_PREFIX, ['provider' => $provider, 'identity' => $identity]);
+        $query['code'] = FakeOAuth::encode(FakeOAuth::CODE_PREFIX, [
+          'provider' => $provider,
+          'identity' => $identity,
+          'code_challenge' => ($_GET['code_challenge'] ?? '') ?: null,
+        ]);
       break;
       // Approve, but hand back a code the token endpoint will reject (server-side exchange failure)
       case 'invalid_code':
@@ -122,7 +133,8 @@ class TestOAuthController extends Controller {
   public function token(array $params):void {
     $provider = self::provider($params);
 
-    $payload = match ($_POST['grant_type'] ?? null) {
+    $grant_type = $_POST['grant_type'] ?? null;
+    $payload = match ($grant_type) {
       'authorization_code' => FakeOAuth::decode(FakeOAuth::CODE_PREFIX, $_POST['code'] ?? null),
       'refresh_token' => FakeOAuth::lookupToken('refresh', $_POST['refresh_token'] ?? null),
       default => self::json(400, ['error' => 'unsupported_grant_type', 'error_description' => 'Unsupported grant type']),
@@ -132,6 +144,16 @@ class TestOAuthController extends Controller {
         'error' => 'invalid_grant',
         'error_description' => 'Invalid or expired authorization code.',
       ]);
+    // PKCE: the verifier must hash (S256) to the challenge sent to the authorization endpoint
+    if ($grant_type === 'authorization_code' && !empty($payload['code_challenge'])){
+      $verifier = (string)($_POST['code_verifier'] ?? '');
+      $expected = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
+      if ($verifier === '' || !hash_equals($payload['code_challenge'], $expected))
+        self::json(400, [
+          'error' => 'invalid_grant',
+          'error_description' => 'The code_verifier does not match the code_challenge.',
+        ]);
+    }
 
     [$access, $refresh] = FakeOAuth::issueTokens($payload);
     $response = [

@@ -183,6 +183,9 @@ as (and, for Discord, server membership) and offers Approve / Deny / Approve-wit
 Tokens match DeviantArt's real lengths (the DB columns are `varchar(50)`/`varchar(40)`), so they're opaque
 and stored under `fs/tmp/test-oauth/` (cleared by `scripts/reset-test-db.sh`); see `App\Testing\FakeOAuth`.
 Seeded users have fixed DA IDs (`TestSeederConstants::USER_DA_ID`/`ADMIN_DA_ID`).
+Like DeviantArt for newly registered apps, the fake DA provider requires PKCE (S256 `code_challenge`) and
+verifies the `code_verifier` at the token exchange, so the sign-in tests cover the app's PKCE round-trip
+(`pkceMethod` option of `seinopsys/oauth2-deviantart` ^1.2; verifier kept in the session by AuthController).
 
 Not covered by Pest: the sign-in *popup* flow (`$.openAuthPopup` in `global.jsx`) — Pest's browser plugin
 can't drive popups, so the tests use the site's full-page redirect fallback (`/da-auth/begin?return=...`).

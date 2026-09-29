@@ -147,6 +147,9 @@
   const authErrorHtml = ({ title, notice }) => title || notice
     ? `<p class="align-center"><strong>${title || ''}</strong></p><p>${notice || ''}</p>`
     : 'Sign in failed, check the popup window for details.';
+  // Shown once this page loses sight of the popup, which can't tell "closed" from "still signing in"
+  const AUTH_POPUP_CONTINUE_HTML = '<p>Please continue signing in using the popup window. This page will refresh automatically once you\'re done.</p>'
+    + '<p>If you closed the popup, you can dismiss this message and try again.</p>';
   $d.on('click', '#turbo-sign-in', function(e) {
     e.preventDefault();
 
@@ -163,9 +166,9 @@
       onFail(data) {
         $.Dialog.fail(false, authErrorHtml(data) + origNotice);
       },
-      // Possibly still open (see $.openAuthPopup); bring the prompt back so the user can retry
+      // Possibly still open (see $.openAuthPopup); keep the prompt around so the user can retry
       onClosed() {
-        $.Dialog.fail(false, origNotice);
+        $.Dialog.info(false, AUTH_POPUP_CONTINUE_HTML + origNotice);
       },
     });
     if (!opened)
@@ -821,7 +824,7 @@
       // Possibly still open (see $.openAuthPopup), so don't fall back to the redirect here — that used to
       // send this page to DeviantArt too while the popup was still showing its sign-in page
       onClosed() {
-        $.Dialog.close();
+        $.Dialog.info(false, AUTH_POPUP_CONTINUE_HTML);
         $this.enable();
       },
     });

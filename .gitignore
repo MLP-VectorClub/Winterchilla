@@ -3,6 +3,9 @@
 !/public/.well-known/assetlinks.json
 !/public/.well-known/apple-app-site-association
 
+# Written by the deploy hook (git-deploy-toolkit) on the server
+/.git-deploy-commit
+
 # Ignore configuration files
 conf.php
 !/setup/conf.php

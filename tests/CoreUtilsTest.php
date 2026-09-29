@@ -13,6 +13,33 @@ class CoreUtilsTest extends TestCase {
     ], $result);
   }
 
+  private static function deployCommitFile(string $contents):string {
+    $path = tempnam(sys_get_temp_dir(), 'deploy-commit');
+    file_put_contents($path, $contents);
+
+    return $path;
+  }
+
+  public function testGetDeployedCommitInfo():void {
+    $path = self::deployCommitFile("4f397273461bc9137a4923cc685173af735b36af\n2026-09-29T21:33:39+02:00\n");
+    self::assertSame('4f3972734;2026-09-29T21:33:39+02:00', CoreUtils::getDeployedCommitInfo($path));
+    unlink($path);
+  }
+
+  public function testGetDeployedCommitInfoIgnoresBadFiles():void {
+    self::assertNull(CoreUtils::getDeployedCommitInfo('/nonexistent/.git-deploy-commit'));
+    foreach ([
+      '',
+      "4f397273461bc9137a4923cc685173af735b36af\n",
+      "not-a-sha\n2026-09-29T21:33:39+02:00\n",
+      "4f397273461bc9137a4923cc685173af735b36af\nnot a date\n",
+    ] as $contents){
+      $path = self::deployCommitFile($contents);
+      self::assertNull(CoreUtils::getDeployedCommitInfo($path), json_encode($contents));
+      unlink($path);
+    }
+  }
+
   public function testAposEncode():void {
     $result = CoreUtils::aposEncode("No Man's Lie");
     self::assertEquals('No Man&apos;s Lie', $result);

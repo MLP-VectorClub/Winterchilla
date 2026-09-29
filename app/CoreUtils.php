@@ -885,6 +885,29 @@ class CoreUtils {
   }
 
   /**
+   * Reads the commit that was deployed from the file the deploy hook (git-deploy-toolkit) writes into the
+   * project root on every deploy: line 1 is the full commit SHA, line 2 the committer date in ISO 8601.
+   * Asking git isn't an option in production, where the deployed files aren't a git working copy.
+   *
+   * @param string|null $path Where to read from, defaults to .git-deploy-commit in the project root
+   *
+   * @return string|null "<short sha>;<date>" like the git log fallback, or null if the file is missing or malformed
+   */
+  public static function getDeployedCommitInfo(?string $path = null):?string {
+    $path ??= PROJPATH.'.git-deploy-commit';
+    if (!is_readable($path))
+      return null;
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines === false || count($lines) < 2)
+      return null;
+    [$sha, $date] = array_map('trim', $lines);
+    if (!preg_match('/^[0-9a-f]{7,40}$/i', $sha) || strtotime($date) === false)
+      return null;
+
+    return substr($sha, 0, 9).";$date";
+  }
+
+  /**
    * Returns the HTML raw GIT information
    *
    * @return array
@@ -894,7 +917,8 @@ class CoreUtils {
     if (empty($commit_info) || !self::env('PRODUCTION')){
       // -c safe.directory=* avoids "detected dubious ownership" errors when the
       // files are owned by a different user than the one running the web server
-      $commit_info = rtrim(shell_exec('git -c safe.directory=* log -1 --date=short --pretty="format:%h;%ci" 2>/dev/null'));
+      $commit_info = self::getDeployedCommitInfo()
+        ?? rtrim((string)shell_exec('git -c safe.directory=* log -1 --date=short --pretty="format:%h;%ci" 2>/dev/null'));
       if (!empty($commit_info)) RedisHelper::set('commit_info', $commit_info);
     }
 

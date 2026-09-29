@@ -33,10 +33,12 @@ class RegExp {
     return $this->_jsRegex;
   }
 
+  /**
+   * Backslash-escapes every occurrence of the delimiter that isn't already escaped. The regex used for this
+   * has '~' as its own delimiter, which is safe whatever $delimiter is: preg_quote() escapes it too.
+   */
   private function _escape(string $pattern, string $delimiter):string {
-    $d = $delimiter === '~' ? '@' : '~';
-
-    return preg_replace("$d([^\\\\])(".preg_quote($delimiter, $d).")$d", "$1\\\\$2", $pattern);
+    return preg_replace('~([^\\\\])('.preg_quote($delimiter, '~').')~', '$1\\\\$2', $pattern);
   }
 
   /**

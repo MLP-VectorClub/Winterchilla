@@ -87,6 +87,12 @@ vendor/bin/pest
 
 The browser tests start their own PHP server with `TEST_MODE=true` (enabling `/test-login` and the fake DeviantArt/Discord OAuth provider, and selecting the test database), so a local dev site can keep `TEST_MODE=false` in `.env` and sign in through the real DeviantArt. `TEST_DB_NAME` can be set in `.env`. Never set `TEST_MODE=true` in a production environment.
 
+**Static analysis** (also runs in CI; configured in `phpstan.neon`):
+
+```bash
+vendor/bin/phpstan analyse --memory-limit=1G
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).

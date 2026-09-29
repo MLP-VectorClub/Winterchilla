@@ -4,6 +4,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # Playwright 1.61+ rejects local file paths from clients connected over a websocket, which breaks
+      # ->attach() in pestphp/pest-plugin-browser 4.x (fixed only on its 5.x line). See CLAUDE.md.
+      # Remove this once the project is on Pest 5.
+      - dependency-name: "playwright"
+        versions: [">=1.61.0"]
 
   - package-ecosystem: "composer"
     directory: "/"

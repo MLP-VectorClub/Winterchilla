@@ -131,9 +131,10 @@ setting the variable (`null` in test mode) instead of omitting the key.
 Also found: `/cg` (the guide index) 500'd on a fresh checkout because `ColorGuideController::index()` read
 `public/dist/mlpvc-colorguide.json` without generating it first (the per-guide page did); fixed the same way.
 
-Known, not fixed: `CoreUtils::minifySvgData()` passes svgo 1.x `--disable`/`--enable` CLI flags, which
-svgo 2.x (the installed version) rejects, so SVG minification silently no-ops (sanitization still runs).
-Needs an svgo config file instead of CLI flags.
+Also fixed: `CoreUtils::minifySvgData()` passed svgo 1.x `--disable`/`--enable` CLI flags, which svgo 2.x
+rejects, so SVG minification silently no-opped. Plugin selection now lives in `svgo.config.js` (passed via
+`--config`), and a non-zero svgo exit throws instead of being ignored. The cutiemark render test asserts
+the minified output (width/height dropped, viewBox kept) so this can't silently regress again.
 
 ### Stage 4 — ShowController movies/generic (not started)
 

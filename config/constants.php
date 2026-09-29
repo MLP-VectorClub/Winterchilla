@@ -11,6 +11,7 @@ const GITHUB_PROJECT_NAME = 'MLP-VectorClub/Winterchilla';
 const GITHUB_URL = 'https://github.com/'.GITHUB_PROJECT_NAME;
 const SITE_TITLE = 'MLP Vector Club';
 const SVGO_BINARY = PROJPATH.'node_modules/svgo/bin/svgo';
+const SVGO_CONFIG = PROJPATH.'svgo.config.js';
 const DISCORD_INVITE_LINK = 'https://discord.mlpvector.club';
 define('CSP_NONCE', base64_encode(random_bytes(16)));
 const API_SCHEMA_PATH = 'dist/api.json';

@@ -663,9 +663,12 @@ class CoreUtils {
     self::createFoldersFor($tmp_path);
     File::put($tmp_path, $svgdata);
 
-    exec(SVGO_BINARY." $tmp_path ".
-      '--disable=removeUnknownsAndDefaults,removeUselessStrokeAndFill,convertPathData,convertTransform,cleanupNumericValues,mergePaths,convertShapeToPath '.
-      '--enable=removeRasterImages,removeDimensions,cleanupIDs');
+    // Minifies in place; plugin selection lives in svgo.config.js
+    exec(SVGO_BINARY.' '.escapeshellarg($tmp_path).' --quiet --config='.escapeshellarg(SVGO_CONFIG).' 2>&1', $svgo_output, $svgo_exit);
+    if ($svgo_exit !== 0){
+      self::deleteFile($tmp_path);
+      throw new RuntimeException(__METHOD__.": svgo exited with code $svgo_exit: ".implode("\n", $svgo_output));
+    }
     $read_file = File::get($tmp_path);
     if ($read_file === false)
       throw new RuntimeException(__METHOD__.": Failed to read file $tmp_path");

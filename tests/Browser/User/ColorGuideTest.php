@@ -33,20 +33,20 @@ function httpGet(string $url): array {
 it('shows the seeded appearance detail page', function () use ($base, $appearanceId) {
   visit($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error')
+    ->assertSee('Twilight Sparkle')
     ->assertSee('Twilight Sparkle');
 });
 
 it('shows the pony color guide change list', function () use ($base) {
   visit($base . '/cg/pony/changes')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Major Friendship is Magic Color Changes');
 });
 
 it('shows the color picker tool', function () use ($base) {
   visit($base . '/cg/picker')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Color Picker');
 });
 
 it('lets a user open an image file in the color picker', function () use ($base) {
@@ -111,7 +111,7 @@ it('shows admin controls on appearance page when logged in as admin', function (
   visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
     ->navigate($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error')
+    ->assertSee('Twilight Sparkle')
     ->assertSee('Twilight Sparkle');
 });
 
@@ -119,13 +119,13 @@ it('shows the new appearance button on guide page for admins', function () use (
   visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
     ->navigate($base . '/cg/pony')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Friendship is Magic Color Guide');
 });
 
 it('shows the reverse blending tool', function () use ($base) {
   visit($base . '/cg/blending-reverse')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Blending Reverser');
 });
 
 it('canonicalizes non-"cg" spellings on the reverse blending tool URL', function () use ($base) {

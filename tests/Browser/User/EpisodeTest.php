@@ -7,20 +7,20 @@ $base = TestSeederConstants::BASE_URL;
 it('shows the episode list page', function () use ($base) {
   visit($base . '/show')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('TV Episodes');
 });
 
 it('shows the seeded episode page', function () use ($base) {
   visit($base . '/episode/' . TestSeederConstants::SHOW_ID)
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Friendship is Magic, Part 1');
 });
 
 it('shows the seeded episode page to a logged-in user', function () use ($base) {
   visit($base . '/test-login/' . TestSeederConstants::USER_ID)
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Friendship is Magic, Part 1');
 });
 
 it('redirects /episode/latest to a real episode', function () use ($base) {
@@ -46,7 +46,7 @@ it('shows the seeded movie page at its canonical URL', function () use ($base) {
   visit($base . '/movie/' . TestSeederConstants::MOVIE_ID)
     ->assertPathIs('/movie/' . TestSeederConstants::MOVIE_ID . '-Equestria-Girls')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error')
+    ->assertSee('Equestria Girls')
     ->assertSee('Equestria Girls');
 });
 

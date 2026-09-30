@@ -22,8 +22,8 @@ mid-request, which deadlocks a single worker), and `opcache.revalidate_freq=0` (
 default-ish 180s revalidation otherwise serves stale code right after an edit).
 
 Assertion gotcha: `assertDontSee('Fatal error')` does **not** catch a PHP fatal — the test server returns
-a bare 500 without those words. Assert real page content (a heading, a known string) instead. Several
-Stage 0 tests still rely on the weak pattern; see Stage 7.
+a bare 500 without those words. Assert real page content (a heading, a known string) instead. The weak pattern has been
+replaced everywhere (Stage 7); don't reintroduce it.
 
 Route inventory source of truth: `config/routes/pages.php`.
 
@@ -222,8 +222,9 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
 - [x] Remove/merge `tests/Browser/User/PostsTest.php` duplication (done in Stage 4)
 - [ ] Decide whether `public_api_v0.php` endpoints need direct coverage beyond what's exercised
       incidentally through page-level UI flows
-- [ ] Replace remaining `assertDontSee('Fatal error')`-only assertions with real page content — they pass
-      on a 500 (see the assertion gotcha near the top)
+- [x] Replaced every `assertDontSee('Fatal error')` with a real page heading. This surfaced one real miss:
+      the guest blending test visited `/cg/pony/blending`, which is a 404 (route is `/cg/blending`) and
+      passed anyway
 - [x] Removed the dead `/admin/discord` route (always 500'd): its page — a manual Discord member ↔ DA user
       binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
       survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above

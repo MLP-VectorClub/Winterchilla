@@ -12,55 +12,55 @@ it('redirects the homepage to a meaningful page for guests', function () use ($b
 it('shows the color guide index page', function () use ($base) {
   visit($base . '/cg')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Color Guide List');
 });
 
 it('shows the pony color guide page', function () use ($base) {
   visit($base . '/cg/pony')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Friendship is Magic Color Guide');
 });
 
 it('shows the color guide full list', function () use ($base) {
   visit($base . '/cg/pony/full')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Complete FiM Pony List');
 });
 
 it('shows the tag list page', function () use ($base) {
   visit($base . '/cg/pony/tags')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('All Tags');
 });
 
 it('shows the blending tool', function () use ($base) {
-  visit($base . '/cg/pony/blending')
+  visit($base . '/cg/blending')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Blending');
 });
 
 it('shows the episode list page', function () use ($base) {
   visit($base . '/show')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('TV Episodes');
 });
 
 it('shows the events list page', function () use ($base) {
   visit($base . '/events')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Events Archive');
 });
 
 it('shows the about page', function () use ($base) {
   visit($base . '/about')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('MLP-VectorClub Website');
 });
 
 it('shows the privacy policy page', function () use ($base) {
   visit($base . '/about/privacy')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Privacy Policy');
 });
 
 it('returns 404 for nonexistent routes', function () use ($base) {

@@ -14,40 +14,40 @@ it('shows the admin panel to admins', function () use ($base) {
     ->navigate($base . '/admin')
     ->assertPathIs('/admin')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Admin Area');
 });
 
 it('shows the admin logs page', function () use ($base) {
   visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
     ->navigate($base . '/admin/logs')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Global logs');
 });
 
 it('shows the useful links admin page', function () use ($base) {
   visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
     ->navigate($base . '/admin/usefullinks')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Manage useful links');
 });
 
 it('shows the admin notices page', function () use ($base) {
   visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
     ->navigate($base . '/admin/notices')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Manage notices');
 });
 
 it('shows the PCG appearances admin page', function () use ($base) {
   visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
     ->navigate($base . '/admin/pcg-appearances')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('All PCG appearances');
 });
 
 it('shows the logs page with type filtering', function () use ($base) {
   visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
     ->navigate($base . '/logs')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error');
+    ->assertSee('Global logs');
 });

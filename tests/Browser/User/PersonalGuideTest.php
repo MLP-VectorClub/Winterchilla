@@ -9,7 +9,7 @@ $adminId = TestSeederConstants::ADMIN_ID;
 it('shows a guest the personal color guide list', function () use ($base, $userId) {
   visit($base . '/users/' . $userId . '/cg')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error')
+    ->assertSee('Personal Color Guide')
     ->assertSee("TestUser's Personal Color Guide");
 });
 
@@ -17,7 +17,7 @@ it('shows the owner their own personal color guide list', function () use ($base
   visit($base . '/test-login/' . $userId)
     ->navigate($base . '/users/' . $userId . '/cg')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error')
+    ->assertSee('Personal Color Guide')
     ->assertSee("TestUser's Personal Color Guide");
 });
 
@@ -25,7 +25,7 @@ it('shows the owner their own point history page', function () use ($base, $user
   visit($base . '/test-login/' . $userId)
     ->navigate($base . '/users/' . $userId . '/cg/point-history')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error')
+    ->assertSee('Point History')
     ->assertSee('Your Point History');
 });
 
@@ -33,7 +33,7 @@ it('shows the owner their own slot history page', function () use ($base, $userI
   visit($base . '/test-login/' . $userId)
     ->navigate($base . '/users/' . $userId . '/cg/slot-history')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error')
+    ->assertSee('Point History')
     ->assertSee('Your Point History');
 });
 
@@ -41,7 +41,7 @@ it('lets staff view another user\'s point history', function () use ($base, $use
   visit($base . '/test-login/' . $adminId)
     ->navigate($base . '/users/' . $userId . '/cg/point-history')
     ->assertNoJavaScriptErrors()
-    ->assertDontSee('Fatal error')
+    ->assertSee('Point History')
     ->assertSee("TestUser's Point History");
 });
 

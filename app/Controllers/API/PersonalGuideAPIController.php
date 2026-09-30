@@ -7,7 +7,10 @@ use App\Auth;
 use App\Controllers\Traits\UserLoaderTrait;
 use App\CoreUtils;
 use App\Input;
+use App\JSON;
 use App\Models\PCGPointGrant;
+use App\Models\PCGSlotHistory;
+use App\Pagination;
 use App\Permission;
 use App\Response;
 use App\UserPrefs;
@@ -15,6 +18,99 @@ use OpenApi\Annotations as OA;
 
 class PersonalGuideAPIController extends APIController {
   use UserLoaderTrait;
+
+  /**
+   * @OA\Get(
+   *   path="/users/{id}/personal-guide/point-history",
+   *   description="The personal guide point history of a user, newest first. Only the user and staff may see it. The history is built on the first request if it does not exist yet.",
+   *   tags={"personal guide"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=100, default=20)),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"entries", "pagination"},
+   *       @OA\Property(
+   *         property="entries",
+   *         type="array",
+   *         @OA\Items(
+   *           type="object",
+   *           required={"id", "changeType", "reason", "amount", "data", "createdAt"},
+   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *           @OA\Property(property="changeType", type="string", example="post_approved"),
+   *           @OA\Property(property="reason", type="string", example="Post approved"),
+   *           @OA\Property(property="amount", type="number", description="Points gained (positive) or lost (negative)"),
+   *           @OA\Property(property="data", type="object", nullable=true, additionalProperties=true, description="Details depending on the change type (post or appearance references, manual grant comment). `by` is only sent to staff."),
+   *           @OA\Property(property="createdAt", type="string", format="date-time")
+   *         )
+   *       ),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
+   *     )
+   *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Not the user or staff", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function pointHistory($params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    if (!Auth::$signed_in)
+      Response::error(401);
+
+    $this->load_user($params);
+
+    if ($this->user->id !== Auth::$user->id && Permission::insufficient('staff'))
+      Response::denied();
+
+    $size = $_GET['size'] ?? 20;
+    if (!is_numeric($size) || $size < 1 || $size > 100)
+      Response::invalid('size', 'The size must be between 1 and 100.');
+    $size = (int)$size;
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+    $page = (int)$page;
+
+    $total = $this->user->getPCGSlotHistoryEntryCount();
+    if ($total === 0) {
+      // The history is derived data: like the page does, build it the first time somebody asks for it
+      $this->user->recalculatePCGSlotHistroy();
+      $total = $this->user->getPCGSlotHistoryEntryCount();
+    }
+    $pagination = (new Pagination('', $size))->forcePage($page)->calcMaxPages($total);
+    $is_staff = Permission::sufficient('staff');
+
+    $entries = array_map(function (PCGSlotHistory $e) use ($is_staff) {
+      $data = $e->change_data === null ? null : JSON::decode($e->change_data);
+      if (is_array($data) && !$is_staff)
+        unset($data['by']);
+
+      return [
+        'id' => $e->id,
+        'changeType' => $e->change_type,
+        'reason' => PCGSlotHistory::CHANGE_DESC[$e->change_type] ?? $e->change_type,
+        'amount' => (float)$e->change_amount,
+        'data' => $data,
+        'createdAt' => gmdate('c', $e->created_at->getTimestamp()),
+      ];
+    }, $this->user->getPCGSlotHistoryEntries($pagination));
+
+    Response::ok([
+      'entries' => $entries,
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
+    ]);
+  }
 
   /**
    * @OA\Post(

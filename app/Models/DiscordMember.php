@@ -144,7 +144,7 @@ class DiscordMember extends NSModel {
       catch (DiscordIdentityProviderException $e){
         if ($e->getMessage() === '{"error":"invalid_grant"}'){
           $this->delete();
-          Response::fail('The Discord account link got severed, you will need to re-link your account.', ['segway' => true]);
+          Response::error(409, 'The Discord account link got severed, you will need to re-link your account.', ['segway' => true]);
         }
         else throw $e;
       }
@@ -174,7 +174,7 @@ class DiscordMember extends NSModel {
     if ($user === null){
       if ($auto_unlink){
         $this->delete();
-        Response::fail('The site is no longer authorized to access the Discord account data, the link has been removed.', ['segway' => true]);
+        Response::error(409, 'The site is no longer authorized to access the Discord account data, the link has been removed.', ['segway' => true]);
       }
       else return false;
     }

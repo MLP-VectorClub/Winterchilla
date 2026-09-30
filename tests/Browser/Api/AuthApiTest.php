@@ -71,3 +71,12 @@ it('404s unknown API endpoints with an error body', function () {
     ->and($r['json'])->toHaveKey('message')
     ->and($r['json'])->not->toHaveKey('status');
 });
+
+it('rejects state-changing requests without a CSRF token with 419', function () {
+  $ch = curl_init(TestSeederConstants::BASE_URL . TestSeederConstants::API_PATH . '/da-auth/sign-out');
+  curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_HTTPHEADER => ['Accept: application/json']]);
+  $body = curl_exec($ch);
+
+  expect(curl_getinfo($ch, CURLINFO_HTTP_CODE))->toBe(419)
+    ->and(json_decode((string)$body, true))->toHaveKey('message');
+});

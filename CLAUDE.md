@@ -455,7 +455,9 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       anything. Also fixed: `lazyload` on an unfinished post 500'd (now 409). Not covered (need the network): creating
       posts, setting images, finishing with a deviation, approval success; `reload` on posts without a deviation
       would mark the seeded posts broken (their images are `example.com` URLs), so the tests only reload the finished one.
-      `TestSeeder` seeds posts 2 (deletable) and 3 (reserved and finished, with cached deviation metadata).
+      `TestSeeder` seeds posts 2 (deletable) and 3 (reserved and finished, with cached deviation metadata). Seeded post
+      images point at `http://127.0.0.1:8765/img/blank-pixel.png` (served by the test server) rather than `example.com`, because
+      opening a post page can trigger a network availability check that marks posts broken.
 - [x] `AppearanceAPIController` (`/cg/appearance/...`) and the helpers behind it (`Appearance::checkCreatePermission`,
       `Image`, `CGUtils` uploads, `Appearances` reindexing) — 401/403/404; 422 field errors (`label`, `guide`, `cgs`,
       `cutiemarks`, `CMData`, `file`, `image_url`); 409 for state conflicts (pinned appearances can't be deleted,
@@ -465,21 +467,23 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       creating personal appearances (the `a_pcgmake` preference is off by default) — the success path needs that
       preference and isn't covered. Not covered: sprite upload, template application, sanitize-svg, cutie mark saving
       (file/network heavy).
-- [ ] **Still legacy (`{status: bool}` + HTTP 200)** — found by grepping `Response::fail|success|done` after the above:
-      `AdminAPIController` (log details, useful links, notices), `PreferenceAPIController` (+ `UserPrefs`),
-      `PersonalGuideAPIController` (slots/points), `ColorGuideAPIController` (full-list reorder, export/reindex),
-      `AppearancesAPIController` (the *public* API — returns string codes like `COLOR_GUIDE.APPEARANCE_NOT_FOUND`
-      with 200; Luna's equivalent is the reference), `DiscordAuthController` sync/unlink, `UserController::contribLazyload`,
-      `ColorGuideController` search, `DiscordMember` and `Notification` model failures. Then the HTML-in-message sweep
-      (step 4) and removing the `$.API` shim.
-
-Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,
-$message)` (422 in Laravel's format), `CoreUtils::camelKeys()` for record payloads, and `Input` validation failures
-now respond 422 with `errors.<field>` for *every* controller (legacy ones included — the `$.API` shim keeps the UI
-working; `jquery.uploadzone.js` has its own error handler). Input messages still HTML-escape `@value`, which is a
-display concern to clean up once clients render messages as text.
-`scripts/openapi_drop_server_response.py <file>...` rewrites a controller's docblocks from the legacy
-`ServerResponse` envelope to plain bodies/`ErrorResponse`; the status codes themselves are still edited by hand.
+- [x] The rest of the API controllers: `AppearancesAPIController` (the public `/appearances` API — now `{message}` errors, 422 with
+      `errors.guide`, 503 when ElasticSearch is down, 403 for private appearances, `createdAt`, no `status`/`cachedOn`/
+      `cachedFor`; the cache key was bumped so old cached bodies aren't served), `AdminAPIController`,
+      `PreferenceAPIController` + `UserPrefs`, `PersonalGuideAPIController`, `ColorGuideAPIController`,
+      `DiscordAuthController` sync/unlink (429 when synced too recently, 409 when not linked), `DiscordMember` (409 +
+      `segway`), the `ColorGuideController` search JSON (503 `unavail`, 404 no results), `UserController::contribLazyload`.
+      **`AdminAPIController` had no authorization at all** — its staff check was lost in the API controllers refactor
+      (like `ColorGroupAPIController`'s appearance state), so a *signed-out* visitor could create/edit/delete useful
+      links (shown site-wide) and read log details: verified with an unauthenticated `POST /api/v0/admin/usefullinks`
+      returning `{"status":true}`. It's now staff-only via a constructor check. Also fixed: uploading a non-image
+      as a sprite was a 500.
+- **CSRF failures are now `419`** (was `401`, which now means "not signed in"). `shared-utils.js` maps 419 to the CSRF
+  dialog, and requests made through `$.API` with a callback are marked `apiHandled` so the global status dialogs
+  (`$.ajaxSetup`) don't pile on top of the callback's own error handling.
+- [ ] Left: the HTML-in-message sweep (step 4 — messages that still contain markup: duplicate-image/deviation links from
+      `Posts`, `retry` prompts, the notices), then remove the `$.API` shim and the `this.status` checks. Also the
+      page-level JSON views that raw-`$.get` clients read (`/cg/.../full?ajax`, `contribLazyload`) still use their own shapes.
 
 ## Database cutover to Luna (audit, nothing implemented yet)
 

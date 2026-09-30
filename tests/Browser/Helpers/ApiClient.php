@@ -48,7 +48,15 @@ class ApiClient {
     return $this->raw('GET', $path, accept: 'text/html')['body'];
   }
 
-  private function raw(string $method, string $path, array $params = [], bool $followRedirects = true, string $accept = 'application/json'):array {
+  /**
+   * POSTs a multipart form with one uploaded file, e.g. a sprite image.
+   */
+  public function upload(string $path, string $field, string $file, array $data = [], string $mime = 'image/png'):array {
+    $data[$field] = new \CURLFile($file, $mime, basename($file));
+    return $this->raw('POST', TestSeederConstants::API_PATH . $path, $data, multipart: true);
+  }
+
+  private function raw(string $method, string $path, array $params = [], bool $followRedirects = true, string $accept = 'application/json', bool $multipart = false):array {
     $url = TestSeederConstants::BASE_URL . $path;
     $ch = curl_init();
     $opts = [
@@ -64,7 +72,8 @@ class ApiClient {
       if ($this->cookie('CSRF_TOKEN') === null)
         $this->raw('GET', TestSeederConstants::API_PATH . '/da-auth/status');
       $params['CSRF_TOKEN'] = $this->cookie('CSRF_TOKEN') ?? '';
-      $opts[CURLOPT_POSTFIELDS] = http_build_query($params);
+      // An array (with CURLFile values) is sent as multipart/form-data, a string as urlencoded
+      $opts[CURLOPT_POSTFIELDS] = $multipart ? $params : http_build_query($params);
     }
     elseif (!empty($params))
       $url .= '?' . http_build_query($params);

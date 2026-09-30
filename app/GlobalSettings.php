@@ -37,7 +37,7 @@ class GlobalSettings {
    */
   public static function set(string $name, ?string $value):bool {
     if (!isset(static::DEFAULTS[$name]))
-      Response::fail("Key $name is not allowed");
+      Response::error(404, "Key $name is not allowed");
     $default = static::DEFAULTS[$name];
     // null (an empty submitted value) resets the setting to its default
     $value ??= $default;

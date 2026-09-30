@@ -21,7 +21,7 @@
         $form.find('input[name=label]').val(data.label);
         $form.find('input[name=url]').val(data.url);
         $form.find('input[name=title]').val(data.title);
-        $form.find('select[name=minrole]').val(data.minrole);
+        $form.find('select[name=minrole]').val(data.minRole);
       });
     });
   });

@@ -78,7 +78,7 @@ class AppearanceController extends ColorGuideController {
     CoreUtils::notFound();
 
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     $this->_initialize($params);
     $this->load_appearance($params);

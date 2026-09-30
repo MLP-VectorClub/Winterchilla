@@ -27,15 +27,13 @@ class ColorGuideAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="html", type="string", description="Rendered HTML of the full list")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function reorderFullList($params):void {
@@ -45,7 +43,7 @@ class ColorGuideAPIController extends APIController {
     $this->_initialize($params);
 
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     Appearances::reorder((new Input('list', 'int[]', [
       Input::CUSTOM_ERROR_MESSAGES => [
@@ -58,7 +56,7 @@ class ColorGuideAPIController extends APIController {
       Input::IS_OPTIONAL => true,
     ]))->out();
 
-    Response::done(['html' => CGUtils::getFullListHTML(Appearances::get($this->guide), $ordering, $this->guide, NOWRAP)]);
+    Response::ok(['html' => CGUtils::getFullListHTML(Appearances::get($this->guide), $ordering, $this->guide, NOWRAP)]);
   }
 
   /**
@@ -71,7 +69,8 @@ class ColorGuideAPIController extends APIController {
    *     description="The color guide export JSON file",
    *     @OA\MediaType(mediaType="application/json")
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function export():void {
@@ -89,8 +88,10 @@ class ColorGuideAPIController extends APIController {
    *   path="/cg/reindex",
    *   description="Trigger a full reindex of the color guide search index. Developer permission required.",
    *   tags={"color guide"},
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="200", description="Re-index completed", @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))),
+   *   @OA\Response(response="503", description="The ElasticSearch server is unreachable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function reindex():void {
@@ -98,7 +99,7 @@ class ColorGuideAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('developer'))
-      Response::fail();
+      Response::denied();
     Appearances::reindex();
   }
 }

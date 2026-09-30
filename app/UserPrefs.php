@@ -83,7 +83,7 @@ class UserPrefs extends GlobalSettings {
     }
 
     if (!array_key_exists($name, static::DEFAULTS))
-      Response::fail("Key $name is not allowed");
+      Response::error(404, "Key $name is not allowed");
     $default = static::DEFAULTS[$name];
 
     if (strpos($name, "a_") === 0)
@@ -117,7 +117,7 @@ class UserPrefs extends GlobalSettings {
 
   public static function reset(string $key, ?User $for = null):bool {
     if (!array_key_exists($key, static::DEFAULTS))
-      Response::fail("Key $key is not allowed");
+      Response::error(404, "Key $key is not allowed");
 
     return self::set($key, static::DEFAULTS[$key], $for);
   }
@@ -170,13 +170,13 @@ class UserPrefs extends GlobalSettings {
       case 'a_postres':
       case 'a_reserve':
         if (Permission::insufficient('staff'))
-          Response::fail("You cannot change the $name preference");
+          Response::denied("You cannot change the $name preference");
 
         $value = $value ? 1 : 0;
       break;
 
       case 'pcg_slots':
-        Response::fail("$name is an internal setting and cannot be modified by users");
+        Response::error(403, "$name is an internal setting and cannot be modified by users");
     }
 
     return $value;

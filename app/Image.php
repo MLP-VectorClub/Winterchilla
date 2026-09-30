@@ -25,8 +25,9 @@ class Image {
    */
   public static function checkType($tmp, $allowedMimeTypes):array {
     $imageSize = getimagesize($tmp);
+    // Not an image at all (or a corrupt one): that's the uploader's problem, not a server error
     if ($imageSize === false)
-      throw new RuntimeException("getimagesize could not read $tmp");
+      Response::invalid('file', 'The uploaded file is not an image');
     /** @var $imageSize array */
     if (is_array($allowedMimeTypes) && !in_array($imageSize['mime'], $allowedMimeTypes, true))
       Response::invalid('file', 'This type of image is now allowed: '.$imageSize['mime']);

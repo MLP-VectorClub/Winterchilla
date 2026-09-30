@@ -28,19 +28,19 @@ class PersonalGuideAPIController extends APIController {
    *     @OA\Schema(ref="#/components/schemas/OneBasedId")
    *   ),
    *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     response="204",
+   *     description="OK"
    *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(
    *     response="403",
    *     description="Insufficient permission (developer required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="404",
    *     description="The specified user does not exist",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -55,7 +55,7 @@ class PersonalGuideAPIController extends APIController {
 
     $this->user->recalculatePCGSlotHistroy();
 
-    Response::done();
+    Response::noContent();
   }
 
   /**
@@ -71,19 +71,25 @@ class PersonalGuideAPIController extends APIController {
    *     @OA\Schema(ref="#/components/schemas/OneBasedId")
    *   ),
    *   @OA\Response(
-   *     response="200",
-   *     description="The user is allowed to add a new PCG appearance",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     response="204",
+   *     description="The user is allowed to add a new PCG appearance"
+   *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(
+   *     response="403",
+   *     description="PCG appearance creation is disabled for this user",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
-   *     response="400",
-   *     description="PCG appearance creation is disabled for this user, or the user has no available slots left",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     response="409",
+   *     description="The user has no available slots left",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="404",
    *     description="The specified user does not exist",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -93,10 +99,13 @@ class PersonalGuideAPIController extends APIController {
 
     switch ($this->action){
       case 'GET':
+        if (!Auth::$signed_in)
+          Response::error(401);
+
         $this->load_user($params);
 
         if (!UserPrefs::get('a_pcgmake', $this->user))
-          Response::fail(Appearances::PCG_APPEARANCE_MAKE_DISABLED);
+          Response::error(403, Appearances::PCG_APPEARANCE_MAKE_DISABLED);
 
         $avail = $this->user->getPCGAvailablePoints(false);
         if ($avail < 10){
@@ -111,9 +120,9 @@ class PersonalGuideAPIController extends APIController {
               ? 'Consider joining the group and fulfilling some requests on our site'
               : 'They should join the group and fulfill some requests on our site'
             );
-          Response::fail("$You $nave no available slots left$cont to get more, or delete/edit ones $you've added already.");
+          Response::error(409, "$You $nave no available slots left$cont to get more, or delete/edit ones $you've added already.");
         }
-        Response::done();
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -135,25 +144,21 @@ class PersonalGuideAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"amount"},
    *           @OA\Property(property="amount", type="integer", description="The number of points available to be granted to or taken from the user")
    *         )
-   *       }
-   *     )
    *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(
    *     response="403",
    *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="404",
    *     description="The specified user does not exist",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    * @OA\Post(
@@ -178,36 +183,37 @@ class PersonalGuideAPIController extends APIController {
    *     )
    *   ),
    *   @OA\Response(
-   *     response="200",
+   *     response="201",
    *     description="The points were successfully given or taken",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))
    *   ),
    *   @OA\Response(
-   *     response="400",
+   *     response="422",
    *     description="The specified amount is 0, invalid, or would cause the user's points to go below 10, or the comment is invalid",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
    *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(
    *     response="403",
    *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="404",
    *     description="The specified user does not exist",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
   public function pointsApi($params) {
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     $this->load_user($params);
 
     switch ($this->action){
       case 'GET':
-        Response::done(['amount' => $this->user->getPCGAvailablePoints(false) - 10]);
+        Response::ok(['amount' => $this->user->getPCGAvailablePoints(false) - 10]);
       break;
       case 'POST':
         $amount = (new Input('amount', 'int', [
@@ -218,11 +224,11 @@ class PersonalGuideAPIController extends APIController {
           ],
         ]))->out();
         if ($amount === 0)
-          Response::fail("You have to enter an integer that isn't 0");
+          Response::invalid('amount', "You have to enter an integer that isn't 0");
 
         $availableSlots = $this->user->getPCGAvailablePoints(false);
         if ($availableSlots + $amount < 10)
-          Response::fail('This would cause the users points to go below 10');
+          Response::invalid('amount', 'This would cause the users points to go below 10');
 
         $comment = (new Input('comment', 'string', [
           Input::IS_OPTIONAL => true,
@@ -239,7 +245,7 @@ class PersonalGuideAPIController extends APIController {
         $nPoints = CoreUtils::makePlural('point', abs($amount), PREPEND_NUMBER);
         $given = $amount > 0 ? 'given' : 'taken';
         $to = $amount > 0 ? 'to' : 'from';
-        Response::success("You've successfully $given $nPoints $to {$this->user->name}");
+        Response::ok(['message' => "You've successfully $given $nPoints $to {$this->user->name}"], 201);
       break;
       default:
         CoreUtils::notAllowed();

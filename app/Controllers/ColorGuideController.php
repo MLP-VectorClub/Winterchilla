@@ -194,7 +194,7 @@ class ColorGuideController extends Controller {
     }
     else {
       if ($searching && $json_response)
-        Response::fail('The ElasticSearch server is currently down and search is not available, sorry for the inconvenience.<br>Please <a class="send-feedback">let us know</a> about this issue.', ['unavail' => true]);
+        Response::error(503, 'The ElasticSearch server is currently down and search is not available, sorry for the inconvenience. Please let us know about this issue.', ['unavail' => true]);
 
       $search_query = null;
       $entry_count = DB::$instance->where('guide', $this->guide)->where('id != 0')->count('appearances');
@@ -207,8 +207,8 @@ class ColorGuideController extends Controller {
       $found = !empty($appearances[0]->id);
       if (CoreUtils::isJSONExpected()){
         if (!$found)
-          Response::fail('Your search returned no results.');
-        Response::done(['goto' => $appearances[0]->toURL()]);
+          Response::error(404, 'Your search returned no results.');
+        Response::ok(['goto' => $appearances[0]->toURL()]);
       }
       if ($found)
         HTTP::tempRedirect($appearances[0]->toURL());

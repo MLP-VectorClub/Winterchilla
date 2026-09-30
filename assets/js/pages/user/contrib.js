@@ -12,8 +12,7 @@
       const favme = el.dataset.favme;
 
       $.get('/user/contrib/lazyload/' + favme, $.mkAjaxHandler(function() {
-        if (!this.status) return $.Dialog.fail('Cannot load deviation ' + favme, this.message);
-
+        // Failures (e.g. 404) never get here: the global status handlers report them
         $.loadImages(this.html).then(function(resp) {
           $(el).replaceWith(resp.$el);
         });

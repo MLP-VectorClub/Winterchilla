@@ -307,9 +307,9 @@ class UserController extends Controller {
   public function contribLazyload($params):void {
     $CachedDeviation = DeviantArt::getCachedDeviation($params['favme']);
     if (empty($CachedDeviation))
-      HTTP::statusCode(404, AND_DIE);
+      Response::error(404, 'The deviation could not be found');
 
-    Response::done(['html' => $CachedDeviation->toLinkWithPreview()]);
+    Response::ok(['html' => $CachedDeviation->toLinkWithPreview()]);
   }
 
   public function list():void {

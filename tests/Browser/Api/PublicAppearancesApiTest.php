@@ -1,0 +1,68 @@
+<?php
+
+use Tests\Browser\Helpers\ApiClient;
+use Tests\Browser\Helpers\TestSeederConstants;
+
+// Contract: the public read API under /appearances (tags: color guide, appearances). This is the API Luna mirrors,
+// so the error format follows Luna's: {message} with real statuses and validation errors as {message, errors}.
+
+$appearanceId = TestSeederConstants::APPEARANCE_ID;
+
+it('lists every appearance of a guide with camelCase keys', function () use ($appearanceId) {
+  $r = ApiClient::guest()->get('/appearances/all', ['guide' => 'pony']);
+
+  expect($r['status'])->toBe(200)
+    ->and($r['contentType'])->toStartWith('application/json')
+    ->and($r['json'])->toHaveKey('appearances')->not->toHaveKeys(['status', 'cachedOn', 'cachedFor']);
+  $ids = array_column($r['json']['appearances'], 'id');
+  expect($ids)->toContain($appearanceId);
+  $first = $r['json']['appearances'][0];
+  expect($first)->toHaveKeys(['id', 'label', 'createdAt', 'sprite', 'hasCutieMarks'])->not->toHaveKey('created_at');
+
+  // Served from the cache the second time, byte for byte
+  expect(ApiClient::guest()->get('/appearances/all', ['guide' => 'pony'])['body'])->toBe($r['body']);
+});
+
+it('validates the guide of /appearances/all with 422', function () {
+  foreach ([[], ['guide' => 'nonsense']] as $query) {
+    $r = ApiClient::guest()->get('/appearances/all', $query);
+    expect($r['status'])->toBe(422)
+      ->and($r['json'])->toHaveKeys(['message', 'errors'])
+      ->and($r['json']['errors'])->toHaveKey('guide');
+  }
+});
+
+it('searches a guide, or reports that ElasticSearch is unreachable', function () {
+  $r = ApiClient::guest()->get('/appearances', ['guide' => 'pony']);
+
+  expect($r['status'])->toBeIn([200, 503])->and($r['json'])->not->toHaveKey('status');
+  if ($r['status'] === 200)
+    expect($r['json'])->toHaveKeys(['appearances', 'pagination'])
+      ->and($r['json']['pagination'])->toHaveKeys(['currentPage', 'totalPages', 'totalItems', 'itemsPerPage']);
+  else
+    expect($r['json'])->toHaveKey('message');
+});
+
+it('returns the color groups of an appearance', function () {
+  $r = ApiClient::guest()->get('/appearances/' . TestSeederConstants::PERSONAL_APPEARANCE_ID . '/color-groups');
+
+  expect($r['status'])->toBe(200)
+    ->and($r['json'])->toHaveKey('colorGroups')->not->toHaveKey('status')
+    ->and($r['json']['colorGroups'][0]['label'])->toBe('Personal Coat');
+});
+
+it('404s for a missing appearance', function () {
+  $r = ApiClient::guest()->get('/appearances/987654/color-groups');
+
+  expect($r['status'])->toBe(404)->and($r['json'])->toHaveKey('message')->not->toHaveKey('status');
+});
+
+it('hides private appearances from everyone but their owner and staff', function () {
+  $path = '/appearances/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID . '/color-groups';
+
+  $r = ApiClient::guest()->get($path);
+  expect($r['status'])->toBe(403)->and($r['json'])->toHaveKey('message')->not->toHaveKey('status');
+
+  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get($path)['status'])->toBe(200);
+  expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get($path)['status'])->toBe(200);
+});

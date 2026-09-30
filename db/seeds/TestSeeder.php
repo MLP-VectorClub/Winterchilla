@@ -71,8 +71,8 @@ class TestSeeder extends AbstractSeed {
     $this->table('posts')->insert([[
       'id'           => 1,
       'type'         => 'chr',
-      'preview'      => 'https://example.com/preview.png',
-      'fullsize'     => 'https://example.com/full.png',
+      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
       'label'        => 'Seeded Test Request',
       'requested_at' => date('c'),
       'show_id'      => 1,
@@ -81,8 +81,8 @@ class TestSeeder extends AbstractSeed {
       // Requests for the API tests: 2 is deleted by its owner, 3 is already reserved (so its owner can't delete it)
       'id'           => 2,
       'type'         => 'chr',
-      'preview'      => 'https://example.com/preview2.png',
-      'fullsize'     => 'https://example.com/full2.png',
+      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
       'label'        => 'Deletable Test Request',
       'requested_at' => date('c'),
       'show_id'      => 1,
@@ -90,8 +90,8 @@ class TestSeeder extends AbstractSeed {
     ], [
       'id'           => 3,
       'type'         => 'obj',
-      'preview'      => 'https://example.com/preview3.png',
-      'fullsize'     => 'https://example.com/full3.png',
+      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
       'label'        => 'Reserved Test Request',
       'requested_at' => date('c'),
       'reserved_at'  => date('c'),

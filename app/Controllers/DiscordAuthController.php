@@ -31,7 +31,7 @@ class DiscordAuthController extends Controller {
 
       if (!Auth::$signed_in){
         if (CoreUtils::isJSONExpected()){
-          Response::fail();
+          Response::error(401);
         }
         CoreUtils::noPerm();
       }
@@ -125,10 +125,10 @@ class DiscordAuthController extends Controller {
     if (false === $this->target instanceof User)
       CoreUtils::notFound();
     if ($this->target->id !== Auth::$user->id && Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     if (!$this->target->boundToDiscordMember())
-      Response::fail('You must be bound to a Discord user to perform this action');
+      Response::error(409, 'You must be bound to a Discord user to perform this action');
 
     $this->same_user = $this->target->id === Auth::$user->id;
   }
@@ -141,13 +141,13 @@ class DiscordAuthController extends Controller {
 
     $discordUser = $this->target->discord_member;
     if ($discordUser->access === null)
-      Response::fail('The Discord account must be linked before syncing');
+      Response::error(409, 'The Discord account must be linked before syncing');
 
     if (!$discordUser->canBeSynced())
-      Response::fail('The account information was last updated '.Time::format($discordUser->last_synced->getTimestamp(), Time::FORMAT_READABLE).', please wait at least 5 minutes before syncing again.');
+      Response::error(429, 'The account information was last updated '.Time::format($discordUser->last_synced->getTimestamp(), Time::FORMAT_READABLE).', please wait at least 5 minutes before syncing again.');
 
     $discordUser->sync($this->provider);
-    Response::done();
+    Response::noContent();
   }
 
   public function unlink($params) {
@@ -186,7 +186,7 @@ class DiscordAuthController extends Controller {
             'statusCode' => $res->getStatusCode(),
             'body' => (string)$res->getBody(),
           ], JSON_PRETTY_PRINT));
-        Response::fail('Revoking access failed, please <a class="send-feedback">let us know</a> so we can look into the issue.');
+        Response::error(502, 'Revoking access failed, please let us know so we can look into the issue.');
       }
     }
 
@@ -194,7 +194,7 @@ class DiscordAuthController extends Controller {
     $discord_user->delete();
 
     $Your = $this->same_user ? 'Your' : 'This';
-    Response::success("$Your Discord account was successfully unlinked.".($this->same_user
-        ? ' If you want to verify it yourself, check your Authorized Apps in your settings.' : ''));
+    Response::ok(['message' => "$Your Discord account was successfully unlinked.".($this->same_user
+        ? ' If you want to verify it yourself, check your Authorized Apps in your settings.' : '')]);
   }
 }

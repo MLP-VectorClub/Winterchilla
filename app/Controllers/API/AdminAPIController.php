@@ -15,6 +15,15 @@ use App\Response;
 use OpenApi\Annotations as OA;
 
 class AdminAPIController extends APIController {
+  public function __construct() {
+    parent::__construct();
+
+    // Every admin endpoint is staff-only. This check went missing in the API controllers refactor, which left the log
+    // details, useful links and notices open to signed-out visitors.
+    if (Permission::insufficient('staff'))
+      Response::denied();
+  }
+
   /**
    * @OA\Get(
    *   path="/admin/logs/details/{id}",
@@ -30,9 +39,6 @@ class AdminAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"details"},
    *           @OA\Property(
@@ -42,11 +48,11 @@ class AdminAPIController extends APIController {
    *             @OA\Items(type="array", @OA\Items())
    *           )
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="default", description="Entry not found, or has no details to show", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="The entry has no details to show", @OA\JsonContent(type="object", required={"message","unclickable"}, @OA\Property(property="message", type="string"), @OA\Property(property="unclickable", type="boolean")))
    * )
    */
   public function logDetail($params) {
@@ -54,16 +60,16 @@ class AdminAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (!isset($params['id']) || !is_numeric($params['id']))
-      Response::fail('Entry ID is missing or invalid');
+      Response::error(404, 'Entry ID is missing or invalid');
 
     /** @var Log|null $main_entry */
     $main_entry = Log::find($params['id']);
     if ($main_entry === null)
-      Response::fail('Log entry does not exist');
+      Response::error(404, 'Log entry does not exist');
     if ($main_entry->data === null)
-      Response::fail('There are no details to show', ['unclickable' => true]);
+      Response::error(409, 'There are no details to show', ['unclickable' => true]);
 
-    Response::done(Logs::formatEntryDetails($main_entry, $main_entry->data));
+    Response::ok(Logs::formatEntryDetails($main_entry, $main_entry->data));
   }
 
   /**
@@ -77,19 +83,19 @@ class AdminAPIController extends APIController {
     $linkid = (int)$params['id'];
     $this->usefulLink = UsefulLink::find($linkid);
     if (empty($this->usefulLink))
-      Response::fail('The specified link does not exist');
+      Response::error(404, 'The specified link does not exist');
   }
 
   /**
    * @OA\Schema(
    *   schema="UsefulLink",
    *   type="object",
-   *   required={"label","url","title","minrole"},
+   *   required={"label","url","title","minRole"},
    *   additionalProperties=false,
    *   @OA\Property(property="label", type="string", minLength=3, maxLength=35),
    *   @OA\Property(property="url", type="string", format="uri", minLength=3, maxLength=255),
    *   @OA\Property(property="title", type="string", maxLength=255),
-   *   @OA\Property(property="minrole", ref="#/components/schemas/UserRole")
+   *   @OA\Property(property="minRole", ref="#/components/schemas/UserRole")
    * )
    * @OA\Schema(
    *   schema="UsefulLinkInput",
@@ -110,20 +116,17 @@ class AdminAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(ref="#/components/schemas/UsefulLink")
-   *     })
+   *     @OA\JsonContent(ref="#/components/schemas/UsefulLink")
    *   ),
-   *   @OA\Response(response="default", description="Link does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
    *   path="/admin/usefullinks",
    *   description="Create a new useful link. Requires staff role",
    *   tags={"admin"},
    *   @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/UsefulLinkInput")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="default", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="201", description="Created", @OA\JsonContent(type="object", required={"id"}, @OA\Property(property="id", ref="#/components/schemas/OneBasedId"))),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
    *   path="/admin/usefullinks/{id}",
@@ -131,16 +134,17 @@ class AdminAPIController extends APIController {
    *   tags={"admin"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/UsefulLinkInput")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="default", description="Validation error or link does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Updated (or nothing needed changing)"),
+   *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/admin/usefullinks/{id}",
    *   description="Delete a useful link. Requires staff role",
    *   tags={"admin"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="default", description="Link does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Deleted"),
+   *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function usefulLinksApi($params) {
@@ -149,18 +153,18 @@ class AdminAPIController extends APIController {
 
     switch ($this->action){
       case 'GET':
-        Response::done([
+        Response::ok([
           'label' => $this->usefulLink->label,
           'url' => $this->usefulLink->url,
           'title' => $this->usefulLink->title,
-          'minrole' => $this->usefulLink->minrole,
+          'minRole' => $this->usefulLink->minrole,
         ]);
       break;
       case 'DELETE':
         if (!DB::$instance->where('id', $this->usefulLink->id)->delete('useful_links'))
-          Response::dbError();
+          Response::dbError(status: 500);
 
-        Response::done();
+        Response::noContent();
       break;
       case 'POST':
       case 'PUT':
@@ -204,7 +208,7 @@ class AdminAPIController extends APIController {
 
         $minrole = (new Input('minrole', function ($value) {
           if (empty(Permission::ROLES_ASSOC[$value]) || Permission::insufficient('guest', $value))
-            Response::fail();
+            return Input::ERROR_INVALID;
         }, [
           Input::CUSTOM_ERROR_MESSAGES => [
             Input::ERROR_MISSING => 'Minimum role is missing',
@@ -215,14 +219,16 @@ class AdminAPIController extends APIController {
           $data['minrole'] = $minrole;
 
         if (empty($data))
-          Response::fail('Nothing was changed');
+          Response::noContent();
         $query = $this->creating
           ? UsefulLink::create($data)
           : $this->usefulLink->update_attributes($data);
         if (!$query)
-          Response::dbError();
+          Response::dbError(status: 500);
 
-        Response::done();
+        if ($this->creating)
+          Response::ok(['id' => $query->id], 201);
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -244,8 +250,8 @@ class AdminAPIController extends APIController {
    *       )
    *     )
    *   ),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="default", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Reordered"),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function reorderUsefulLinks() {
@@ -260,10 +266,10 @@ class AdminAPIController extends APIController {
     $order = 1;
     foreach ($list as $id){
       if (!UsefulLink::find($id)->update_attributes(['order' => $order++]))
-        Response::fail("Updating link #$id failed, process halted");
+        Response::error(500, "Updating link #$id failed, process halted");
     }
 
-    Response::done();
+    Response::noContent();
   }
 
   private ?Notice $notice;
@@ -274,7 +280,7 @@ class AdminAPIController extends APIController {
     $this->notice = Notice::find($params['id']);
 
     if (!$this->creating && empty($this->notice))
-      Response::fail('The specified notice does not exist');
+      Response::error(404, 'The specified notice does not exist');
   }
 
   public function noticesApi($params) {
@@ -285,7 +291,7 @@ class AdminAPIController extends APIController {
 
     switch ($this->action){
       case 'GET':
-        Response::done($this->notice->to_array());
+        Response::ok(CoreUtils::camelKeys($this->notice->to_array()));
       break;
       case 'POST':
       case 'PUT':
@@ -320,12 +326,12 @@ class AdminAPIController extends APIController {
         $this->notice->type = (new Input('type', 'string'))->out();
 
         $this->notice->save();
-        Response::done(['notice' => $this->notice->to_array()]);
+        Response::ok(['notice' => CoreUtils::camelKeys($this->notice->to_array())], $this->creating ? 201 : 200);
       break;
       case 'DELETE':
         $this->notice->delete();
 
-        Response::done();
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -337,7 +343,7 @@ class AdminAPIController extends APIController {
    *   path="/admin/stat-cache",
    *   description="Clear the PHP stat cache. Requires staff role",
    *   tags={"admin"},
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Cleared")
    * )
    */
   public function statCacheApi() {
@@ -345,6 +351,6 @@ class AdminAPIController extends APIController {
       CoreUtils::notAllowed();
 
     clearstatcache();
-    Response::done();
+    Response::noContent();
   }
 }

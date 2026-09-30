@@ -73,7 +73,7 @@ class AppearancesAPIController extends APIController {
    *   required={
    *     "id",
    *     "label",
-   *     "created_at",
+   *     "createdAt",
    *     "notes",
    *     "tags",
    *     "sprite",
@@ -91,7 +91,7 @@ class AppearancesAPIController extends APIController {
    *     example="Twinkle Sprinkle"
    *   ),
    *   @OA\Property(
-   *     property="created_at",
+   *     property="createdAt",
    *     type="string",
    *     format="date-time"
    *   ),
@@ -160,7 +160,7 @@ class AppearancesAPIController extends APIController {
     $appearance = [
       'id' => $a->id,
       'label' => $a->label,
-      'created_at' => gmdate('c', $a->created_at->getTimestamp()),
+      'createdAt' => gmdate('c', $a->created_at->getTimestamp()),
       'notes' => $a->notes_rend,
       'tags' => $tags,
       'sprite' => self::mapSprite($a, $with_previews),
@@ -425,13 +425,10 @@ class AppearancesAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/PagedServerResponse"),
-   *         @OA\Schema(ref="#/components/schemas/AppearanceList")
-   *       }
-   *     )
-   *   )
+   *     @OA\JsonContent(ref="#/components/schemas/AppearanceList")
+   *   ),
+   *   @OA\Response(response="422", description="Invalid guide name", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
+   *   @OA\Response(response="503", description="The ElasticSearch server is unreachable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   function queryPublic() {
@@ -439,10 +436,8 @@ class AppearancesAPIController extends APIController {
       CoreUtils::notAllowed();
 
     $elastic_avail = CGUtils::isElasticAvailable();
-    if (!$elastic_avail){
-      HTTP::statusCode(503);
-      Response::fail('ELASTIC_DOWN');
-    }
+    if (!$elastic_avail)
+      Response::error(503, 'The ElasticSearch server is unreachable');
     if (isset($_GET['size']) && is_numeric($_GET['size']))
       $appearances_per_page = CoreUtils::rangeLimit((int)$_GET['size'], 7, 20);
     else $appearances_per_page = 7;
@@ -450,43 +445,20 @@ class AppearancesAPIController extends APIController {
     $searching = !empty($_GET['q']) && $_GET['q'] !== '';
     $guide_name = $_GET['guide'] ?? null;
     $with_previews = ($_GET['previews'] ?? null) === 'true';
-    if (!array_key_exists($guide_name, CGUtils::GUIDE_MAP)){
-      HTTP::statusCode(400);
-      Response::fail('COLOR_GUIDE.INVALID_GUIDE_NAME');
-    }
+    if (!array_key_exists($guide_name, CGUtils::GUIDE_MAP))
+      Response::invalid('guide', 'The selected guide is invalid.');
     [$appearances] = CGUtils::searchGuide($pagination, $guide_name, $searching);
 
     $results = array_map(function (Appearance $a) use ($with_previews) {
       return self::mapAppearance($a, $with_previews);
     }, $appearances);
-    Response::done([
+    Response::ok([
       'appearances' => $results,
       'pagination' => CoreUtils::paginationForApi($pagination),
     ]);
   }
 
   /**
-   * @OA\Schema(
-   *   schema="CacheIndicator",
-   *   required={
-   *     "cachedOn",
-   *     "cachedFor"
-   *   },
-   *   additionalProperties=false,
-   *   @OA\Property(
-   *     property="cachedOn",
-   *     type="string",
-   *     format="date-time",
-   *     description="Indicates when a cached resource was last updated with fresh data"
-   *   ),
-   *   @OA\Property(
-   *     property="cachedFor",
-   *     type="number",
-   *     minimum=1,
-   *     example="3600",
-   *     description="How long the data is cached for (in seconds)"
-   *   )
-   * )
    * @OA\Get(
    *   path="/appearances/all",
    *   security={},
@@ -508,14 +480,9 @@ class AppearancesAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(ref="#/components/schemas/SlimAppearanceList"),
-   *         @OA\Schema(ref="#/components/schemas/CacheIndicator")
-   *       }
-   *     )
-   *   )
+   *     @OA\JsonContent(ref="#/components/schemas/SlimAppearanceList")
+   *   ),
+   *   @OA\Response(response="422", description="Invalid guide name", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   function queryAll() {
@@ -524,13 +491,11 @@ class AppearancesAPIController extends APIController {
 
     $guide_name = $_GET['guide'] ?? null;
     $with_previews = ($_GET['previews'] ?? null) === 'true';
-    if (!isset(CGUtils::GUIDE_MAP[$guide_name])){
-      HTTP::statusCode(400);
-      Response::fail('COLOR_GUIDE.INVALID_GUIDE_NAME');
-    }
+    if (!isset(CGUtils::GUIDE_MAP[$guide_name]))
+      Response::invalid('guide', 'The selected guide is invalid.');
 
     $cache_time = 600;
-    $cache_key = CoreUtils::generateCacheKey(1, 'all appearances', $guide_name, $with_previews);
+    $cache_key = CoreUtils::generateCacheKey(2, 'all appearances', $guide_name, $with_previews);
     $cached_data = RedisHelper::get($cache_key);
     if ($cached_data !== null)
       Response::doneCached($cached_data);
@@ -541,7 +506,7 @@ class AppearancesAPIController extends APIController {
     $results = array_map(function (Appearance $a) use ($with_previews) {
       return self::mapAppearance($a, $with_previews, true);
     }, $appearances);
-    Response::done([
+    Response::okCached([
       'appearances' => $results,
     ], $cache_key, $cache_time);
   }
@@ -549,10 +514,8 @@ class AppearancesAPIController extends APIController {
   private static function _resolveAppearance(array $params):Appearance {
     $id = (int)$params['id'];
     $appearance = Appearance::find($id);
-    if (empty($appearance)){
-      HTTP::statusCode(404);
-      Response::fail('COLOR_GUIDE.APPEARANCE_NOT_FOUND');
-    }
+    if (empty($appearance))
+      Response::error(404, 'The appearance could not be found');
     return $appearance;
   }
 
@@ -563,8 +526,7 @@ class AppearancesAPIController extends APIController {
 
       // Usage with token is postponed for the rewrite
 
-      HTTP::statusCode(403);
-      Response::fail('COLOR_GUIDE.APPEARANCE_PRIVATE');
+      Response::error(403, 'This appearance is private and you do not have permission to view it');
     }
   }
 
@@ -583,12 +545,7 @@ class AppearancesAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(ref="#/components/schemas/ListOfColorGroups")
-   *       }
-   *     )
+   *     @OA\JsonContent(ref="#/components/schemas/ListOfColorGroups")
    *   )
    * )
    * @param array $params
@@ -601,7 +558,7 @@ class AppearancesAPIController extends APIController {
 
     self::_handlePrivateAppearanceCheck($appearance);
 
-    Response::done(['colorGroups' => self::_getColorGroups($appearance)]);
+    Response::ok(['colorGroups' => self::_getColorGroups($appearance)]);
   }
 
   /**
@@ -661,20 +618,12 @@ class AppearancesAPIController extends APIController {
    *   @OA\Response(
    *     response="404",
    *     description="Sprite image missing",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse")
-   *       }
-   *     )
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="403",
    *     description="You don't have permission to access this resource",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse")
-   *       }
-   *     )
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    * @param array $params
@@ -718,20 +667,12 @@ class AppearancesAPIController extends APIController {
    *   @OA\Response(
    *     response="404",
    *     description="Appearance missing",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse")
-   *       }
-   *     )
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="403",
    *     description="You don't have permission to access this resource",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse")
-   *       }
-   *     )
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    * @param array $params

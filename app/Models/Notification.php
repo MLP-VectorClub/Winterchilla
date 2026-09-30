@@ -103,7 +103,7 @@ class Notification extends NSModel {
     } catch (Exception $e) {
       CoreUtils::logError("Mark read error\n{$e->getMessage()}\n{$e->getTraceAsString()}");
       if (!$silent)
-        Response::fail("Mark read error: {$e->getMessage()}");
+        Response::error(500, "Mark read error: {$e->getMessage()}");
     }
   }
 

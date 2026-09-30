@@ -98,7 +98,20 @@ class Response {
     self::_respond(true, '', $data, false, $cache_key, $cache_for_seconds);
   }
 
+  /**
+   * Responds 200 with $data and caches the encoded body in Redis for $cache_for_seconds. Serve it with doneCached().
+   */
+  public static function okCached(array $data, string $cache_key, int $cache_for_seconds):never {
+    $json = JSON::encode($data, JSON_UNESCAPED_SLASHES);
+    http_response_code(200);
+    header('Content-Type: application/json');
+    RedisHelper::set($cache_key, serialize($json), $cache_for_seconds);
+    echo $json;
+    exit;
+  }
+
   public static function doneCached(string $data):never {
+    header('Content-Type: application/json');
     self::_respondWith(unserialize($data, [false]));
   }
 

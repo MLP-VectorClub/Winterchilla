@@ -30,8 +30,9 @@ class CSRFProtection {
   public static function protect():void {
     self::detect();
 
+    // 419 (as in Laravel) rather than 401, which now means "not signed in"
     if (self::$tripped === true)
-      HTTP::statusCode(401, AND_DIE);
+      Response::error(419, 'The CSRF token is missing or does not match. Reload the page and try again.');
   }
 
   /**

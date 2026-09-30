@@ -51,7 +51,7 @@ use OpenApi\Annotations as OA;
  *   type="apiKey",
  *   in="query",
  *   name="CSRF_TOKEN",
- *   description="Required for all non-GET requests. The server sets a `CSRF_TOKEN` cookie on every response; its value must be echoed back as a `CSRF_TOKEN` request parameter (query string or body) on subsequent state-changing (POST/PUT/DELETE) requests, or the request will fail with `401 Unauthorized`. This is purely an anti-CSRF measure and is unrelated to user authentication."
+ *   description="Required for all non-GET requests. The server sets a `CSRF_TOKEN` cookie on every response; its value must be echoed back as a `CSRF_TOKEN` request parameter (query string or body) on subsequent state-changing (POST/PUT/DELETE) requests, or the request will fail with `419` (CSRF token mismatch). This is purely an anti-CSRF measure and is unrelated to user authentication."
  * )
  * @OA\Schema(
  *   schema="ErrorResponse",

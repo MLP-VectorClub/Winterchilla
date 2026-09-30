@@ -417,7 +417,12 @@
     }
     else event.data = { ...event.data, CSRF_TOKEN: t };
   });
-  const simpleStatusHandler = xhr => {
+  // Requests made through $.API with a callback are handled by that callback (see the shim above), so the global
+  // dialogs below must not pile on top of it
+  const simpleStatusHandler = function(xhr) {
+    if (this && this.apiHandled)
+      return;
+
     let resp;
     if (xhr.responseJSON)
       resp = xhr.responseJSON.message;
@@ -433,16 +438,23 @@
     0: () => { /* noop */
     },
     400: simpleStatusHandler,
-    401: function() {
-      $.Dialog.fail(undefined, 'Cross-site Request Forgery attack detected. Please <a class=\'send-feedback\'>let us know</a> about this issue so we can look into it.');
-    },
+    401: simpleStatusHandler,
     403: simpleStatusHandler,
     404: simpleStatusHandler,
     405: simpleStatusHandler,
+    409: simpleStatusHandler,
+    422: simpleStatusHandler,
+    429: simpleStatusHandler,
+    419: function() {
+      $.Dialog.fail(undefined, 'Cross-site Request Forgery attack detected. Please <a class=\'send-feedback\'>let us know</a> about this issue so we can look into it.');
+    },
     500: function() {
       $.Dialog.fail(false, 'A request failed due to an internal server error. If this persists, please <a class="send-feedback">let us know</a>!');
     },
     503: function() {
+      if (this && this.apiHandled)
+        return;
+
       $.Dialog.fail(false, `A request failed because the server is temporarily unavailable. This shouldn't take too long, please try again in a few seconds.<br>If the problem still persist after a few minutes, please let us know by clicking the "Send feedback" link in the footer.`);
     },
     504: function() {
@@ -452,6 +464,9 @@
   $.ajaxSetup({
     dataType: 'json',
     error: function(xhr) {
+      if (this && this.apiHandled)
+        return;
+
       if (typeof statusCodeHandlers[xhr.status] !== 'function')
         $w.triggerHandler('ajaxerror', $.toArray(arguments));
     },
@@ -1001,6 +1016,14 @@
     };
   });
 
+  let nextApiRequestHandled = false;
+  $.ajaxPrefilter(function(options) {
+    if (nextApiRequestHandled){
+      options.apiHandled = true;
+      nextApiRequestHandled = false;
+    }
+  });
+
   if (typeof $.API !== 'undefined'){
     $.each(['get', 'post', 'put', 'delete'], (i, el) => {
       ((method) => {
@@ -1026,7 +1049,11 @@
               handler(Object.assign({}, body, { status: false, httpStatus: jqXHR.status }));
             };
           }
+          // The next request is handled by the callback (see the ajaxPrefilter below)
+          if (errorHandler !== null)
+            nextApiRequestHandled = true;
           const request = $[method]($.API.API_PATH + url, ...args);
+          nextApiRequestHandled = false;
           if (errorHandler !== null)
             request.fail(errorHandler);
           return request;

@@ -54,6 +54,16 @@ use OpenApi\Annotations as OA;
  *   description="Required for all non-GET requests. The server sets a `CSRF_TOKEN` cookie on every response; its value must be echoed back as a `CSRF_TOKEN` request parameter (query string or body) on subsequent state-changing (POST/PUT/DELETE) requests, or the request will fail with `419` (CSRF token mismatch). This is purely an anti-CSRF measure and is unrelated to user authentication."
  * )
  * @OA\Schema(
+ *   schema="Pagination",
+ *   type="object",
+ *   required={"currentPage", "totalPages", "totalItems", "itemsPerPage"},
+ *   additionalProperties=false,
+ *   @OA\Property(property="currentPage", type="integer", minimum=1),
+ *   @OA\Property(property="totalPages", type="integer", minimum=1),
+ *   @OA\Property(property="totalItems", type="integer", minimum=0),
+ *   @OA\Property(property="itemsPerPage", type="integer", minimum=1)
+ * )
+ * @OA\Schema(
  *   schema="ErrorResponse",
  *   type="object",
  *   required={"message"},

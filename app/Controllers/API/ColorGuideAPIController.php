@@ -8,12 +8,110 @@ use App\Controllers\ColorGuideController;
 use App\Controllers\Traits\ColorGuideAccessTrait;
 use App\CoreUtils;
 use App\Input;
+use App\Models\Appearance;
+use App\Models\MajorChange;
 use App\Permission;
 use App\Response;
 use OpenApi\Annotations as OA;
 
 class ColorGuideAPIController extends APIController {
   use ColorGuideAccessTrait;
+
+  /**
+   * @OA\Get(
+   *   path="/color-guide",
+   *   security={},
+   *   description="Get the number of entries in each guide",
+   *   tags={"color guide"},
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"entryCounts"},
+   *       @OA\Property(property="entryCounts", type="object", additionalProperties=@OA\AdditionalProperties(type="integer"), example={"pony": 418, "eqg": 21})
+   *     )
+   *   )
+   * )
+   */
+  public function index():void {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $counts = [];
+    foreach (array_keys(CGUtils::GUIDE_MAP) as $guide)
+      $counts[$guide] = Appearance::count(['conditions' => ['guide = ?', $guide]]);
+
+    Response::ok(['entryCounts' => $counts]);
+  }
+
+  /**
+   * @OA\Schema(
+   *   schema="MajorChange",
+   *   type="object",
+   *   required={"id", "reason", "appearance", "createdAt"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="reason", type="string"),
+   *   @OA\Property(property="appearance", ref="#/components/schemas/PreviewAppearance"),
+   *   @OA\Property(property="user", nullable=true, ref="#/components/schemas/User", description="Who made the change; only sent to staff"),
+   *   @OA\Property(property="createdAt", type="string", format="date-time")
+   * )
+   * @OA\Get(
+   *   path="/color-guide/major-changes",
+   *   security={},
+   *   description="Get the most recent major changes made to appearances in a guide",
+   *   tags={"color guide"},
+   *   @OA\Parameter(in="query", name="guide", required=true, @OA\Schema(type="string", enum={"pony", "eqg"})),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=15, default=9)),
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"changes", "pagination"},
+   *       @OA\Property(property="changes", type="array", @OA\Items(ref="#/components/schemas/MajorChange")),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
+   *     )
+   *   ),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function majorChanges():void {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $guide = self::validateGuide();
+    $size = $_GET['size'] ?? 9;
+    if (!is_numeric($size) || $size < 1 || $size > 15)
+      Response::invalid('size', 'The size must be between 1 and 15.');
+    $size = (int)$size;
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+    $page = (int)$page;
+
+    $total = MajorChange::total($guide);
+    $is_staff = Permission::sufficient('staff');
+    $changes = MajorChange::get(null, $guide, 'LIMIT '.$size.' OFFSET '.(($page - 1) * $size));
+
+    Response::ok([
+      'changes' => array_map(fn(MajorChange $mc) => [
+        'id' => $mc->id,
+        'reason' => $mc->reason,
+        'appearance' => AppearancesAPIController::mapPreviewAppearance($mc->appearance),
+        'user' => $is_staff && $mc->user !== null ? UsersAPIController::mapUser($mc->user) : null,
+        'createdAt' => gmdate('c', $mc->created_at->getTimestamp()),
+      ], $changes),
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
+    ]);
+  }
 
   /**
    * @OA\Put(

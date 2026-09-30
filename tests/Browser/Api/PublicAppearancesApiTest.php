@@ -88,3 +88,32 @@ it('answers 404 for a missing appearance and 403 for a private one', function ()
   expect($r['status'])->toBe(403)->and($r['json'])->toHaveKey('message');
   expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get('/appearances/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID)['status'])->toBe(200);
 });
+
+it('locates an appearance with preview colors', function () use ($appearanceId) {
+  $r = ApiClient::guest()->get("/appearances/$appearanceId/locate");
+
+  expect($r['status'])->toBe(200)
+    ->and($r['json'])->toHaveKeys(['id', 'label', 'guide', 'previewData'])
+    ->and($r['json']['guide'])->toBe('pony')
+    ->and($r['json']['previewData'])->toBeArray();
+  expect(ApiClient::guest()->get('/appearances/987654/locate')['status'])->toBe(404)
+    ->and(ApiClient::guest()->get('/appearances/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID . '/locate')['status'])->toBe(403);
+});
+
+it('lists pinned appearances of a guide', function () {
+  $guest = ApiClient::guest();
+  $r = $guest->get('/appearances/pinned', ['guide' => 'pony']);
+
+  expect($r['status'])->toBe(200)->and($r['json'])->toBeArray();
+  foreach ($r['json'] as $appearance)
+    expect($appearance)->toHaveKeys(['id', 'label', 'colorGroups']);
+  expect($guest->get('/appearances/pinned')['status'])->toBe(422)
+    ->and($guest->get('/appearances/pinned', ['guide' => 'nope'])['json']['errors'])->toHaveKey('guide');
+});
+
+it('serves the appearance preview as an SVG', function () use ($appearanceId) {
+  $r = ApiClient::guest()->get("/appearances/$appearanceId/preview");
+
+  expect($r['status'])->toBe(200)->and($r['contentType'])->toStartWith('image/svg+xml');
+  expect(ApiClient::guest()->get('/appearances/987654/preview')['status'])->toBe(404);
+});

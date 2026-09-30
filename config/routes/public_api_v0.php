@@ -26,11 +26,14 @@ $api_endpoint = function ($path, array $target, $methods = 'POST|GET|PUT|DELETE'
 $api_endpoint('/appearances', [\App\Controllers\API\AppearancesAPIController::class, 'queryPublic'], 'GET');
 $api_endpoint('/appearances', [\App\Controllers\API\AppearanceAPIController::class, 'api'], 'POST');
 $api_endpoint('/appearances/all', [\App\Controllers\API\AppearancesAPIController::class, 'queryAll']);
+$api_endpoint('/appearances/pinned', [\App\Controllers\API\AppearancesAPIController::class, 'pinned']);
 $api_endpoint('/appearances/autocomplete', [\App\Controllers\API\AppearanceAPIController::class, 'autocomplete']);
 $api_endpoint('/appearances/order', [\App\Controllers\API\ColorGuideAPIController::class, 'reorderFullList']);
 $api_endpoint('/appearances/[i:id]', [\App\Controllers\API\AppearancesAPIController::class, 'get'], 'GET');
 $api_endpoint('/appearances/[i:id]', [\App\Controllers\API\AppearanceAPIController::class, 'api'], 'PUT|DELETE');
 $api_endpoint('/appearances/[i:id]/metadata', [\App\Controllers\API\AppearanceAPIController::class, 'api']);
+$api_endpoint('/appearances/[i:id]/locate', [\App\Controllers\API\AppearancesAPIController::class, 'locate']);
+$api_endpoint('/appearances/[i:id]/preview', [\App\Controllers\API\AppearancesAPIController::class, 'preview']);
 $api_endpoint('/appearances/[i:id]/sprite', [\App\Controllers\API\AppearancesAPIController::class, 'sprite'], 'GET');
 $api_endpoint('/appearances/[i:id]/sprite', [\App\Controllers\API\AppearanceAPIController::class, 'spriteApi'], 'POST|PUT|DELETE');
 $api_endpoint('/appearances/[i:id]/color-groups', [\App\Controllers\API\AppearancesAPIController::class, 'getColorGroups']);
@@ -53,6 +56,8 @@ $api_endpoint('/useful-links/order', [\App\Controllers\API\AdminAPIController::c
 $api_endpoint('/admin/notices/[i:id]?', [\App\Controllers\API\AdminAPIController::class, 'noticesApi']);
 $api_endpoint('/admin/stat-cache', [\App\Controllers\API\AdminAPIController::class, 'statCacheApi']);
 $api_endpoint('/cg/full', [\App\Controllers\API\ColorGuideAPIController::class, 'fullList']);
+$api_endpoint('/color-guide', [\App\Controllers\API\ColorGuideAPIController::class, 'index']);
+$api_endpoint('/color-guide/major-changes', [\App\Controllers\API\ColorGuideAPIController::class, 'majorChanges']);
 $api_endpoint('/color-guide/export', [\App\Controllers\API\ColorGuideAPIController::class, 'export']);
 $api_endpoint('/color-guide/reindex', [\App\Controllers\API\ColorGuideAPIController::class, 'reindex']);
 $api_endpoint('/tags', [\App\Controllers\API\TagAPIController::class, 'autocomplete'], 'GET');

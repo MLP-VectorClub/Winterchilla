@@ -11,6 +11,7 @@ use App\Models\Appearance;
 use App\Models\Color;
 use App\Models\ColorGroup;
 use App\Models\Cutiemark;
+use App\Models\PinnedAppearance;
 use App\Models\Tag;
 use App\Pagination;
 use App\Permission;
@@ -529,6 +530,78 @@ class AppearancesAPIController extends APIController {
 
       Response::error(403, 'This appearance is private and you do not have permission to view it');
     }
+  }
+
+  /**
+   * @OA\Schema(
+   *   schema="PreviewAppearance",
+   *   type="object",
+   *   description="The barest of properties for an appearance, enough to show a small colored preview",
+   *   required={"id", "label", "guide", "previewData"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="label", type="string"),
+   *   @OA\Property(property="guide", type="string", nullable=true, description="The guide the appearance belongs to; null for personal guide appearances"),
+   *   @OA\Property(property="previewData", type="array", description="Up to four hex colors (#rrggbb) that represent the appearance", @OA\Items(type="string"))
+   * )
+   * @param Appearance $a
+   *
+   * @return array
+   */
+  static function mapPreviewAppearance(Appearance $a):array {
+    return [
+      'id' => $a->id,
+      'label' => $a->label,
+      'guide' => $a->guide,
+      'previewData' => array_map(fn(Color $c) => $c->hex, $a->getPreviewColors()),
+    ];
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/appearances/pinned",
+   *   security={},
+   *   description="Get the appearances pinned to the top of a guide",
+   *   tags={"color guide", "appearances"},
+   *   @OA\Parameter(in="query", name="guide", required=true, @OA\Schema(type="string", enum={"pony", "eqg"})),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Appearance"))),
+   *   @OA\Response(response="422", description="Invalid guide", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  function pinned() {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $guide = $_GET['guide'] ?? null;
+    if (!isset(CGUtils::GUIDE_MAP[$guide]))
+      Response::invalid('guide', 'The selected guide is invalid.');
+
+    $pins = PinnedAppearance::find('all', ['conditions' => ['guide = ?', $guide], 'order' => 'id asc']);
+    Response::ok(array_map(fn(PinnedAppearance $p) => self::mapAppearance($p->appearance, false), $pins));
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/appearances/{id}/locate",
+   *   security={},
+   *   description="Get the minimum information needed to link to an appearance and show a small preview of it",
+   *   tags={"color guide", "appearances"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/ZeroBasedId")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/PreviewAppearance")),
+   *   @OA\Response(response="403", description="The appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   * @param array $params
+   */
+  function locate(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $appearance = self::_resolveAppearance($params);
+
+    self::_handlePrivateAppearanceCheck($appearance);
+
+    Response::ok(self::mapPreviewAppearance($appearance));
   }
 
   /**

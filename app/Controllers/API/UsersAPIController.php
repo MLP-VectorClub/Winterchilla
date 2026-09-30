@@ -5,7 +5,10 @@ namespace App\Controllers\API;
 use App\Auth;
 use App\CoreUtils;
 use App\DeviantArt;
+use App\GlobalSettings;
+use App\Models\DeviantartUser;
 use App\Models\User;
+use App\Permission;
 use App\Response;
 use OpenApi\Annotations as OA;
 
@@ -139,6 +142,91 @@ class UsersAPIController extends APIController {
       'user' => self::mapUser(Auth::$user),
       'sessionUpdating' => Auth::$session->updating,
     ]);
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/users/{id}",
+   *   security={},
+   *   description="Get the public information of a user",
+   *   tags={"users"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/User")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
+  function getById(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $user = User::find((int)$params['id']);
+    if ($user === null)
+      Response::error(404, 'The user could not be found');
+
+    Response::ok(self::mapPublicUser($user));
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/users/da/{username}",
+   *   security={},
+   *   description="Get the public information of a user by their DeviantArt username. Unlike the profile page, this never asks DeviantArt about unknown names.",
+   *   tags={"users"},
+   *   @OA\Parameter(in="path", name="username", required=true, @OA\Schema(type="string")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/User")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
+  function getByName(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $da_user = DeviantartUser::find(['conditions' => ['name = ?', $params['username']]]);
+    $user = $da_user?->user;
+    if ($user === null)
+      Response::error(404, 'The user could not be found');
+
+    Response::ok(self::mapPublicUser($user));
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/users",
+   *   description="List the regular users of the site (id, name and role only). Staff only.",
+   *   tags={"users"},
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(type="array", @OA\Items(type="object", required={"id", "name", "role"}, additionalProperties=false,
+   *       @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *       @OA\Property(property="name", type="string"),
+   *       @OA\Property(property="role", ref="#/components/schemas/UserRole")
+   *     ))
+   *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Not staff", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
+  function list() {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    if (Permission::insufficient('staff'))
+      Response::denied();
+
+    // The developer role may be labeled as a regular user
+    $roles = GlobalSettings::get('dev_role_label') === 'user' ? ['user', 'developer'] : ['user'];
+    $users = User::find('all', ['conditions' => ['role IN (?)', $roles], 'order' => 'name asc']);
+
+    Response::ok(array_map(fn(User $u) => ['id' => $u->id, 'name' => $u->name, 'role' => 'user'], $users));
+  }
+
+  /** Same as mapUser(), but with the developer role replaced by its public label */
+  static function mapPublicUser(User $u):array {
+    $data = self::mapUser($u);
+    $data['role'] = $u->maskedRole();
+
+    return $data;
   }
 
   // TODO Endpoint for changing user settings

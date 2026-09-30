@@ -125,6 +125,31 @@ class TestSeeder extends AbstractSeed {
       if (file_exists($fs.$derived))
         unlink($fs.$derived);
 
+    // A second appearance with a cutie mark and all of its files, for the appearance deletion test (the files have to be
+    // removed along with the appearance). IDs must match TestSeederConstants::DELETABLE_*.
+    $deletable_cutiemark_id = 900002;
+    $this->table('appearances')->insert([[
+      'id'          => 2,
+      'order'       => 2,
+      'label'       => 'Deletable Test Pony',
+      'owner_id'    => null,
+      'guide'       => 'pony',
+      'private'     => false,
+      'created_at'  => date('c'),
+      'updated_at'  => date('c'),
+    ]])->save();
+    $this->table('cutiemarks')->insert([[
+      'id'             => $deletable_cutiemark_id,
+      'appearance_id'  => 2,
+      'facing'         => 'left',
+      'rotation'       => 0,
+    ]])->save();
+    foreach (['cm_source', 'cm_tokenized', 'cg_render/cutiemark'] as $folder) {
+      if (!is_dir($fs.$folder))
+        mkdir($fs.$folder, 0777, true);
+      copy(dirname(__DIR__, 2).'/tests/Browser/fixtures/cutiemark.svg', $fs."$folder/$deletable_cutiemark_id.svg");
+    }
+
     // An event
     $this->table('events')->insert([[
       'id'          => 1,

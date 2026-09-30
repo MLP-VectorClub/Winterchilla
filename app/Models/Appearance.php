@@ -92,7 +92,15 @@ class Appearance extends NSModel implements Linkable {
   }
 
   public static $before_save = ['render_notes'];
+  // The cutie marks are removed by a database cascade, which never runs their own callbacks, so their files have to be
+  // cleaned up while the rows still exist
+  public static $before_destroy = ['removeCutiemarkFiles'];
   public static $after_destroy = ['clearIndex', 'clearRenderedImages', 'deleteSprite'];
+
+  public function removeCutiemarkFiles():void {
+    foreach ($this->cutiemarks as $cm)
+      $cm->remove_files();
+  }
 
   /**
    * Ensure that this is only called after user is authenticated as we would leak colors otherwise

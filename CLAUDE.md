@@ -459,6 +459,28 @@ email_verifications (`166bfe8`), event cleanup (`9686422`), dropped `notificatio
       `user_prefs` key `ep_hidesynopses`
 - `discord_members.display_name` is `varchar(32)` here vs `varchar(128)` in Luna — harmless (Luna's is wider)
 
+### File migration rehearsal (done 2026-09-30)
+
+Pulled `fs/cm_source`, `fs/sprites`, `fs/sprites_pcg` (5.5 MB; the rest of `fs/` is render caches) with
+`ssh vinyl.vps 'sudo -n tar -C /var/www/Winterchilla -cf - fs/cm_source fs/sprites fs/sprites_pcg'`, then ran
+`php artisan fs:migrate <fs> 1 --wipe` in Luna against `luna_import`: **138 sprites + 146 cutie mark SVGs imported**
+(`media` rows, `image/png` 137, `image/jpeg` 1, `image/svg+xml` 146). Two things surfaced:
+- `sprites_pcg/641.png` is really a JPEG. Luna's `sprites` collection only accepted `image/png`, and the command aborts
+  on the first bad file. Fixed in Luna (uncommitted there): the collection accepts `image/jpeg`, and
+  `Core::generateHashFilename` takes the extension from the real mime type, so it is stored as `.jpg`.
+- 6 files in `cm_source` (IDs 234, 246, 247, 249, 250, 251) have no `cutiemarks` row: they belonged to
+  appearances that were later deleted (`cutiemarks.appearance_id` cascades, so no `cm_delete` log is written and the
+  `cm_source` file is left behind): 234 = Obscura (608, deleted 2022-08), 246/247 = two Mirror King Sombra PCG
+  appearances (660/661, identical files), 249-251 = three identical uploads for the 2026-07-08 "Applejack" PCG
+  appearances (675-677); the `logs` table confirms the add/delete dates.
+  Fixed in Winterchilla: `Appearance` now has a `before_destroy` callback (`removeCutiemarkFiles`) that removes the
+  source/tokenized/rendered files while the rows still exist (regression test: `tests/Browser/Api/AppearanceApiTest.php`,
+  backed by a seeded `DELETABLE_APPEARANCE_ID`). The leftovers on prod (6 `cm_source` files + stale derived copies) were deleted
+  by hand on 2026-09-30, so the real `fs:migrate` should not hit the orphan check (the fix itself still needs deploying). The JPEG upload support in Luna's `sprites` collection is
+  deliberately not documented in its OpenAPI. `fs:migrate` (rightly) refuses to run with orphans, so the rehearsal used a scratch
+  copy without them. For the real run, exclude them (or delete them on the server first).
+- The command was run with `--user $(id -u)`; a root-owned `storage/` from earlier root container runs needs a `chown`.
+
 ### Why a plain dup + reimport is not enough
 
 - **Files are not in the DB.** Sprites, cutie marks and `cm_source` live in `fs/`; Luna reads them via Spatie media
@@ -470,10 +492,56 @@ email_verifications (`166bfe8`), event cleanup (`9686422`), dropped `notificatio
   to shared tables would break it. Safest plan: keep the Winterchilla-schema DB as the source of truth and make Luna's
   migrations no-ops against it by pre-seeding Laravel's `migrations` table.
 
-### Next step
+### Prod import rehearsal (done 2026-09-30)
 
-Copy the prod DB into a scratch DB, `composer install` in Luna, run Luna's migrations on a fresh DB, then diff
-`pg_dump --schema-only` of both. Turn the result into Luna-side "follow Winterchilla" migrations for the open items above.
+Rehearsed locally with a real prod dump. Setup: `ssh vinyl.vps "sudo -n -u postgres pg_dump -d mlpvc-rr --column-inserts"`
+into a local scratch DB (`prod_copy`; the dump holds user e-mails and ~1000 `sessions` token rows, keep it out of git and
+delete it afterwards). Luna's locked deps (Laravel 9) don't install on PHP 8.5, so Luna runs in Docker (`php:8.1-cli` +
+`pdo_pgsql exif gd bcmath intl zip` + composer, `--network host`) against a scratch DB (`luna_import`) with the `citext`
+extension and `php artisan migrate`. The data load was `pg_dump --data-only --column-inserts --disable-triggers --no-owner
+-T phinxlog` from `prod_copy` into `luna_import`.
+
+**Result: the import loads cleanly.** Zero errors, every table's row count identical (1447 users, 509 appearances, 2297
+posts, 155 shows, 6049 logs, ...), sequences already ahead of `max(id)` (the dump's `setval`s carry over), all Luna
+models hydrate, appearance -> colour groups -> colours relations work. Prod already has a `luna` DB on the same server with
+Luna's 16 migrations applied and no data in it, and a `luna_ro` role with grants on `mlpvc-rr`.
+
+Schema differences that remain (prod vs Luna after migrate):
+- [ ] `show_videos` (Luna only, dead table) and `show.generation` + `mlp_generation` enum (Luna only, dropped in
+      Winterchilla 2024-11; Luna's `MlpGeneration` enum / DBAL type / `show` unique key `(season, episode, generation)`)
+- [ ] `UserPrefKey` enum lacks `discord_token`: prod has 8 such `user_prefs` rows (a dead key, Winterchilla no longer
+      references it) and `UserPref::all()` throws on them. Delete those rows in the import; the enum also still has
+      `ep_hidesynopses`, which Winterchilla removed in 2022
+- [ ] `cutiemarks.contributor_id` FK is `ON DELETE RESTRICT` in prod, `CASCADE` in Luna
+- [ ] `pinned_appearances.created_at/updated_at` are `timestamp` (no zone) in Luna, `timestamptz` in prod
+- [ ] `email_verifications` has `created_at/updated_at` only in prod (table is empty in prod, so nothing to drop)
+- `discord_members.discriminator` `smallint` -> `char(4)` stores `'0   '`/`'1   '` (space padded, no leading zeros);
+  harmless, Luna only does `$discriminator % 5` with it. `pcg_slot_history.change_amount` `real` -> `int`: no
+  fractional values in prod. `show.score` `real` -> `double`: values carry over exactly. `settings.name` 50 vs 255 and
+  `discord_members.display_name` 32 vs 128 are wider in Luna. Unique constraints match (prod uses unique indexes).
+- Only 3 columns are nullable in prod but `NOT NULL` in Luna (`deviantart_users.user_id`, `locked_posts.post_id`,
+  `locked_posts.user_id`); prod has no NULLs in them. (The local dev DB is *not* representative of prod's nullability —
+  it showed ~70 such columns — so rehearse against a prod dump, not the dev DB.)
+- Luna quirk unrelated to the import: `Post::getCreatedAtColumn()` reads `requested_by` before it's loaded and emits an
+  "Undefined property" warning on every hydrate.
+
+### Why a plain dup + reimport is not enough
+
+- **Files are not in the DB.** Sprites, cutie marks and `cm_source` live in `fs/`; Luna reads them via Spatie media
+  library. `php artisan fs:migrate <fs folder> <uid>` (Luna) does the copy and must be part of the cutover.
+- **Luna-owned data would be lost** if Luna's DB is overwritten: `media` (filled by `fs:migrate`),
+  `personal_access_tokens`, `activity_log` and any users registered natively on Luna. Prod Luna is empty today.
+- **Winterchilla on the new DB:** it uses Phinx (`phinxlog`) and expects its own schema. Extra Luna-only tables are
+  fine, but Luna schema changes to shared tables would break it. Safest plan: keep the Winterchilla-schema DB as the
+  source of truth and make Luna's migrations no-ops against it by pre-seeding Laravel's `migrations` table.
+
+### Next steps
+
+1. Luna-side migrations following Winterchilla for the open items above (and drop the dead code).
+2. Rehearse the full path against `luna_import`: `fs:migrate`, then hit Luna's API endpoints (not just Eloquent) and diff
+   against Winterchilla's `/api/v0` output.
+3. Decide the cutover method: load the data into prod's empty `luna` DB (delete `discord_token` prefs first) vs
+   adopt `mlpvc-rr` in place; then point Winterchilla at the chosen DB. Delete the local prod dump when done.
 
 ## Working on this plan
 

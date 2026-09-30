@@ -504,8 +504,11 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       in TEST_MODE looks for a marker file in `fs/tmp/test-club-gallery/` instead of asking DeviantArt (`Tests\Browser\Helpers\ClubGallery`).
       Found by these tests: staff couldn't remove an approval (`load_post` locked approved posts before the `unlock` exemption
       could apply), `URL::makeHttps()` broke local image URLs, sprite upload errors showed the generic 422 text twice and one image
-      size message still contained HTML, and the create-appearance response returned its id as a string. Still uncovered in the
-      browser: the show/guide-relations editor on episode pages, personal guide slot checks, the tag-list refresh buttons.
+      size message still contained HTML, and the create-appearance response returned its id as a string. Also covered: the guide relations editor on episode pages and
+      the show relations editor on appearance pages (`GuideRelationsTest`), the personal guide slot/permission checks including
+      adding an appearance with enough points (`PersonalGuideSlotsTest` — points can't be taken back below 10 in total, so the test
+      leaves the user with the points it gave; the "no slots left" test runs first on purpose), and the tag-list refresh
+      buttons (`TagSynonymTest`). Every conversion listed in this section now has a browser test.
 - [x] The page-level JSON views are API endpoints now, so every client-side data request goes through `$.API`:
       `GET /cg/full?guide&sort_by` (was `/cg/[guide]/full?ajax`; the page and the API share
       `ColorGuideController::getFullListData()`) and `GET /user/contrib/lazyload/{favme}` (was a page route on

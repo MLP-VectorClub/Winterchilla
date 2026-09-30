@@ -44,3 +44,26 @@ it('makes a tag a synonym of another and removes the synonym again from the tag 
     $api->request('DELETE', '/cg/tag/' . $target['id']);
   }
 });
+
+it('recounts tag uses from the refresh buttons of the tag list', function () use ($base) {
+  $name = 'refresh-tag-' . substr(md5(uniqid('', true)), 0, 6);
+  $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $tag = $api->post('/cg/tag', ['name' => $name, 'type' => 'app', 'addto' => TestSeederConstants::APPEARANCE_ID])['json'];
+
+  try {
+    $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+      ->navigate($base . '/cg/pony/tags')
+      ->assertNoJavaScriptErrors()
+      // One tag: its own refresh button updates the count in place
+      ->click("tr:has-text(\"$name\") button.refresh")
+      ->assertSeeIn("tr:has-text(\"$name\") td.uses", '1');
+
+    // And the one in the header, for every tag on the page, which reports the outcome
+    $page
+      ->click('thead .refresh-all')
+      ->assertSee('use count was updated');
+  }
+  finally {
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/cg/tag/' . $tag['id'], ['sanitycheck' => 1]);
+  }
+});

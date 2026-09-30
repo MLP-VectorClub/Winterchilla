@@ -111,9 +111,9 @@ it('lists pinned appearances of a guide', function () {
     ->and($guest->get('/appearances/pinned', ['guide' => 'nope'])['json']['errors'])->toHaveKey('guide');
 });
 
-it('serves the appearance preview as an SVG', function () use ($appearanceId) {
-  $r = ApiClient::guest()->get("/appearances/$appearanceId/preview");
-
-  expect($r['status'])->toBe(200)->and($r['contentType'])->toStartWith('image/svg+xml');
-  expect(ApiClient::guest()->get('/appearances/987654/preview')['status'])->toBe(404);
+// The success body is a redirect to the generated file under /img/appearance_previews, which the PHP test server can't
+// serve from the fs/ directory, so only the error paths are pinned here.
+it('answers 404 and 403 for the preview of a missing or private appearance', function () {
+  expect(ApiClient::guest()->get('/appearances/987654/preview')['status'])->toBe(404)
+    ->and(ApiClient::guest()->get('/appearances/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID . '/preview')['status'])->toBe(403);
 });

@@ -111,17 +111,20 @@ New file: `tests/Browser/User/PersonalGuideTest.php`. Covers guest/owner/staff a
 the list and point-history pages (owner-or-staff guard on point-history, open-by-default on list per
 `User::canVisitorSeePCG()`).
 
-### Stage 2 — UserController remaining (not started)
+### Stage 2 — UserController remaining (done)
 
-- [ ] `/users` — user browse/list page
-- [ ] `/u/[uuid]` — profile by UUID
-- [ ] `/users/[id]/contrib/[type]/[i]?` — contribution tabs (art/other)
-- [ ] `/user/contrib/lazyload/[favme]` — ajax lazyload behavior
-- [ ] `/users/verify` — email verification flow
-- [ ] Legacy `@[username]` redirect routes (~8 routes in pages.php lines 101-111) — one representative
-      test confirming redirect target, not full per-route coverage
+- [x] `/users` — user browse/list page (guest "Club Members" vs staff "Users")
+- [x] `/u/[uuid]` — profile by UUID (developer-only; test asserts guests and regular users get 404)
+- [x] `/users/[id]/contrib/[type]/[i]?` — contribution tabs (cms-provided, unknown type 404, requests
+      owner/staff-only)
+- [ ] `/user/contrib/lazyload/[favme]` — not covered: on a cache miss it calls the real DeviantArt oEmbed
+      API, so a test would depend on the network. Needs a `CachedDeviation` seed row (or a fake oEmbed
+      endpoint like the OAuth one) first
+- [x] `/users/verify` — verify/block page renders (the JS-driven API call itself isn't exercised)
+- [x] Legacy `@[username]` redirect — one representative test (`/@name` and `/@name/contrib/...`); the
+      unknown-name path calls DeviantArt (`Users::fetchDA`) so it isn't covered
 
-Extend `tests/Browser/User/UserProfileTest.php` or split into a new file if it grows unwieldy.
+Extended `tests/Browser/User/UserProfileTest.php`.
 
 ### Stage 3 — ColorGuide/Appearance remaining (done)
 

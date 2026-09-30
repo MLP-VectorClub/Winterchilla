@@ -367,7 +367,9 @@ class PostAPIController extends APIController {
   public function approvalApi($params) {
     $this->_authorizeMember();
 
-    $this->load_post($params, 'approval');
+    // Approved posts are locked, so removing the approval has to be allowed to load them ('unlock' is exempt from that
+    // check; it used to be unreachable, which made approvals permanent for everybody but developers)
+    $this->load_post($params, $this->action === 'DELETE' ? 'unlock' : 'approval');
 
     switch ($this->action){
       case 'POST':

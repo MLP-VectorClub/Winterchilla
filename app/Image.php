@@ -65,9 +65,9 @@ class Image {
           ? 'height is'
           : 'dimensions are'
         )
-        ).' too '.($tooBig ? 'big' : 'small').', please upload a '.($tooBig ? 'smaller' : 'larger').' image.<br>The '.($tooBig ? 'maximum'
+        ).' too '.($tooBig ? 'big' : 'small').', please upload a '.($tooBig ? 'smaller' : 'larger').' image. The '.($tooBig ? 'maximum'
           : 'minimum').' size is '.($tooBig ? $max[0] : $min[0]).'px wide by '.($tooBig ? $max[1]
-          : $min[1])."px tall, and you uploaded an image that's {$width}px wide and {$height}px tall.</p>");
+          : $min[1])."px tall, and you uploaded an image that's {$width}px wide and {$height}px tall.");
     }
   }
 

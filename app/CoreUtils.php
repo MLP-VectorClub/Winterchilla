@@ -1147,6 +1147,11 @@ class CoreUtils {
    * @return bool|int
    */
   public static function isDeviationInClub($DeviationID) {
+    // Tests never talk to DeviantArt: a deviation counts as accepted into the group gallery while a marker file named
+    // after its ID exists in fs/tmp/test-club-gallery/ (see tests/Browser/Helpers/ClubGallery)
+    if (self::env('TEST_MODE'))
+      return file_exists(FSPATH.'tmp/test-club-gallery/'.$DeviationID);
+
     if (!is_int($DeviationID))
       $DeviationID = intval(mb_substr($DeviationID, 1), 36);
 

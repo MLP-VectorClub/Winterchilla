@@ -74,13 +74,11 @@
           // Failures arrive through the error callback below
           $input.trigger('set-image', [this]);
         }),
-        error: function(jqXHR) {
-          const body = jqXHR.responseJSON;
-          if (!body || typeof body !== 'object')
-            return;
+        // Shows the API's error in a dialog (and keeps the global status dialogs from doing it a second time)
+        error: $.API.failWith(function(body) {
           $.Dialog.fail(title, body.message);
           $this.trigger('uz-uploadfinish');
-        },
+        }),
         complete: function() {
           $this.removeClass('uploading');
           if (opt.helper)

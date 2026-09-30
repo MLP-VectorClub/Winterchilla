@@ -27,6 +27,10 @@ class TestSeederConstants {
   // Requests by USER_ID: 2 exists to be deleted, 3 is reserved by ADMIN_ID
   public const DELETABLE_POST_ID = 2;
   public const RESERVED_POST_ID = 3;
+  // A broken request (usable images) for the unbreak test
+  public const BROKEN_POST_ID = 4;
+  // Another broken request, cleared through the UI test
+  public const BROKEN_UI_POST_ID = 5;
   // Unread notifications: 1 and 2 belong to USER_ID, 3 to ADMIN_ID
   public const NOTIFICATION_ID = 1;
   public const NOTIFICATION_MARK_READ_ID = 2;
@@ -35,5 +39,7 @@ class TestSeederConstants {
   public const EVENT_ENTRY_ID = 1;
   public const ADMIN_EVENT_ENTRY_ID = 2;
   public const EVENT_ENTRY_DELETE_ID = 3;
+  // Belongs to USER_ID and is withdrawn through the UI test
+  public const EVENT_ENTRY_UI_DELETE_ID = 4;
   public const API_PATH = '/api/v0';
 }

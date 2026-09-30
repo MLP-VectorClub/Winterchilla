@@ -100,6 +100,28 @@ class TestSeeder extends AbstractSeed {
       'show_id'      => 1,
       'requested_by' => 9001,
       'reserved_by'  => 9002,
+    ], [
+      // A broken request with usable images, for the unbreak test
+      'id'           => 4,
+      'type'         => 'bg',
+      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'label'        => 'Broken Test Request',
+      'requested_at' => date('c'),
+      'show_id'      => 1,
+      'requested_by' => 9001,
+      'broken'       => true,
+    ], [
+      // Like 4, but cleared through the UI test
+      'id'           => 5,
+      'type'         => 'obj',
+      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'label'        => 'Broken UI Request',
+      'requested_at' => date('c'),
+      'show_id'      => 1,
+      'requested_by' => 9001,
+      'broken'       => true,
     ]])->save();
 
     // Notifications about the seeded post: two unread ones for the regular user (the API tests consume one) and
@@ -220,21 +242,24 @@ class TestSeeder extends AbstractSeed {
     // user's and only used for deletion. IDs must match TestSeederConstants::EVENT_ENTRY_*.
     $entry = ['event_id' => 1, 'sub_prov' => 'fav.me', 'prev_src' => null, 'prev_full' => null, 'prev_thumb' => null, 'created_at' => $now = date('c'), 'updated_at' => $now];
     $this->table('event_entries')->insert([
-      $entry + ['id' => 1, 'sub_id' => 'a1b2c3d', 'title' => 'Seeded Entry', 'submitted_by' => 9001],
-      $entry + ['id' => 2, 'sub_id' => 'a1b2c3e', 'title' => 'Admin Entry', 'submitted_by' => 9002],
-      $entry + ['id' => 3, 'sub_id' => 'a1b2c3f', 'title' => 'Doomed Entry', 'submitted_by' => 9001],
+      $entry + ['id' => 1, 'sub_id' => 'd1b2c3d', 'title' => 'Seeded Entry', 'submitted_by' => 9001],
+      $entry + ['id' => 2, 'sub_id' => 'd1b2c3e', 'title' => 'Admin Entry', 'submitted_by' => 9002],
+      $entry + ['id' => 3, 'sub_id' => 'd1b2c3f', 'title' => 'Doomed Entry', 'submitted_by' => 9001],
+      $entry + ['id' => 4, 'sub_id' => 'd1b2c3g', 'title' => 'Withdrawn Entry', 'submitted_by' => 9001],
     ])->save();
 
     // Deviation metadata lives in Redis; without these the event page would ask the real DeviantArt oEmbed API
     // about our made-up submission IDs (slow, and a network dependency in tests)
-    foreach (['a1b2c3d' => 'Seeded Entry', 'a1b2c3e' => 'Admin Entry', 'a1b2c3f' => 'Doomed Entry', 'dfin001' => 'Finished Test Vector'] as $sub_id => $title)
+    foreach (['d1b2c3d' => 'Seeded Entry', 'd1b2c3e' => 'Admin Entry', 'd1b2c3f' => 'Doomed Entry', 'd1b2c3g' => 'Withdrawn Entry', 'dfin001' => 'Finished Test Vector', 'dfin002' => 'Vector For Finishing', 'dfin003' => 'Vector For The UI Test', 'dfin004' => 'Vector By Someone Else', 'dfin005' => 'Image For New Posts', 'dfin006' => 'Image For Changing', 'dfin007' => 'Image For The UI Test'] as $sub_id => $title)
       \App\Models\CachedDeviation::create([
         'provider' => 'fav.me',
         'id' => $sub_id,
         'title' => $title,
-        'author' => 'TestUser',
-        'preview' => null,
-        'fullsize' => null,
+        'author' => in_array($sub_id, ['dfin002', 'dfin003'], true) ? 'TestAdmin' : 'TestUser',
+        // Made-up deviations point at an image the test server serves, so nothing has to leave the machine; the
+        // query string keeps the URLs unique (posts refuse an image that another post already uses)
+        'preview' => "http://127.0.0.1:8765/img/blank-pixel.png?d=$sub_id",
+        'fullsize' => "http://127.0.0.1:8765/img/blank-pixel.png?d=$sub_id",
         'type' => 'png',
       ]);
 

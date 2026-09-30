@@ -254,7 +254,7 @@ class AppearanceAPIController extends APIController {
         if ($this->creating){
           $data['id'] = $new_appearance->id;
           $response = [
-            'id' => $new_appearance->id,
+            'id' => (int)$new_appearance->id,
             'message' => 'Appearance added successfully',
             'goto' => $new_appearance->toURL(),
           ];

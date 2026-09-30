@@ -1,0 +1,55 @@
+<?php
+
+use Tests\Browser\Helpers\ApiClient;
+use Tests\Browser\Helpers\TestSeederConstants;
+
+// Contract: PUT/GET /cg/appearance/{id}/cutiemarks, the success paths (validation is in AppearanceContractTest).
+
+$svg = file_get_contents(dirname(__DIR__) . '/fixtures/cutiemark.svg');
+
+function scratchPony(ApiClient $admin):int {
+  $r = $admin->post('/cg/appearance', ['guide' => 'pony', 'label' => substr('CM Pony ' . substr(md5(uniqid('', true)), 0, 8), 0, 70)]);
+  expect($r['status'])->toBe(201);
+  return $r['json']['id'];
+}
+
+it('adds, renames and removes cutie marks on an appearance', function () use ($svg) {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $id = scratchPony($admin);
+  $path = "/cg/appearance/$id/cutiemarks";
+
+  $r = $admin->request('PUT', $path, ['CMData' => json_encode([['svgdata' => $svg, 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0, 'label' => 'Scratch CM']])]);
+  expect($r['status'])->toBe(200)->and($r['json'])->not->toHaveKey('status');
+
+  $r = $admin->get($path);
+  expect($r['status'])->toBe(200)->and($r['json']['cms'])->toHaveCount(1);
+  $cm = $r['json']['cms'][0];
+  expect($cm['label'])->toBe('Scratch CM')->and($cm['facing'])->toBe('left');
+
+  // Update it (no new SVG data needed for an existing mark)
+  $r = $admin->request('PUT', $path, ['CMData' => json_encode([['id' => $cm['id'], 'facing' => 'right', 'attribution' => 'none', 'rotation' => 10, 'label' => 'Renamed CM']])]);
+  expect($r['status'])->toBe(200);
+  $cm = $admin->get($path)['json']['cms'][0];
+  expect($cm['label'])->toBe('Renamed CM')->and($cm['facing'])->toBe('right');
+
+  // Leaving it out of the list removes it
+  expect($admin->request('PUT', $path, ['CMData' => '[]'])['status'])->toBe(200);
+  expect($admin->get($path)['json']['cms'])->toBe([]);
+
+  $admin->request('DELETE', "/cg/appearance/$id");
+});
+
+it('rejects a cutie mark with an invalid rotation or attribution', function () use ($svg) {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $id = scratchPony($admin);
+  $path = "/cg/appearance/$id/cutiemarks";
+  $base = ['svgdata' => $svg, 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0];
+
+  foreach ([['rotation' => 90], ['attribution' => 'nonsense'], ['facing' => 'sideways']] as $bad) {
+    $r = $admin->request('PUT', $path, ['CMData' => json_encode([$bad + $base])]);
+    expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('cutiemarks');
+  }
+  expect($admin->get($path)['json']['cms'])->toBe([]);
+
+  $admin->request('DELETE', "/cg/appearance/$id");
+});

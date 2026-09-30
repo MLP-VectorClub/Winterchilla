@@ -85,3 +85,18 @@ it('404s the lazyload endpoint for a missing entry', function () {
 
   expect($r['status'])->toBe(404)->and($r['json'])->toHaveKey('message');
 });
+
+it('updates an entry from a cached deviation link and returns its rendered list item', function () {
+  $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
+  $path = '/event/entry/' . TestSeederConstants::EVENT_ENTRY_ID;
+
+  $r = $user->request('PUT', $path, ['link' => 'http://fav.me/d1b2c3d', 'title' => 'Renamed Entry']);
+  expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('entryHtml')->and($r['json']['entryHtml'])->toContain('Renamed Entry');
+
+  expect($user->get($path)['json']['title'])->toBe('Renamed Entry');
+  $user->request('PUT', $path, ['link' => 'http://fav.me/d1b2c3d', 'title' => 'Seeded Entry']);
+
+  // Links that aren't deviations or Sta.sh submissions are rejected
+  $r = $user->request('PUT', $path, ['link' => 'http://example.com/whatever', 'title' => 'Seeded Entry']);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('link');
+});

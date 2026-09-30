@@ -496,8 +496,16 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       `$.ajaxSetup` status dialogs stay quiet. ~100 call sites were converted with an AST codemod (espree) plus ~30 by hand;
       new UI tests cover the admin useful-links CRUD and casting a vote (`UsefulLinksTest`, `VoteTest`), next to the
       existing appearance/color group/tag synonym/sign-out flows, plus `PostReservationTest` (reserve and cancel on an episode page)
-      and giving personal guide points. Untested conversions (worth a click-through before deploying): post finish/approve/
-      unbreak/image update, event entry edit, tag editing dialogs, cutie mark editor, sprite upload/remove, relations editors.
+      and giving personal guide points, and now also: finish + approval (`PostFinishTest`), broken status and image replacement
+      (`PostEditingTest`), event entry edit/withdraw (`EventTest`), tag edit/delete (`TagEditingTest`), sprite upload/remove and its
+      error dialog (`SpriteTest`), the appearance relations editor (`RelationsTest`) and the cutie mark editor
+      (`CutiemarkEditorTest`). API-level success paths that need images or DeviantArt run against the test server itself: made-up
+      deviations are cached in Redis with local image URLs (`dfin001`..`dfin007`, `d1b2c3d`..), and `CoreUtils::isDeviationInClub()`
+      in TEST_MODE looks for a marker file in `fs/tmp/test-club-gallery/` instead of asking DeviantArt (`Tests\Browser\Helpers\ClubGallery`).
+      Found by these tests: staff couldn't remove an approval (`load_post` locked approved posts before the `unlock` exemption
+      could apply), `URL::makeHttps()` broke local image URLs, sprite upload errors showed the generic 422 text twice and one image
+      size message still contained HTML, and the create-appearance response returned its id as a string. Still uncovered in the
+      browser: the show/guide-relations editor on episode pages, personal guide slot checks, the tag-list refresh buttons.
 - [x] The page-level JSON views are API endpoints now, so every client-side data request goes through `$.API`:
       `GET /cg/full?guide&sort_by` (was `/cg/[guide]/full?ajax`; the page and the API share
       `ColorGuideController::getFullListData()`) and `GET /user/contrib/lazyload/{favme}` (was a page route on

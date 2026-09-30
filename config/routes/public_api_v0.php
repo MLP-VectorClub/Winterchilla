@@ -100,6 +100,8 @@ $api_endpoint('/posts/check-image', [\App\Controllers\API\PostAPIController::cla
 $api_endpoint('/posts/reservations', [\App\Controllers\API\PostAPIController::class, 'addReservation']);
 $api_endpoint('/posts/requests/[i:id]', [\App\Controllers\API\PostAPIController::class, 'deleteRequest']);
 $api_endpoint('/posts/requests/suggestion', [\App\Controllers\API\PostAPIController::class, 'suggestRequest']);
+$api_endpoint('/useful-links/sidebar', [\App\Controllers\API\UsefulLinksAPIController::class, 'sidebar']);
+$api_endpoint('/user-prefs/me', [\App\Controllers\API\UserPrefsAPIController::class, 'me']);
 $api_endpoint('/settings/[au:key]', [\App\Controllers\API\SettingAPIController::class, 'api']);
 $api_endpoint('/users/sessions/[i:id]', [\App\Controllers\API\UserAPIController::class, 'sessionApi']);
 $api_endpoint('/users/me/password', [\App\Controllers\API\UserAPIController::class, 'passwordApi']);

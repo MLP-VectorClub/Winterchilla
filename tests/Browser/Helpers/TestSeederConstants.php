@@ -6,6 +6,8 @@ class TestSeederConstants {
   public const BASE_URL = 'http://127.0.0.1:8765';
   public const USER_ID = 9001;
   public const ADMIN_ID = 9002;
+  // A regular user with no personal appearances, points or preferences: it has the defaults new users get
+  public const FRESH_USER_ID = 9003;
   public const USER_DA_ID = '0f0e0d0c-0b0a-4000-8000-000000009001';
   public const ADMIN_DA_ID = '0f0e0d0c-0b0a-4000-8000-000000009002';
   public const APPEARANCE_ID = 1;

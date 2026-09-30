@@ -505,9 +505,7 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       Found by these tests: staff couldn't remove an approval (`load_post` locked approved posts before the `unlock` exemption
       could apply), `URL::makeHttps()` broke local image URLs, sprite upload errors showed the generic 422 text twice and one image
       size message still contained HTML, and the create-appearance response returned its id as a string. Also covered: the guide relations editor on episode pages and
-      the show relations editor on appearance pages (`GuideRelationsTest`), the personal guide slot/permission checks including
-      adding an appearance with enough points (`PersonalGuideSlotsTest` — points can't be taken back below 10 in total, so the test
-      leaves the user with the points it gave; the "no slots left" test runs first on purpose), and the tag-list refresh
+      the show relations editor on appearance pages (`GuideRelationsTest`), the personal guide slot/permission checks (`PersonalGuideSlotsTest`, run as the seeded `FreshUser`, which has the defaults every new user gets: the free slot = 10 points, enough for exactly one personal appearance, and permission to create them — the test creates one, then sees "no slots left"), and the tag-list refresh
       buttons (`TagSynonymTest`). Every conversion listed in this section now has a browser test.
 - [x] The page-level JSON views are API endpoints now, so every client-side data request goes through `$.API`:
       `GET /cg/full?guide&sort_by` (was `/cg/[guide]/full?ajax`; the page and the API share

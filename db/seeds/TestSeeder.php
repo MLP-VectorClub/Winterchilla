@@ -12,6 +12,9 @@ class TestSeeder extends AbstractSeed {
     $this->table('users')->insert([
       ['id' => 9001, 'name' => 'TestUser',  'role' => 'user',  'created_at' => date('c'), 'updated_at' => date('c')],
       ['id' => 9002, 'name' => 'TestAdmin', 'role' => 'admin', 'created_at' => date('c'), 'updated_at' => date('c')],
+      // Has done nothing yet: no personal appearances, points or preferences, so it has the defaults every new user gets
+      // (the free slot, i.e. 10 points, and permission to create personal appearances)
+      ['id' => 9003, 'name' => 'FreshUser', 'role' => 'user', 'created_at' => date('c'), 'updated_at' => date('c')],
     ])->save();
 
     // DeviantArt linked accounts (access_expires far in the future to avoid token refresh)
@@ -36,6 +39,17 @@ class TestSeeder extends AbstractSeed {
         'scope'          => 'user',
         'access'         => 'fake-access-token-admin',
         'refresh'        => 'fake-refresh-token-admin',
+        'access_expires' => date('c', strtotime('+10 years')),
+        'created_at'     => date('c'),
+      ],
+      [
+        'id'             => '0f0e0d0c-0b0a-4000-8000-000000009003',
+        'name'           => 'FreshUser',
+        'avatar_url'     => null,
+        'user_id'        => 9003,
+        'scope'          => 'user',
+        'access'         => 'fake-access-token-fresh',
+        'refresh'        => 'fake-refresh-token-fresh',
         'access_expires' => date('c', strtotime('+10 years')),
         'created_at'     => date('c'),
       ],

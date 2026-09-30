@@ -416,7 +416,16 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       JSON branch now goes through `Response::denied()` (401 for guests). Fixed: clearing a contribution cache that
       doesn't exist crashed on `unlink()`. Not covered: the e-mail flow past validation (needs a real domain with MX
       records, i.e. the network) and the do-not-send/verification success paths.
-- [ ] Everything else — see the inventory and the order above (`Tag` next).
+- [x] `TagAPIController` (`/cg/tags`, `/cg/tags/recount-uses`, `/cg/tag/{id}`, `/cg/tag/{id}/synonym`) — staff only
+      (401/403); 404 for missing tags; 422 field errors (`name`, `type`, `target_id`, `tagids`, duplicate name+type
+      is a 422 on `name`); create is 201 with the tag (`tags` HTML when `addto` succeeded, `warning` when it
+      couldn't be added); delete is 204; deleting an in-use tag is `409 {message, uses}` until `sanitycheck` is sent
+      (replaces the old `confirm: true` + HTML); an already-synonym tag is `409` with `synonymOf {id, name}` (replaces
+      `undo: true` + HTML); tag/autocomplete keys are camelCase (`synonymOf`, `synonymTarget`; `tid` is not returned).
+      `tag-list.js`/`manage.jsx` build the dialogs' HTML client-side now. Also fixed: creating/updating a tag
+      without a `type` read an undefined index. Not covered by browser tests: the synonym/unsynonym dialogs
+      (only through the API).
+- [ ] Everything else — see the inventory and the order above (`ColorGroup` next).
 
 Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,
 $message)` (422 in Laravel's format), `CoreUtils::camelKeys()` for record payloads, and `Input` validation failures

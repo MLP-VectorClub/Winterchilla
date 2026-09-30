@@ -322,7 +322,7 @@
 
   function createTagSpan(data) {
     return (
-      $(`<span class="tag id-${data.id}${data.type ? ` typ-${data.type}` : ''}${data.synonym_of ? ' synonym' : ''}" data-syn-of="${data.synonym_of}">`)
+      $(`<span class="tag id-${data.id}${data.type ? ` typ-${data.type}` : ''}${data.synonymOf ? ' synonym' : ''}" data-syn-of="${data.synonymOf}">`)
         .attr('title', data.title)
         .text(data.name)
     );
@@ -1277,7 +1277,7 @@
                   else $affected.removeAttr('title');
                   $affected.text(data.name).data('ctxmenu-items').eq(0).text(`Tag: ${data.name}`);
                   $affected.each(function() {
-                    if (data.synonym_of){
+                    if (data.synonymOf){
                       $(this).remove();
                       return;
                     }
@@ -1319,7 +1319,7 @@
                   tagAutocompleteCache.clear();
                   $.Dialog.close();
                 }
-                else if (this.confirm)
+                else if (this.uses)
                   $.Dialog.confirm(false, this.message, ['NUKE TAG', 'Never mind'], function(sure) {
                     if (!sure) return;
 
@@ -1977,12 +1977,12 @@
             templates: {
               suggestion: data => {
                 const $tag = $(`<span />`)
-                  .attr('class', `tag id-${data.tid} ${data.type} ${data.synonym_of ? 'synonym' : 'monospace'}`);
+                  .attr('class', `tag id-${data.tid} ${data.type} ${data.synonymOf ? 'synonym' : 'monospace'}`);
                 $tag.text(`${data.name} `);
                 const $uses = $(`<span class="uses" />`);
-                if (data.synonym_of)
+                if (data.synonymOf)
                   $uses
-                    .text(data.synonym_target)
+                    .text(data.synonymTarget)
                     .prepend(`<span class="typcn typcn-flow-children"></span>`);
                 else $uses.text(data.uses);
                 $tag.append($uses);

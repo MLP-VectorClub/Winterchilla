@@ -30,7 +30,7 @@ use function in_array;
  *     "title",
  *     "type",
  *     "uses",
- *     "synonym_of"
+ *     "synonymOf"
  *   },
  *   additionalProperties=false,
  *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
@@ -38,7 +38,7 @@ use function in_array;
  *   @OA\Property(property="title", type="string", nullable=true, description="Optional human-friendly title for the tag"),
  *   @OA\Property(property="type", type="string", description="The tag's type/category"),
  *   @OA\Property(property="uses", type="integer", minimum=0, description="Number of appearances this tag is applied to"),
- *   @OA\Property(property="synonym_of", ref="#/components/schemas/OneBasedId", nullable=true, description="ID of the tag this one is a synonym of, if any")
+ *   @OA\Property(property="synonymOf", ref="#/components/schemas/OneBasedId", nullable=true, description="ID of the tag this one is a synonym of, if any")
  * )
  */
 class TagAPIController extends APIController {
@@ -66,15 +66,13 @@ class TagAPIController extends APIController {
    *       @OA\Property(property="name", type="string"),
    *       @OA\Property(property="type", type="string", nullable=true, description="Tag type/category; when found via the 's' (autocomplete) search this is prefixed with 'typ-'"),
    *       @OA\Property(property="uses", type="integer"),
-   *       @OA\Property(property="synonym_of", ref="#/components/schemas/OneBasedId", nullable=true),
-   *       @OA\Property(property="synonym_target", type="string", description="Name of the tag this one is a synonym of, only present when found via autocomplete")
+   *       @OA\Property(property="synonymOf", ref="#/components/schemas/OneBasedId", nullable=true),
+   *       @OA\Property(property="synonymTarget", type="string", description="Name of the tag this one is a synonym of, only present when found via autocomplete")
    *     ))
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Tag is already a synonym of another tag", @OA\JsonContent(allOf={
-   *     @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *     @OA\Schema(type="object", @OA\Property(property="undo", type="boolean"))
-   *   }))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Tag is already a synonym of another tag", @OA\JsonContent(type="object", required={"message","synonymOf"}, @OA\Property(property="message", type="string"), @OA\Property(property="synonymOf", type="object", @OA\Property(property="id", ref="#/components/schemas/OneBasedId"), @OA\Property(property="name", type="string"))))
    * )
    */
   public function autocomplete() {
@@ -82,7 +80,7 @@ class TagAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     $except = (new Input('not', 'int', [Input::IS_OPTIONAL => true]))->out();
     if ((new Input('action', 'string', [Input::IS_OPTIONAL => true]))->out() === 'synon'){
@@ -91,7 +89,9 @@ class TagAPIController extends APIController {
       /** @var $Tag Tag */
       $Tag = DB::$instance->where('"synonym_of" IS NOT NULL')->getOne('tags');
       if (!empty($Tag))
-        Response::fail("This tag is already a synonym of <strong>{$Tag->synonym->name}</strong>.<br>Would you like to remove the synonym?", ['undo' => true]);
+        Response::error(409, "This tag is already a synonym of \"{$Tag->synonym->name}\"", [
+          'synonymOf' => ['id' => $Tag->synonym->id, 'name' => $Tag->synonym->name],
+        ]);
     }
 
     $viaAutocomplete = !empty($_GET['s']);
@@ -124,7 +124,7 @@ class TagAPIController extends APIController {
       unset($t);
     }
 
-    CGUtils::autocompleteRespond(empty($Tags) ? '[]' : $Tags);
+    CGUtils::autocompleteRespond(empty($Tags) ? '[]' : CoreUtils::camelKeys($Tags));
   }
 
   /**
@@ -139,15 +139,14 @@ class TagAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
+   *         @OA\Property(property="message", type="string"),
    *         @OA\Property(property="counts", type="object", description="Map of tag ID to its new use count")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function recountUses() {
@@ -155,7 +154,7 @@ class TagAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     /** @var $tagIDs int[] */
     $tagIDs = (new Input('tagids', 'int[]', [
@@ -175,14 +174,12 @@ class TagAPIController extends APIController {
       }
     }
 
-    Response::success(
-      (
-      !$updates
+    Response::ok([
+      'message' => !$updates
         ? 'There was no change in the tag usage counts'
-        : "$updates tag".($updates !== 1 ? "s'" : "'s").' use count'.($updates !== 1 ? 's were' : ' was').' updated'
-      ),
-      ['counts' => $counts]
-    );
+        : "$updates tag".($updates !== 1 ? "s'" : "'s").' use count'.($updates !== 1 ? 's were' : ' was').' updated',
+      'counts' => $counts,
+    ]);
   }
 
   /** @var Tag|null */
@@ -191,15 +188,15 @@ class TagAPIController extends APIController {
   private function load_tag($params) {
     $this->_initialize($params);
     if (Permission::insufficient('staff'))
-      CoreUtils::noPerm();
+      Response::denied();
 
     if (!$this->creating){
       if (!isset($params['id']))
-        Response::fail('Missing tag ID');
+        Response::error(404, 'Missing tag ID');
       $id = (int)$params['id'];
       $this->tag = Tag::find($id);
       if (empty($this->tag))
-        Response::fail('This tag does not exist');
+        Response::error(404, 'This tag does not exist');
     }
   }
 
@@ -212,13 +209,11 @@ class TagAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(ref="#/components/schemas/Tag")
-   *     })
+   *     @OA\JsonContent(ref="#/components/schemas/Tag")
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
    *   path="/cg/tag",
@@ -232,20 +227,19 @@ class TagAPIController extends APIController {
    *     @OA\Property(property="addto", ref="#/components/schemas/ZeroBasedId", description="ID of an appearance to add the new tag to; 0 means the tag cannot be applied")
    *   )),
    *   @OA\Response(
-   *     response="200",
-   *     description="OK. If 'addto' was specified and valid, only a success message and 'tags' are returned (no tag fields); if 'addto' pointed to an invalid/untaggable appearance, only a success message is returned. Otherwise the submitted tag fields are echoed back (without id, uses or synonym_of).",
+   *     response="201",
+   *     description="Created. The response is the new tag; if 'addto' was valid it also carries the appearance's rendered tag list in 'tags', and if it was not it carries a 'warning'.",
    *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
+   *       @OA\Schema(ref="#/components/schemas/Tag"),
    *       @OA\Schema(type="object",
-   *         @OA\Property(property="name", type="string", description="Tag name, present when 'addto' was not specified or invalid"),
-   *         @OA\Property(property="type", type="string", description="Tag type/category, present when 'addto' was not specified or invalid"),
-   *         @OA\Property(property="title", type="string", nullable=true, description="Optional human-friendly title, present when 'addto' was not specified or invalid"),
-   *         @OA\Property(property="tags", type="string", description="Rendered HTML of the appearance's tags, present when addto was specified and valid")
+   *         @OA\Property(property="tags", type="string", description="Rendered HTML of the appearance's tags, present when addto was specified and valid"),
+   *         @OA\Property(property="warning", type="string", description="Present when the tag was created but could not be added to the requested appearance")
    *       )
    *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="A tag with the same name and type already exists, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="A tag with the same name and type already exists, or validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
    *   path="/cg/tag/{id}",
@@ -261,13 +255,11 @@ class TagAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(ref="#/components/schemas/Tag")
-   *     })
+   *     @OA\JsonContent(ref="#/components/schemas/Tag")
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="A tag with the same name and type already exists, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="A tag with the same name and type already exists, or validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/cg/tag/{id}",
@@ -275,12 +267,11 @@ class TagAPIController extends APIController {
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\Parameter(name="sanitycheck", in="query", description="Set to confirm deletion of an in-use tag", @OA\Schema(type="string")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Tag does not exist, or confirmation required", @OA\JsonContent(allOf={
-   *     @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *     @OA\Schema(type="object", @OA\Property(property="confirm", type="boolean"))
-   *   }))
+   *   @OA\Response(response="204", description="Deleted"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="The tag is in use and deletion was not confirmed with sanitycheck", @OA\JsonContent(type="object", required={"message","uses"}, @OA\Property(property="message", type="string"), @OA\Property(property="uses", type="integer", description="Number of appearances the tag is used on")))
    * )
    */
   public function api($params) {
@@ -288,14 +279,14 @@ class TagAPIController extends APIController {
 
     switch ($this->action){
       case 'GET':
-        Response::done($this->tag->to_array());
+        Response::ok(CoreUtils::camelKeys($this->tag->to_array()));
       break;
       case 'DELETE':
         $tid = $this->tag->synonym_of ?? $this->tag->id;
         $Uses = Tagged::by_tag($tid);
         $UseCount = count($Uses);
         if (!isset($_REQUEST['sanitycheck']) && $UseCount > 0)
-          Response::fail('<p>This tag is currently used on '.CoreUtils::makePlural('appearance', $UseCount, PREPEND_NUMBER).'</p><p>Deleting will <strong class="color-red">permanently remove</strong> the tag from those appearances!</p><p>Are you <em class="color-red">REALLY</em> sure about this?</p>', ['confirm' => true]);
+          Response::error(409, 'This tag is currently used on '.CoreUtils::makePlural('appearance', $UseCount, PREPEND_NUMBER).'. Deleting will permanently remove the tag from those appearances. Repeat the request with sanitycheck set to confirm.', ['uses' => $UseCount]);
 
         $this->tag->delete();
 
@@ -304,7 +295,7 @@ class TagAPIController extends APIController {
         foreach ($Uses as $use)
           $use->appearance->updateIndex();
 
-        Response::success('Tag deleted successfully');
+        Response::noContent();
       break;
       case 'POST':
       case 'PUT':
@@ -325,8 +316,12 @@ class TagAPIController extends APIController {
 
         if (!$this->creating)
           DB::$instance->where('id', $this->tag->id, '!=');
-        if (DB::$instance->where('name', $data['name'])->where('type', $data['type'])->has('tags'))
-          Response::fail('A tag with the same name and type already exists');
+        DB::$instance->where('name', $data['name']);
+        if (isset($data['type']))
+          DB::$instance->where('type', $data['type']);
+        else DB::$instance->where('type IS NULL');
+        if (DB::$instance->has('tags'))
+          Response::invalid('name', 'A tag with the same name and type already exists');
 
         $data['title'] = (new Input('title', 'string', [
           Input::IS_OPTIONAL => true,
@@ -339,20 +334,24 @@ class TagAPIController extends APIController {
         if ($this->creating){
           $Tag = new Tag($data);
           if (!$Tag->save())
-            Response::dbError();
+            Response::dbError(status: 500);
 
+          $created = CoreUtils::camelKeys($Tag->to_array());
+          // The id comes back from the insert as a string
+          $created['id'] = (int)$created['id'];
           $appearance_id = (new Input('addto', 'int', [Input::IS_OPTIONAL => true]))->out();
           if ($appearance_id !== null){
             if ($appearance_id === 0)
-              Response::success("The tag was created, <strong>but</strong> it could not be added to the appearance because it can't be tagged.");
+              Response::ok($created + ['warning' => "The tag was created, but it could not be added to the appearance because it can't be tagged."], 201);
 
             $Appearance = Appearance::find($appearance_id);
             if (empty($Appearance))
-              Response::success("The tag was created, <strong>but</strong> it could not be added to the appearance (<a href='/cg/v/$appearance_id'>#$appearance_id</a>) because it doesn't seem to exist. Please try adding the tag manually.");
+              Response::ok($created + ['warning' => "The tag was created, but it could not be added to the appearance (#$appearance_id) because it doesn't seem to exist. Please try adding the tag manually."], 201);
 
             $Appearance->addTag($Tag)->updateIndex();
-            Response::done(['tags' => $Appearance->getTagsHTML(NOWRAP)]);
+            Response::ok($created + ['tags' => $Appearance->getTagsHTML(NOWRAP)], 201);
           }
+          Response::ok($created, 201);
         }
         else {
           $this->tag->update_attributes($data);
@@ -363,7 +362,7 @@ class TagAPIController extends APIController {
           }
         }
 
-        Response::done($data);
+        Response::ok(CoreUtils::camelKeys($data));
       break;
       default:
         CoreUtils::notAllowed();
@@ -383,15 +382,15 @@ class TagAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="target", ref="#/components/schemas/Tag")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Tag does not exist, target does not exist, or either is already a synonym, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Either tag is already a synonym", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Target tag missing or does not exist", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/cg/tag/{id}/synonym",
@@ -401,16 +400,15 @@ class TagAPIController extends APIController {
    *   @OA\Parameter(name="keep_tagged", in="query", description="If present, the tag will be reapplied to all appearances tagged with its synonym target", @OA\Schema(type="string")),
    *   @OA\Response(
    *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
-   *         @OA\Property(property="keep_tagged", type="boolean")
+   *     description="Synonym removed",
+   *     @OA\JsonContent(type="object", additionalProperties=false,
+   *         @OA\Property(property="keepTagged", type="boolean")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="The tag was not a synonym, nothing changed"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function synonymApi($params) {
@@ -419,7 +417,7 @@ class TagAPIController extends APIController {
     switch ($this->action){
       case 'PUT':
         if ($this->tag->synonym_of !== null)
-          Response::fail("The selected tag is already a synonym of the \"{$this->tag->synonym->name}\" (".Tags::TAG_TYPES[$this->tag->synonym->type].') tag');
+          Response::error(409, "The selected tag is already a synonym of the \"{$this->tag->synonym->name}\" (".Tags::TAG_TYPES[$this->tag->synonym->type].') tag');
 
         $target_id = (new Input('target_id', 'int', [
           Input::CUSTOM_ERROR_MESSAGES => [
@@ -429,9 +427,9 @@ class TagAPIController extends APIController {
         ]))->out();
         $target = Tag::find($target_id);
         if (empty($target))
-          Response::fail('Target tag does not exist');
+          Response::invalid('target_id', 'Target tag does not exist');
         if ($target->synonym_of !== null)
-          Response::fail("The selected tag is already a synonym of the \"{$target->synonym->name}\" (".Tags::TAG_TYPES[$target->synonym->type].') tag');
+          Response::error(409, "The target tag is already a synonym of the \"{$target->synonym->name}\" (".Tags::TAG_TYPES[$target->synonym->type].') tag');
 
         $target_tagged = Tagged::by_tag($target->id);
         $tagged_appearance_ids = [];
@@ -444,7 +442,7 @@ class TagAPIController extends APIController {
             continue;
 
           if (!Tagged::make($target->id, $tg->appearance_id)->save())
-            Response::fail('Creating tag synonym failed, please retry.<br>Technical details: '.$tg->to_json());
+            Response::error(500, 'Creating tag synonym failed, please retry. Technical details: '.$tg->to_json());
         }
         Tagged::delete_all(['conditions' => ['tag_id = ?', $this->tag->id]]);
         $this->tag->update_attributes([
@@ -463,11 +461,11 @@ class TagAPIController extends APIController {
         }
 
         $target->updateUses();
-        Response::success('Tag synonyms created', ['target' => $target->to_array()]);
+        Response::ok(['message' => 'Tag synonyms created', 'target' => CoreUtils::camelKeys($target->to_array())]);
       break;
       case 'DELETE':
         if ($this->tag->synonym_of === null)
-          Response::done();
+          Response::noContent();
 
         if ($this->tag->synonym){
           $keep_tagged = isset($_REQUEST['keep_tagged']);
@@ -480,12 +478,12 @@ class TagAPIController extends APIController {
         else $keep_tagged = false;
 
         if (!$this->tag->update_attributes(['synonym_of' => null]))
-          Response::dbError('Could not update tag');
+          Response::dbError('Could not update tag', status: 500);
 
         foreach ($this->tag->appearances as $app)
           $app->updateIndex();
 
-        Response::done(['keep_tagged' => $keep_tagged]);
+        Response::ok(['keepTagged' => $keep_tagged]);
       break;
       default:
         CoreUtils::notAllowed();

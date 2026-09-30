@@ -48,8 +48,16 @@
 
         $.API.get('/cg/tags', { not: tagID, action: action }, function() {
           if (!this.length){
-            if (this.undo)
-              return window.cgTagEditing.call(this, tagName, tagID, 'unsynon', $tr);
+            if (this.synonymOf) {
+              const message = $.mk('div').append(
+                'This tag is already a synonym of ',
+                $.mk('strong').text(this.synonymOf.name),
+                '.',
+                $.mk('br'),
+                'Would you like to remove the synonym?',
+              ).html();
+              return window.cgTagEditing.call({ message }, tagName, tagID, 'unsynon', $tr);
+            }
 
             return $.Dialog.fail(false, this.message);
           }

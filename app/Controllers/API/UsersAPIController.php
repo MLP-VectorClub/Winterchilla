@@ -6,10 +6,15 @@ use App\Auth;
 use App\CoreUtils;
 use App\DeviantArt;
 use App\GlobalSettings;
+use App\Models\Appearance;
 use App\Models\DeviantartUser;
+use App\Models\Post;
+use App\Models\PreviousUsername;
 use App\Models\User;
 use App\Permission;
 use App\Response;
+use App\UserPrefs;
+use App\Users;
 use OpenApi\Annotations as OA;
 
 /**
@@ -219,6 +224,105 @@ class UsersAPIController extends APIController {
     $users = User::find('all', ['conditions' => ['role IN (?)', $roles], 'order' => 'name asc']);
 
     Response::ok(array_map(fn(User $u) => ['id' => $u->id, 'name' => $u->name, 'role' => 'user'], $users));
+  }
+
+  /**
+   * @OA\Schema(
+   *   schema="UserProfile",
+   *   type="object",
+   *   description="Everything the profile page shows about a user, with what the current visitor may do with it",
+   *   required={"user", "sameUser", "canEdit", "devOnDev", "editableRoles", "discordServerMember", "previousUsernames", "contributions", "contributionsCacheDuration", "personalGuides", "awaitingApproval"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="user", ref="#/components/schemas/User"),
+   *   @OA\Property(property="sameUser", type="boolean", description="Whether the visitor is looking at their own profile"),
+   *   @OA\Property(property="canEdit", type="boolean", description="Whether the visitor may change this user's role"),
+   *   @OA\Property(property="devOnDev", type="boolean", description="Whether a developer is looking at a developer (may change the displayed role label)"),
+   *   @OA\Property(property="editableRoles", type="object", nullable=true, additionalProperties=@OA\AdditionalProperties(type="string"), description="Roles the visitor may assign, key to label"),
+   *   @OA\Property(property="discordServerMember", type="boolean"),
+   *   @OA\Property(property="previousUsernames", type="array", nullable=true, @OA\Items(type="string"), description="Only sent to the user themselves and to staff"),
+   *   @OA\Property(
+   *     property="contributions",
+   *     type="array",
+   *     @OA\Items(type="object", required={"type", "count", "noun", "verb"}, @OA\Property(property="type", type="string"), @OA\Property(property="count", type="integer"), @OA\Property(property="noun", type="string"), @OA\Property(property="verb", type="string"))
+   *   ),
+   *   @OA\Property(property="contributionsCacheDuration", type="string", example="hour"),
+   *   @OA\Property(
+   *     property="personalGuides",
+   *     type="array",
+   *     nullable=true,
+   *     description="Null when the user keeps their personal guide section private from the visitor",
+   *     @OA\Items(type="object", required={"id", "label", "private", "previewData"}, @OA\Property(property="id", ref="#/components/schemas/OneBasedId"), @OA\Property(property="label", type="string"), @OA\Property(property="private", type="boolean"), @OA\Property(property="previewData", type="array", @OA\Items(type="string")))
+   *   ),
+   *   @OA\Property(property="awaitingApproval", type="array", nullable=true, description="Finished posts waiting for approval; null when the user is not a member", @OA\Items(ref="#/components/schemas/PostItem"))
+   * )
+   * @OA\Get(
+   *   path="/users/{id}/profile",
+   *   security={},
+   *   description="Get the data of a user's profile page",
+   *   tags={"users"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/UserProfile")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
+  function profile(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $user = User::find((int)$params['id']);
+    if ($user === null)
+      Response::error(404, 'The user could not be found');
+
+    $same_user = Auth::$signed_in && $user->id === Auth::$user->id;
+    $is_staff = Permission::sufficient('staff');
+    $can_edit = !$same_user && $is_staff && Permission::sufficient($user->role);
+    $dev_on_dev = Permission::sufficient('developer') && Permission::sufficient('developer', $user->role);
+
+    $editable_roles = null;
+    if ($can_edit) {
+      $editable_roles = [];
+      foreach (Permission::ROLES_ASSOC as $name => $label) {
+        if ($name !== 'guest' && Permission::sufficient($name, Auth::$user->role))
+          $editable_roles[$name] = $label;
+      }
+    }
+    else if ($dev_on_dev)
+      $editable_roles = Permission::ROLES_ASSOC;
+
+    $previous_names = null;
+    if (($same_user || $is_staff) && $user->boundToDeviantartUser())
+      $previous_names = array_map(fn(PreviousUsername $p) => $p->username, $user->deviantart_user->previous_names);
+
+    $list_pcgs = !UserPrefs::get('p_hidepcg', $user) || $same_user || $is_staff;
+    $guides = null;
+    if ($list_pcgs) {
+      $guides = array_map(fn(Appearance $a) => [
+        'id' => $a->id,
+        'label' => $a->label,
+        'private' => (bool)$a->private,
+        'previewData' => $a->private && !$same_user && !$is_staff ? [] : array_map(fn($c) => $c->hex, $a->getPreviewColors()),
+      ], $user->pcg_appearances);
+    }
+
+    $contributions = [];
+    foreach ($user->getCachedContributions() as $type => [$count, $noun, $verb])
+      $contributions[] = ['type' => $type, 'count' => (int)$count, 'noun' => $noun, 'verb' => $verb];
+
+    Response::ok([
+      'user' => self::mapPublicUser($user),
+      'sameUser' => $same_user,
+      'canEdit' => $can_edit,
+      'devOnDev' => $dev_on_dev,
+      'editableRoles' => $editable_roles,
+      'discordServerMember' => $user->isDiscordServerMember(),
+      'previousUsernames' => $previous_names,
+      'contributions' => $contributions,
+      'contributionsCacheDuration' => Users::getContributionsCacheDuration(),
+      'personalGuides' => $guides,
+      'awaitingApproval' => $user->perm('member')
+        ? array_map(fn(Post $p) => PostAPIController::mapPost($p), $user->getPostsAwaitingApproval())
+        : null,
+    ]);
   }
 
   /** Same as mapUser(), but with the developer role replaced by its public label */

@@ -50,10 +50,3 @@ it('404s when marking a notification that does not exist', function () {
 
   expect($r['status'])->toBe(404)->and($r['json'])->toHaveKey('message');
 });
-
-it('keeps the legacy notification paths working as aliases', function () {
-  $client = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
-  expect($client->get('/notif')['json']['list'])->toBe($client->get('/notifications')['json']['list'])
-    ->and($client->post('/notif/987654/mark-read')['status'])->toBe(404)
-    ->and(ApiClient::guest()->post('/notif/1/mark-read')['status'])->toBe(401);
-});

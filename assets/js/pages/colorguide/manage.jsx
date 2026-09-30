@@ -2,7 +2,7 @@
   'use strict';
 
   $('.cg-export').on('click', function() {
-    window.open(`${$.API.API_PATH}/cg/export`, '_blank');
+    window.open(`${$.API.API_PATH}/color-guide/export`, '_blank');
   });
 
   $('.cg-reindex').on('click', function() {
@@ -11,7 +11,7 @@
 
       $.Dialog.wait(false);
 
-      $.API.post('/cg/reindex').done(function(resp = {}) {
+      $.API.post('/color-guide/reindex').done(function(resp = {}) {
         $.Dialog.segway(false, resp.message);
       }).fail($.API.fail());
     });
@@ -353,7 +353,7 @@
         if (data.addto && AppearancePage)
           data.APPEARANCE_PAGE = true;
 
-        $.API.post(`/cg/tag`, data).done(function(resp = {}) {
+        $.API.post(`/tags`, data).done(function(resp = {}) {
           if (resp.tags){
             $tagsDiv.html(resp.tags);
             ctxmenus();
@@ -524,7 +524,7 @@
 
         $.Dialog.wait(false, 'Saving changes');
 
-        $.API[this.editing ? 'put' : 'post'](`/cg/colorgroup${this.editing ? `/${this.group_id}` : ''}`, data).done(function(resp = {}) {
+        $.API[this.editing ? 'put' : 'post'](`/color-groups${this.editing ? `/${this.group_id}` : ''}`, data).done(function(resp = {}) {
           if (resp.cgs){
             let $pony = $('#p' + appearance_id);
             if (resp.cgs)
@@ -1234,7 +1234,7 @@
 
           $.Dialog.wait(title, 'Retrieving tag details from server');
 
-          $.API.get(`/cg/tag/${tagID}`).done(function(tag = {}) {
+          $.API.get(`/tags/${tagID}`).done(function(tag = {}) {
             $.Dialog.request(title, $EditTagFormTemplate.clone(true, true).data('tag', tag), 'Save', function($form) {
               $form.find(`input[name=type][value=${tag.type}]`).prop('checked', true);
               $form.find('input[type=text][name], textarea[name]').each(function() {
@@ -1249,7 +1249,7 @@
                   data.APPEARANCE_PAGE = $tag.closest('div[id^=p]').attr('id').replace(/\D/g, '');
                 $.Dialog.wait(false, 'Saving changes');
 
-                $.API.put(`/cg/tag/${tagID}`, data).done(function(resp = {}) {
+                $.API.put(`/tags/${tagID}`, data).done(function(resp = {}) {
                   let data = resp,
                     $affected = $('.id-' + data.id);
                   if (data.title) $affected.attr('title', data.title);
@@ -1290,7 +1290,7 @@
             (function send(data) {
               $.Dialog.wait(title, 'Sending removal request');
 
-              $.API.delete(`/cg/tag/${tagID}`, data).done(function() {
+              $.API.delete(`/tags/${tagID}`, data).done(function() {
                 let $affected = $('.id-' + tagID);
                 $affected.remove();
                 tagAutocompleteCache.clear();
@@ -1403,7 +1403,7 @@
 
             $.Dialog.wait(title, `Retrieving color group details from server`);
 
-            $.API.get(`/cg/colorgroup/${groupID}`).done(function(resp = {}) {
+            $.API.get(`/color-groups/${groupID}`).done(function(resp = {}) {
               ColorGroupEditor.factory(title, $group, resp);
             }).fail($.API.fail(title));
           },
@@ -1419,7 +1419,7 @@
 
               $.Dialog.wait(title, 'Sending removal request');
 
-              $.API.delete(`/cg/colorgroup/${groupID}`).done(function() {
+              $.API.delete(`/color-groups/${groupID}`).done(function() {
                 const $parent = $group.parent();
                 if ($parent.children().length === 1)
                   $parent.empty();
@@ -1922,7 +1922,7 @@
             source: (s, callback) => {
               if (tagAutocompleteCache.has(s))
                 return callback(tagAutocompleteCache.get(s));
-              $.API.get(`/cg/tags`, { s }).done(function(resp = {}) {
+              $.API.get(`/tags`, { s }).done(function(resp = {}) {
                 callback(tagAutocompleteCache.set(s, resp));
               });
             },

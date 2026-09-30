@@ -3,7 +3,7 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-// Contract: /cg/colorgroup (tag: color groups). Signed-in users manage color groups on appearances they own
+// Contract: /color-groups (tag: color groups). Signed-in users manage color groups on appearances they own
 // (personal guide) or, as staff, on any appearance. The seeded appearance belongs to the official guide.
 
 $appearanceId = TestSeederConstants::APPEARANCE_ID;
@@ -17,7 +17,7 @@ function colorsJson(array $colors = [['label' => 'Contract Base', 'hex' => '#ff8
 }
 
 function createGroup(ApiClient $admin, int $appearanceId, ?string $label = null):array {
-  $r = $admin->post('/cg/colorgroup', ['ponyid' => $appearanceId, 'label' => $label ?? uniqueLabel('Group'), 'Colors' => colorsJson()]);
+  $r = $admin->post('/color-groups', ['ponyid' => $appearanceId, 'label' => $label ?? uniqueLabel('Group'), 'Colors' => colorsJson()]);
   expect($r['status'])->toBe(201);
   return $r['json'];
 }
@@ -25,7 +25,7 @@ function createGroup(ApiClient $admin, int $appearanceId, ?string $label = null)
 it('requires authentication for every color group endpoint', function () {
   $guest = ApiClient::guest();
 
-  foreach ([['GET', '/cg/colorgroup/1'], ['POST', '/cg/colorgroup'], ['PUT', '/cg/colorgroup/1'], ['DELETE', '/cg/colorgroup/1']] as [$method, $path])
+  foreach ([['GET', '/color-groups/1'], ['POST', '/color-groups'], ['PUT', '/color-groups/1'], ['DELETE', '/color-groups/1']] as [$method, $path])
     expect($guest->request($method, $path)['status'])->toBe(401, "$method $path");
 });
 
@@ -34,43 +34,43 @@ it('forbids regular users from official guide color groups', function () use ($a
   $group = createGroup($admin, $appearanceId);
 
   $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
-  expect($user->get('/cg/colorgroup/' . $group['id'])['status'])->toBe(403)
-    ->and($user->request('PUT', '/cg/colorgroup/' . $group['id'], ['label' => 'Nope', 'Colors' => colorsJson()])['status'])->toBe(403)
-    ->and($user->request('DELETE', '/cg/colorgroup/' . $group['id'])['status'])->toBe(403)
-    ->and($user->post('/cg/colorgroup', ['ponyid' => $appearanceId, 'label' => 'Nope', 'Colors' => colorsJson()])['status'])->toBe(403);
+  expect($user->get('/color-groups/' . $group['id'])['status'])->toBe(403)
+    ->and($user->request('PUT', '/color-groups/' . $group['id'], ['label' => 'Nope', 'Colors' => colorsJson()])['status'])->toBe(403)
+    ->and($user->request('DELETE', '/color-groups/' . $group['id'])['status'])->toBe(403)
+    ->and($user->post('/color-groups', ['ponyid' => $appearanceId, 'label' => 'Nope', 'Colors' => colorsJson()])['status'])->toBe(403);
 
-  ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/cg/colorgroup/' . $group['id']);
+  ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/color-groups/' . $group['id']);
 });
 
 it('404s for missing color groups and appearances', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
-  expect($admin->get('/cg/colorgroup/987654')['status'])->toBe(404)
-    ->and($admin->request('PUT', '/cg/colorgroup/987654', ['label' => 'x'])['status'])->toBe(404)
-    ->and($admin->request('DELETE', '/cg/colorgroup/987654')['status'])->toBe(404)
-    ->and($admin->post('/cg/colorgroup', ['ponyid' => 987654, 'label' => 'Missing', 'Colors' => colorsJson()])['status'])->toBe(404);
+  expect($admin->get('/color-groups/987654')['status'])->toBe(404)
+    ->and($admin->request('PUT', '/color-groups/987654', ['label' => 'x'])['status'])->toBe(404)
+    ->and($admin->request('DELETE', '/color-groups/987654')['status'])->toBe(404)
+    ->and($admin->post('/color-groups', ['ponyid' => 987654, 'label' => 'Missing', 'Colors' => colorsJson()])['status'])->toBe(404);
 });
 
 it('validates new color groups with 422 and field errors and saves nothing when rejected', function () use ($appearanceId) {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
-  $r = $admin->post('/cg/colorgroup');
+  $r = $admin->post('/color-groups');
   expect($r['status'])->toBe(422)->and($r['json'])->toHaveKeys(['message', 'errors'])->and($r['json']['errors'])->toHaveKey('ponyid');
 
-  $r = $admin->post('/cg/colorgroup', ['ponyid' => $appearanceId]);
+  $r = $admin->post('/color-groups', ['ponyid' => $appearanceId]);
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('label');
 
   $label = uniqueLabel('Rejected');
   $base = ['ponyid' => $appearanceId, 'label' => $label];
-  expect($admin->post('/cg/colorgroup', $base)['json']['errors'])->toHaveKey('Colors');
-  expect($admin->post('/cg/colorgroup', $base + ['Colors' => colorsJson([])])['json']['errors'])->toHaveKey('Colors');
-  expect($admin->post('/cg/colorgroup', $base + ['Colors' => colorsJson([['label' => 'Bad Hex', 'hex' => 'nope']])])['json']['errors'])->toHaveKey('Colors');
-  expect($admin->post('/cg/colorgroup', $base + ['Colors' => colorsJson([['label' => 'ab']])])['json']['errors'])->toHaveKey('Colors');
-  expect($admin->post('/cg/colorgroup', $base + ['Colors' => colorsJson([['label' => 'Twin'], ['label' => 'Twin']])])['json']['errors'])->toHaveKey('Colors');
+  expect($admin->post('/color-groups', $base)['json']['errors'])->toHaveKey('Colors');
+  expect($admin->post('/color-groups', $base + ['Colors' => colorsJson([])])['json']['errors'])->toHaveKey('Colors');
+  expect($admin->post('/color-groups', $base + ['Colors' => colorsJson([['label' => 'Bad Hex', 'hex' => 'nope']])])['json']['errors'])->toHaveKey('Colors');
+  expect($admin->post('/color-groups', $base + ['Colors' => colorsJson([['label' => 'ab']])])['json']['errors'])->toHaveKey('Colors');
+  expect($admin->post('/color-groups', $base + ['Colors' => colorsJson([['label' => 'Twin'], ['label' => 'Twin']])])['json']['errors'])->toHaveKey('Colors');
 
   // None of the rejected attempts may have left a group behind: the same label is still free
   $group = createGroup($admin, $appearanceId, $label);
-  $admin->request('DELETE', '/cg/colorgroup/' . $group['id']);
+  $admin->request('DELETE', '/color-groups/' . $group['id']);
 });
 
 it('creates, reads, updates and deletes a color group', function () use ($appearanceId) {
@@ -79,9 +79,9 @@ it('creates, reads, updates and deletes a color group', function () use ($appear
 
   $created = createGroup($admin, $appearanceId, $label);
   expect($created)->toHaveKeys(['id', 'cgs', 'notes'])->not->toHaveKey('status');
-  $path = '/cg/colorgroup/' . $created['id'];
+  $path = '/color-groups/' . $created['id'];
 
-  $r = $admin->post('/cg/colorgroup', ['ponyid' => $appearanceId, 'label' => $label, 'Colors' => colorsJson()]);
+  $r = $admin->post('/color-groups', ['ponyid' => $appearanceId, 'label' => $label, 'Colors' => colorsJson()]);
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('label');
 
   $r = $admin->get($path);
@@ -112,7 +112,7 @@ it('creates, reads, updates and deletes a color group', function () use ($appear
 
 it('lets a user manage color groups on their own personal appearance', function () {
   $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
-  $seeded = '/cg/colorgroup/' . TestSeederConstants::PERSONAL_COLOR_GROUP_ID;
+  $seeded = '/color-groups/' . TestSeederConstants::PERSONAL_COLOR_GROUP_ID;
 
   $r = $user->get($seeded);
   expect($r['status'])->toBe(200)
@@ -120,9 +120,9 @@ it('lets a user manage color groups on their own personal appearance', function 
     ->and($r['json']['appearanceId'])->toBe(TestSeederConstants::PERSONAL_APPEARANCE_ID);
 
   $label = uniqueLabel('Mine');
-  $r = $user->post('/cg/colorgroup', ['ponyid' => TestSeederConstants::PERSONAL_APPEARANCE_ID, 'label' => $label, 'Colors' => colorsJson()]);
+  $r = $user->post('/color-groups', ['ponyid' => TestSeederConstants::PERSONAL_APPEARANCE_ID, 'label' => $label, 'Colors' => colorsJson()]);
   expect($r['status'])->toBe(201);
-  $path = '/cg/colorgroup/' . $r['json']['id'];
+  $path = '/color-groups/' . $r['json']['id'];
 
   $r = $user->request('PUT', $path, ['label' => $label . ' 2', 'Colors' => colorsJson([['label' => 'Personal Two', 'hex' => '#010203']])]);
   expect($r['status'])->toBe(200);
@@ -134,12 +134,12 @@ it('lets a user manage color groups on their own personal appearance', function 
 it('lets staff manage color groups on someone else\'s personal appearance', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
-  expect($admin->get('/cg/colorgroup/' . TestSeederConstants::PERSONAL_COLOR_GROUP_ID)['status'])->toBe(200);
+  expect($admin->get('/color-groups/' . TestSeederConstants::PERSONAL_COLOR_GROUP_ID)['status'])->toBe(200);
 });
 
 it('does not let a user add color groups to the official guide through the personal guide rules', function () use ($appearanceId) {
   $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
 
-  $r = $user->post('/cg/colorgroup', ['ponyid' => $appearanceId, 'label' => uniqueLabel('Nope'), 'Colors' => colorsJson()]);
+  $r = $user->post('/color-groups', ['ponyid' => $appearanceId, 'label' => uniqueLabel('Nope'), 'Colors' => colorsJson()]);
   expect($r['status'])->toBe(403);
 });

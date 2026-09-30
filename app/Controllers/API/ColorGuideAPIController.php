@@ -108,7 +108,7 @@ class ColorGuideAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/export",
+   *   path="/color-guide/export",
    *   description="Download the full color guide export data as a JSON file. Developer permission required.",
    *   tags={"color guide"},
    *   @OA\Response(
@@ -132,7 +132,7 @@ class ColorGuideAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/cg/reindex",
+   *   path="/color-guide/reindex",
    *   description="Trigger a full reindex of the color guide search index. Developer permission required.",
    *   tags={"color guide"},
    *   @OA\Response(response="200", description="Re-index completed", @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))),

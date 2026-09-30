@@ -1,8 +1,9 @@
 # API path alignment with Luna (decided 2026-09-30)
 
-**Decision:** Winterchilla's write API moves to Luna's resource-oriented paths. The old paths stay as aliases while both front ends
-run, and the Winterchilla client moves to the canonical paths last. Canonical paths are what the OpenAPI spec documents (and so what
-Celestia's generated types are named after); aliases are undocumented and get removed once Winterchilla's own client is retired.
+**Decision:** Winterchilla's write API moves to Luna's resource-oriented paths. Winterchilla's own client is the only
+consumer and deploys together with the API, so paths are **renamed in place**: no aliases, no transition state. Each resource
+group changes its route, docblock `path=`, contract tests and the client calls in one commit. The OpenAPI spec documents the
+canonical paths (Celestia's generated types are named after them).
 
 ## Conventions (taken from `Luna/routes/api.php`)
 
@@ -17,12 +18,9 @@ Celestia's generated types are named after); aliases are undocumented and get re
 ## Router change this needs
 
 `config/routes/public_api_v0.php` maps a path to one controller for *every* method (`POST|GET|PUT|DELETE`), so two controllers can't
-share a path by method. Canonical paths collide with Luna-mirroring ones (`GET /appearances` is the public list, `POST /appearances`
-creates; `GET /appearances/{id}/sprite` is public, `POST`/`DELETE` manage). The registration helper therefore takes an optional
-method list — `$api_endpoint($path, $target, methods: 'GET')` — and aliases are registered next to their canonical route
-(`aliases: ['/cg/tag/[i:id]?']`). A method with no route answers the router's 404 instead of the controllers' 405; the contract tests
-pin what is expected. Canonical `[i:id]?` optional-parameter routes are split into collection and item routes so the docs can describe
-them separately.
+share a path. Canonical paths do collide (`GET /tags` is the list, `POST /tags` creates), so `$api_endpoint($path, $target, $methods)`
+takes an optional method list. A method with no route answers the router's 404 instead of the controller's 405. Optional-parameter
+routes (`[i:id]?`) are split into collection and item routes so the docs can describe them separately.
 
 ## Mapping (old → canonical)
 
@@ -122,13 +120,12 @@ from what Luna implements.
 
 ## Order of work
 
-1. Router helper with methods + aliases; a generated test that every old path still answers like its canonical twin.
-2. Move resource by resource (appearances → color groups/tags → posts/events/show → users/site): canonical route, docblock `path=`,
-   contract tests on the canonical path, alias for the old path. One commit per resource, suite green each time.
+1. Router helper with a method list (done).
+2. Move resource by resource (settings, notifications, tags, color groups, color-guide export/reindex are done; next appearances →
+   posts/events/show → users/site): route, docblock `path=`, contract tests and client calls in one commit, suite green each time.
 3. Close the read gap (see CLAUDE.md "Next") on the new paths.
 4. Request-body naming (snake_case → camelCase: `image_url`→`imageUrl`, `show_id`→`showId`, `ponyid`→`appearanceId`, `Colors`→`colors`,
-   `CMData`→`cutieMarks`, `APPEARANCE_PAGE` flags removed with the HTML fragments). Accept both spellings during the transition.
-5. Move Winterchilla's own client to the canonical paths; later remove the aliases.
+   `CMData`→`cutieMarks`, `APPEARANCE_PAGE` flags removed with the HTML fragments). Renamed in place, client in the same commit.
 
 ## Open
 

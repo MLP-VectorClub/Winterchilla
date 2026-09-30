@@ -80,7 +80,7 @@ class ColorGroupAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/colorgroup/{id}",
+   *   path="/color-groups/{id}",
    *   description="Get a color group's details and its colors. The user must be signed in and either own the appearance's personal guide or be staff.",
    *   tags={"color groups"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -94,7 +94,7 @@ class ColorGroupAPIController extends APIController {
    *   @OA\Response(response="404", description="Color group not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
-   *   path="/cg/colorgroup",
+   *   path="/color-groups",
    *   description="Create a new color group with its colors on an appearance. The user must be signed in and have permission to manage the appearance.",
    *   tags={"color groups"},
    *   @OA\RequestBody(required=true, @OA\JsonContent(
@@ -128,7 +128,7 @@ class ColorGroupAPIController extends APIController {
    *   @OA\Response(response="422", description="Validation error, e.g. duplicate color group label or invalid color data (errors are reported under label, reason or Colors)", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/cg/colorgroup/{id}",
+   *   path="/color-groups/{id}",
    *   description="Update an existing color group and its colors. The user must be signed in and either own the appearance's personal guide or be staff.",
    *   tags={"color groups"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -164,7 +164,7 @@ class ColorGroupAPIController extends APIController {
    *   @OA\Response(response="422", description="Validation error (errors are reported under label, reason or Colors)", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/cg/colorgroup/{id}",
+   *   path="/color-groups/{id}",
    *   description="Delete a color group and its colors. The user must be signed in and either own the appearance's personal guide or be staff.",
    *   tags={"color groups"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),

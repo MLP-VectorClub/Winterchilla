@@ -57,9 +57,3 @@ it('forbids staff who are not developers from changing dev_role_label with 403',
 
   expect($r['status'])->toBe(403)->and($r['json'])->toHaveKey('message');
 });
-
-it('keeps the legacy /setting path working as an alias', function () {
-  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  expect($admin->get('/setting/reservation_rules')['json'])->toBe($admin->get('/settings/reservation_rules')['json'])
-    ->and($admin->get('/setting/nope')['status'])->toBe(404);
-});

@@ -42,7 +42,7 @@
     let text = $h2c.text().trim();
 
     $.Dialog.wait(`Editing "${text}"`, 'Retrieving setting\'s value');
-    $.API.get(`/setting/${endpoint}`).done(function(resp = {}) {
+    $.API.get(`/settings/${endpoint}`).done(function(resp = {}) {
       let $EditorForm = $.mk('form', `${endpoint}-editor`),
         value = resp.value;
 
@@ -59,7 +59,7 @@
           let data = { value: dataEditor.getValue() };
           $.Dialog.wait(false, 'Saving');
 
-          $.API.put(`/setting/${endpoint}`, data).done(function(resp = {}) {
+          $.API.put(`/settings/${endpoint}`, data).done(function(resp = {}) {
             $h2.siblings().remove();
             $h2.parent().append(resp.value);
             $.Dialog.close();

@@ -80,7 +80,7 @@
               $notifCnt.empty();
             });
           }
-          else $.API.get('/notif').done((data = {}) => {
+          else $.API.get('/notifications').done((data = {}) => {
             $notifCnt.text(cnt);
             $notifSbList.html(data.list);
             Time.update();
@@ -186,7 +186,7 @@
             send = () => {
               $el.siblings('.mark-read').addBack().addClass('disabled');
 
-              $.API.post(`/notif/${nid}/mark-read`, data).done((resp = {}) => {
+              $.API.post(`/notifications/${nid}/read`, data).done((resp = {}) => {
                 this.conn.emit('notif-cnt');
 
                 if (resp.message) {

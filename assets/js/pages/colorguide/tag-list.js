@@ -34,7 +34,7 @@
 
           $.Dialog.wait(false, 'Deleting tag');
 
-          $.API.delete(`/cg/tag/${tagID}`, { sanitycheck: true }).done(function(resp = {}) {
+          $.API.delete(`/tags/${tagID}`, { sanitycheck: true }).done(function(resp = {}) {
             updateList.call(resp, $tr, action);
           }).fail($.API.fail());
         });
@@ -42,7 +42,7 @@
       case 'synon':
         $.Dialog.wait(`Make ${tagName} a synonym`, 'Retrieving tag list from server');
 
-        $.API.get('/cg/tags', { not: tagID, action: action }).fail($.API.failWith(body => {
+        $.API.get('/tags', { not: tagID, action: action }).fail($.API.failWith(body => {
           // 409: the tag already is a synonym, offer to remove that instead
           if (body.synonymOf) {
             const message = $.mk('div').append(
@@ -96,7 +96,7 @@
               let sent = $form.mkData();
               $.Dialog.wait(false, 'Creating tag synonym');
 
-              $.API.put(`/cg/tag/${tagID}/synonym`, sent).done(function(data = {}) {
+              $.API.put(`/tags/${tagID}/synonym`, sent).done(function(data = {}) {
                 updateList.call(data, $tr, action);
               }).fail($.API.fail());
             });
@@ -123,7 +123,7 @@
                 let data = $form.mkData();
                 $.Dialog.wait(false, 'Removing synonym');
 
-                $.API.delete(`/cg/tag/${tagID}/synonym`, data).done(function(resp = {}) {
+                $.API.delete(`/tags/${tagID}/synonym`, data).done(function(resp = {}) {
                   updateList.call(resp, $tr, action);
                 }).fail($.API.fail());
               });
@@ -135,7 +135,7 @@
       case 'refresh':
         $.Dialog.wait(`Refresh use count of ${tagName}`, 'Updating use count');
 
-        $.API.post('/cg/tags/recount-uses', { tagids: tagID }).done(tagUseUpdateHandler()).fail($.API.fail());
+        $.API.post('/tags/recount-uses', { tagids: tagID }).done(tagUseUpdateHandler()).fail($.API.fail());
         break;
     }
   };
@@ -159,6 +159,6 @@
 
     $.Dialog.wait(title, 'Updating use count' + (tagIDs.length !== 1 ? 's' : ''));
 
-    $.API.post('/cg/tags/recount-uses', { tagids: tagIDs.join(',') }).done(tagUseUpdateHandler(true)).fail($.API.fail());
+    $.API.post('/tags/recount-uses', { tagids: tagIDs.join(',') }).done(tagUseUpdateHandler(true)).fail($.API.fail());
   });
 })();

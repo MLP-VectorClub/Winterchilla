@@ -55,7 +55,7 @@
         let data = $form.mkData();
         $.Dialog.wait(false, 'Changing role mask');
 
-        $.API.put(`/setting/dev_role_label`, data).done(function(resp = {}) {
+        $.API.put(`/settings/dev_role_label`, data).done(function(resp = {}) {
           $.Navigation.reload(true);
         }).fail($.API.fail());
       });

@@ -11,21 +11,17 @@ global $router;
  */
 
 /**
- * Allowing all request methods lets us reply with HTTP 405 to unsupported methods at the controller level
- *
- * Canonical paths follow Luna's resource style (see docs/api-path-alignment.md); the old Winterchilla paths stay
- * registered as aliases for the same target until the client has moved.
+ * Paths follow Luna's resource style (see docs/api-path-alignment.md). Allowing all request methods lets us reply
+ * with HTTP 405 to unsupported methods at the controller level; pass $methods when several controllers share a path.
  *
  * @param string $path
  * @param array{0: class-string, 1: string} $target
- * @param string[] $aliases
+ * @param string $methods
  *
  * @return void
  */
-$api_endpoint = function ($path, array $target, array $aliases = []) use ($router) {
-  foreach (array_merge([$path], $aliases) as $route_path) {
-    $router->map('POST|GET|PUT|DELETE', PUBLIC_API_V0_PATH.$route_path, $target);
-  }
+$api_endpoint = function ($path, array $target, $methods = 'POST|GET|PUT|DELETE') use ($router) {
+  $router->map($methods, PUBLIC_API_V0_PATH.$path, $target);
 };
 $api_endpoint('/appearances', [\App\Controllers\API\AppearancesAPIController::class, 'queryPublic']);
 $api_endpoint('/appearances/all', [\App\Controllers\API\AppearancesAPIController::class, 'queryAll']);
@@ -53,13 +49,15 @@ $api_endpoint('/cg/appearance/[i:id]/guide-relations', [\App\Controllers\API\App
 $api_endpoint('/cg/appearance/[i:id]/pin', [\App\Controllers\API\AppearanceAPIController::class, 'pinApi']);
 $api_endpoint('/cg/full', [\App\Controllers\API\ColorGuideAPIController::class, 'fullList']);
 $api_endpoint('/cg/full/reorder', [\App\Controllers\API\ColorGuideAPIController::class, 'reorderFullList']);
-$api_endpoint('/cg/export', [\App\Controllers\API\ColorGuideAPIController::class, 'export']);
-$api_endpoint('/cg/reindex', [\App\Controllers\API\ColorGuideAPIController::class, 'reindex']);
-$api_endpoint('/cg/tags', [\App\Controllers\API\TagAPIController::class, 'autocomplete']);
-$api_endpoint('/cg/tags/recount-uses', [\App\Controllers\API\TagAPIController::class, 'recountUses']);
-$api_endpoint('/cg/tag/[i:id]?', [\App\Controllers\API\TagAPIController::class, 'api']);
-$api_endpoint('/cg/tag/[i:id]/synonym', [\App\Controllers\API\TagAPIController::class, 'synonymApi']);
-$api_endpoint('/cg/colorgroup/[i:id]?', [\App\Controllers\API\ColorGroupAPIController::class, 'api']);
+$api_endpoint('/color-guide/export', [\App\Controllers\API\ColorGuideAPIController::class, 'export']);
+$api_endpoint('/color-guide/reindex', [\App\Controllers\API\ColorGuideAPIController::class, 'reindex']);
+$api_endpoint('/tags', [\App\Controllers\API\TagAPIController::class, 'autocomplete'], 'GET');
+$api_endpoint('/tags/recount-uses', [\App\Controllers\API\TagAPIController::class, 'recountUses']);
+$api_endpoint('/tags', [\App\Controllers\API\TagAPIController::class, 'api'], 'POST');
+$api_endpoint('/tags/[i:id]', [\App\Controllers\API\TagAPIController::class, 'api']);
+$api_endpoint('/tags/[i:id]/synonym', [\App\Controllers\API\TagAPIController::class, 'synonymApi']);
+$api_endpoint('/color-groups', [\App\Controllers\API\ColorGroupAPIController::class, 'api'], 'POST');
+$api_endpoint('/color-groups/[i:id]', [\App\Controllers\API\ColorGroupAPIController::class, 'api']);
 $api_endpoint('/da-auth/status', [\App\Controllers\API\AuthAPIController::class, 'sessionStatus']);
 $api_endpoint('/da-auth/sign-out', [\App\Controllers\API\AuthAPIController::class, 'signOut']);
 $api_endpoint('/show/[i:id]?', [\App\Controllers\API\ShowAPIController::class, 'api']);
@@ -74,8 +72,8 @@ $api_endpoint('/event/[i:id]/check-entries', [\App\Controllers\API\EventAPIContr
 $api_endpoint('/event/[i:id]/entry', [\App\Controllers\API\EventEntryAPIController::class, 'api']);
 $api_endpoint('/event/entry/[i:entryid]', [\App\Controllers\API\EventEntryAPIController::class, 'api']);
 $api_endpoint('/event/entry/[i:entryid]/lazyload', [\App\Controllers\API\EventEntryAPIController::class, 'lazyload']);
-$api_endpoint('/notifications', [\App\Controllers\API\NotificationAPIController::class, 'get'], ['/notif']);
-$api_endpoint('/notifications/[i:id]/read', [\App\Controllers\API\NotificationAPIController::class, 'markRead'], ['/notif/[i:id]/mark-read']);
+$api_endpoint('/notifications', [\App\Controllers\API\NotificationAPIController::class, 'get']);
+$api_endpoint('/notifications/[i:id]/read', [\App\Controllers\API\NotificationAPIController::class, 'markRead']);
 $api_endpoint('/post/[i:id]?', [\App\Controllers\API\PostAPIController::class, 'api']);
 $api_endpoint('/post/[i:id]/lazyload', [\App\Controllers\API\PostAPIController::class, 'lazyload']);
 $api_endpoint('/post/[i:id]/finish', [\App\Controllers\API\PostAPIController::class, 'finishApi']);
@@ -89,7 +87,7 @@ $api_endpoint('/post/check-image', [\App\Controllers\API\PostAPIController::clas
 $api_endpoint('/post/reservation', [\App\Controllers\API\PostAPIController::class, 'addReservation']);
 $api_endpoint('/post/request/[i:id]', [\App\Controllers\API\PostAPIController::class, 'deleteRequest']);
 $api_endpoint('/post/request/suggestion', [\App\Controllers\API\PostAPIController::class, 'suggestRequest']);
-$api_endpoint('/settings/[au:key]', [\App\Controllers\API\SettingAPIController::class, 'api'], ['/setting/[au:key]']);
+$api_endpoint('/settings/[au:key]', [\App\Controllers\API\SettingAPIController::class, 'api']);
 $api_endpoint('/user/session/[i:id]', [\App\Controllers\API\UserAPIController::class, 'sessionApi']);
 $api_endpoint('/user/password', [\App\Controllers\API\UserAPIController::class, 'passwordApi']);
 $api_endpoint('/user/verify', [\App\Controllers\API\UserAPIController::class, 'verifyApi']);

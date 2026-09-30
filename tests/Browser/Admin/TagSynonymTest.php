@@ -12,8 +12,8 @@ it('makes a tag a synonym of another and removes the synonym again from the tag 
 
   // Set the tags up through the API first: logging in as the admin in the browser replaces the API client's session
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $source = $api->post('/cg/tag', ['name' => $sourceName, 'type' => 'app'])['json'];
-  $target = $api->post('/cg/tag', ['name' => $targetName, 'type' => 'app'])['json'];
+  $source = $api->post('/tags', ['name' => $sourceName, 'type' => 'app'])['json'];
+  $target = $api->post('/tags', ['name' => $targetName, 'type' => 'app'])['json'];
 
   try {
     $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
@@ -40,15 +40,15 @@ it('makes a tag a synonym of another and removes the synonym again from the tag 
   }
   finally {
     $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-    $api->request('DELETE', '/cg/tag/' . $source['id']);
-    $api->request('DELETE', '/cg/tag/' . $target['id']);
+    $api->request('DELETE', '/tags/' . $source['id']);
+    $api->request('DELETE', '/tags/' . $target['id']);
   }
 });
 
 it('recounts tag uses from the refresh buttons of the tag list', function () use ($base) {
   $name = 'refresh-tag-' . substr(md5(uniqid('', true)), 0, 6);
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $tag = $api->post('/cg/tag', ['name' => $name, 'type' => 'app', 'addto' => TestSeederConstants::APPEARANCE_ID])['json'];
+  $tag = $api->post('/tags', ['name' => $name, 'type' => 'app', 'addto' => TestSeederConstants::APPEARANCE_ID])['json'];
 
   try {
     $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
@@ -64,6 +64,6 @@ it('recounts tag uses from the refresh buttons of the tag list', function () use
       ->assertSee('use count was updated');
   }
   finally {
-    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/cg/tag/' . $tag['id'], ['sanitycheck' => 1]);
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/tags/' . $tag['id'], ['sanitycheck' => 1]);
   }
 });

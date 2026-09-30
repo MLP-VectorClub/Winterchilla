@@ -52,7 +52,7 @@ class TagAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/tags",
+   *   path="/tags",
    *   description="Search tags for autocomplete purposes, or list tags for management. Staff only.",
    *   tags={"tags"},
    *   @OA\Parameter(name="not", in="query", description="Exclude a tag ID from the results", @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -129,7 +129,7 @@ class TagAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/cg/tags/recount-uses",
+   *   path="/tags/recount-uses",
    *   description="Recalculate the use counts of the given tags. Staff only.",
    *   tags={"tags"},
    *   @OA\RequestBody(required=true, @OA\JsonContent(
@@ -202,7 +202,7 @@ class TagAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/tag/{id}",
+   *   path="/tags/{id}",
    *   description="Get a tag's details. Staff only.",
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -216,7 +216,7 @@ class TagAPIController extends APIController {
    *   @OA\Response(response="404", description="Tag does not exist", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
-   *   path="/cg/tag",
+   *   path="/tags",
    *   description="Create a new tag, optionally adding it to an appearance. Staff only.",
    *   tags={"tags"},
    *   @OA\RequestBody(required=true, @OA\JsonContent(
@@ -242,7 +242,7 @@ class TagAPIController extends APIController {
    *   @OA\Response(response="422", description="A tag with the same name and type already exists, or validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/cg/tag/{id}",
+   *   path="/tags/{id}",
    *   description="Update an existing tag's name, type or title. Staff only.",
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -262,7 +262,7 @@ class TagAPIController extends APIController {
    *   @OA\Response(response="422", description="A tag with the same name and type already exists, or validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/cg/tag/{id}",
+   *   path="/tags/{id}",
    *   description="Delete a tag (or its synonym target if it's a synonym). Staff only. If the tag is in use, a confirmation must be sent via the 'sanitycheck' parameter.",
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -371,7 +371,7 @@ class TagAPIController extends APIController {
 
   /**
    * @OA\Put(
-   *   path="/cg/tag/{id}/synonym",
+   *   path="/tags/{id}/synonym",
    *   description="Mark a tag as a synonym of another tag, merging their usages. Staff only.",
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -393,7 +393,7 @@ class TagAPIController extends APIController {
    *   @OA\Response(response="422", description="Target tag missing or does not exist", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/cg/tag/{id}/synonym",
+   *   path="/tags/{id}/synonym",
    *   description="Remove a tag's synonym relationship, restoring it as a standalone tag. Staff only.",
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),

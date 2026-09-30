@@ -11,6 +11,7 @@ use App\Models\DeviantartUser;
 use App\Models\Post;
 use App\Models\PreviousUsername;
 use App\Models\User;
+use App\Pagination;
 use App\Permission;
 use App\Response;
 use App\UserPrefs;
@@ -322,6 +323,87 @@ class UsersAPIController extends APIController {
       'awaitingApproval' => $user->perm('member')
         ? array_map(fn(Post $p) => PostAPIController::mapPost($p), $user->getPostsAwaitingApproval())
         : null,
+    ]);
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/users/{id}/contributions/{type}",
+   *   security={},
+   *   description="List one kind of a user's contributions, newest concerns first. `requests` is only visible to the user and to staff.",
+   *   tags={"users"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="path", name="type", required=true, @OA\Schema(type="string", enum={"cms-provided", "requests", "reservations", "finished-posts", "fulfilled-requests"})),
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=50, default=10)),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK. `cms-provided` items are `{appearance, favMe}`, every other type lists posts.",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"type", "items", "pagination"},
+   *       @OA\Property(property="type", type="string"),
+   *       @OA\Property(property="items", type="array", @OA\Items(oneOf={@OA\Schema(ref="#/components/schemas/PostItem"), @OA\Schema(type="object", required={"appearance", "favMe"}, @OA\Property(property="appearance", ref="#/components/schemas/PreviewAppearance"), @OA\Property(property="favMe", type="string", nullable=true))})),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
+   *     )
+   *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="The requests of another user (401 when signed out)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  function contributions(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $user = User::find((int)$params['id']);
+    if ($user === null)
+      Response::error(404, 'The user could not be found');
+    $type = $params['type'];
+    if ($type === 'requests' && $user->id !== (Auth::$user->id ?? null) && Permission::insufficient('staff'))
+      Response::denied();
+
+    $size = $_GET['size'] ?? 10;
+    if (!is_numeric($size) || $size < 1 || $size > 50)
+      Response::invalid('size', 'The size must be between 1 and 50.');
+    $size = (int)$size;
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+    $page = (int)$page;
+
+    $getters = [
+      'cms-provided' => 'getCMContributions',
+      'requests' => 'getRequestContributions',
+      'reservations' => 'getReservationContributions',
+      'finished-posts' => 'getFinishedPostContributions',
+      'fulfilled-requests' => 'getApprovedFinishedRequestContributions',
+    ];
+    $getter = $getters[$type];
+    $total = (int)$user->$getter();
+    $pagination = (new Pagination('', $size))->forcePage($page)->calcMaxPages($total);
+    $data = $user->$getter(false, $pagination);
+
+    $items = array_map(function ($item) use ($type) {
+      if ($type !== 'cms-provided')
+        return PostAPIController::mapPost($item);
+
+      return [
+        'appearance' => AppearancesAPIController::mapPreviewAppearance(Appearance::find($item->appearance_id)),
+        'favMe' => $item->favme,
+      ];
+    }, $data);
+
+    Response::ok([
+      'type' => $type,
+      'items' => $items,
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
     ]);
   }
 

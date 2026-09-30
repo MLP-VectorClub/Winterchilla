@@ -51,6 +51,7 @@ $api_endpoint('/users', [\App\Controllers\API\UsersAPIController::class, 'list']
 $api_endpoint('/users/da/[un:username]', [\App\Controllers\API\UsersAPIController::class, 'getByName']);
 $api_endpoint('/users/[i:id]', [\App\Controllers\API\UsersAPIController::class, 'getById'], 'GET');
 $api_endpoint('/users/[i:id]/profile', [\App\Controllers\API\UsersAPIController::class, 'profile'], 'GET');
+$api_endpoint('/users/[i:id]/contributions/[(cms-provided|requests|reservations|finished-posts|fulfilled-requests):type]', [\App\Controllers\API\UsersAPIController::class, 'contributions'], 'GET');
 $api_endpoint('/config', [\App\Controllers\API\ConfigAPIController::class, 'get']);
 $api_endpoint('/about/connection', [\App\Controllers\API\AboutAPIController::class, 'connection']);
 $api_endpoint('/about/members', [\App\Controllers\API\AboutAPIController::class, 'members']);

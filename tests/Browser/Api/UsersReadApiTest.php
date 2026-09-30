@@ -79,3 +79,41 @@ it('lists contributions and personal guides on a profile', function () {
 it('answers 404 for the profile of an unknown user', function () {
   expect(ApiClient::guest()->get('/users/987654/profile')['status'])->toBe(404);
 });
+
+it('lists a user\'s contributions by type with Luna-shaped pagination', function () {
+  $id = TestSeederConstants::USER_ID;
+  $guest = ApiClient::guest();
+
+  $posts = $guest->get("/users/$id/contributions/reservations");
+  expect($posts['status'])->toBe(200)
+    ->and($posts['json']['type'])->toBe('reservations')
+    ->and($posts['json']['pagination'])->toHaveKeys(['currentPage', 'totalPages', 'totalItems', 'itemsPerPage'])
+    ->and($posts['json']['pagination']['itemsPerPage'])->toBe(10)
+    ->and($posts['json']['items'])->toBeArray();
+
+  $marks = $guest->get("/users/$id/contributions/cms-provided");
+  expect($marks['status'])->toBe(200)->and($marks['json']['items'])->toBeArray();
+  foreach ($marks['json']['items'] as $item)
+    expect($item)->toHaveKeys(['appearance', 'favMe'])->and($item['appearance'])->toHaveKeys(['id', 'label', 'previewData']);
+});
+
+it('keeps the requests contributions of a user to themselves and staff', function () {
+  $id = TestSeederConstants::USER_ID;
+
+  expect(ApiClient::guest()->get("/users/$id/contributions/requests")['status'])->toBe(401);
+  expect(ApiClient::loggedInAs(TestSeederConstants::FRESH_USER_ID)->get("/users/$id/contributions/requests")['status'])->toBe(403);
+  $own = ApiClient::loggedInAs($id)->get("/users/$id/contributions/requests");
+  expect($own['status'])->toBe(200)->and($own['json']['pagination']['totalItems'])->toBeGreaterThanOrEqual(1);
+  expect($own['json']['items'][0])->toHaveKeys(['id', 'kind', 'label']);
+  expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get("/users/$id/contributions/requests")['status'])->toBe(200);
+});
+
+it('validates contributions queries', function () {
+  $id = TestSeederConstants::USER_ID;
+  $guest = ApiClient::guest();
+
+  expect($guest->get("/users/$id/contributions/reservations", ['size' => 99])['json']['errors'])->toHaveKey('size');
+  expect($guest->get("/users/$id/contributions/reservations", ['page' => 0])['json']['errors'])->toHaveKey('page');
+  expect($guest->get('/users/987654/contributions/reservations')['status'])->toBe(404);
+  expect($guest->get("/users/$id/contributions/nonsense")['status'])->toBe(404);
+});

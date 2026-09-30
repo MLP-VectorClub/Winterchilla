@@ -332,8 +332,11 @@ What is left to prepare, in order:
    the write API moves to Luna's style, renamed **in place** (Winterchilla's client is the only consumer and deploys with the API, so no aliases; client calls change in the same commit). The full
    old → canonical mapping, the router change it needs (per-method routes) and the order of work are in
    `docs/api-path-alignment.md` (path renames are **done** for every controller; "As built" there lists the deviations). Request bodies are renamed to camelCase afterwards, also in place.
-6. **Finish the OpenAPI docs**: loose bodies (HTML-fragment fields, some request bodies), one validation error per response (`Input`
-   still stops at the first), and a CI step that generates Celestia's types from the spec so it can't silently regress.
+6. **Finish the OpenAPI docs**: loose bodies (HTML-fragment fields, some request bodies) and one validation error per response (`Input`
+   still stops at the first) are still open. The regression guard is in place: `tests/ApiSchemaTest.php` (no swagger-php warnings, unique
+   readable operation IDs, no dangling `$ref`, no old path prefixes) runs with the unit tests, and the CI job "API Types" generates the
+   document and converts it with `openapi-typescript@7.13.0` (the version `packages/api-types` uses) and type-checks the result. Celestia's
+   own index generator lives in the other repo; it was run by hand against the current spec (312 exported types, type-checks).
 Every new endpoint ships with its contract test (`tests/Browser/Api/`) and docblock in the same commit, like the existing ones.
 
 ### Current state (audit)

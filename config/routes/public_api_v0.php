@@ -61,7 +61,10 @@ $api_endpoint('/admin/logs/[i:id]', [\App\Controllers\API\AdminAPIController::cl
 $api_endpoint('/useful-links', [\App\Controllers\API\AdminAPIController::class, 'usefulLinksApi'], 'POST');
 $api_endpoint('/useful-links/[i:id]', [\App\Controllers\API\AdminAPIController::class, 'usefulLinksApi']);
 $api_endpoint('/useful-links/order', [\App\Controllers\API\AdminAPIController::class, 'reorderUsefulLinks']);
-$api_endpoint('/admin/notices/[i:id]?', [\App\Controllers\API\AdminAPIController::class, 'noticesApi']);
+$api_endpoint('/notices', [\App\Controllers\API\NoticesAPIController::class, 'list'], 'GET');
+$api_endpoint('/notices', [\App\Controllers\API\NoticesAPIController::class, 'api'], 'POST');
+$api_endpoint('/notices/current', [\App\Controllers\API\NoticesAPIController::class, 'current'], 'GET');
+$api_endpoint('/notices/[i:id]', [\App\Controllers\API\NoticesAPIController::class, 'api']);
 $api_endpoint('/admin/stat-cache', [\App\Controllers\API\AdminAPIController::class, 'statCacheApi']);
 $api_endpoint('/cg/full', [\App\Controllers\API\ColorGuideAPIController::class, 'fullList']);
 $api_endpoint('/color-guide', [\App\Controllers\API\ColorGuideAPIController::class, 'index']);

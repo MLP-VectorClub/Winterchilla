@@ -8,7 +8,6 @@ use App\DB;
 use App\Input;
 use App\Logs;
 use App\Models\Log;
-use App\Models\Notice;
 use App\Models\UsefulLink;
 use App\Permission;
 use App\Response;
@@ -363,72 +362,6 @@ class AdminAPIController extends APIController {
     }
 
     Response::noContent();
-  }
-
-  private ?Notice $notice;
-
-  private function load_notice($params) {
-    if (empty($params['id']))
-      CoreUtils::notFound();
-    $this->notice = Notice::find($params['id']);
-
-    if (!$this->creating && empty($this->notice))
-      Response::error(404, 'The specified notice does not exist');
-  }
-
-  public function noticesApi($params) {
-    # TODO Implement notice editing on the client side
-    CoreUtils::notFound();
-
-    $this->load_notice($params);
-
-    switch ($this->action){
-      case 'GET':
-        Response::ok(CoreUtils::camelKeys($this->notice->to_array()));
-      break;
-      case 'POST':
-      case 'PUT':
-        if ($this->creating){
-          $this->notice = new Notice([
-            'posted_by' => Auth::$user->id,
-          ]);
-        }
-
-        $message_html = (new Input('messageHtml', 'string', [
-          Input::IN_RANGE => [null, 500],
-          Input::CUSTOM_ERROR_MESSAGES => [
-            Input::ERROR_MISSING => 'Message is missing',
-            Input::ERROR_INVALID => 'Message is invalid',
-            Input::ERROR_RANGE => 'Message cannot be longer than @max chars',
-          ],
-        ]))->out();
-        CoreUtils::checkStringValidity($message_html, INVERSE_PRINTABLE_ASCII_PATTERN, 'Message');
-        $this->notice->message_html = CoreUtils::sanitizeHtml($message_html);
-
-        $hide_after = (new Input('hideAfter', 'timestamp', [
-          Input::IN_RANGE => [time(), null],
-          Input::CUSTOM_ERROR_MESSAGES => [
-            Input::ERROR_MISSING => 'Hide after date is missing',
-            Input::ERROR_INVALID => 'Hide after date is invalid',
-            Input::ERROR_RANGE => 'Hide after date cannot be in the past',
-          ],
-        ]))->out();
-        $this->notice->hide_after = $hide_after;
-
-        # TODO Validate notice type
-        $this->notice->type = (new Input('type', 'string'))->out();
-
-        $this->notice->save();
-        Response::ok(['notice' => CoreUtils::camelKeys($this->notice->to_array())], $this->creating ? 201 : 200);
-      break;
-      case 'DELETE':
-        $this->notice->delete();
-
-        Response::noContent();
-      break;
-      default:
-        CoreUtils::notAllowed();
-    }
   }
 
   /**

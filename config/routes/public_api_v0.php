@@ -83,6 +83,7 @@ $api_endpoint('/show/[i:id]/vote', [\App\Controllers\API\ShowAPIController::clas
 $api_endpoint('/show/[i:id]/appearances', [\App\Controllers\API\ShowAPIController::class, 'guideRelationsApi']);
 $api_endpoint('/show/next', [\App\Controllers\API\ShowAPIController::class, 'next']);
 $api_endpoint('/show/prefill', [\App\Controllers\API\ShowAPIController::class, 'prefill']);
+$api_endpoint('/events', [\App\Controllers\API\EventAPIController::class, 'list'], 'GET');
 $api_endpoint('/events', [\App\Controllers\API\EventAPIController::class, 'api'], 'POST');
 $api_endpoint('/events/[i:id]', [\App\Controllers\API\EventAPIController::class, 'api']);
 $api_endpoint('/events/[i:id]/finalize', [\App\Controllers\API\EventAPIController::class, 'finalize']);

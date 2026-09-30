@@ -12,7 +12,7 @@ it('disables event management for staff with 501 and enforces permissions first'
   $guest = ApiClient::guest();
   $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
 
-  foreach (['GET', 'PUT', 'DELETE'] as $method) {
+  foreach (['PUT', 'DELETE'] as $method) {
     expect($guest->request($method, '/events/' . $eventId)['status'])->toBe(401)
       ->and($user->request($method, '/events/' . $eventId)['status'])->toBe(403);
   }
@@ -20,7 +20,7 @@ it('disables event management for staff with 501 and enforces permissions first'
     ->and($user->post('/events/' . $eventId . '/finalize')['status'])->toBe(403);
 
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  foreach ([['GET', '/events/' . $eventId], ['POST', '/events'], ['PUT', '/events/' . $eventId], ['DELETE', '/events/' . $eventId], ['POST', '/events/' . $eventId . '/finalize']] as [$method, $path]) {
+  foreach ([['POST', '/events'], ['PUT', '/events/' . $eventId], ['DELETE', '/events/' . $eventId], ['POST', '/events/' . $eventId . '/finalize']] as [$method, $path]) {
     $r = $admin->request($method, $path);
     expect($r['status'])->toBe(501)->and($r['json'])->toHaveKey('message')->not->toHaveKey('status');
   }
@@ -99,4 +99,28 @@ it('updates an entry from a cached deviation link and returns its rendered list 
   // Links that aren't deviations or Sta.sh submissions are rejected
   $r = $user->request('PUT', $path, ['link' => 'http://example.com/whatever', 'title' => 'Seeded Entry']);
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('link');
+});
+
+it('lists events publicly with Luna-shaped pagination', function () use ($eventId) {
+  $r = ApiClient::guest()->get('/events');
+
+  expect($r['status'])->toBe(200)
+    ->and($r['json']['pagination'])->toHaveKeys(['currentPage', 'totalPages', 'totalItems', 'itemsPerPage'])
+    ->and(array_column($r['json']['events'], 'id'))->toContain($eventId)
+    ->and($r['json']['events'][0])->toHaveKeys(['id', 'name', 'startsAt', 'endsAt', 'maxEntries', 'entryRole', 'voteRole', 'resultFavMe', 'finalizedAt'])
+    ->and($r['json'])->not->toHaveKey('status');
+  expect(ApiClient::guest()->get('/events', ['size' => 99])['json']['errors'])->toHaveKey('size');
+  expect(ApiClient::guest()->get('/events', ['page' => 0])['json']['errors'])->toHaveKey('page');
+});
+
+it('shows an event with its entries to everyone', function () use ($eventId) {
+  $r = ApiClient::guest()->get('/events/' . $eventId);
+
+  expect($r['status'])->toBe(200)
+    ->and($r['json']['id'])->toBe($eventId)
+    ->and($r['json'])->toHaveKeys(['descriptionSrc', 'addedBy', 'createdAt', 'canEnter', 'canVote', 'ongoing', 'ended', 'entries'])
+    ->and($r['json']['canEnter'])->toBeFalse();
+  expect($r['json']['entries'])->not->toBeEmpty()
+    ->and($r['json']['entries'][0])->toHaveKeys(['id', 'title', 'submittedBy', 'submissionProvider', 'submissionId', 'previewUrl', 'fullUrl', 'createdAt']);
+  expect(ApiClient::guest()->get('/events/987654')['status'])->toBe(404);
 });

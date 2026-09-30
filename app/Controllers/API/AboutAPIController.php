@@ -3,7 +3,6 @@
 namespace App\Controllers\API;
 
 use App\CoreUtils;
-use App\HTTP;
 use App\Response;
 
 /**
@@ -51,24 +50,18 @@ class AboutAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
-   *           type="object",
-   *           description="Git revision information under the git key",
-   *           required={
-   *             "git",
-   *           },
-   *           additionalProperties=false,
-   *           @OA\Property(
-   *             property="git",
-   *             type="object",
-   *             ref="#/components/schemas/GitInfo"
-   *           )
-   *         )
-   *       }
+   *       type="object",
+   *       description="Git revision information under the git key",
+   *       required={"git"},
+   *       additionalProperties=false,
+   *       @OA\Property(
+   *         property="git",
+   *         type="object",
+   *         ref="#/components/schemas/GitInfo"
+   *       )
    *     )
-   *   )
+   *   ),
+   *   @OA\Response(response="500", description="Git revision information is unavailable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   function server() {
@@ -77,12 +70,10 @@ class AboutAPIController extends APIController {
 
     $git = CoreUtils::getFooterGitInfoRaw();
 
-    if (empty($git)){
-      HTTP::statusCode(500);
-      Response::fail('GIT_INFO_MISSING');
-    }
+    if (empty($git))
+      Response::error(500, 'Git revision information is unavailable');
 
-    Response::done([
+    Response::ok([
       'git' => self::mapGit($git),
     ]);
   }
@@ -97,14 +88,9 @@ class AboutAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
-   *           type="object",
-   *           required={"html"},
-   *           @OA\Property(property="html", type="string", description="Rendered upcoming items HTML")
-   *         )
-   *       }
+   *       type="object",
+   *       required={"html"},
+   *       @OA\Property(property="html", type="string", description="Rendered upcoming items HTML")
    *     )
    *   )
    * )
@@ -113,6 +99,6 @@ class AboutAPIController extends APIController {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
 
-    Response::done(['html' => CoreUtils::getSidebarUpcoming(NOWRAP)]);
+    Response::ok(['html' => CoreUtils::getSidebarUpcoming(NOWRAP)]);
   }
 }

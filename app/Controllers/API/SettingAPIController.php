@@ -2,6 +2,7 @@
 
 namespace App\Controllers\API;
 
+use App\Auth;
 use App\CoreUtils;
 use App\GlobalSettings;
 use App\Permission;
@@ -13,14 +14,18 @@ class SettingAPIController extends APIController {
   public function __construct() {
     parent::__construct();
 
+    if (!Auth::$signed_in)
+      Response::error(401);
     if (Permission::insufficient('staff'))
-      CoreUtils::noPerm();
+      Response::error(403);
   }
 
   private $setting, $value;
 
   public function load_setting($params) {
     $this->setting = $params['key'];
+    if (!isset(GlobalSettings::DEFAULTS[$this->setting]))
+      Response::error(404, "Unknown setting {$this->setting}");
     $this->value = GlobalSettings::get($this->setting);
   }
 
@@ -38,16 +43,15 @@ class SettingAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(
-   *         required={"value"},
-   *         additionalProperties=false,
-   *         @OA\Property(property="value", type="string")
-   *       )
-   *     })
+   *     @OA\JsonContent(
+   *       required={"value"},
+   *       additionalProperties=false,
+   *       @OA\Property(property="value", type="string")
+   *     )
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Unknown setting key", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
    *   path="/setting/{key}",
@@ -67,17 +71,17 @@ class SettingAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(
-   *         required={"value"},
-   *         additionalProperties=false,
-   *         @OA\Property(property="value", type="string")
-   *       )
-   *     })
+   *     @OA\JsonContent(
+   *       required={"value"},
+   *       additionalProperties=false,
+   *       @OA\Property(property="value", type="string")
+   *     )
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="default", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Unknown setting key", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
+   *   @OA\Response(response="500", description="The value could not be saved", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function api($params) {
@@ -85,27 +89,28 @@ class SettingAPIController extends APIController {
 
     switch ($this->action){
       case 'GET':
-        Response::done(['value' => $this->value]);
+        Response::ok(['value' => $this->value]);
       break;
       case 'PUT':
         $this->load_setting($params);
 
         if (!isset($_REQUEST['value']))
-          Response::fail('Missing setting value');
+          Response::error(422, 'The given data was invalid.', ['errors' => ['value' => ['The value field is required.']]]);
 
         try {
           $newvalue = GlobalSettings::process($this->setting);
         }
         catch (Exception $e){
-          Response::fail('Preference value error: '.$e->getMessage());
+          Response::error(422, 'The given data was invalid.', ['errors' => ['value' => [$e->getMessage()]]]);
         }
 
         if ($newvalue === $this->value)
-          Response::done(['value' => $newvalue]);
+          Response::ok(['value' => $newvalue ?? $this->value]);
         if (!GlobalSettings::set($this->setting, $newvalue))
-          Response::dbError();
+          Response::dbError(status: 500);
 
-        Response::done(['value' => $newvalue]);
+        // An empty value resets the setting, so report the effective (default) value
+        Response::ok(['value' => GlobalSettings::get($this->setting)]);
       break;
       default:
         CoreUtils::notAllowed();

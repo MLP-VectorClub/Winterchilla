@@ -15,7 +15,7 @@ class NotificationAPIController extends APIController {
     parent::__construct();
 
     if (!Auth::$signed_in)
-      Response::fail();
+      Response::error(401);
   }
 
   /**
@@ -26,16 +26,14 @@ class NotificationAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(
-   *         required={"list"},
-   *         additionalProperties=false,
-   *         @OA\Property(property="list", type="string", description="Rendered HTML for the notification list")
-   *       )
-   *     })
+   *     @OA\JsonContent(
+   *       required={"list"},
+   *       additionalProperties=false,
+   *       @OA\Property(property="list", type="string", description="Rendered HTML for the notification list")
+   *     )
    *   ),
-   *   @OA\Response(response="default", description="Not signed in, or an error occurred", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="500", description="The notifications could not be fetched", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function get() {
@@ -44,11 +42,11 @@ class NotificationAPIController extends APIController {
 
     try {
       $notifs = Notifications::getHTML(Notifications::get(Notifications::UNREAD_ONLY), NOWRAP);
-      Response::done(['list' => $notifs]);
+      Response::ok(['list' => $notifs]);
     }
     catch (Throwable $e){
       CoreUtils::logError('Exception caught when fetching notifications: '.$e->getMessage()."\n".$e->getTraceAsString());
-      Response::fail('An error prevented the notifications from appearing. If this persists, <a class="send-feedback">let us know</a>.');
+      Response::error(500, 'An error prevented the notifications from appearing.');
     }
   }
 
@@ -58,8 +56,9 @@ class NotificationAPIController extends APIController {
    *   description="Mark one of the current user's notifications as read. Requires authentication",
    *   tags={"notifications"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="default", description="Notification does not exist or does not belong to the current user", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Marked as read"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Notification does not exist or does not belong to the current user", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function markRead($params) {
@@ -69,10 +68,10 @@ class NotificationAPIController extends APIController {
     $nid = (int)$params['id'];
     $notif = Notification::find($nid);
     if (empty($notif) || $notif->recipient_id !== Auth::$user->id)
-      Response::fail("The notification (#$nid) does not exist");
+      Response::error(404, "The notification (#$nid) does not exist");
 
     $notif->safeMarkRead();
 
-    Response::done();
+    Response::noContent();
   }
 }

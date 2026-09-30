@@ -35,10 +35,12 @@ class GlobalSettings {
    * @return bool
    * @throws ActiveRecordException
    */
-  public static function set(string $name, string $value):bool {
+  public static function set(string $name, ?string $value):bool {
     if (!isset(static::DEFAULTS[$name]))
       Response::fail("Key $name is not allowed");
     $default = static::DEFAULTS[$name];
+    // null (an empty submitted value) resets the setting to its default
+    $value ??= $default;
 
     $setting = GlobalSetting::find_by_name($name);
     if ($setting !== null){
@@ -75,7 +77,7 @@ class GlobalSettings {
 
       case 'dev_role_label':
         if (Permission::insufficient('developer'))
-          Response::fail("You cannot change the $name setting");
+          Response::error(403, "You cannot change the $name setting");
 
         if (empty($value) || !isset(Permission::ROLES_ASSOC[$value]))
           throw new RuntimeException('The specified role is invalid');

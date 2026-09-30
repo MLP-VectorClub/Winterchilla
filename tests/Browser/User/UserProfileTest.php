@@ -97,3 +97,12 @@ it('redirects a legacy @username URL to the user ID URL', function () use ($base
   visit($base . '/@TestUser/contrib/cms-provided')
     ->assertUrlIs($base . '/users/' . TestSeederConstants::USER_ID . '/contrib/cms-provided');
 });
+
+it('lazy-loads deviation previews on a contributions page through the API', function () use ($base) {
+  // The seeded finished post's deviation is cached, so its preview link comes back from the API
+  visit($base . '/users/' . TestSeederConstants::ADMIN_ID . '/contrib/finished-posts')
+    ->assertNoJavaScriptErrors()
+    // The promise placeholder is replaced once the API has answered (a failure would show an error dialog instead)
+    ->assertMissing('.deviation-promise')
+    ->assertDontSee('Cannot load deviation');
+});

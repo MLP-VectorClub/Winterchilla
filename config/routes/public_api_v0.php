@@ -45,6 +45,7 @@ $api_endpoint('/cg/appearance/[i:id]/sanitize-svg', [\App\Controllers\API\Appear
 $api_endpoint('/cg/appearance/[i:id]/selective', [\App\Controllers\API\AppearanceAPIController::class, 'selectiveClear']);
 $api_endpoint('/cg/appearance/[i:id]/guide-relations', [\App\Controllers\API\AppearanceAPIController::class, 'guideRelationsApi']);
 $api_endpoint('/cg/appearance/[i:id]/pin', [\App\Controllers\API\AppearanceAPIController::class, 'pinApi']);
+$api_endpoint('/cg/full', [\App\Controllers\API\ColorGuideAPIController::class, 'fullList']);
 $api_endpoint('/cg/full/reorder', [\App\Controllers\API\ColorGuideAPIController::class, 'reorderFullList']);
 $api_endpoint('/cg/export', [\App\Controllers\API\ColorGuideAPIController::class, 'export']);
 $api_endpoint('/cg/reindex', [\App\Controllers\API\ColorGuideAPIController::class, 'reindex']);
@@ -86,6 +87,7 @@ $api_endpoint('/setting/[au:key]', [\App\Controllers\API\SettingAPIController::c
 $api_endpoint('/user/session/[i:id]', [\App\Controllers\API\UserAPIController::class, 'sessionApi']);
 $api_endpoint('/user/password', [\App\Controllers\API\UserAPIController::class, 'passwordApi']);
 $api_endpoint('/user/verify', [\App\Controllers\API\UserAPIController::class, 'verifyApi']);
+$api_endpoint('/user/contrib/lazyload/[favme:favme]', [\App\Controllers\API\UserAPIController::class, 'contribLazyload']);
 $api_endpoint('/user/[i:id]/avatar-wrap', [\App\Controllers\API\UserAPIController::class, 'avatarWrap']);
 $api_endpoint('/user/[i:id]/contrib-cache', [\App\Controllers\API\UserAPIController::class, 'contribCacheApi']);
 $api_endpoint('/user/[i:id]/role', [\App\Controllers\API\UserAPIController::class, 'roleApi']);

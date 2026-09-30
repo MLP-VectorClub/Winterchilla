@@ -7,21 +7,17 @@
     $ReorderCancelBtn = $('#guide-reorder-cancel');
   const { GUIDE } = window;
   $sortBy.on('change', function() {
-    let baseUrl = $sortBy.data('base-url'),
-      val = $sortBy.val(),
-      url = `${baseUrl}?ajax&sort_by=${val}`;
+    const val = $sortBy.val();
 
     $.Dialog.wait('Changing sort order');
 
-    $.get(url, $.mkAjaxHandler(function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      $fullList.html(this.html);
+    $.API.get('/cg/full', { guide: GUIDE, sort_by: val }).done(function(resp = {}) {
+      $fullList.html(resp.html);
       reobserve();
       $ReorderBtn.prop('disabled', val.length > 0);
-      history.replaceState(history.state, '', this.stateUrl);
+      history.replaceState(history.state, '', resp.stateUrl);
       $.Dialog.close();
-    }));
+    }).fail($.API.fail());
   });
 
   const io = new IntersectionObserver(entries => {

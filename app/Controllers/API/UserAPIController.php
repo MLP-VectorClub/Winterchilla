@@ -6,6 +6,7 @@ use App\Auth;
 use App\Controllers\Traits\UserLoaderTrait;
 use App\CoreUtils;
 use App\DB;
+use App\DeviantArt;
 use App\Input;
 use App\Models\BlockedEmail;
 use App\Models\EmailVerification;
@@ -583,5 +584,31 @@ class UserAPIController extends APIController {
     $this->load_user($params);
 
     Response::ok(['html' => $this->user->getAvatarWrap()]);
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/user/contrib/lazyload/{favme}",
+   *   description="Get the rendered link (with preview) of a deviation shown on a contributions page",
+   *   tags={"users"},
+   *   security={},
+   *   @OA\Parameter(name="favme", in="path", required=true, @OA\Schema(type="string", example="d7abcde")),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(type="object", required={"html"}, @OA\Property(property="html", type="string", description="Rendered link with a preview image"))
+   *   ),
+   *   @OA\Response(response="404", description="The deviation could not be found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
+  public function contribLazyload($params):void {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $cached_deviation = DeviantArt::getCachedDeviation($params['favme']);
+    if (empty($cached_deviation))
+      Response::error(404, 'The deviation could not be found');
+
+    Response::ok(['html' => $cached_deviation->toLinkWithPreview()]);
   }
 }

@@ -304,14 +304,6 @@ class UserController extends Controller {
     ]);
   }
 
-  public function contribLazyload($params):void {
-    $CachedDeviation = DeviantArt::getCachedDeviation($params['favme']);
-    if (empty($CachedDeviation))
-      Response::error(404, 'The deviation could not be found');
-
-    Response::ok(['html' => $CachedDeviation->toLinkWithPreview()]);
-  }
-
   public function list():void {
     $is_staff = Permission::sufficient('staff');
     if (!$is_staff){

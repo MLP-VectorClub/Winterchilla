@@ -498,8 +498,14 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       existing appearance/color group/tag synonym/sign-out flows. Untested conversions (worth a click-through before deploying):
       post reserve/finish/approve/unbreak on episode pages, event entry edit, personal guide points/slots, tag editing dialogs,
       cutie mark editor, sprite upload/remove, relations editors.
-- [ ] Left: the page-level JSON views that raw-`$.get` clients read (`/cg/.../full?ajax`, `contribLazyload`) still use their own
-      shapes and `$.mkAjaxHandler`; the WebSocket server's own `{status}` messages are unrelated.
+- [x] The page-level JSON views are API endpoints now, so every client-side data request goes through `$.API`:
+      `GET /cg/full?guide&sort_by` (was `/cg/[guide]/full?ajax`; the page and the API share
+      `ColorGuideController::getFullListData()`) and `GET /user/contrib/lazyload/{favme}` (was a page route on
+      `UserController`). The dead JSON branches of the guide search ("I'm feeling lucky" is a plain redirect) are removed.
+      Fixed on the way: `POST /cg/full/reorder` ignored the `guide` the client sent (it only read a route parameter that
+      doesn't exist), so it re-rendered the list of *every* guide; it now requires `guide` (422 otherwise). Covered by
+      `ColorGuideApiTest` plus UI tests for re-sorting the full list and lazy-loading deviations on a contributions page.
+      Only `jquery.uploadzone.js` still makes its own ajax call (multipart uploads to API endpoints), with its own error handler.
 
 ## Database cutover to Luna (audit, nothing implemented yet)
 

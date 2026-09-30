@@ -62,10 +62,13 @@ class ColorGuideController extends Controller {
     CGUtils::redirectToPreferredGuidePath();
   }
 
-  public function fullList($params):void {
-    $this->_initialize($params);
-
-    $sort_by = $_GET['sort_by'] ?? null;
+  /**
+   * The appearances of a guide's full list in the requested order, along with the (normalized) order and the page's URL
+   * for that order. Shared by the page and the API.
+   *
+   * @return array{0: Appearance[], 1: string, 2: string}
+   */
+  public static function getFullListData(?string $guide, ?string $sort_by, string $base_path):array {
     if (!isset(self::FULL_LIST_ORDER[$sort_by]))
       $sort_by = 'relevance';
     switch ($sort_by){
@@ -76,17 +79,19 @@ class ColorGuideController extends Controller {
         DB::$instance->orderBy('created_at', 'DESC');
       break;
     }
-    $appearances = Appearances::get($this->guide, null, null, 'id,label,private,created_at');
+    $appearances = Appearances::get($guide, null, null, 'id,label,private,created_at');
 
-    $path = Uri::new("{$this->path}/full");
+    $path = Uri::new("$base_path/full");
     if ($sort_by !== 'relevance')
       $path = Modifier::wrap($path)->appendQuery(Query::fromVariable(['sort_by'=>$sort_by]))->unwrap();
 
-    if (CoreUtils::isJSONExpected())
-      Response::done([
-        'html' => CGUtils::getFullListHTML($appearances, $sort_by, $this->guide, NOWRAP),
-        'stateUrl' => (string)$path,
-      ]);
+    return [$appearances, $sort_by, (string)$path];
+  }
+
+  public function fullList($params):void {
+    $this->_initialize($params);
+
+    [$appearances, $sort_by, $path] = self::getFullListData($this->guide, $_GET['sort_by'] ?? null, $this->path);
 
     CoreUtils::fixPath($path);
 
@@ -187,15 +192,11 @@ class ColorGuideController extends Controller {
     $appearances_per_page = UserPrefs::get('cg_itemsperpage');
     $elastic_avail = CGUtils::isElasticAvailable();
     $searching = !empty($_GET['q']) && CoreUtils::trim($_GET['q']) !== '';
-    $json_response = CoreUtils::isJSONExpected();
     if ($elastic_avail){
       $pagination = new Pagination($this->path, $appearances_per_page);
       [$appearances, $search_query] = CGUtils::searchGuide($pagination, $this->guide, $searching, $title);
     }
     else {
-      if ($searching && $json_response)
-        Response::error(503, 'The ElasticSearch server is currently down and search is not available, sorry for the inconvenience. Please let us know about this issue.', ['unavail' => true]);
-
       $search_query = null;
       $entry_count = DB::$instance->where('guide', $this->guide)->where('id != 0')->count('appearances');
 
@@ -204,12 +205,8 @@ class ColorGuideController extends Controller {
     }
 
     if (isset($_REQUEST['btnl'])){
+      // The "I'm feeling lucky" button: go straight to the first result
       $found = !empty($appearances[0]->id);
-      if (CoreUtils::isJSONExpected()){
-        if (!$found)
-          Response::error(404, 'Your search returned no results.');
-        Response::ok(['goto' => $appearances[0]->toURL()]);
-      }
       if ($found)
         HTTP::tempRedirect($appearances[0]->toURL());
     }

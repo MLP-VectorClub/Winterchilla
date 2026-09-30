@@ -11,12 +11,11 @@
 
       const favme = el.dataset.favme;
 
-      $.get('/user/contrib/lazyload/' + favme, $.mkAjaxHandler(function() {
-        // Failures (e.g. 404) never get here: the global status handlers report them
-        $.loadImages(this.html).then(function(resp) {
-          $(el).replaceWith(resp.$el);
+      $.API.get('/user/contrib/lazyload/' + favme).done(function(resp = {}) {
+        $.loadImages(resp.html).then(function(loaded) {
+          $(el).replaceWith(loaded.$el);
         });
-      }));
+      }).fail($.API.fail('Cannot load deviation ' + favme));
     });
   });
 

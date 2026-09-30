@@ -93,7 +93,6 @@ $page_route('/users/[i:user_id](-[uc]?)?', [\App\Controllers\UserController::cla
 $page_route('/[sett]', [\App\Controllers\UserController::class, 'profile']);
 $page_route('/u/[uuid:uuid]', [\App\Controllers\UserController::class, 'profileByUuid']);
 $page_route('/users/[i:user_id]/contrib/[ad:type]/[i]?', [\App\Controllers\UserController::class, 'contrib']);
-$page_route('/user/contrib/lazyload/[favme:favme]', [\App\Controllers\UserController::class, 'contribLazyload']);
 $page_route('/users/[i:id]?/account', [\App\Controllers\UserController::class, 'account']);
 $page_route('/users/verify', [\App\Controllers\UserController::class, 'verify']);
 // Forced redirects from the old URL structure

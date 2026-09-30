@@ -190,3 +190,11 @@ it('serves the rendered file instead of the source to guests requesting ?source'
   expect($res['status'])->toBe(200)
     ->and($res['headers']['content-disposition'] ?? '')->not->toContain('(source)');
 });
+
+it('re-sorts the full list through the API when the sort order changes', function () use ($base) {
+  visit($base . '/cg/pony/full')
+    ->assertNoJavaScriptErrors()
+    ->select('#sort-by', 'label')
+    ->assertQueryStringHas('sort_by', 'label')
+    ->assertSee('Twilight Sparkle');
+});

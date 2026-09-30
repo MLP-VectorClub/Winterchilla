@@ -4,6 +4,7 @@ namespace App\Controllers\API;
 
 use App\Appearances;
 use App\CGUtils;
+use App\Controllers\ColorGuideController;
 use App\Controllers\Traits\ColorGuideAccessTrait;
 use App\CoreUtils;
 use App\Input;
@@ -20,7 +21,8 @@ class ColorGuideAPIController extends APIController {
    *   description="Reorder the appearances in a guide's full list. Staff only.",
    *   tags={"color guide"},
    *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"list"},
+   *     required={"list","guide"},
+   *     @OA\Property(property="guide", ref="#/components/schemas/GuideName", description="The guide whose full list is returned"),
    *     @OA\Property(property="list", type="array", description="Appearance IDs in the desired order", @OA\Items(ref="#/components/schemas/OneBasedId")),
    *     @OA\Property(property="ordering", type="string", enum={"label","relevance","added"}, description="Sort order used to render the returned list")
    *   )),
@@ -40,10 +42,11 @@ class ColorGuideAPIController extends APIController {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
 
-    $this->_initialize($params);
-
     if (Permission::insufficient('staff'))
       Response::denied();
+
+    // The guide comes with the request body (there is no route parameter for it)
+    $guide = self::validateGuide();
 
     Appearances::reorder((new Input('list', 'int[]', [
       Input::CUSTOM_ERROR_MESSAGES => [
@@ -56,7 +59,51 @@ class ColorGuideAPIController extends APIController {
       Input::IS_OPTIONAL => true,
     ]))->out();
 
-    Response::ok(['html' => CGUtils::getFullListHTML(Appearances::get($this->guide), $ordering, $this->guide, NOWRAP)]);
+    Response::ok(['html' => CGUtils::getFullListHTML(Appearances::get($guide), $ordering, $guide, NOWRAP)]);
+  }
+
+  private static function validateGuide():string {
+    return (new Input('guide', function ($value) {
+      if (!isset(CGUtils::GUIDE_MAP[$value]))
+        return Input::ERROR_INVALID;
+    }, [
+      Input::CUSTOM_ERROR_MESSAGES => [
+        Input::ERROR_MISSING => 'The guide is missing',
+        Input::ERROR_INVALID => 'The guide (@value) is invalid',
+      ],
+    ]))->out();
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/cg/full",
+   *   description="Get the rendered full list of a guide in the requested order, along with the URL of the full list page for that order",
+   *   tags={"color guide"},
+   *   security={},
+   *   @OA\Parameter(name="guide", in="query", required=true, @OA\Schema(ref="#/components/schemas/GuideName")),
+   *   @OA\Parameter(name="sort_by", in="query", required=false, @OA\Schema(type="string", enum={"label","relevance","added"}, default="relevance")),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(type="object", required={"html","stateUrl"},
+   *       @OA\Property(property="html", type="string", description="Rendered HTML of the full list"),
+   *       @OA\Property(property="stateUrl", type="string", description="URL of the full list page in this order")
+   *     )
+   *   ),
+   *   @OA\Response(response="422", description="Missing or invalid guide", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function fullList():void {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $guide = self::validateGuide();
+    [$appearances, $sort_by, $path] = ColorGuideController::getFullListData($guide, $_GET['sort_by'] ?? null, "/cg/$guide");
+
+    Response::ok([
+      'html' => CGUtils::getFullListHTML($appearances, $sort_by, $guide, NOWRAP),
+      'stateUrl' => $path,
+    ]);
   }
 
   /**

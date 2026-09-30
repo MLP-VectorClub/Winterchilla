@@ -27,6 +27,9 @@ replaced everywhere (Stage 7); don't reintroduce it.
 
 Route inventory source of truth: `config/routes/pages.php`.
 
+Running: `vendor/bin/pest tests/Browser` runs the browser suite; a bare `vendor/bin/pest` runs only the unit
+tests (the browser suite is skipped unless the args mention `tests/Browser`).
+
 ### Known infra gotcha: every browser test times out at ~5s uniformly
 
 If you ever see **every single test** in the suite (including pre-existing, untouched ones) fail with
@@ -217,8 +220,13 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
 
 ### Stage 7 — Closeout audit (in progress)
 
-- [ ] Diff the full test suite's covered routes against `config/routes/pages.php` one more time to confirm
-      nothing was missed
+- [x] Diffed covered routes against `config/routes/pages.php`; the gaps found are covered by
+      `tests/Browser/Guest/RemainingRoutesTest.php` (manifest, `/browser`, `/blending`, picker frame,
+      paginated episodes/movies/events/logs lists, wsdiag + `/diagnose/*` 403s, appearance exports
+      json/gpl/png/facing svg). Known remaining gaps: personal-guide appearance pages
+      (`/users/[id]/[cg]/.../v/[id]` — needs a seeded personal appearance), sprite exports, the
+      `[sett]` profile shortcut, and the developer-only pages (wsdiag, diagnose) since no developer is
+      seeded
 - [x] Remove/merge `tests/Browser/User/PostsTest.php` duplication (done in Stage 4)
 - [ ] Decide whether `public_api_v0.php` endpoints need direct coverage beyond what's exercised
       incidentally through page-level UI flows

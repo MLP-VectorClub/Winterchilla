@@ -46,7 +46,7 @@ it('shows the pony color guide change list', function () use ($base) {
 it('shows the color picker tool', function () use ($base) {
   visit($base . '/cg/picker')
     ->assertNoJavaScriptErrors()
-    ->assertSee('Color Picker');
+    ->assertTitleContains('Color Picker');
 });
 
 it('lets a user open an image file in the color picker', function () use ($base) {

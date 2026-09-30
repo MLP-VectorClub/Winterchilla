@@ -3,12 +3,12 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-// Contract: PUT/GET /cg/appearance/{id}/cutiemarks, the success paths (validation is in AppearanceContractTest).
+// Contract: PUT/GET /appearances/{id}/cutie-marks, the success paths (validation is in AppearanceContractTest).
 
 $svg = file_get_contents(dirname(__DIR__) . '/fixtures/cutiemark.svg');
 
 function scratchPony(ApiClient $admin):int {
-  $r = $admin->post('/cg/appearance', ['guide' => 'pony', 'label' => substr('CM Pony ' . substr(md5(uniqid('', true)), 0, 8), 0, 70)]);
+  $r = $admin->post('/appearances', ['guide' => 'pony', 'label' => substr('CM Pony ' . substr(md5(uniqid('', true)), 0, 8), 0, 70)]);
   expect($r['status'])->toBe(201);
   return $r['json']['id'];
 }
@@ -16,7 +16,7 @@ function scratchPony(ApiClient $admin):int {
 it('adds, renames and removes cutie marks on an appearance', function () use ($svg) {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $id = scratchPony($admin);
-  $path = "/cg/appearance/$id/cutiemarks";
+  $path = "/appearances/$id/cutie-marks";
 
   $r = $admin->request('PUT', $path, ['CMData' => json_encode([['svgdata' => $svg, 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0, 'label' => 'Scratch CM']])]);
   expect($r['status'])->toBe(200)->and($r['json'])->not->toHaveKey('status');
@@ -36,13 +36,13 @@ it('adds, renames and removes cutie marks on an appearance', function () use ($s
   expect($admin->request('PUT', $path, ['CMData' => '[]'])['status'])->toBe(200);
   expect($admin->get($path)['json']['cms'])->toBe([]);
 
-  $admin->request('DELETE', "/cg/appearance/$id");
+  $admin->request('DELETE', "/appearances/$id");
 });
 
 it('rejects a cutie mark with an invalid rotation or attribution', function () use ($svg) {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $id = scratchPony($admin);
-  $path = "/cg/appearance/$id/cutiemarks";
+  $path = "/appearances/$id/cutie-marks";
   $base = ['svgdata' => $svg, 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0];
 
   foreach ([['rotation' => 90], ['attribution' => 'nonsense'], ['facing' => 'sideways']] as $bad) {
@@ -51,5 +51,5 @@ it('rejects a cutie mark with an invalid rotation or attribution', function () u
   }
   expect($admin->get($path)['json']['cms'])->toBe([]);
 
-  $admin->request('DELETE', "/cg/appearance/$id");
+  $admin->request('DELETE', "/appearances/$id");
 });

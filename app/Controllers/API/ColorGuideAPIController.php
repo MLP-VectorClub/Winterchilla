@@ -16,8 +16,8 @@ class ColorGuideAPIController extends APIController {
   use ColorGuideAccessTrait;
 
   /**
-   * @OA\Post(
-   *   path="/cg/full/reorder",
+   * @OA\Put(
+   *   path="/appearances/order",
    *   description="Reorder the appearances in a guide's full list. Staff only.",
    *   tags={"color guide"},
    *   @OA\RequestBody(required=true, @OA\JsonContent(
@@ -39,7 +39,7 @@ class ColorGuideAPIController extends APIController {
    * )
    */
   public function reorderFullList($params):void {
-    if ($this->action !== 'POST')
+    if ($this->action !== 'PUT')
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('staff'))

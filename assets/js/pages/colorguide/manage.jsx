@@ -120,7 +120,7 @@
               if (!sure) return;
 
               $.Dialog.wait(false);
-              $.API.delete(`/cg/appearance/${appearanceID}/selective`, data).done(function(resp = {}) {
+              $.API.delete(`/appearances/${appearanceID}/contents`, data).done(function(resp = {}) {
                 $.Navigation.reload(true);
               }).fail($.API.fail());
             });
@@ -132,7 +132,7 @@
 
         $.Dialog.close();
         $.Dialog.wait(`Manage Cutie Mark of ${ponyLabel}`, 'Retrieving CM data from server');
-        $.API.get(`/cg/appearance/${appearanceId}/cutiemarks`).done(function(resp = {}) {
+        $.API.get(`/appearances/${appearanceId}/cutie-marks`).done(function(resp = {}) {
           CutieMarkEditor.factory(false, appearanceId, ponyLabel, resp);
         }).fail($.API.fail());
       },
@@ -199,7 +199,7 @@
           if (GUIDE)
             data.guide = GUIDE;
 
-          $.API[editing ? 'put' : 'post'](`/cg/appearance${editing ? `/${appearanceID}` : ''}`, data).done((data = {}) => {
+          $.API[editing ? 'put' : 'post'](`/appearances${editing ? `/${appearanceID}` : ''}`, data).done((data = {}) => {
             if (editing){
               if (AppearancePage)
                 return $.Navigation.reload(true);
@@ -912,7 +912,7 @@
         if (AppearancePage)
           data.APPEARANCE_PAGE = true;
         $.Dialog.wait(false, 'Saving cutie mark data');
-        $.API.put(`/cg/appearance/${appearance_id}/cutiemarks`, data).done((data = {}) => {
+        $.API.put(`/appearances/${appearance_id}/cutie-marks`, data).done((data = {}) => {
           $.Dialog.close();
           if (this.$cmSection.length){
             this.$cmSection.children(':not(h2,p)').remove();
@@ -1117,7 +1117,7 @@
                       requestKey: 'file',
                       title: fileAction,
                       accept: '.svg,.svgz,image/svg+xml',
-                      target: `${$.API.API_PATH}/cg/appearance/${this.appearance_id}/sanitize-svg`,
+                      target: `${$.API.API_PATH}/appearances/${this.appearance_id}/sanitize-svg`,
                       helper: true,
                     }).on('uz-uploadfinish', (_, data) => {
                       if (data){
@@ -1198,7 +1198,7 @@
       let data = {};
       if (AppearancePage)
         data.APPEARANCE_PAGE = true;
-      $.API.post(`/cg/appearance/${appearanceID}/template`, data).done(function(resp = {}) {
+      $.API.post(`/appearances/${appearanceID}/template`, data).done(function(resp = {}) {
         let $pony = $(`#p${appearanceID}`);
         $pony.find('ul.colors').html(resp.cgs);
         ctxmenus();
@@ -1333,7 +1333,7 @@
 
             $.Dialog.wait(title, 'Retrieving color group list from server');
 
-            const endpoint = `/cg/appearance/${appearanceID}/colorgroups`;
+            const endpoint = `/appearances/${appearanceID}/color-groups/order`;
             $.API.get(endpoint).done(function(resp = {}) {
               let $CGReorderForm = $.mk('form', 'cg-reorder'),
                 $cgs = $.mk('ol');
@@ -1490,7 +1490,7 @@
           requestKey: 'sprite',
           title: 'Upload sprite',
           accept: 'image/png',
-          target: `${$.API.API_PATH}/cg/appearance/${appearanceID}/sprite`,
+          target: `${$.API.API_PATH}/appearances/${appearanceID}/sprite`,
         }).on('uz-uploadstart', function() {
           $.Dialog.close();
         }).on('uz-uploadfinish', function() {
@@ -1541,7 +1541,7 @@
 
                   $.Dialog.wait(title, 'Downloading external image to the server');
 
-                  $.API.post(`/cg/appearance/${appearanceID}/sprite`, { image_url: image_url }).done(function(resp = {}) {
+                  $.API.post(`/appearances/${appearanceID}/sprite`, { image_url: image_url }).done(function(resp = {}) {
                     $uploadInput.trigger('set-image', [resp]);
                   }).fail($.API.fail(title));
                 });
@@ -1557,7 +1557,7 @@
 
                 $.Dialog.wait(false, 'Removing image');
 
-                $.API.delete(`/cg/appearance/${appearanceID}/sprite`).done(function(resp = {}) {
+                $.API.delete(`/appearances/${appearanceID}/sprite`).done(function(resp = {}) {
                   $this.find('img').attr('src', resp.sprite);
                   updateSprite();
                   $.Dialog.close();
@@ -1589,7 +1589,7 @@
 
     $.Dialog.wait(title, 'Retrieving appearance details from server');
 
-    $.API.get(`/cg/appearance/${appearanceID}`).done(function(resp = {}) {
+    $.API.get(`/appearances/${appearanceID}/metadata`).done(function(resp = {}) {
       let data = resp;
       data.appearanceID = appearanceID;
       mkPonyEditor($this, title, data);
@@ -1609,7 +1609,7 @@
 
       $.Dialog.wait(title, 'Sending removal request');
 
-      $.API.delete(`/cg/appearance/${appearanceID}`).done(function() {
+      $.API.delete(`/appearances/${appearanceID}`).done(function() {
         $li.remove();
         $.Dialog.success(title, 'Appearance removed');
 
@@ -1636,7 +1636,7 @@
 
       $.Dialog.wait(title, 'Sending request');
 
-      $.API[pinning ? 'post' : 'delete'](`/cg/appearance/${appearanceID}/pin`).done(function(resp = {}) {
+      $.API[pinning ? 'post' : 'delete'](`/appearances/${appearanceID}/pin`).done(function(resp = {}) {
         $.Dialog.success(title, `${resp.message}<br><strong>Note:</strong> The changes won't be visible until you reload the page.`, true);
       }).fail($.API.fail(title));
     });
@@ -1652,7 +1652,7 @@
 
     $.Dialog.wait(title, 'Retrieving relations from server');
 
-    const endpoint = `/cg/appearance/${appearanceID}/guide-relations`;
+    const endpoint = `/appearances/${appearanceID}/shows`;
     $.API.get(endpoint).done((response = {}) => {
       const { SplitSelector } = window.reactComponents;
       let data = {
@@ -1688,7 +1688,7 @@
     $.Dialog.wait(title, 'Retrieving relations from the server');
 
     let $cgRelations = $content.find('section.related');
-    $.API.get(`/cg/appearance/${appearanceID}/relations`).done(function(resp = {}) {
+    $.API.get(`/appearances/${appearanceID}/relations`).done(function(resp = {}) {
       let data = resp,
         $GuideRelationEditorForm = $.mk('form').attr('id', 'guide-relation-editor'),
         $selectLinked = $.mk('select').attr({ name: 'listed', multiple: true }),
@@ -1808,7 +1808,7 @@
           };
           if (AppearancePage)
             data.APPEARANCE_PAGE = true;
-          $.API.put(`/cg/appearance/${appearanceID}/relations`, data).done(function(resp = {}) {
+          $.API.put(`/appearances/${appearanceID}/relations`, data).done(function(resp = {}) {
             if (resp.section){
               if (!$cgRelations.length)
                 $cgRelations = $.mk('section')
@@ -2016,12 +2016,12 @@
     $editTagsBtn.disable().html('Please wait&hellip;');
 
     const appearanceID = $(this).closest('[id^=p]').attr('id').replace(/\D/g, '');
-    $.API.get(`/cg/appearance/${appearanceID}/tagged`).done(function(resp = {}) {
+    $.API.get(`/appearances/${appearanceID}/tags`).done(function(resp = {}) {
       const orig_tags = resp.tags;
       const editor = new TagEditor(orig_tags, tags => {
         editor.disableButtons();
 
-        $.API.put(`/cg/appearance/${appearanceID}/tagged`, { tags, orig_tags }).done(function() {
+        $.API.put(`/appearances/${appearanceID}/tags`, { tags, orig_tags }).done(function() {
           window.location.reload();
         }).fail($.API.fail('Saving tags')).fail(() => {
           editor.enableButtons();

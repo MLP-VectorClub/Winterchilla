@@ -9,7 +9,7 @@ $sprite = dirname(__DIR__, 3) . '/public/img/sprite_template/body_female.png';
 
 it('uploads and removes a sprite image on an appearance page', function () use ($base, $sprite) {
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $id = $api->post('/cg/appearance', ['guide' => 'pony', 'label' => 'Sprite UI Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
+  $id = $api->post('/appearances', ['guide' => 'pony', 'label' => 'Sprite UI Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
 
   try {
     $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
@@ -27,13 +27,13 @@ it('uploads and removes a sprite image on an appearance page', function () use (
       ->assertPresent('.upload-wrap.nosprite');
   }
   finally {
-    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', "/cg/appearance/$id");
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', "/appearances/$id");
   }
 });
 
 it('shows the API\'s error when a sprite upload is rejected', function () use ($base) {
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $id = $api->post('/cg/appearance', ['guide' => 'pony', 'label' => 'Sprite UI Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
+  $id = $api->post('/appearances', ['guide' => 'pony', 'label' => 'Sprite UI Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
 
   try {
     // 1x1 image: below the minimum sprite size
@@ -44,6 +44,6 @@ it('shows the API\'s error when a sprite upload is rejected', function () use ($
       ->assertDontSee('<br>');
   }
   finally {
-    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', "/cg/appearance/$id");
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', "/appearances/$id");
   }
 });

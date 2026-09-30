@@ -8,8 +8,8 @@ $base = TestSeederConstants::BASE_URL;
 it('links two appearances to each other in the relations editor', function () use ($base) {
   $suffix = substr(md5(uniqid('', true)), 0, 5);
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $a = $api->post('/cg/appearance', ['guide' => 'pony', 'label' => "Relation Pony A $suffix"])['json']['id'];
-  $b = $api->post('/cg/appearance', ['guide' => 'pony', 'label' => "Relation Pony B $suffix"])['json']['id'];
+  $a = $api->post('/appearances', ['guide' => 'pony', 'label' => "Relation Pony A $suffix"])['json']['id'];
+  $b = $api->post('/appearances', ['guide' => 'pony', 'label' => "Relation Pony B $suffix"])['json']['id'];
 
   try {
     visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
@@ -22,12 +22,12 @@ it('links two appearances to each other in the relations editor', function () us
       ->assertSee("Relation Pony B $suffix");
 
     // The link is stored (one way unless the editor said mutual)
-    $r = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get("/cg/appearance/$a/relations");
+    $r = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get("/appearances/$a/relations");
     expect(array_map('intval', array_column($r['json']['linked'], 'id')))->toContain($b);
   }
   finally {
     $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-    $api->request('DELETE', "/cg/appearance/$a");
-    $api->request('DELETE', "/cg/appearance/$b");
+    $api->request('DELETE', "/appearances/$a");
+    $api->request('DELETE', "/appearances/$b");
   }
 });

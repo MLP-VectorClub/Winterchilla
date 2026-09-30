@@ -3,19 +3,19 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-// Contract: sprite upload and removal on /cg/appearance/{id}/sprite, and the public /appearances/{id}/sprite image.
+// Contract: sprite upload and removal on /appearances/{id}/sprite, and the public /appearances/{id}/sprite image.
 // public/img/sprite_template/body_female.png is a valid sprite (a 300x300 PNG) and doubles as the upload fixture.
 
 $sprite = dirname(__DIR__, 3) . '/public/img/sprite_template/body_female.png';
 
 function scratchAppearance(ApiClient $admin):int {
-  $r = $admin->post('/cg/appearance', ['guide' => 'pony', 'label' => substr('Sprite Pony ' . substr(md5(uniqid('', true)), 0, 8), 0, 70)]);
+  $r = $admin->post('/appearances', ['guide' => 'pony', 'label' => substr('Sprite Pony ' . substr(md5(uniqid('', true)), 0, 8), 0, 70)]);
   expect($r['status'])->toBe(201);
   return $r['json']['id'];
 }
 
 it('requires authentication and permission to upload or remove sprites', function () use ($sprite) {
-  $path = '/cg/appearance/' . TestSeederConstants::APPEARANCE_ID . '/sprite';
+  $path = '/appearances/' . TestSeederConstants::APPEARANCE_ID . '/sprite';
 
   expect(ApiClient::guest()->upload($path, 'sprite', $sprite)['status'])->toBe(401);
   expect(ApiClient::guest()->request('DELETE', $path)['status'])->toBe(401);
@@ -28,7 +28,7 @@ it('requires authentication and permission to upload or remove sprites', functio
 it('uploads a sprite, serves it publicly and removes it again', function () use ($sprite) {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $id = scratchAppearance($admin);
-  $path = "/cg/appearance/$id/sprite";
+  $path = "/appearances/$id/sprite";
 
   $r = $admin->upload($path, 'sprite', $sprite);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('path')->not->toHaveKey('status');
@@ -45,13 +45,13 @@ it('uploads a sprite, serves it publicly and removes it again', function () use 
   $r = ApiClient::guest()->get("/appearances/$id/sprite");
   expect($r['status'])->toBe(200)->and($r['contentType'])->toStartWith('image/png');
 
-  $admin->request('DELETE', "/cg/appearance/$id");
+  $admin->request('DELETE', "/appearances/$id");
 });
 
 it('rejects files that are not usable sprites with 422', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $id = scratchAppearance($admin);
-  $path = "/cg/appearance/$id/sprite";
+  $path = "/appearances/$id/sprite";
 
   // Not an image at all
   $r = $admin->upload($path, 'sprite', __FILE__, mime: 'text/plain');
@@ -61,5 +61,5 @@ it('rejects files that are not usable sprites with 422', function () {
   $r = $admin->upload($path, 'sprite', dirname(__DIR__, 3) . '/public/img/blank-pixel.png');
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('file');
 
-  $admin->request('DELETE', "/cg/appearance/$id");
+  $admin->request('DELETE', "/appearances/$id");
 });

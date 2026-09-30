@@ -93,7 +93,7 @@
         if (GUIDE)
           data.guide = GUIDE;
 
-        $.API.post('/cg/full/reorder', data).done(function(resp = {}) {
+        $.API.put('/appearances/order', data).done(function(resp = {}) {
           $fullList.removeClass('sorting').html(resp.html);
           reobserve();
           $ReorderBtn.removeClass('typcn-tick green').addClass('typcn-arrow-unsorted darkblue').html('Re-order');

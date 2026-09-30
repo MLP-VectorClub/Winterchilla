@@ -38,7 +38,7 @@ it('gives a new user one personal guide appearance and then reports no slots lef
     // Delete the appearance again (found on the user's personal guide page); the slot comes back
     $owner = ApiClient::loggedInAs($userId);
     if (preg_match('~/v/(\d+)-' . preg_quote(str_replace(' ', '-', $label), '~') . '~', $owner->page("/users/$userId/cg"), $m))
-      $owner->request('DELETE', '/cg/appearance/' . $m[1]);
+      $owner->request('DELETE', '/appearances/' . $m[1]);
   }
 });
 

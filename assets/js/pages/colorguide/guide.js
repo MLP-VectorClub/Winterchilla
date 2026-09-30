@@ -160,7 +160,7 @@
           source: (q, callback) => {
             if (appearanceAutocompleteCache.has(q))
               return callback(appearanceAutocompleteCache.get(q));
-            $.API.get(`/cg/appearances`, { q, guide: GUIDE }).done((data = {}) => {
+            $.API.get(`/appearances/autocomplete`, { q, guide: GUIDE }).done((data = {}) => {
               callback(appearanceAutocompleteCache.set(q, data));
             });
           },

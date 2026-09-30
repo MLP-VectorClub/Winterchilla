@@ -7,8 +7,8 @@ $base = TestSeederConstants::BASE_URL;
 
 it('renames a cutie mark in the cutie mark editor', function () use ($base) {
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $id = $api->post('/cg/appearance', ['guide' => 'pony', 'label' => 'CM Editor Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
-  $api->request('PUT', "/cg/appearance/$id/cutiemarks", ['CMData' => json_encode([[
+  $id = $api->post('/appearances', ['guide' => 'pony', 'label' => 'CM Editor Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
+  $api->request('PUT', "/appearances/$id/cutie-marks", ['CMData' => json_encode([[
     'svgdata' => file_get_contents(dirname(__DIR__) . '/fixtures/cutiemark.svg'), 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0, 'label' => 'Before Editing',
   ]])]);
 
@@ -26,6 +26,6 @@ it('renames a cutie mark in the cutie mark editor', function () use ($base) {
       ->assertDontSee('Before Editing');
   }
   finally {
-    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', "/cg/appearance/$id");
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', "/appearances/$id");
   }
 });

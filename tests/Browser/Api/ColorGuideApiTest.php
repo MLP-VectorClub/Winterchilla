@@ -30,18 +30,18 @@ it('validates the guide of the full list with 422', function () {
 
 it('reorders a guide\'s full list for staff and answers with that guide\'s list only', function () {
   $guest = ApiClient::guest();
-  expect($guest->post('/cg/full/reorder', ['guide' => 'pony', 'list' => '1'])['status'])->toBe(401);
-  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->post('/cg/full/reorder', ['guide' => 'pony', 'list' => '1'])['status'])->toBe(403);
+  expect($guest->request('PUT', '/appearances/order', ['guide' => 'pony', 'list' => '1'])['status'])->toBe(401);
+  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->request('PUT', '/appearances/order', ['guide' => 'pony', 'list' => '1'])['status'])->toBe(403);
 
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $r = $admin->post('/cg/full/reorder', ['list' => '1']);
+  $r = $admin->request('PUT', '/appearances/order', ['list' => '1']);
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('guide');
 
-  $r = $admin->post('/cg/full/reorder', ['guide' => 'pony', 'list' => '2,1', 'ordering' => 'relevance']);
+  $r = $admin->request('PUT', '/appearances/order', ['guide' => 'pony', 'list' => '2,1', 'ordering' => 'relevance']);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('html')->and($r['json']['html'])->toContain('Twilight Sparkle');
 
   // The guide is honoured: the eqg list doesn't contain the pony guide's appearances
-  $r = $admin->post('/cg/full/reorder', ['guide' => 'eqg', 'list' => '1', 'ordering' => 'relevance']);
+  $r = $admin->request('PUT', '/appearances/order', ['guide' => 'eqg', 'list' => '1', 'ordering' => 'relevance']);
   expect($r['status'])->toBe(200)->and($r['json']['html'])->not->toContain('Twilight Sparkle');
 });
 

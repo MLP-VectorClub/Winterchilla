@@ -40,6 +40,6 @@ it('links a show to an appearance in the show relations editor of an appearance 
       ->assertSee('Friendship is Magic, Part 1');
   }
   finally {
-    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('PUT', "/cg/appearance/$id/guide-relations", ['ids' => '']);
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('PUT', "/appearances/$id/shows", ['ids' => '']);
   }
 });

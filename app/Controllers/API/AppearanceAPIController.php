@@ -61,7 +61,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/appearance/{id}",
+   *   path="/appearances/{id}/metadata",
    *   description="Get basic editable details of an appearance. The user must be signed in and have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -75,7 +75,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
-   *   path="/cg/appearance",
+   *   path="/appearances",
    *   description="Create a new appearance. The user must be signed in and have permission to create appearances in the specified guide (or their personal guide if no guide is given).",
    *   tags={"appearances"},
    *   @OA\RequestBody(required=true, @OA\JsonContent(
@@ -100,7 +100,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/cg/appearance/{id}",
+   *   path="/appearances/{id}",
    *   description="Update an existing appearance's label, notes or private flag. The user must be signed in and have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -127,7 +127,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/cg/appearance/{id}",
+   *   path="/appearances/{id}",
    *   description="Delete an appearance. The user must be signed in and have permission to manage the appearance. Pinned appearances cannot be deleted.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -364,7 +364,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/cg/appearance/{id}/template",
+   *   path="/appearances/{id}/template",
    *   description="Apply the default color group template to an appearance. The user must have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -400,7 +400,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Delete(
-   *   path="/cg/appearance/{id}/selective",
+   *   path="/appearances/{id}/contents",
    *   description="Selectively clear cached files, colors, tags, notes and other data on an appearance. The user must have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -540,7 +540,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/appearance/{id}/colorgroups",
+   *   path="/appearances/{id}/color-groups/order",
    *   description="Get the IDs and labels of an appearance's color groups, for reordering. The user must have permission to manage the appearance. Requires at least 2 color groups.",
    *   tags={"appearances","color groups"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -560,7 +560,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="409", description="Not enough color groups to reorder", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/cg/appearance/{id}/colorgroups",
+   *   path="/appearances/{id}/color-groups/order",
    *   description="Set the display order of an appearance's color groups. The user must have permission to manage the appearance.",
    *   tags={"appearances","color groups"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -638,7 +638,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/cg/appearance/{id}/sprite",
+   *   path="/appearances/{id}/sprite",
    *   description="Upload a new sprite image for an appearance. The user must have permission to manage the appearance. PCG owners are blocked unless they have the appropriate preference enabled.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -659,7 +659,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="422", description="Validation error, e.g. invalid image format or size", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/cg/appearance/{id}/sprite",
+   *   path="/appearances/{id}/sprite",
    *   description="Remove the sprite image of an appearance, reverting it to the default. The user must have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -706,7 +706,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/appearance/{id}/relations",
+   *   path="/appearances/{id}/relations",
    *   description="Get the list of appearances that can be related to this one, split into linked and unlinked groups. Unavailable for appearances in personal guides. The user must have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -731,7 +731,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="409", description="Relations are unavailable for personal guide appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/cg/appearance/{id}/relations",
+   *   path="/appearances/{id}/relations",
    *   description="Set the related appearances for this appearance. Unavailable for appearances in personal guides. The user must have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -830,7 +830,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/appearance/{id}/cutiemarks",
+   *   path="/appearances/{id}/cutie-marks",
    *   description="Get the cutie marks associated with an appearance. The user must have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -856,7 +856,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/cg/appearance/{id}/cutiemarks",
+   *   path="/appearances/{id}/cutie-marks",
    *   description="Replace the cutie marks of an appearance (up to 4). The user must have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1087,7 +1087,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/appearance/{id}/tagged",
+   *   path="/appearances/{id}/tags",
    *   description="Get the tags applied to an appearance as plain text. Unavailable for personal guide and pinned appearances. The user must have permission to manage the appearance.",
    *   tags={"appearances","tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1104,7 +1104,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="409", description="Tagging is unavailable for this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/cg/appearance/{id}/tagged",
+   *   path="/appearances/{id}/tags",
    *   description="Update the tags applied to an appearance. Unavailable for personal guide and pinned appearances. The user must have permission to manage the appearance.",
    *   tags={"appearances","tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1161,7 +1161,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/cg/appearance/{id}/sanitize-svg",
+   *   path="/appearances/{id}/sanitize-svg",
    *   description="Upload and sanitize an SVG file for use as a cutie mark, returning the sanitized SVG markup. The user must be signed in and have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1216,7 +1216,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/appearance/{id}/guide-relations",
+   *   path="/appearances/{id}/shows",
    *   description="Get the list of shows/episodes that can be linked to an appearance, along with currently linked entries. Staff only.",
    *   tags={"appearances","shows"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1238,7 +1238,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/cg/appearance/{id}/guide-relations",
+   *   path="/appearances/{id}/shows",
    *   description="Set the shows/episodes linked to an appearance. Staff only.",
    *   tags={"appearances","shows"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1325,7 +1325,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/cg/appearance/{id}/pin",
+   *   path="/appearances/{id}/pin",
    *   description="Pin an appearance to the top of its guide. Staff only. Not available for personal guide appearances.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1336,7 +1336,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(response="409", description="Appearances in personal guides cannot be pinned", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/cg/appearance/{id}/pin",
+   *   path="/appearances/{id}/pin",
    *   description="Unpin a previously pinned appearance. Staff only. Not available for personal guide appearances.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1389,7 +1389,7 @@ class AppearanceAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/cg/appearances",
+   *   path="/appearances/autocomplete",
    *   security={},
    *   description="Search appearances by label for autocomplete purposes. Returns an empty array if the query or guide is missing.",
    *   tags={"appearances"},

@@ -410,7 +410,7 @@ class ShowAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/show/{id}/guide-relations",
+   *   path="/show/{id}/appearances",
    *   description="Get the list of color guide appearances that can be linked to this show, along with the appearances currently linked. Requires staff permissions.",
    *   tags={"shows","appearances","color guide"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -447,7 +447,7 @@ class ShowAPIController extends APIController {
    *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
-   *   path="/show/{id}/guide-relations",
+   *   path="/show/{id}/appearances",
    *   description="Update the list of color guide appearances linked to this show. Requires staff permissions.",
    *   tags={"shows","appearances","color guide"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),

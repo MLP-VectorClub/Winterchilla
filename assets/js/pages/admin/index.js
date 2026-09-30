@@ -25,7 +25,7 @@
         postID = el.dataset.postId,
         viewonly = el.dataset.viewonly;
 
-      $.API.get(`/post/${postID}/lazyload`, { viewonly }).done(function(resp = {}) {
+      $.API.get(`/posts/${postID}/lazyload`, { viewonly }).done(function(resp = {}) {
         $.loadImages(resp.html).then(function(resp) {
           $(el).closest('.image').replaceWith(resp.$el);
         });

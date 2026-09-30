@@ -121,7 +121,7 @@ class EventEntryAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/event/{id}/entry",
+   *   path="/events/{id}/entries",
    *   description="Get the currently logged in user's entry details for management purposes. Requires the entry to belong to the current user, or staff permissions.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -135,7 +135,7 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Get(
-   *   path="/event/entry/{entryid}",
+   *   path="/event-entries/{entryid}",
    *   description="Get an entry's details for management purposes. Requires the entry to belong to the current user, or staff permissions.",
    *   tags={"events"},
    *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -149,7 +149,7 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Put(
-   *   path="/event/{id}/entry",
+   *   path="/events/{id}/entries",
    *   description="Update the currently logged in user's entry. Requires the entry to belong to the current user (or staff permissions), and the event must not have ended (unless staff).",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -176,7 +176,7 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Put(
-   *   path="/event/entry/{entryid}",
+   *   path="/event-entries/{entryid}",
    *   description="Update an existing entry. Requires the entry to belong to the current user (or staff permissions), and the event must not have ended (unless staff).",
    *   tags={"events"},
    *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -203,7 +203,7 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Delete(
-   *   path="/event/{id}/entry",
+   *   path="/events/{id}/entries",
    *   description="Delete the currently logged in user's entry. Requires the entry to belong to the current user (or staff permissions), and the event must not have ended (unless staff).",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -214,7 +214,7 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(response="500", description="Database error while deleting the entry", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Delete(
-   *   path="/event/entry/{entryid}",
+   *   path="/event-entries/{entryid}",
    *   description="Delete an existing entry. Requires the entry to belong to the current user (or staff permissions), and the event must not have ended (unless staff).",
    *   tags={"events"},
    *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -267,7 +267,7 @@ class EventEntryAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/event/entry/{entryid}/lazyload",
+   *   path="/event-entries/{entryid}/lazyload",
    *   description="Get the lazily-loaded preview HTML for an entry. Does not require the user to be signed in.",
    *   tags={"events"},
    *   security={},

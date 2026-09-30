@@ -22,7 +22,7 @@
           $btn.disable();
           $loadNotice.hide();
 
-          $.API.get('/post/request/suggestion', { already_loaded: already_loaded.join(',') }).done(function(resp = {}) {
+          $.API.get('/posts/requests/suggestion', { already_loaded: already_loaded.join(',') }).done(function(resp = {}) {
             let $result = $(resp.suggestion),
               postID = parseInt($result.attr('id').split('-')[1], 10);
 
@@ -38,7 +38,7 @@
             });
             $result.find('.reserve-request').on('click', function() {
               let $this = $(this);
-              $.API.post(`/post/${postID}/reservation`, { from: 'suggestion' }).done(function(resp = {}) {
+              $.API.post(`/posts/${postID}/reservation`, { from: 'suggestion' }).done(function(resp = {}) {
                 $this.replaceWith(resp.button);
                 $pendingReservations.html($(resp.pendingReservations).children());
               }).fail($.API.fail());

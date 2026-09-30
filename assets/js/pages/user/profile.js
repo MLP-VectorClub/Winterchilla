@@ -30,7 +30,7 @@
         $.Dialog.wait(false, 'Cancelling reservation');
 
         let postId = $link.prop('hash').substring(1).split('-')[1];
-        $.API.delete(`/post/${postId}/reservation`, { from: 'profile' }).done(function(resp = {}) {
+        $.API.delete(`/posts/${postId}/reservation`, { from: 'profile' }).done(function(resp = {}) {
           let pendingRes = resp.pendingReservations;
           $btn.closest('li').fadeOut(1000, function() {
             $(this).remove();
@@ -68,7 +68,7 @@
           let data = $form.mkData();
           $.Dialog.wait(false, 'Replacing image');
 
-          $.API.put(`/post/${id}/image`, data).done(function(resp = {}) {
+          $.API.put(`/posts/${id}/image`, data).done(function(resp = {}) {
             $.Dialog.success(false, 'Image has been updated');
             $.Navigation.reload(true);
           }).fail($.API.fail());
@@ -146,7 +146,7 @@
 
       const { postId, viewonly } = el.dataset;
 
-      $.API.get(`/post/${postId}/lazyload`, { viewonly }).done(({ html }) => {
+      $.API.get(`/posts/${postId}/lazyload`, { viewonly }).done(({ html }) => {
         const $el = $(el);
 
         $.loadImages(html).then(function(resp) {
@@ -174,7 +174,7 @@
 
     $.Dialog.wait('Deviation acceptance status', 'Checking');
 
-    $.API.post(`/post/${id}/approval`).done(function(resp = {}) {
+    $.API.post(`/posts/${id}/approval`).done(function(resp = {}) {
       $li.remove();
       $.Dialog.success(false, resp.message, true);
     }).fail($.API.fail());

@@ -51,7 +51,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/post/{id}/reload",
+   *   path="/posts/{id}/reload",
    *   description="Reload a post's list item, checking whether its image is still available and merging the broken image with a Derpibooru match if possible. Marks the post as broken if its image cannot be found.",
    *   tags={"posts"},
    *   security={},
@@ -164,7 +164,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/post/{id}/reservation",
+   *   path="/posts/{id}/reservation",
    *   description="Reserve a request, or take over an overdue reservation from another user. Requires member permission and signed in user.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -196,7 +196,7 @@ class PostAPIController extends APIController {
    *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/post/{id}/reservation",
+   *   path="/posts/{id}/reservation",
    *   description="Remove a reservation from a post (un-reserve a request, or delete a manually added reservation). Requires member permission and signed in user; staff may act on any post.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -332,7 +332,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/post/{id}/approval",
+   *   path="/posts/{id}/approval",
    *   description="Approve a finished post, marking it as locked. Requires member permission, the post to be reserved and finished, and the deviation to be in the club gallery.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -353,7 +353,7 @@ class PostAPIController extends APIController {
    *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/post/{id}/approval",
+   *   path="/posts/{id}/approval",
    *   description="Revoke approval of a previously approved post (unlock it). Requires staff permission, and developer permission if the deviation is still in the club gallery.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -420,7 +420,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/post/{id}",
+   *   path="/posts/{id}",
    *   description="Get information about a single post for editing purposes. The user must have permission to edit the post (be the requester/reserver, or staff).",
    *   tags={"posts"},
    *   security={},
@@ -435,7 +435,7 @@ class PostAPIController extends APIController {
    *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
-   *   path="/post",
+   *   path="/posts",
    *   description="Create a new request or reservation post. Requires the user to be signed in and have permission to post the given kind; reservations additionally require member permission and an available reservation slot.",
    *   tags={"posts"},
    *   @OA\RequestBody(
@@ -475,7 +475,7 @@ class PostAPIController extends APIController {
    *   @OA\Response(response="422", description="Validation error (image URL, show entry, description, type, user to post as)", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/post/{id}",
+   *   path="/posts/{id}",
    *   description="Update an existing post's details (image, label, etc). The user must have permission to edit the post (be the requester/reserver, or staff).",
    *   tags={"posts"},
    *   security={},
@@ -615,7 +615,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Put(
-   *   path="/post/{id}/finish",
+   *   path="/posts/{id}/finish",
    *   description="Mark a post as finished by attaching a deviation as its finished image. Requires member permission, the post to be reserved, and the user to be the reserver or staff.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -646,7 +646,7 @@ class PostAPIController extends APIController {
    *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/post/{id}/finish",
+   *   path="/posts/{id}/finish",
    *   description="Unmark a finished post (remove its finished image), or delete the reservation entirely if `unbind` is set. Requires member permission and the user to be the reserver or staff.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -749,8 +749,8 @@ class PostAPIController extends APIController {
   }
 
   /**
-   * @OA\Post(
-   *   path="/post/{id}/locate",
+   * @OA\Get(
+   *   path="/posts/{id}/location",
    *   description="Locate a post's page/section given its ID, for use with old shortlink-style URLs. Returns either a redirect target (castle/show info) or a `refresh` instruction if the post belongs to the currently viewed show.",
    *   tags={"posts"},
    *   security={},
@@ -796,8 +796,8 @@ class PostAPIController extends APIController {
   }
 
   /**
-   * @OA\Get(
-   *   path="/post/{id}/unbreak",
+   * @OA\Post(
+   *   path="/posts/{id}/unbreak",
    *   description="Clear the broken status of a post after verifying its preview and fullsize images are reachable again, restoring the previous reserver if known. Requires staff permission.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -818,7 +818,7 @@ class PostAPIController extends APIController {
    * )
    */
   public function unbreak($params) {
-    if ($this->action !== 'GET')
+    if ($this->action !== 'POST')
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('staff'))
@@ -860,7 +860,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/post/check-image",
+   *   path="/posts/check-image",
    *   description="Validate an image URL (deviation or supported external image provider) and return its preview image and title. Requires the user to be signed in.",
    *   tags={"posts"},
    *   @OA\RequestBody(
@@ -922,7 +922,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Delete(
-   *   path="/post/request/{id}",
+   *   path="/posts/requests/{id}",
    *   description="Delete a request post. Requires the user to be signed in and either be the original requester (provided it hasn't been reserved yet) or have staff permission.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -972,7 +972,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Put(
-   *   path="/post/{id}/image",
+   *   path="/posts/{id}/image",
    *   description="Change the image (preview/fullsize) of a post. Requires the user to be signed in, the post to not be locked, and either be the poster (and, if a request, not yet reserved) or have staff permission.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -1053,7 +1053,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/post/{id}/lazyload",
+   *   path="/posts/{id}/lazyload",
    *   description="Get the rendered HTML for a post's finished image, for lazy loading on the page",
    *   tags={"posts"},
    *   security={},
@@ -1088,7 +1088,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/post/reservation",
+   *   path="/posts/reservations",
    *   description="Add a finished reservation directly on behalf of a user. Requires staff permission.",
    *   tags={"posts"},
    *   @OA\RequestBody(
@@ -1154,7 +1154,7 @@ class PostAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/post/request/suggestion",
+   *   path="/posts/requests/suggestion",
    *   description="Suggest a random unfinished, unreserved (or long-overdue) request the user could work on. Requires the user to be signed in.",
    *   tags={"posts"},
    *   @OA\Parameter(

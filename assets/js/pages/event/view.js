@@ -44,7 +44,7 @@
 
     $.Dialog.wait(`Editing entry #${entryID}`, 'Retrieving entry details from server');
 
-    $.API.get(`/event/entry/${entryID}`).done(function(resp = {}) {
+    $.API.get(`/event-entries/${entryID}`).done(function(resp = {}) {
       let data = resp;
 
       $.Dialog.request(false, $entryForm.clone(), 'Save', function($form) {
@@ -60,7 +60,7 @@
           let data = $form.mkData();
           $.Dialog.wait(false, 'Saving changes');
 
-          $.API.put(`/event/entry/${entryID}`, data).done(function(resp = {}) {
+          $.API.put(`/event-entries/${entryID}`, data).done(function(resp = {}) {
             $li.html(resp.entryHtml).rebindFluidbox();
             $.Dialog.close();
           }).fail($.API.fail());
@@ -81,7 +81,7 @@
 
       $.Dialog.wait(false, 'Sending deletion request');
 
-      $.API.delete(`/event/entry/${entryID}`).done(function(resp = {}) {
+      $.API.delete(`/event-entries/${entryID}`).done(function(resp = {}) {
         $.Dialog.close();
         $li.fadeOut(500, function() {
           $li.remove();
@@ -100,7 +100,7 @@
 
       const { entryid } = el.dataset;
 
-      $.API.get(`/event/entry/${entryid}/lazyload`).done(function(resp = {}) {
+      $.API.get(`/event-entries/${entryid}/lazyload`).done(function(resp = {}) {
         $.loadImages(resp.html).then(function(resp) {
           const $el = $(el);
           const $parent = $el.closest('li[id]');

@@ -20,7 +20,7 @@ it('links an appearance to a show in the guide relations editor of an episode pa
       ->assertSee('Twilight Sparkle');
   }
   finally {
-    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('PUT', '/show/' . TestSeederConstants::SHOW_ID . '/guide-relations', ['ids' => '']);
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('PUT', '/show/' . TestSeederConstants::SHOW_ID . '/appearances', ['ids' => '']);
   }
 });
 

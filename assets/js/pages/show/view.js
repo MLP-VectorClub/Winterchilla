@@ -271,7 +271,7 @@
             deviation,
             show_id: showId,
           };
-          $.API.post('/post/reservation', data).done(function(resp = {}) {
+          $.API.post('/posts/reservations', data).done(function(resp = {}) {
             $.Dialog.success(false, resp.message);
             $form.closest('.posts').trigger('pls-update', [() => {
               $.Dialog.close();
@@ -311,7 +311,7 @@
       imgCheckDisabler(true);
       $.Dialog.wait(title, 'Checking image, this can take a bit of time');
 
-      $.API.post('/post/check-image', { image_url }).fail($.API.failWith(body => {
+      $.API.post('/posts/check-image', { image_url }).fail($.API.failWith(body => {
         $notice.children('p:not(.keep)').remove();
         $notice.prepend($.mk('p').attr('class', 'color-red').html(body.message)).show();
         $previewIMG.hide();
@@ -410,7 +410,7 @@
       (function submit() {
         $.Dialog.wait(title, 'Submitting post');
 
-        $.API.post('/post', data).fail($.API.failWith(body => {
+        $.API.post('/posts', data).fail($.API.failWith(body => {
           if (!body.canForce)
             return $.Dialog.fail(false, body.message);
           $.Dialog.confirm(false, body.message, ['Go ahead', 'Never mind'], function(sure) {
@@ -458,7 +458,7 @@
 
       const { postId, viewonly } = el.dataset;
 
-      $.API.get(`/post/${postId}/lazyload`, { viewonly }).done(function(loaded = {}) {
+      $.API.get(`/posts/${postId}/lazyload`, { viewonly }).done(function(loaded = {}) {
         const $el = $(el);
 
         $.loadImages(loaded.html).then(function (resp) {
@@ -542,7 +542,7 @@
 
     if (log)
       console.log(`[POST-FIX] Attempting to reload post #${id}`);
-    $.API.get(`/post/${id}/reload`, { cache: log }).fail($.API.failWith(() => {
+    $.API.get(`/posts/${id}/reload`, { cache: log }).fail($.API.failWith(() => {
       // Nothing to report: the post is probably gone, and the list item just stays as it is
     })).fail(() => {
       reloading[_idAttr] = false;
@@ -600,7 +600,7 @@
       const title = 'Scroll post into view';
       // Attempt to find the post as a last resort, it might be on a different episode page
       const postID = location.hash.replace(/\D/g, '');
-      $.API.post(`/post/${postID}/locate`, { show_id: showId }).fail($.API.failWith(body => {
+      $.API.get(`/posts/${postID}/location`, { show_id: showId }).fail($.API.failWith(body => {
         $.Dialog.info(title, body.message);
       })).done(function(resp = {}) {
         if (resp.refresh){

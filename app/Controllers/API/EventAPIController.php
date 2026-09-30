@@ -14,7 +14,7 @@ class EventAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/event/{id}",
+   *   path="/events/{id}",
    *   description="Fetch the details of an event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -23,7 +23,7 @@ class EventAPIController extends APIController {
    *   @OA\Response(response="501", description="Fetching event details is currently disabled", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Post(
-   *   path="/event",
+   *   path="/events",
    *   description="Create a new event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\RequestBody(
@@ -44,7 +44,7 @@ class EventAPIController extends APIController {
    *   @OA\Response(response="501", description="creating events is currently disabled", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Put(
-   *   path="/event/{id}",
+   *   path="/events/{id}",
    *   description="Edit an existing event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -67,7 +67,7 @@ class EventAPIController extends APIController {
    *   @OA\Response(response="404", description="Event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Delete(
-   *   path="/event/{id}",
+   *   path="/events/{id}",
    *   description="Delete an existing event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -100,7 +100,7 @@ class EventAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/event/{id}/finalize",
+   *   path="/events/{id}/finalize",
    *   description="Finalize an event, locking in the winning entry. Requires staff permissions. Currently always fails. Requires the **staff** role.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -119,8 +119,8 @@ class EventAPIController extends APIController {
   /**
    * This method checks whether the current user can submit any more entries
    *
-   * @OA\Get(
-   *   path="/event/{id}/check-entries",
+   * @OA\Post(
+   *   path="/events/{id}/entries/check",
    *   description="Check whether the currently logged in user can submit any more entries to this event. Currently always fails.",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),

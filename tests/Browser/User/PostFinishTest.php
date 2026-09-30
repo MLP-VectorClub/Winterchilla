@@ -39,8 +39,8 @@ it('reserves, finishes and approves a request from the episode page', function (
 
     // Put the seeded request back the way it was for the other tests: unlock, unfinish and unreserve it
     $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-    $admin->request('DELETE', '/post/' . TestSeederConstants::POST_ID . '/approval');
-    $admin->request('DELETE', '/post/' . TestSeederConstants::POST_ID . '/finish');
-    $admin->request('DELETE', '/post/' . TestSeederConstants::POST_ID . '/reservation');
+    $admin->request('DELETE', '/posts/' . TestSeederConstants::POST_ID . '/approval');
+    $admin->request('DELETE', '/posts/' . TestSeederConstants::POST_ID . '/finish');
+    $admin->request('DELETE', '/posts/' . TestSeederConstants::POST_ID . '/reservation');
   }
 });

@@ -132,24 +132,24 @@ it('409s when voting on a show that has not aired yet', function () {
 });
 
 it('manages appearance relations for staff only', function () use ($showId) {
-  expect(ApiClient::guest()->get('/show/' . $showId . '/guide-relations')['status'])->toBe(401);
-  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get('/show/' . $showId . '/guide-relations')['status'])->toBe(403);
+  expect(ApiClient::guest()->get('/show/' . $showId . '/appearances')['status'])->toBe(401);
+  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get('/show/' . $showId . '/appearances')['status'])->toBe(403);
 
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $r = $admin->get('/show/' . $showId . '/guide-relations');
+  $r = $admin->get('/show/' . $showId . '/appearances');
   expect($r['status'])->toBe(200)
     ->and($r['json'])->toHaveKeys(['groups', 'entries', 'linkedIds'])
     ->and($r['json']['linkedIds'])->toBe([]);
 
-  $r = $admin->request('PUT', '/show/' . $showId . '/guide-relations', ['ids' => (string)TestSeederConstants::APPEARANCE_ID]);
+  $r = $admin->request('PUT', '/show/' . $showId . '/appearances', ['ids' => (string)TestSeederConstants::APPEARANCE_ID]);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('section');
-  expect($admin->get('/show/' . $showId . '/guide-relations')['json']['linkedIds'])->toBe([TestSeederConstants::APPEARANCE_ID]);
+  expect($admin->get('/show/' . $showId . '/appearances')['json']['linkedIds'])->toBe([TestSeederConstants::APPEARANCE_ID]);
 
-  $r = $admin->request('PUT', '/show/' . $showId . '/guide-relations', ['ids' => '']);
+  $r = $admin->request('PUT', '/show/' . $showId . '/appearances', ['ids' => '']);
   expect($r['status'])->toBe(200);
-  expect($admin->get('/show/' . $showId . '/guide-relations')['json']['linkedIds'])->toBe([]);
+  expect($admin->get('/show/' . $showId . '/appearances')['json']['linkedIds'])->toBe([]);
 
-  expect($admin->get('/show/987654/guide-relations')['status'])->toBe(404);
+  expect($admin->get('/show/987654/appearances')['status'])->toBe(404);
 });
 
 it('GET /show/next reports a hiatus with 404 when nothing is upcoming', function () {

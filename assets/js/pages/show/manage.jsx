@@ -6,7 +6,7 @@
   $('#cg-relations').on('click', function() {
     $.Dialog.wait('Guide relation editor', 'Retrieving relations from server');
 
-    const endpoint = `/show/${showId}/guide-relations`;
+    const endpoint = `/show/${showId}/appearances`;
     $.API.get(endpoint).done((response = {}) => {
       const { SplitSelector } = window.reactComponents;
       let data = {
@@ -74,7 +74,7 @@
       send = function(data) {
         $.Dialog.wait(title, 'Sending reservation to the server');
 
-        $.API.post(`/post/${id}/reservation`, data).fail($.API.failWith(body => {
+        $.API.post(`/posts/${id}/reservation`, data).fail($.API.failWith(body => {
           if (body.retry)
             return $.Dialog.confirm(false, body.message, function(sure) {
               if (!sure) return;
@@ -150,7 +150,7 @@
 
       $.Dialog.wait(`Editing post #${id}`, `Retrieving details`);
 
-      $.API.get(`/post/${id}`).done(function(data = {}) {
+      $.API.get(`/posts/${id}`).done(function(data = {}) {
         let $PostEditForm = $.mk('form').attr('id', 'post-edit-form').append(
           $.mk('label').append(
             $.mk('span').text(`Description (3-255 chars.${!isRequest ? ', optional' : ''})`),
@@ -313,7 +313,7 @@
 
             $.Dialog.wait(false, 'Saving changes');
 
-            $.API.put(`/post/${id}`, newData).done(function(resp = {}) {
+            $.API.put(`/posts/${id}`, newData).done(function(resp = {}) {
               $li.reloadLi();
 
               $.Dialog.close();
@@ -335,12 +335,12 @@
         $li.addClass('deleting');
 
         if (type === 'request')
-          $.API.delete(`/post/${id}/reservation`).done(function(resp = {}) {
+          $.API.delete(`/posts/${id}/reservation`).done(function(resp = {}) {
             $li.removeClass('deleting').reloadLi(false);
             $.Dialog.close();
           }).fail($.API.fail());
         else {
-          $.API.delete(`/post/${id}/reservation`).done(function(resp = {}) {
+          $.API.delete(`/posts/${id}/reservation`).done(function(resp = {}) {
             $.Dialog.close();
             return $li[window.withinMobileBreakpoint() ? 'slideUp' : 'fadeOut'](500, function() {
               $li.remove();
@@ -390,7 +390,7 @@
           (function attempt() {
             $.Dialog.wait(false, 'Marking post as finished');
 
-            $.API.put(`/post/${id}/finish`, sent_data).done(function(data = {}) {
+            $.API.put(`/posts/${id}/finish`, sent_data).done(function(data = {}) {
               $.Dialog.success(false, `${Type} has been marked as finished`);
 
               $(`#${type}s`).trigger('pls-update', [function() {
@@ -445,7 +445,7 @@
 
           $.Dialog.wait(false, 'Removing "finished" flag' + (unbind ? ' & unbinding from user' : ''));
 
-          $.API.delete(`/post/${id}/finish${unbind ? '?unbind' : ''}`).done(function(resp = {}) {
+          $.API.delete(`/posts/${id}/finish${unbind ? '?unbind' : ''}`).done(function(resp = {}) {
             $.Dialog.success(false, typeof resp.message !== 'undefined' ? resp.message : '"finished" flag removed successfully');
             $(`#${type}s`).trigger('pls-update');
           }).fail($.API.fail());
@@ -460,7 +460,7 @@
 
       $.Dialog.wait('Submission approval status', 'Checking');
 
-      $.API.post(`/post/${id}/approval`).done(function(resp = {}) {
+      $.API.post(`/posts/${id}/approval`).done(function(resp = {}) {
         let message = resp.message;
         $li.reloadLi();
         $.Dialog.success(false, message, true);
@@ -477,7 +477,7 @@
 
         $.Dialog.wait(false);
 
-        $.API.delete(`/post/${id}/approval`).done(function(resp = {}) {
+        $.API.delete(`/posts/${id}/approval`).done(function(resp = {}) {
           $li.closest('.posts').trigger('pls-update');
         }).fail($.API.fail());
       });
@@ -494,7 +494,7 @@
         $.Dialog.wait(false);
         $li.addClass('deleting');
 
-        $.API.delete(`/post/request/${id}`).done(function() {
+        $.API.delete(`/posts/requests/${id}`).done(function() {
           $.Dialog.close();
           $li[window.withinMobileBreakpoint() ? 'slideUp' : 'fadeOut'](500, () => {
             $li.remove();
@@ -538,7 +538,7 @@
           let data = $form.mkData();
           $.Dialog.wait(false, 'Replacing image');
 
-          $.API.put(`/post/${id}/image`, data).done(function(resp = {}) {
+          $.API.put(`/posts/${id}/image`, data).done(function(resp = {}) {
             $.Dialog.success(false, 'Image has been updated', true);
 
             if (resp.li){
@@ -562,7 +562,7 @@
       $.Dialog.close();
       $.Dialog.wait('Clear post broken status', 'Checking image availability');
 
-      $.API.get(`/post/${id}/unbreak`).done(function(resp = {}) {
+      $.API.post(`/posts/${id}/unbreak`).done(function(resp = {}) {
         if (resp.li){
           let $newli = $(resp.li);
           if ($li.hasClass('highlight'))

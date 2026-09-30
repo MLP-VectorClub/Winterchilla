@@ -121,7 +121,7 @@ from what Luna implements.
 ## Order of work
 
 1. Router helper with a method list (done).
-2. Move resource by resource (settings, notifications, tags, color groups, color-guide export/reindex and appearances are done; next
+2. Move resource by resource (settings, notifications, tags, color groups, color-guide export/reindex and appearances, posts, events and show relations are done; next
    posts/events/show → users/site): route, docblock `path=`, contract tests and client calls in one commit, suite green each time.
 3. Close the read gap (see CLAUDE.md "Next") on the new paths.
 4. Request-body naming (snake_case → camelCase: `image_url`→`imageUrl`, `show_id`→`showId`, `ponyid`→`appearanceId`, `Colors`→`colors`,

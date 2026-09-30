@@ -15,5 +15,9 @@ class TestSeederConstants {
   public const MOVIE_ID = 2;
   public const EVENT_ID = 1;
   public const POST_ID = 1;
+  // Unread notifications: 1 and 2 belong to USER_ID, 3 to ADMIN_ID
+  public const NOTIFICATION_ID = 1;
+  public const NOTIFICATION_MARK_READ_ID = 2;
+  public const ADMIN_NOTIFICATION_ID = 3;
   public const API_PATH = '/api/v0';
 }

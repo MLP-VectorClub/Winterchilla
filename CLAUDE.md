@@ -369,6 +369,32 @@ call, don't apply blindly. Approach, in order:
 5. Key-case migration to camelCase is done per endpoint alongside its contract test (many keys are already
    camelCase or single words); document any endpoint that has to keep a legacy key.
 
+### Migration progress
+
+Infrastructure (done): `Response::error($status, $message, $extra)`, `Response::ok($data, $status)`,
+`Response::noContent()`, and an optional `status:` argument on `Response::fail()`/`dbError()` (passing it switches
+that call to the new format; calls without it stay legacy until migrated). The `$.API` wrapper in
+`shared-utils.js` is the client shim from step 2. `CoreUtils::notFound/noPerm/notAllowed` JSON branches use the
+new error body. Shared `ErrorResponse`/`ValidationErrorResponse` schemas live in `APIController`'s docblock.
+
+Contract tests live in `tests/Browser/Api/` (they reuse the browser suite's server/DB bootstrap, hence the
+directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `guest()`/`loggedInAs()`).
+
+- [x] `AuthAPIController` (`/da-auth/status`, `/da-auth/sign-out`) — pilot; `retries_remaining` →
+      `retriesRemaining`, sign-out is 204, errors 403/404/500 with `{message}`. Also fixed the guest
+      `/da-auth/status` path calling `unsetData` on a null session.
+- [x] `SettingAPIController` (`/setting/{key}`) — 401/403/404 (unknown key; used to fatal on an undefined
+      index), 422 with `errors.value` for missing/invalid values. Also fixed: submitting an empty value (the
+      documented way to reset a setting) 500'd on a `string` type error; it now resets and returns the
+      effective value.
+- [x] `AboutAPIController` (`/about/server`, `/about/upcoming`) — plain bodies; 500 `{message}` when git info
+      is unavailable. `/about/upcoming` still returns rendered HTML in `html`.
+- [x] `NotificationAPIController` (`/notif`, `/notif/{id}/mark-read`) — 401 for guests, 404 for unknown
+      notifications (including other users' — ownership is enforced), mark-read is 204. `TestSeeder` seeds
+      three unread `post-approved` notifications (`TestSeederConstants::NOTIFICATION_*`). `/notif` still
+      returns rendered HTML in `list`.
+- [ ] Everything else — see the inventory and the order above (`Show` next).
+
 ## Working on this plan
 
 - Update the relevant stage's checkboxes and flip its heading from "not started" → "in progress" →

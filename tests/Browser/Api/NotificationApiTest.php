@@ -17,7 +17,32 @@ it('lists the current user\'s unread notifications as HTML', function () {
 
   expect($r['status'])->toBe(200)
     ->and($r['json'])->toHaveKey('list')
-    ->and($r['json'])->not->toHaveKey('status');
+    ->and($r['json'])->not->toHaveKey('status')
+    ->and($r['json']['list'])->toContain('data-id=\'' . TestSeederConstants::NOTIFICATION_ID . '\'');
+});
+
+it('does not list other users\' notifications', function () {
+  $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get('/notif');
+
+  expect($r['json']['list'])->not->toContain('data-id=\'' . TestSeederConstants::ADMIN_NOTIFICATION_ID . '\'');
+});
+
+it('marks a notification as read with 204 and stops listing it', function () {
+  $client = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
+  $id = TestSeederConstants::NOTIFICATION_MARK_READ_ID;
+  expect($client->get('/notif')['json']['list'])->toContain('data-id=\'' . $id . '\'');
+
+  $r = $client->post('/notif/' . $id . '/mark-read');
+  expect($r['status'])->toBe(204)->and($r['body'])->toBe('');
+
+  expect($client->get('/notif')['json']['list'])->not->toContain('data-id=\'' . $id . '\'');
+});
+
+it('404s when marking another user\'s notification as read', function () {
+  $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)
+    ->post('/notif/' . TestSeederConstants::ADMIN_NOTIFICATION_ID . '/mark-read');
+
+  expect($r['status'])->toBe(404);
 });
 
 it('404s when marking a notification that does not exist', function () {

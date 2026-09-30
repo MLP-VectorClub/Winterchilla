@@ -79,6 +79,15 @@ class TestSeeder extends AbstractSeed {
       'requested_by' => 9001,
     ]])->save();
 
+    // Notifications about the seeded post: two unread ones for the regular user (the API tests consume one) and
+    // one for the admin (to check that users can't touch each other's). IDs must match TestSeederConstants.
+    $notification_data = json_encode(['id' => 1, 'type' => 'request']);
+    $this->table('notifications')->insert([
+      ['id' => 1, 'type' => 'post-approved', 'data' => $notification_data, 'recipient_id' => 9001],
+      ['id' => 2, 'type' => 'post-approved', 'data' => $notification_data, 'recipient_id' => 9001],
+      ['id' => 3, 'type' => 'post-approved', 'data' => $notification_data, 'recipient_id' => 9002],
+    ])->save();
+
     // An appearance in the pony color guide
     $this->table('appearances')->insert([[
       'id'          => 1,

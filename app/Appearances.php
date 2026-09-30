@@ -155,6 +155,8 @@ class Appearances {
           ],
         ],
         'settings' => [
+          // Single-node setup, replicas could never be allocated (cluster health would stay yellow)
+          'number_of_replicas' => 0,
           'analysis' => [
             'analyzer' => [
               'overkill' => [

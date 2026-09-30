@@ -314,16 +314,30 @@ Globals inventory (key → where exported → readers):
 
 Each phase: add/adjust tests first, keep `vendor/bin/pest tests/Browser` green, update checkboxes here.
 
+### Decisions
+
+- **Versioning:** stay on `/api/v0` for now (already documented as unstable); no `/api/v1`.
+- **Auth:** verified from source — Luna uses **Laravel Sanctum** (`laravel/sanctum` ^2.0; not Passport):
+  `auth:sanctum` routes, plain-text bearer tokens issued by `User::authResponse()` after sign-in, plus
+  stateful-cookie support for its own frontend host. Luna has its own users and DB and re-implements the
+  same resources itself (`/appearances`, `/users`, `/color-guide`, `/about`, `/useful-links`, ...), so
+  Winterchilla's API is the *behavioral spec* Luna implements, not something Luna authenticates against.
+  Contract tests therefore must not depend on Winterchilla's DeviantArt session/`test-login` mechanics as part of
+  the contract; document auth per endpoint as an abstract requirement (public / signed in / role) that
+  Luna maps onto Sanctum.
+- **Browser calls:** Celestia proxies `NEXT_PUBLIC_API_PREFIX/:path*` to the backend via a Next.js
+  rewrite (`Celestia/apps/celestia/next.config.js`), so there is no cross-origin browser traffic and no
+  CORS work is needed.
+- **Writes are in scope:** existing mutation endpoints get the same contract tests and OpenAPI docs as the
+  reads.
+
 ### Open questions
 
-- Versioning: keep evolving `/api/v0` (documented as unstable) or cut `/api/v1` for the Celestia/Luna
-  contract? Leaning `/api/v1` for read endpoints so the contract can freeze while `v0` keeps changing.
-- Auth for Celestia/Luna: session cookie only (today) vs token auth. They are separate apps, so cookies
-  from another origin won't work — needs a decision before Phase 1 endpoints are declared stable.
-- Which projects call this API server-to-server vs from browsers (CORS)?
-- Write endpoints: the plan above covers reads; existing mutation endpoints need the same contract-test
-  and docs treatment — in scope for this round?
-  (SEO/first-paint questions are Celestia/Luna's to answer, not Winterchilla's.)
+- Naming: Luna's responses are camelCase (`response()->camelJson`); check what Winterchilla `/api/v0` emits
+  (likely snake_case). Document the difference as part of the contract rather than changing either side,
+  unless you want Winterchilla's contract normalized first.
+- Error shape and status codes per endpoint (unauthenticated 401 vs 403, validation format) — collect them
+  while writing the contract tests.
 
 ## Working on this plan
 

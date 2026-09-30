@@ -672,8 +672,7 @@ class AppearanceAPIController extends APIController {
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="No sprite file found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   *   @OA\Response(response="404", description="Appearance not found, or (when deleting) no sprite file found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function spriteApi($params):void {

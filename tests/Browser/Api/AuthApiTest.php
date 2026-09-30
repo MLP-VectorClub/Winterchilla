@@ -80,3 +80,13 @@ it('rejects state-changing requests without a CSRF token with 419', function () 
   expect(curl_getinfo($ch, CURLINFO_HTTP_CODE))->toBe(419)
     ->and(json_decode((string)$body, true))->toHaveKey('message');
 });
+
+it('answers a JSON request for an HTML page with 406 instead of dumping the page data', function () {
+  // /cg/pony passes Eloquent-style models with circular references to the view; logging them used to overflow the headers
+  $ch = curl_init(TestSeederConstants::BASE_URL . '/cg/pony');
+  curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HTTPHEADER => ['Accept: application/json']]);
+  $body = curl_exec($ch);
+
+  expect(curl_getinfo($ch, CURLINFO_HTTP_CODE))->toBe(406)
+    ->and(json_decode((string)$body, true))->toHaveKey('message');
+});

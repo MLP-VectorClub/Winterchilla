@@ -499,6 +499,9 @@ class PostAPIController extends APIController {
    * )
    */
   public function api($params) {
+    // Signed-out visitors get a 401 whatever the post's state (loading an approved post answers 409 first otherwise)
+    $this->_authorize();
+
     if (!$this->creating)
       $this->load_post($params, 'manage');
 

@@ -279,7 +279,9 @@ class CoreUtils {
   public static function loadPage(string $method_name, array $options = []) {
     if (self::isJSONExpected()){
       HTTP::statusCode(400);
-      self::logError(__METHOD__.": JSON expected, but this was called instead.\nView: $method_name\nOptions:\n".var_export($options, true)."\nStacktrace:\n".(new Exception())->getTraceAsString(), Logger::WARNING);
+      // The options aren't dumped: they hold models with circular references, which var_export() answers with a warning
+      // per reference, enough to overflow the response headers (a 502 from the proxy)
+      self::logError(__METHOD__.": JSON expected, but this was called instead.\nView: $method_name\nRequest: {$_SERVER['REQUEST_METHOD']} {$_SERVER['REQUEST_URI']}\nStacktrace:\n".(new Exception())->getTraceAsString(), Logger::WARNING);
       $path = self::escapeHTML($_SERVER['REQUEST_URI']);
       Response::error(406, "The requested endpoint ($path) does not support JSON responses");
     }

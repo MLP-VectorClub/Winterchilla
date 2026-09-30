@@ -75,7 +75,6 @@ class PersonalGuideAPIController extends APIController {
    *     description="The user is allowed to add a new PCG appearance"
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(
    *     response="403",
    *     description="PCG appearance creation is disabled for this user",

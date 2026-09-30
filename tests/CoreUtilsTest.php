@@ -119,7 +119,8 @@ class CoreUtilsTest extends TestCase {
     $result = CoreUtils::checkStringValidity('Oh my~!', 'Exclamation', '[^A-Za-z!\s]', true);
     self::assertEquals('Exclamation (Oh my~!) contains an invalid character: ~', $result);
     $result = CoreUtils::checkStringValidity('A_*cbe>#', 'String', '[^A-Za-z]', true);
-    self::assertEquals('String (A_*cbe&gt;#) contains the following invalid characters: _, *, &gt; and #', $result);
+    // Plain text: clients escape messages themselves when they show them as HTML
+    self::assertEquals('String (A_*cbe>#) contains the following invalid characters: _, *, > and #', $result);
   }
 
   public function testPosess():void {

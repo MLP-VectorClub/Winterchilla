@@ -66,3 +66,25 @@ it('hides private appearances from everyone but their owner and staff', function
   expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get($path)['status'])->toBe(200);
   expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get($path)['status'])->toBe(200);
 });
+
+it('returns a detailed appearance with color groups and cutie marks', function () use ($appearanceId) {
+  $r = ApiClient::guest()->get("/appearances/$appearanceId");
+
+  expect($r['status'])->toBe(200)
+    ->and($r['json'])->toHaveKeys(['id', 'label', 'createdAt', 'notes', 'tags', 'sprite', 'hasCutieMarks', 'colorGroups', 'cutieMarks'])
+    ->and($r['json']['id'])->toBe($appearanceId)
+    ->and($r['json'])->not->toHaveKeys(['status', 'created_at', 'color_groups']);
+  $marks = array_column($r['json']['cutieMarks'], null, 'id');
+  expect($marks)->toHaveKey(TestSeederConstants::CUTIEMARK_ID)
+    ->and($marks[TestSeederConstants::CUTIEMARK_ID])->toHaveKeys(['id', 'viewUrl', 'facing', 'rotation'])
+    ->and($marks[TestSeederConstants::CUTIEMARK_ID]['viewUrl'])->toStartWith('/cg/cutiemark/');
+});
+
+it('answers 404 for a missing appearance and 403 for a private one', function () {
+  $guest = ApiClient::guest();
+
+  expect($guest->get('/appearances/987654')['status'])->toBe(404);
+  $r = $guest->get('/appearances/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID);
+  expect($r['status'])->toBe(403)->and($r['json'])->toHaveKey('message');
+  expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get('/appearances/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID)['status'])->toBe(200);
+});

@@ -28,7 +28,8 @@ $api_endpoint('/appearances', [\App\Controllers\API\AppearanceAPIController::cla
 $api_endpoint('/appearances/all', [\App\Controllers\API\AppearancesAPIController::class, 'queryAll']);
 $api_endpoint('/appearances/autocomplete', [\App\Controllers\API\AppearanceAPIController::class, 'autocomplete']);
 $api_endpoint('/appearances/order', [\App\Controllers\API\ColorGuideAPIController::class, 'reorderFullList']);
-$api_endpoint('/appearances/[i:id]', [\App\Controllers\API\AppearanceAPIController::class, 'api']);
+$api_endpoint('/appearances/[i:id]', [\App\Controllers\API\AppearancesAPIController::class, 'get'], 'GET');
+$api_endpoint('/appearances/[i:id]', [\App\Controllers\API\AppearanceAPIController::class, 'api'], 'PUT|DELETE');
 $api_endpoint('/appearances/[i:id]/metadata', [\App\Controllers\API\AppearanceAPIController::class, 'api']);
 $api_endpoint('/appearances/[i:id]/sprite', [\App\Controllers\API\AppearancesAPIController::class, 'sprite'], 'GET');
 $api_endpoint('/appearances/[i:id]/sprite', [\App\Controllers\API\AppearanceAPIController::class, 'spriteApi'], 'POST|PUT|DELETE');

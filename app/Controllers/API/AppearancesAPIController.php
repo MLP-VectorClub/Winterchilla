@@ -10,6 +10,7 @@ use App\HTTP;
 use App\Models\Appearance;
 use App\Models\Color;
 use App\Models\ColorGroup;
+use App\Models\Cutiemark;
 use App\Models\Tag;
 use App\Pagination;
 use App\Permission;
@@ -528,6 +529,77 @@ class AppearancesAPIController extends APIController {
 
       Response::error(403, 'This appearance is private and you do not have permission to view it');
     }
+  }
+
+  /**
+   * @OA\Schema(
+   *   schema="CutieMark",
+   *   type="object",
+   *   description="A cutie mark entry",
+   *   required={"id", "viewUrl", "facing", "rotation"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="viewUrl", type="string", description="The URL used for displaying the cutie mark SVG file."),
+   *   @OA\Property(property="facing", type="string", nullable=true, enum={"left", "right", null}, description="The direction the character is facing when this cutie mark should be used. `null` means the image is symmetrical."),
+   *   @OA\Property(property="favMe", type="string", nullable=true, description="Optional ID of a deviation on DeviantArt that is the original source of this cutie mark vector."),
+   *   @OA\Property(property="rotation", type="integer", minimum=-45, maximum=45, default=0),
+   *   @OA\Property(property="contributor", description="Optional details of the user who contributed this cutie mark.", ref="#/components/schemas/User"),
+   *   @OA\Property(property="label", type="string", description="Optional label in case the cutie mark warrants additional information.")
+   * )
+   * @OA\Schema(
+   *   schema="DetailedAppearance",
+   *   type="object",
+   *   description="An appearance object containing the full range of information available",
+   *   additionalProperties=false,
+   *   allOf={
+   *     @OA\Schema(ref="#/components/schemas/Appearance"),
+   *     @OA\Schema(
+   *       type="object",
+   *       required={"cutieMarks"},
+   *       @OA\Property(property="cutieMarks", type="array", minItems=0, @OA\Items(ref="#/components/schemas/CutieMark"))
+   *     )
+   *   }
+   * )
+   * @OA\Get(
+   *   path="/appearances/{id}",
+   *   security={},
+   *   description="Get all relevant information about an appearance at once, including tags, color groups and cutie marks",
+   *   tags={"color guide", "appearances"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/ZeroBasedId")),
+   *   @OA\Response(response="200", description="Complete appearance information", @OA\JsonContent(ref="#/components/schemas/DetailedAppearance")),
+   *   @OA\Response(response="403", description="The appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   * @param array $params
+   */
+  function get(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $appearance = self::_resolveAppearance($params);
+
+    self::_handlePrivateAppearanceCheck($appearance);
+
+    Response::ok(self::mapAppearance($appearance, false) + [
+      'cutieMarks' => array_map(fn(Cutiemark $cm) => self::mapCutieMark($cm), $appearance->cutiemarks),
+    ]);
+  }
+
+  static function mapCutieMark(Cutiemark $cm):array {
+    $result = [
+      'id' => $cm->id,
+      'viewUrl' => $cm->getRenderedRelativeURL(),
+      'facing' => $cm->facing,
+      'favMe' => $cm->favme,
+      'rotation' => (int)$cm->rotation,
+    ];
+    $contributor = $cm->contributor?->user;
+    if ($contributor !== null)
+      $result['contributor'] = UsersAPIController::mapUser($contributor);
+    if (!empty($cm->label))
+      $result['label'] = $cm->label;
+
+    return $result;
   }
 
   /**

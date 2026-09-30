@@ -13,17 +13,15 @@
 
     $.Dialog.wait(`Editing link #${linkid}`, 'Retrieving link information from server');
 
-    $.API.get(`/admin/usefullinks/${linkid}`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      let data = this;
+    $.API.get(`/admin/usefullinks/${linkid}`).done(function(resp = {}) {
+      let data = resp;
       $.Dialog.request(false, getLinkEditForm(linkid), 'Save changes', function($form) {
         $form.find('input[name=label]').val(data.label);
         $form.find('input[name=url]').val(data.url);
         $form.find('input[name=title]').val(data.title);
         $form.find('select[name=minrole]').val(data.minRole);
       });
-    });
+    }).fail($.API.fail());
   });
   $uflol.on('click', '.delete-link', function() {
     let $li = $(this).closest('[id^=ufl-]'),
@@ -34,15 +32,13 @@
 
       $.Dialog.wait(false, 'Removing link');
 
-      $.API.delete(`/admin/usefullinks/${linkId}`, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
+      $.API.delete(`/admin/usefullinks/${linkId}`).done(function(resp = {}) {
         $li.remove();
         $('#ufl-link-' + linkId).remove();
         if ($sbUflContainer.is(':empty'))
           $sbUflContainer.hide();
         $.Dialog.close();
-      });
+      }).fail($.API.fail());
     });
   });
   $('#add-link').on('click', function() {
@@ -83,11 +79,9 @@
         let data = $(this).serialize();
         $.Dialog.wait(false);
 
-        $.API[linkid ? 'put' : 'post'](`/admin/usefullinks${linkid ? `/${linkid}` : ''}`, data, $.mkAjaxHandler(function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
+        $.API[linkid ? 'put' : 'post'](`/admin/usefullinks${linkid ? `/${linkid}` : ''}`, data).done(function(resp = {}) {
           $.Navigation.reload(true);
-        }));
+        }).fail($.API.fail());
       });
     }
 
@@ -112,11 +106,9 @@
         list.push($(this).find('.typcn-arrow-move').remove().end().attr('id').split('-').pop());
       });
 
-      $.API.post('/admin/usefullinks/reorder', { list: list.join(',') }, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
+      $.API.post('/admin/usefullinks/reorder', { list: list.join(',') }).done(function(resp = {}) {
         $.Navigation.reload(true);
-      });
+      }).fail($.API.fail());
     }
   });
 })();

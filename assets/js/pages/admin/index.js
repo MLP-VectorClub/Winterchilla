@@ -6,13 +6,11 @@
 
     $.Dialog.wait('Clearing file stat cache');
 
-    $.API.delete('/admin/stat-cache', function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      if (this.message)
-        $.Dialog.success(false, this.message, true);
+    $.API.delete('/admin/stat-cache').done(function(resp = {}) {
+      if (resp.message)
+        $.Dialog.success(false, resp.message, true);
       else $.Dialog.close();
-    });
+    }).fail($.API.fail());
   });
 
   const deviationIO = new IntersectionObserver(entries => {
@@ -27,13 +25,11 @@
         postID = el.dataset.postId,
         viewonly = el.dataset.viewonly;
 
-      $.API.get(`/post/${postID}/lazyload`, { viewonly }, function() {
-        if (!this.status) return $.Dialog.fail(`Cannot load post ${postID}`, this.message);
-
-        $.loadImages(this.html).then(function(resp) {
+      $.API.get(`/post/${postID}/lazyload`, { viewonly }).done(function(resp = {}) {
+        $.loadImages(resp.html).then(function(resp) {
           $(el).closest('.image').replaceWith(resp.$el);
         });
-      });
+      }).fail($.API.fail(`Cannot load post ${postID}`));
     });
   });
   const imageIO = new IntersectionObserver(entries => {

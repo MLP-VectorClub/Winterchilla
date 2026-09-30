@@ -1037,49 +1037,47 @@
 
     return data;
   };
-  let nextApiRequestHandled = false;
-  $.ajaxPrefilter(function(options) {
-    if (nextApiRequestHandled){
-      options.apiHandled = true;
-      nextApiRequestHandled = false;
-    }
+  // Successful API responses get their `message` escaped the same way (see escapeMessage), whatever the calling style
+  $.ajaxPrefilter('json', function(options) {
+    if (typeof $.API === 'undefined' || typeof options.url !== 'string' || options.url.indexOf($.API.API_PATH) !== 0)
+      return;
+
+    options.dataFilter = function(raw) {
+      if (typeof raw !== 'string' || raw === '')
+        return raw;
+      try {
+        return JSON.stringify(escapeMessage(JSON.parse(raw)));
+      } catch (e){
+        return raw;
+      }
+    };
   });
 
+  // Error handler for promise style calls: shows the API's error message in a dialog, and tells the global status handlers
+  // (see $.ajaxSetup) that this request took care of it. Use with `.fail()` on the request, e.g.
+  // `$.API.post(url).done(...).fail($.API.fail('Some title'))`.
   if (typeof $.API !== 'undefined'){
-    $.each(['get', 'post', 'put', 'delete'], (i, el) => {
-      ((method) => {
-        $.API[method] = function(url, ...args) {
-          const lastArg = args.slice(-1)[0];
-          let errorHandler = null;
-          if (typeof lastArg === 'function'){
-            // Endpoints are moving from `200 {status: false, message}` to proper HTTP error statuses. Keep the
-            // legacy `this.status` / `this.message` contract for callers: 2xx gets `status: true` (204 has no
-            // body at all) and 4xx/5xx JSON errors are delivered to the same callback with `status: false`.
-            const handler = $.mkAjaxHandler(lastArg);
-            args.splice(-1, 1, function(data, textStatus, jqXHR) {
-              if ((jqXHR && jqXHR.status === 204) || data === undefined || data === '')
-                data = {};
-              if (data !== null && typeof data === 'object' && !('status' in data))
-                data.status = true;
-              return handler(escapeMessage(data));
-            });
-            errorHandler = function(jqXHR) {
-              const body = jqXHR.responseJSON;
-              if (!body || typeof body !== 'object')
-                return;
-              handler(escapeMessage(Object.assign({}, body, { status: false, httpStatus: jqXHR.status, message: errorText(body) })));
-            };
-          }
-          // The next request is handled by the callback (see the ajaxPrefilter below)
-          if (errorHandler !== null)
-            nextApiRequestHandled = true;
-          const request = $[method]($.API.API_PATH + url, ...args);
-          nextApiRequestHandled = false;
-          if (errorHandler !== null)
-            request.fail(errorHandler);
-          return request;
-        };
-      })(el);
+    // Like fail(), but hands the error body (with `message` escaped for HTML, and the plain text in `rawMessage`) to a
+    // custom handler instead of showing a dialog
+    $.API.failWith = function(handler) {
+      return function(jqXHR) {
+        const body = jqXHR.responseJSON;
+        // Not an API error body (network failure, HTML error page): leave it to the global handlers
+        if (!body || typeof body !== 'object')
+          return;
+
+        this.apiHandled = true;
+        handler(escapeMessage(Object.assign({}, body, { message: errorText(body) })), jqXHR);
+      };
+    };
+    $.API.fail = (title = false) => $.API.failWith(body => $.Dialog.fail(title, body.message));
+  }
+
+  if (typeof $.API !== 'undefined'){
+    // Promise style only: `$.API.get(url, data).done(resp => ...).fail($.API.fail(title))`. Responses are the resource
+    // itself (204 has no body, so `done` gets undefined), and errors are proper HTTP statuses.
+    $.each(['get', 'post', 'put', 'delete'], (i, method) => {
+      $.API[method] = (url, data) => $[method]($.API.API_PATH + url, data);
     });
   }
 

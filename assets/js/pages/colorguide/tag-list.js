@@ -4,19 +4,15 @@
   const { TAG_TYPES_ASSOC } = window;
   let $tbody = $('#tags').children('tbody'),
     updateList = function($tr, action) {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
       if (typeof $tr === 'function')
         return $tr.call(this, action);
 
       $.Dialog.segway(false, this.message ? $.mk('span').attr('class', 'color-green').html(this.message) : undefined);
     },
     tagUseUpdateHandler = function(successDialog) {
-      return function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
-        if (this.counts){
-          let counts = this.counts;
+      return function(resp = {}) {
+        if (resp.counts){
+          let counts = resp.counts;
           $tbody.children().each(function() {
             let $ch = $(this).children(),
               id = parseInt($ch.first().text().trim(), 10);
@@ -26,7 +22,7 @@
           });
         }
 
-        if (successDialog) $.Dialog.success(false, this.message, true);
+        if (successDialog) $.Dialog.success(false, resp.message, true);
         else $.Dialog.close();
       };
     };
@@ -38,35 +34,37 @@
 
           $.Dialog.wait(false, 'Deleting tag');
 
-          $.API.delete(`/cg/tag/${tagID}`, { sanitycheck: true }, function() {
-            updateList.call(this, $tr, action);
-          });
+          $.API.delete(`/cg/tag/${tagID}`, { sanitycheck: true }).done(function(resp = {}) {
+            updateList.call(resp, $tr, action);
+          }).fail($.API.fail());
         });
         break;
       case 'synon':
         $.Dialog.wait(`Make ${tagName} a synonym`, 'Retrieving tag list from server');
 
-        $.API.get('/cg/tags', { not: tagID, action: action }, function() {
-          if (!this.length){
-            if (this.synonymOf) {
-              const message = $.mk('div').append(
-                'This tag is already a synonym of ',
-                $.mk('strong').text(this.synonymOf.name),
-                '.',
-                $.mk('br'),
-                'Would you like to remove the synonym?',
-              ).html();
-              return window.cgTagEditing.call({ message }, tagName, tagID, 'unsynon', $tr);
-            }
-
-            return $.Dialog.fail(false, this.message);
+        $.API.get('/cg/tags', { not: tagID, action: action }).fail($.API.failWith(body => {
+          // 409: the tag already is a synonym, offer to remove that instead
+          if (body.synonymOf) {
+            const message = $.mk('div').append(
+              'This tag is already a synonym of ',
+              $.mk('strong').text(body.synonymOf.name),
+              '.',
+              $.mk('br'),
+              'Would you like to remove the synonym?',
+            ).html();
+            return window.cgTagEditing.call({ message }, tagName, tagID, 'unsynon', $tr);
           }
+
+          $.Dialog.fail(false, body.message);
+        })).done(function(resp = []) {
+          if (!resp.length)
+            return $.Dialog.fail(false, 'There are no other tags to make a synonym of');
 
           let $TagActionForm = $.mk('form', `tag-${action}`),
             $select = $.mk('select').attr('required', true).attr('name', 'target_id'),
             optgroups = {}, ogorder = [];
 
-          $.each(this, function(_, tag) {
+          $.each(resp, function(_, tag) {
             let type = tag.type,
               $option = `<option value="${tag.id}">${tag.name}</option>`;
 
@@ -98,9 +96,9 @@
               let sent = $form.mkData();
               $.Dialog.wait(false, 'Creating tag synonym');
 
-              $.API.put(`/cg/tag/${tagID}/synonym`, sent, function(data) {
+              $.API.put(`/cg/tag/${tagID}/synonym`, sent).done(function(data = {}) {
                 updateList.call(data, $tr, action);
-              });
+              }).fail($.API.fail());
             });
           });
         });
@@ -125,9 +123,9 @@
                 let data = $form.mkData();
                 $.Dialog.wait(false, 'Removing synonym');
 
-                $.API.delete(`/cg/tag/${tagID}/synonym`, data, function() {
-                  updateList.call(this, $tr, action);
-                });
+                $.API.delete(`/cg/tag/${tagID}/synonym`, data).done(function(resp = {}) {
+                  updateList.call(resp, $tr, action);
+                }).fail($.API.fail());
               });
             });
           });
@@ -137,7 +135,7 @@
       case 'refresh':
         $.Dialog.wait(`Refresh use count of ${tagName}`, 'Updating use count');
 
-        $.API.post('/cg/tags/recount-uses', { tagids: tagID }, tagUseUpdateHandler());
+        $.API.post('/cg/tags/recount-uses', { tagids: tagID }).done(tagUseUpdateHandler()).fail($.API.fail());
         break;
     }
   };
@@ -161,6 +159,6 @@
 
     $.Dialog.wait(title, 'Updating use count' + (tagIDs.length !== 1 ? 's' : ''));
 
-    $.API.post('/cg/tags/recount-uses', { tagids: tagIDs.join(',') }, tagUseUpdateHandler(true));
+    $.API.post('/cg/tags/recount-uses', { tagids: tagIDs.join(',') }).done(tagUseUpdateHandler(true)).fail($.API.fail());
   });
 })();

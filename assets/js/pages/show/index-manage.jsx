@@ -110,20 +110,18 @@
 
             $this.disable();
 
-            $.API.get('/show/prefill', function() {
-              if (!this.status) return $.Dialog.fail(false, this.message);
-
-              let airs = setSat830(this.airday);
+            $.API.get('/show/prefill').done(function(resp = {}) {
+              let airs = setSat830(resp.airday);
               $.each({
                 airdate: $.momentToYMD(airs),
                 airtime: $.momentToHM(airs),
-                episode: this.episode,
-                season: this.season,
-                no: this.no,
+                episode: resp.episode,
+                season: resp.season,
+                no: resp.no,
               }, (name, value) => {
                 $form.find(`[name=${name}]`).val(value);
               });
-            }).always(function() {
+            }).fail($.API.fail()).always(function() {
               $this.enable();
             });
           }),
@@ -147,13 +145,11 @@
         const what = is_episode ? 'episode' : 'show entry';
         $.Dialog.wait(false, `Adding ${what} to database`);
 
-        $.API.post('/show', data, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
+        $.API.post('/show', data).done(function(resp = {}) {
           $.Dialog.wait(false, `Opening ${what} page`, true);
 
-          $.Navigation.visit(this.url);
-        });
+          $.Navigation.visit(resp.url);
+        }).fail($.API.fail());
       });
     });
   });
@@ -170,10 +166,8 @@
     $.Dialog.wait(`Editing show entry #${id}`);
 
     const endpoint = `/show/${id}`;
-    $.API.get(endpoint, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      const { show } = this;
+    $.API.get(endpoint).done(function(resp = {}) {
+      const { show } = resp;
 
       const isEpisode = show.season !== null;
 
@@ -215,15 +209,13 @@
 
           $.Dialog.wait(false, 'Saving changes');
 
-          $.API.put(endpoint, data, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
+          $.API.put(endpoint, data).done(function(resp = {}) {
             $.Dialog.wait(false, 'Updating page', true);
             $.Navigation.reload();
-          });
+          }).fail($.API.fail());
         });
       });
-    });
+    }).fail($.API.fail());
   }
 
   $content.on('click', '#edit-show', EditEp);
@@ -240,11 +232,9 @@
 
       $.Dialog.wait(false, 'Removing episode');
 
-      $.API.delete(`/show/${id}`, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
+      $.API.delete(`/show/${id}`).done(function(resp = {}) {
         $.Navigation.reload(true);
-      });
+      }).fail($.API.fail());
     });
   });
 })();

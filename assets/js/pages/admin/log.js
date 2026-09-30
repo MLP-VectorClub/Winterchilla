@@ -32,16 +32,13 @@
             $this.addClass('typcn-times color-red').css('cursor', 'not-allowed').off('click');
           };
 
-        $.API.get(`/admin/logs/details/${EntryID}`, function() {
-          if (!this.status){
-            if (this.unclickable === true)
-              $this.replaceWith($this.text().trim());
-            $.Dialog.fail(title, this.message);
-            return fail();
-          }
-
+        $.API.get(`/admin/logs/details/${EntryID}`).fail($.API.failWith(body => {
+          if (body.unclickable === true)
+            $this.replaceWith($this.text().trim());
+          $.Dialog.fail(title, body.message);
+        })).done(function(resp = {}) {
           let $dataDiv = $.mk('div').attr('class', 'expandable-section').css('display', 'none');
-          $.each(this.details, (_, detail) => {
+          $.each(resp.details, (_, detail) => {
             let $info, $key = $.mk('strong').html(detail[0] + ': ');
             if (typeof detail[2] === 'string')
               $key.addClass(`color-${detail[2]}`);

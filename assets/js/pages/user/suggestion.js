@@ -22,13 +22,8 @@
           $btn.disable();
           $loadNotice.hide();
 
-          $.API.get('/post/request/suggestion', { already_loaded: already_loaded.join(',') }, function() {
-            if (!this.status){
-              $btn.enable();
-              return $.Dialog.fail(false, this.message);
-            }
-
-            let $result = $(this.suggestion),
+          $.API.get('/post/request/suggestion', { already_loaded: already_loaded.join(',') }).done(function(resp = {}) {
+            let $result = $(resp.suggestion),
               postID = parseInt($result.attr('id').split('-')[1], 10);
 
             already_loaded.push(postID);
@@ -43,16 +38,18 @@
             });
             $result.find('.reserve-request').on('click', function() {
               let $this = $(this);
-              $.API.post(`/post/${postID}/reservation`, { from: 'suggestion' }, function() {
-                if (!this.status) return $.Dialog.fail(false, this.message);
-
-                $this.replaceWith(this.button);
-                $pendingReservations.html($(this.pendingReservations).children());
-              });
+              $.API.post(`/post/${postID}/reservation`, { from: 'suggestion' }).done(function(resp = {}) {
+                $this.replaceWith(resp.button);
+                $pendingReservations.html($(resp.pendingReservations).children());
+              }).fail($.API.fail());
             });
             $output.html($result);
             $btn.enable();
-          }).fail(function() {
+          }).fail($.API.failWith(body => {
+            $btn.enable();
+            $.Dialog.fail(false, body.message);
+          })).fail(function() {
+            // Also covers failures that aren't API error bodies (the handler above skips those)
             $btn.enable();
           });
         });

@@ -97,15 +97,13 @@
         if (GUIDE)
           data.guide = GUIDE;
 
-        $.API.post('/cg/full/reorder', data, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
-          $fullList.removeClass('sorting').html(this.html);
+        $.API.post('/cg/full/reorder', data).done(function(resp = {}) {
+          $fullList.removeClass('sorting').html(resp.html);
           reobserve();
           $ReorderBtn.removeClass('typcn-tick green').addClass('typcn-arrow-unsorted darkblue').html('Re-order');
           $ReorderCancelBtn.addClass('hidden');
           $.Dialog.close();
-        });
+        }).fail($.API.fail());
       }
     });
 

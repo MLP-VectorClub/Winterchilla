@@ -59,11 +59,9 @@
 
       $.Dialog.wait(false, 'Saving changes');
 
-      $.API.put(this.props.endpoint, { ids }, data => {
-        if (!data.status) return $.Dialog.fail(false, data.message);
-
+      $.API.put(this.props.endpoint, { ids }).done((data = {}) => {
         this.props.onSuccess(data);
-      });
+      }).fail($.API.fail());
     }
 
     handleSearch(e) {

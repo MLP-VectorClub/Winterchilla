@@ -7,9 +7,7 @@
     $.Dialog.wait('Guide relation editor', 'Retrieving relations from server');
 
     const endpoint = `/show/${showId}/guide-relations`;
-    $.API.get(endpoint, response => {
-      if (!response.status) return $.Dialog.fail(false, response.message);
-
+    $.API.get(endpoint).done((response = {}) => {
       const { SplitSelector } = window.reactComponents;
       let data = {
         ...response,
@@ -31,7 +29,7 @@
         },
       };
       $.Dialog.request(false, <SplitSelector {...data} />, 'Save');
-    });
+    }).fail($.API.fail());
   });
 
   $('#edit-about_reservations, #edit-reservation_rules').on('click', function(e) {
@@ -44,11 +42,9 @@
     let text = $h2c.text().trim();
 
     $.Dialog.wait(`Editing "${text}"`, 'Retrieving setting\'s value');
-    $.API.get(`/setting/${endpoint}`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
+    $.API.get(`/setting/${endpoint}`).done(function(resp = {}) {
       let $EditorForm = $.mk('form', `${endpoint}-editor`),
-        value = this.value;
+        value = resp.value;
 
       $.Dialog.request(false, $EditorForm, 'Save', function($form) {
         const dataEditor = $.renderCodeMirror({
@@ -63,16 +59,14 @@
           let data = { value: dataEditor.getValue() };
           $.Dialog.wait(false, 'Saving');
 
-          $.API.put(`/setting/${endpoint}`, data, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
+          $.API.put(`/setting/${endpoint}`, data).done(function(resp = {}) {
             $h2.siblings().remove();
-            $h2.parent().append(this.value);
+            $h2.parent().append(resp.value);
             $.Dialog.close();
-          });
+          }).fail($.API.fail());
         });
       });
-    });
+    }).fail($.API.fail());
   });
 
   function reservePost($li, reserveAs, id) {
@@ -80,19 +74,19 @@
       send = function(data) {
         $.Dialog.wait(title, 'Sending reservation to the server');
 
-        $.API.post(`/post/${id}/reservation`, data, function() {
-          if (this.retry)
-            return $.Dialog.confirm(false, this.message, function(sure) {
+        $.API.post(`/post/${id}/reservation`, data).fail($.API.failWith(body => {
+          if (body.retry)
+            return $.Dialog.confirm(false, body.message, function(sure) {
               if (!sure) return;
 
               data.screwit = true;
               send(data);
             });
-          else if (!this.status)
-            return $.Dialog.fail(false, this.message);
 
-          if (this.li){
-            let $newli = $(this.li);
+          $.Dialog.fail(false, body.message);
+        })).done(function(resp = {}) {
+          if (resp.li){
+            let $newli = $(resp.li);
             if ($li.hasClass('highlight'))
               $newli.addClass('highlight');
             $li.replaceWith($newli);
@@ -156,9 +150,7 @@
 
       $.Dialog.wait(`Editing post #${id}`, `Retrieving details`);
 
-      $.API.get(`/post/${id}`, function(data) {
-        if (!data.status) return $.Dialog.fail(false, data.message);
-
+      $.API.get(`/post/${id}`).done(function(data = {}) {
         let $PostEditForm = $.mk('form').attr('id', 'post-edit-form').append(
           $.mk('label').append(
             $.mk('span').text(`Description (3-255 chars.${!isRequest ? ', optional' : ''})`),
@@ -321,16 +313,14 @@
 
             $.Dialog.wait(false, 'Saving changes');
 
-            $.API.put(`/post/${id}`, newData, function() {
-              if (!this.status) return $.Dialog.fail(false, this.message);
-
+            $.API.put(`/post/${id}`, newData).done(function(resp = {}) {
               $li.reloadLi();
 
               $.Dialog.close();
-            });
+            }).fail($.API.fail());
           });
         });
-      });
+      }).fail($.API.fail());
     })
     .on('click', 'li[id] .cancel', function(e) {
       e.preventDefault();
@@ -345,21 +335,17 @@
         $li.addClass('deleting');
 
         if (type === 'request')
-          $.API.delete(`/post/${id}/reservation`, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
+          $.API.delete(`/post/${id}/reservation`).done(function(resp = {}) {
             $li.removeClass('deleting').reloadLi(false);
             $.Dialog.close();
-          });
+          }).fail($.API.fail());
         else {
-          $.API.delete(`/post/${id}/reservation`, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
+          $.API.delete(`/post/${id}/reservation`).done(function(resp = {}) {
             $.Dialog.close();
             return $li[window.withinMobileBreakpoint() ? 'slideUp' : 'fadeOut'](500, function() {
               $li.remove();
             });
-          });
+          }).fail($.API.fail());
         }
       });
     })
@@ -404,28 +390,24 @@
           (function attempt() {
             $.Dialog.wait(false, 'Marking post as finished');
 
-            $.API.put(`/post/${id}/finish`, sent_data, function(data) {
-              if (data.status){
-                $.Dialog.success(false, `${Type} has been marked as finished`);
+            $.API.put(`/post/${id}/finish`, sent_data).done(function(data = {}) {
+              $.Dialog.success(false, `${Type} has been marked as finished`);
 
-                $(`#${type}s`).trigger('pls-update', [function() {
-                  if (typeof data.message === 'string' && data.message)
-                    $.Dialog.success(false, data.message, true);
-                  else $.Dialog.close();
-                }]);
-
-                return;
-              }
-
-              if (data.retry){
-                $.Dialog.confirm(false, data.message, ['Continue', 'Cancel'], function(sure) {
+              $(`#${type}s`).trigger('pls-update', [function() {
+                if (typeof data.message === 'string' && data.message)
+                  $.Dialog.success(false, data.message, true);
+                else $.Dialog.close();
+              }]);
+            }).fail($.API.failWith(body => {
+              if (body.retry){
+                $.Dialog.confirm(false, body.message, ['Continue', 'Cancel'], function(sure) {
                   if (!sure) return;
                   sent_data.allow_overwrite_reserver = true;
                   attempt();
                 });
               }
-              else $.Dialog.fail(false, data.message);
-            });
+              else $.Dialog.fail(false, body.message);
+            }));
           })();
         });
       });
@@ -463,12 +445,10 @@
 
           $.Dialog.wait(false, 'Removing "finished" flag' + (unbind ? ' & unbinding from user' : ''));
 
-          $.API.delete(`/post/${id}/finish${unbind ? '?unbind' : ''}`, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
-            $.Dialog.success(false, typeof this.message !== 'undefined' ? this.message : '"finished" flag removed successfully');
+          $.API.delete(`/post/${id}/finish${unbind ? '?unbind' : ''}`).done(function(resp = {}) {
+            $.Dialog.success(false, typeof resp.message !== 'undefined' ? resp.message : '"finished" flag removed successfully');
             $(`#${type}s`).trigger('pls-update');
-          });
+          }).fail($.API.fail());
         });
       });
     })
@@ -480,13 +460,11 @@
 
       $.Dialog.wait('Submission approval status', 'Checking');
 
-      $.API.post(`/post/${id}/approval`, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
-        let message = this.message;
+      $.API.post(`/post/${id}/approval`).done(function(resp = {}) {
+        let message = resp.message;
         $li.reloadLi();
         $.Dialog.success(false, message, true);
-      });
+      }).fail($.API.fail());
     })
     .on('click', 'li[id] .unlock', function(e) {
       e.preventDefault();
@@ -499,11 +477,9 @@
 
         $.Dialog.wait(false);
 
-        $.API.delete(`/post/${id}/approval`, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
+        $.API.delete(`/post/${id}/approval`).done(function(resp = {}) {
           $li.closest('.posts').trigger('pls-update');
-        });
+        }).fail($.API.fail());
       });
     })
     .on('click', 'li[id] .delete', function(e) {
@@ -518,17 +494,15 @@
         $.Dialog.wait(false);
         $li.addClass('deleting');
 
-        $.API.delete(`/post/request/${id}`, function() {
-          if (!this.status){
-            $li.removeClass('deleting');
-            return $.Dialog.fail(false, this.message);
-          }
-
+        $.API.delete(`/post/request/${id}`).done(function() {
           $.Dialog.close();
           $li[window.withinMobileBreakpoint() ? 'slideUp' : 'fadeOut'](500, () => {
             $li.remove();
           });
-        });
+        }).fail($.API.failWith(body => {
+          $li.removeClass('deleting');
+          $.Dialog.fail(false, body.message);
+        }));
       });
     });
   $body
@@ -564,13 +538,11 @@
           let data = $form.mkData();
           $.Dialog.wait(false, 'Replacing image');
 
-          $.API.put(`/post/${id}/image`, data, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
+          $.API.put(`/post/${id}/image`, data).done(function(resp = {}) {
             $.Dialog.success(false, 'Image has been updated', true);
 
-            if (this.li){
-              let $newli = $(this.li);
+            if (resp.li){
+              let $newli = $(resp.li);
               if ($li.hasClass('highlight'))
                 $newli.addClass('highlight');
               $li.replaceWith($newli);
@@ -578,7 +550,7 @@
               $newli.rebindFluidbox();
             }
             else $li.reloadLi();
-          });
+          }).fail($.API.fail());
         });
       });
     })
@@ -590,11 +562,9 @@
       $.Dialog.close();
       $.Dialog.wait('Clear post broken status', 'Checking image availability');
 
-      $.API.get(`/post/${id}/unbreak`, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
-        if (this.li){
-          let $newli = $(this.li);
+      $.API.get(`/post/${id}/unbreak`).done(function(resp = {}) {
+        if (resp.li){
+          let $newli = $(resp.li);
           if ($li.hasClass('highlight'))
             $newli.addClass('highlight');
           $li.replaceWith($newli);
@@ -603,6 +573,6 @@
         }
 
         $.Dialog.close();
-      });
+      }).fail($.API.fail());
     });
 })();

@@ -11,11 +11,9 @@
 
       $.Dialog.wait(false);
 
-      $.API.post('/cg/reindex', function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
-        $.Dialog.segway(false, this.message);
-      });
+      $.API.post('/cg/reindex').done(function(resp = {}) {
+        $.Dialog.segway(false, resp.message);
+      }).fail($.API.fail());
     });
   });
 
@@ -122,11 +120,9 @@
               if (!sure) return;
 
               $.Dialog.wait(false);
-              $.API.delete(`/cg/appearance/${appearanceID}/selective`, data, function() {
-                if (!this.status) return $.Dialog.fail(false, this.message);
-
+              $.API.delete(`/cg/appearance/${appearanceID}/selective`, data).done(function(resp = {}) {
                 $.Navigation.reload(true);
-              });
+              }).fail($.API.fail());
             });
           });
         });
@@ -136,11 +132,9 @@
 
         $.Dialog.close();
         $.Dialog.wait(`Manage Cutie Mark of ${ponyLabel}`, 'Retrieving CM data from server');
-        $.API.get(`/cg/appearance/${appearanceId}/cutiemarks`, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
-          CutieMarkEditor.factory(false, appearanceId, ponyLabel, this);
-        });
+        $.API.get(`/cg/appearance/${appearanceId}/cutiemarks`).done(function(resp = {}) {
+          CutieMarkEditor.factory(false, appearanceId, ponyLabel, resp);
+        }).fail($.API.fail());
       },
     },
     mkPonyEditor = function($this, title, data) {
@@ -205,9 +199,7 @@
           if (GUIDE)
             data.guide = GUIDE;
 
-          $.API[editing ? 'put' : 'post'](`/cg/appearance${editing ? `/${appearanceID}` : ''}`, data, data => {
-            if (!data.status) return $.Dialog.fail(false, data.message);
-
+          $.API[editing ? 'put' : 'post'](`/cg/appearance${editing ? `/${appearanceID}` : ''}`, data).done((data = {}) => {
             if (editing){
               if (AppearancePage)
                 return $.Navigation.reload(true);
@@ -229,7 +221,7 @@
             if (!data.info)
               return carryOn();
             $.Dialog.segway(title, data.info, 'View appearance page', carryOn);
-          });
+          }).fail($.API.fail());
         });
       });
     };
@@ -242,11 +234,9 @@
       return mkPonyEditor($this, title);
 
     $.Dialog.wait(title, 'Checking whether there are available slots');
-    $.API.get(`/user/${OwnerId}/pcg/slots`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
+    $.API.get(`/user/${OwnerId}/pcg/slots`).done(function(resp = {}) {
       mkPonyEditor($this, title);
-    });
+    }).fail($.API.fail());
   });
 
   const $EditTagFormTemplate = $.mk('form', 'edit-tag');
@@ -363,16 +353,14 @@
         if (data.addto && AppearancePage)
           data.APPEARANCE_PAGE = true;
 
-        $.API.post(`/cg/tag`, data, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
-          if (this.tags){
-            $tagsDiv.html(this.tags);
+        $.API.post(`/cg/tag`, data).done(function(resp = {}) {
+          if (resp.tags){
+            $tagsDiv.html(resp.tags);
             ctxmenus();
           }
           tagAutocompleteCache.clear();
           $.Dialog.close();
-        });
+        }).fail($.API.fail());
       });
     });
   }
@@ -536,38 +524,36 @@
 
         $.Dialog.wait(false, 'Saving changes');
 
-        $.API[this.editing ? 'put' : 'post'](`/cg/colorgroup${this.editing ? `/${this.group_id}` : ''}`, data, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
-          if (this.cgs){
+        $.API[this.editing ? 'put' : 'post'](`/cg/colorgroup${this.editing ? `/${this.group_id}` : ''}`, data).done(function(resp = {}) {
+          if (resp.cgs){
             let $pony = $('#p' + appearance_id);
-            if (this.cgs)
-              $pony.find('ul.colors').html(this.cgs);
-            if (!AppearancePage && this.notes){
+            if (resp.cgs)
+              $pony.find('ul.colors').html(resp.cgs);
+            if (!AppearancePage && resp.notes){
               let $notes = $pony.find('.notes');
-              $notes.html(this.notes);
+              $notes.html(resp.notes);
             }
-            if (this.update){ // Guide Page
+            if (resp.update){ // Guide Page
               let $updateDiv = $pony.find('.update');
               if ($updateDiv.length)
-                $updateDiv.replaceWith(this.update);
-              else $(this.update).insertAfter($pony.find('strong'));
+                $updateDiv.replaceWith(resp.update);
+              else $(resp.update).insertAfter($pony.find('strong'));
             }
-            if (this.changes){ // Appearance Page
+            if (resp.changes){ // Appearance Page
               if ($changes.length)
-                $changes.replaceWith(this.changes);
-              else $(this.changes).insertBefore($('#tags'));
+                $changes.replaceWith(resp.changes);
+              else $(resp.changes).insertBefore($('#tags'));
             }
 
             ctxmenus();
-            if (this.update || this.changes)
+            if (resp.update || resp.changes)
               Time.update();
-            if (AppearancePage && this.cmList)
-              $('#pony-cm-list').html(this.cmList);
+            if (AppearancePage && resp.cmList)
+              $('#pony-cm-list').html(resp.cmList);
             $.Dialog.close();
           }
           else $.Dialog.close();
-        });
+        }).fail($.API.fail());
       });
 
       if (this.editing)
@@ -926,15 +912,13 @@
         if (AppearancePage)
           data.APPEARANCE_PAGE = true;
         $.Dialog.wait(false, 'Saving cutie mark data');
-        $.API.put(`/cg/appearance/${appearance_id}/cutiemarks`, data, data => {
-          if (!data.status) return $.Dialog.fail(false, data.message);
-
+        $.API.put(`/cg/appearance/${appearance_id}/cutiemarks`, data).done((data = {}) => {
           $.Dialog.close();
           if (this.$cmSection.length){
             this.$cmSection.children(':not(h2,p)').remove();
             this.$cmSection.removeClass('hidden').append(data.html);
           }
-        });
+        }).fail($.API.fail());
       }).on('change input', '.rotation-range', function(e) {
         let $this = $(e.target),
           val = $this.val();
@@ -1214,15 +1198,13 @@
       let data = {};
       if (AppearancePage)
         data.APPEARANCE_PAGE = true;
-      $.API.post(`/cg/appearance/${appearanceID}/template`, data, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
+      $.API.post(`/cg/appearance/${appearanceID}/template`, data).done(function(resp = {}) {
         let $pony = $(`#p${appearanceID}`);
-        $pony.find('ul.colors').html(this.cgs);
+        $pony.find('ul.colors').html(resp.cgs);
         ctxmenus();
 
         $.Dialog.close();
-      });
+      }).fail($.API.fail());
     });
   };
 
@@ -1252,9 +1234,8 @@
 
           $.Dialog.wait(title, 'Retrieving tag details from server');
 
-          $.API.get(`/cg/tag/${tagID}`, function() {
-            let tag = this;
-            if (this.status) $.Dialog.request(title, $EditTagFormTemplate.clone(true, true).data('tag', tag), 'Save', function($form) {
+          $.API.get(`/cg/tag/${tagID}`).done(function(tag = {}) {
+            $.Dialog.request(title, $EditTagFormTemplate.clone(true, true).data('tag', tag), 'Save', function($form) {
               $form.find(`input[name=type][value=${tag.type}]`).prop('checked', true);
               $form.find('input[type=text][name], textarea[name]').each(function() {
                 let $this = $(this);
@@ -1268,10 +1249,8 @@
                   data.APPEARANCE_PAGE = $tag.closest('div[id^=p]').attr('id').replace(/\D/g, '');
                 $.Dialog.wait(false, 'Saving changes');
 
-                $.API.put(`/cg/tag/${tagID}`, data, function() {
-                  if (!this.status) return $.Dialog.fail(false, this.message);
-
-                  let data = this,
+                $.API.put(`/cg/tag/${tagID}`, data).done(function(resp = {}) {
+                  let data = resp,
                     $affected = $('.id-' + data.id);
                   if (data.title) $affected.attr('title', data.title);
                   else $affected.removeAttr('title');
@@ -1289,11 +1268,10 @@
                   });
 
                   $.Dialog.close();
-                });
+                }).fail($.API.fail());
               });
             });
-            else $.Dialog.fail(title, this.message);
-          });
+          }).fail($.API.fail(title));
         },
       },
       {
@@ -1312,22 +1290,22 @@
             (function send(data) {
               $.Dialog.wait(title, 'Sending removal request');
 
-              $.API.delete(`/cg/tag/${tagID}`, data, function() {
-                if (this.status){
-                  let $affected = $('.id-' + tagID);
-                  $affected.remove();
-                  tagAutocompleteCache.clear();
-                  $.Dialog.close();
-                }
-                else if (this.uses)
-                  $.Dialog.confirm(false, this.message, ['NUKE TAG', 'Never mind'], function(sure) {
+              $.API.delete(`/cg/tag/${tagID}`, data).done(function() {
+                let $affected = $('.id-' + tagID);
+                $affected.remove();
+                tagAutocompleteCache.clear();
+                $.Dialog.close();
+              }).fail($.API.failWith(body => {
+                // 409: the tag is in use, and has to be confirmed
+                if (body.uses)
+                  $.Dialog.confirm(false, body.message, ['NUKE TAG', 'Never mind'], function(sure) {
                     if (!sure) return;
 
                     data.sanitycheck = true;
                     send(data);
                   });
-                else $.Dialog.fail(title, this.message);
-              });
+                else $.Dialog.fail(title, body.message);
+              }));
             })(data);
           });
         },
@@ -1356,13 +1334,11 @@
             $.Dialog.wait(title, 'Retrieving color group list from server');
 
             const endpoint = `/cg/appearance/${appearanceID}/colorgroups`;
-            $.API.get(endpoint, function() {
-              if (!this.status) return $.Dialog.fail(false, this.message);
-
+            $.API.get(endpoint).done(function(resp = {}) {
               let $CGReorderForm = $.mk('form', 'cg-reorder'),
                 $cgs = $.mk('ol');
 
-              $.each(this.cgs, function(_, cg) {
+              $.each(resp.cgs, function(_, cg) {
                 $cgs.append($.mk('li').attr('data-id', cg.id).text(cg.label));
               });
 
@@ -1392,16 +1368,14 @@
                   if (AppearancePage)
                     data.APPEARANCE_PAGE = true;
 
-                  $.API.put(endpoint, data, function() {
-                    if (!this.status) return $.Dialog.fail(null, this.message);
-
-                    $colors.html(this.cgs);
+                  $.API.put(endpoint, data).done(function(resp = {}) {
+                    $colors.html(resp.cgs);
                     ctxmenus();
                     $.Dialog.close();
-                  });
+                  }).fail($.API.fail(null));
                 });
               });
-            });
+            }).fail($.API.fail());
           },
         },
         {
@@ -1429,11 +1403,9 @@
 
             $.Dialog.wait(title, `Retrieving color group details from server`);
 
-            $.API.get(`/cg/colorgroup/${groupID}`, function() {
-              if (!this.status) return $.Dialog.fail(title, this.message);
-
-              ColorGroupEditor.factory(title, $group, this);
-            });
+            $.API.get(`/cg/colorgroup/${groupID}`).done(function(resp = {}) {
+              ColorGroupEditor.factory(title, $group, resp);
+            }).fail($.API.fail(title));
           },
         },
         {
@@ -1447,16 +1419,13 @@
 
               $.Dialog.wait(title, 'Sending removal request');
 
-              $.API.delete(`/cg/colorgroup/${groupID}`, function() {
-                if (this.status){
-                  const $parent = $group.parent();
-                  if ($parent.children().length === 1)
-                    $parent.empty();
-                  else $group.remove();
-                  $.Dialog.close();
-                }
-                else $.Dialog.fail(title, this.message);
-              });
+              $.API.delete(`/cg/colorgroup/${groupID}`).done(function() {
+                const $parent = $group.parent();
+                if ($parent.children().length === 1)
+                  $parent.empty();
+                else $group.remove();
+                $.Dialog.close();
+              }).fail($.API.fail(title));
             });
           },
         },
@@ -1572,11 +1541,9 @@
 
                   $.Dialog.wait(title, 'Downloading external image to the server');
 
-                  $.API.post(`/cg/appearance/${appearanceID}/sprite`, { image_url: image_url }, function() {
-                    if (this.status)
-                      $uploadInput.trigger('set-image', [this]);
-                    else $.Dialog.fail(title, this.message);
-                  });
+                  $.API.post(`/cg/appearance/${appearanceID}/sprite`, { image_url: image_url }).done(function(resp = {}) {
+                    $uploadInput.trigger('set-image', [resp]);
+                  }).fail($.API.fail(title));
                 });
               });
             },
@@ -1590,13 +1557,11 @@
 
                 $.Dialog.wait(false, 'Removing image');
 
-                $.API.delete(`/cg/appearance/${appearanceID}/sprite`, function() {
-                  if (!this.status) return $.Dialog.fail(false, this.message);
-
-                  $this.find('img').attr('src', this.sprite);
+                $.API.delete(`/cg/appearance/${appearanceID}/sprite`).done(function(resp = {}) {
+                  $this.find('img').attr('src', resp.sprite);
                   updateSprite();
                   $.Dialog.close();
-                });
+                }).fail($.API.fail());
               });
             },
           },
@@ -1624,13 +1589,11 @@
 
     $.Dialog.wait(title, 'Retrieving appearance details from server');
 
-    $.API.get(`/cg/appearance/${appearanceID}`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      let data = this;
+    $.API.get(`/cg/appearance/${appearanceID}`).done(function(resp = {}) {
+      let data = resp;
       data.appearanceID = appearanceID;
       mkPonyEditor($this, title, data);
-    });
+    }).fail($.API.fail());
   });
   $('button.delete-appearance').on('click', function() {
     let $this = $(this),
@@ -1646,19 +1609,16 @@
 
       $.Dialog.wait(title, 'Sending removal request');
 
-      $.API.delete(`/cg/appearance/${appearanceID}`, function() {
-        if (this.status){
-          $li.remove();
-          $.Dialog.success(title, this.message);
+      $.API.delete(`/cg/appearance/${appearanceID}`).done(function() {
+        $li.remove();
+        $.Dialog.success(title, 'Appearance removed');
 
-          if (AppearancePage){
-            $.Dialog.wait('Navigation', 'Loading page 1');
-            $.Navigation.visit(`${PGRq}/cg`);
-          }
-          else $.Navigation.reload();
+        if (AppearancePage){
+          $.Dialog.wait('Navigation', 'Loading page 1');
+          $.Navigation.visit(`${PGRq}/cg`);
         }
-        else $.Dialog.fail(title, this.message);
-      });
+        else $.Navigation.reload();
+      }).fail($.API.fail(title));
     });
   });
   $('button.pin-appearance, button.unpin-appearance').on('click', function() {
@@ -1676,11 +1636,9 @@
 
       $.Dialog.wait(title, 'Sending request');
 
-      $.API[pinning ? 'post' : 'delete'](`/cg/appearance/${appearanceID}/pin`, function() {
-        if (!this.status) return $.Dialog.fail(title, this.message);
-
-        $.Dialog.success(title, `${this.message}<br><strong>Note:</strong> The changes won't be visible until you reload the page.`, true);
-      });
+      $.API[pinning ? 'post' : 'delete'](`/cg/appearance/${appearanceID}/pin`).done(function(resp = {}) {
+        $.Dialog.success(title, `${resp.message}<br><strong>Note:</strong> The changes won't be visible until you reload the page.`, true);
+      }).fail($.API.fail(title));
     });
   });
   $('.section-container').on('click', '.edit-show-relations', function() {
@@ -1695,9 +1653,7 @@
     $.Dialog.wait(title, 'Retrieving relations from server');
 
     const endpoint = `/cg/appearance/${appearanceID}/guide-relations`;
-    $.API.get(endpoint, response => {
-      if (!response.status) return $.Dialog.fail(false, response.message);
-
+    $.API.get(endpoint).done((response = {}) => {
       const { SplitSelector } = window.reactComponents;
       let data = {
         ...response,
@@ -1719,7 +1675,7 @@
         },
       };
       $.Dialog.request(false, <SplitSelector {...data} />, 'Save');
-    });
+    }).fail($.API.fail());
   }).on('click', '.edit-appearance-relations', function() {
     let $this = $(this),
       $li = $this.closest('[id^=p]'),
@@ -1732,10 +1688,8 @@
     $.Dialog.wait(title, 'Retrieving relations from the server');
 
     let $cgRelations = $content.find('section.related');
-    $.API.get(`/cg/appearance/${appearanceID}/relations`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      let data = this,
+    $.API.get(`/cg/appearance/${appearanceID}/relations`).done(function(resp = {}) {
+      let data = resp,
         $GuideRelationEditorForm = $.mk('form').attr('id', 'guide-relation-editor'),
         $selectLinked = $.mk('select').attr({ name: 'listed', multiple: true }),
         $selectUnlinked = $.mk('select').attr('multiple', true);
@@ -1854,25 +1808,23 @@
           };
           if (AppearancePage)
             data.APPEARANCE_PAGE = true;
-          $.API.put(`/cg/appearance/${appearanceID}/relations`, data, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
-            if (this.section){
+          $.API.put(`/cg/appearance/${appearanceID}/relations`, data).done(function(resp = {}) {
+            if (resp.section){
               if (!$cgRelations.length)
                 $cgRelations = $.mk('section')
                   .addClass('related')
                   .appendTo($content.children().last());
-              $cgRelations.html($(this.section).filter('section').html());
+              $cgRelations.html($(resp.section).filter('section').html());
             }
             else if ($cgRelations.length){
               $cgRelations.remove();
               $cgRelations = { length: 0 };
             }
             $.Dialog.close();
-          });
+          }).fail($.API.fail());
         });
       });
-    });
+    }).fail($.API.fail());
   });
 
   ctxmenus();
@@ -1970,8 +1922,8 @@
             source: (s, callback) => {
               if (tagAutocompleteCache.has(s))
                 return callback(tagAutocompleteCache.get(s));
-              $.API.get(`/cg/tags`, { s }, function() {
-                callback(tagAutocompleteCache.set(s, this));
+              $.API.get(`/cg/tags`, { s }).done(function(resp = {}) {
+                callback(tagAutocompleteCache.set(s, resp));
               });
             },
             templates: {
@@ -2064,25 +2016,18 @@
     $editTagsBtn.disable().html('Please wait&hellip;');
 
     const appearanceID = $(this).closest('[id^=p]').attr('id').replace(/\D/g, '');
-    $.API.get(`/cg/appearance/${appearanceID}/tagged`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      const orig_tags = this.tags;
+    $.API.get(`/cg/appearance/${appearanceID}/tagged`).done(function(resp = {}) {
+      const orig_tags = resp.tags;
       const editor = new TagEditor(orig_tags, tags => {
         editor.disableButtons();
 
-        $.API.put(`/cg/appearance/${appearanceID}/tagged`, { tags, orig_tags }, function() {
-          if (!this.status){
-            editor.enableButtons();
-            return $.Dialog.fail('Saving tags', this.message);
-          }
-
+        $.API.put(`/cg/appearance/${appearanceID}/tagged`, { tags, orig_tags }).done(function() {
           window.location.reload();
-        }).fail(() => {
+        }).fail($.API.fail('Saving tags')).fail(() => {
           editor.enableButtons();
         });
       });
-    }).always(() => {
+    }).fail($.API.fail()).always(() => {
       $editTagsBtn.html(oldHTML).enable();
     });
   });

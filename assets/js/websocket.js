@@ -80,7 +80,7 @@
               $notifCnt.empty();
             });
           }
-          else $.API.get('/notif', data => {
+          else $.API.get('/notif').done((data = {}) => {
             $notifCnt.text(cnt);
             $notifSbList.html(data.list);
             Time.update();
@@ -186,18 +186,19 @@
             send = () => {
               $el.siblings('.mark-read').addBack().addClass('disabled');
 
-              $.API.post(`/notif/${nid}/mark-read`, data, data => {
+              $.API.post(`/notif/${nid}/mark-read`, data).done((resp = {}) => {
                 this.conn.emit('notif-cnt');
 
-                if (!data.status) return $.Dialog.fail(title, data.message);
-
-                if (data.message) {
-                  $.Dialog.success(title, data.message, true);
+                if (resp.message) {
+                  $.Dialog.success(title, resp.message, true);
                   return;
                 }
 
                 $.Dialog.close();
-              }).always(() => {
+              }).fail($.API.failWith(body => {
+                this.conn.emit('notif-cnt');
+                $.Dialog.fail(title, body.message);
+              })).always(() => {
                 $el.siblings('.mark-read').addBack().removeClass('disabled');
               });
             };

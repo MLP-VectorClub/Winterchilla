@@ -49,12 +49,10 @@
 
       waitingList[this.appearanceId] = [this];
 
-      $.API.get(`/../v0/appearances/${this.appearanceId}/color-groups`, data => {
-        if (!data.status) return this.displayError(data.rawMessage ?? data.message);
-
+      $.API.get(`/../v0/appearances/${this.appearanceId}/color-groups`).done(data => {
         this.colorData[this.appearanceId] = data.colorGroups;
         this.processWaitingList();
-      });
+      }).fail($.API.failWith(body => this.displayError(body.rawMessage)));
     }
 
     processWaitingList() {

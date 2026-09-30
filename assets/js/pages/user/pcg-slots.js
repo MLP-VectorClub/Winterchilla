@@ -16,11 +16,9 @@
         if (!sure) return;
 
         $.Dialog.wait(false, 'Recalculating');
-        $.API.post(`/user/${userId}/pcg/point-history/recalc`, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
+        $.API.post(`/user/${userId}/pcg/point-history/recalc`).done(function(resp = {}) {
           $.Navigation.reload(true);
-        });
+        }).fail($.API.fail());
       },
     );
   });

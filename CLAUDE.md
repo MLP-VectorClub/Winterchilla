@@ -489,8 +489,17 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       builds `message` from **all** `errors` (one per line) instead of the generic "The given data was invalid." — without
       that the dialogs lost the specific reason (found by `tests/Browser/Admin/ErrorMessageTest.php`; it affected every
       endpoint migrated since `Input` started answering 422).
-- [ ] Left: remove the `$.API` shim and the `this.status` checks (~100 call sites), then retire the shim's `rawMessage`/escaping.
-      The page-level JSON views that raw-`$.get` clients read (`/cg/.../full?ajax`, `contribLazyload`) still use their own shapes.
+- [x] The `$.API` shim and the `this.status` checks are gone. `$.API.get/post/put/delete(url, data)` now return the jqXHR and
+      callers use `.done(resp => ...)` (the resource itself; `undefined`/`{}` for 204) and `.fail($.API.fail(title))` — or
+      `.fail($.API.failWith(body => ...))` for custom handling (`body.message` is escaped for HTML dialogs, `body.rawMessage`
+      is the plain text, 422 field errors are joined into the message). Both mark the request `apiHandled` so the global
+      `$.ajaxSetup` status dialogs stay quiet. ~100 call sites were converted with an AST codemod (espree) plus ~30 by hand;
+      new UI tests cover the admin useful-links CRUD and casting a vote (`UsefulLinksTest`, `VoteTest`), next to the
+      existing appearance/color group/tag synonym/sign-out flows. Untested conversions (worth a click-through before deploying):
+      post reserve/finish/approve/unbreak on episode pages, event entry edit, personal guide points/slots, tag editing dialogs,
+      cutie mark editor, sprite upload/remove, relations editors.
+- [ ] Left: the page-level JSON views that raw-`$.get` clients read (`/cg/.../full?ajax`, `contribLazyload`) still use their own
+      shapes and `$.mkAjaxHandler`; the WebSocket server's own `{status}` messages are unrelated.
 
 ## Database cutover to Luna (audit, nothing implemented yet)
 

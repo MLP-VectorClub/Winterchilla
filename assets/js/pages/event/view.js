@@ -44,10 +44,8 @@
 
     $.Dialog.wait(`Editing entry #${entryID}`, 'Retrieving entry details from server');
 
-    $.API.get(`/event/entry/${entryID}`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      let data = this;
+    $.API.get(`/event/entry/${entryID}`).done(function(resp = {}) {
+      let data = resp;
 
       $.Dialog.request(false, $entryForm.clone(), 'Save', function($form) {
         if (data.link)
@@ -62,15 +60,13 @@
           let data = $form.mkData();
           $.Dialog.wait(false, 'Saving changes');
 
-          $.API.put(`/event/entry/${entryID}`, data, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
-            $li.html(this.entryHtml).rebindFluidbox();
+          $.API.put(`/event/entry/${entryID}`, data).done(function(resp = {}) {
+            $li.html(resp.entryHtml).rebindFluidbox();
             $.Dialog.close();
-          });
+          }).fail($.API.fail());
         });
       });
-    });
+    }).fail($.API.fail());
   });
 
   $eventEntries.on('click', '.delete-entry', function(e) {
@@ -85,14 +81,12 @@
 
       $.Dialog.wait(false, 'Sending deletion request');
 
-      $.API.delete(`/event/entry/${entryID}`, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
+      $.API.delete(`/event/entry/${entryID}`).done(function(resp = {}) {
         $.Dialog.close();
         $li.fadeOut(500, function() {
           $li.remove();
         });
-      });
+      }).fail($.API.fail());
     });
   });
 
@@ -106,16 +100,14 @@
 
       const { entryid } = el.dataset;
 
-      $.API.get(`/event/entry/${entryid}/lazyload`, function() {
-        if (!this.status) return $.Dialog.fail(`Failed to load preview for entry #${entryid}`, this.message);
-
-        $.loadImages(this.html).then(function(resp) {
+      $.API.get(`/event/entry/${entryid}/lazyload`).done(function(resp = {}) {
+        $.loadImages(resp.html).then(function(resp) {
           const $el = $(el);
           const $parent = $el.closest('li[id]');
           $el.replaceWith(resp.$el);
           $parent.rebindFluidbox();
         });
-      });
+      }).fail($.API.fail(`Failed to load preview for entry #${entryid}`));
     });
   });
 

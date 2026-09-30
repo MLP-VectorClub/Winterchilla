@@ -82,15 +82,13 @@
 
         $.Dialog.wait(false, 'Submitting your rating');
 
-        $.API.post(`/show/${showId}/vote`, data, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
+        $.API.post(`/show/${showId}/vote`, data).done(function(resp = {}) {
           let $section = $voteButton.closest('section');
           $section.children('h2').nextAll().remove();
-          $section.append(this.newhtml);
+          $section.append(resp.newhtml);
           $voting.bindDetails();
           $.Dialog.close();
-        });
+        }).fail($.API.fail());
       });
     });
   });
@@ -99,13 +97,11 @@
     if (diff.past !== true) return;
 
     if (!$voting.children('.rate').length){
-      $.API.get(`/show/${showId}/vote?html`, function() {
-        if (!this.status) return $.Dialog.fail('Display voting buttons', this.message);
-
+      $.API.get(`/show/${showId}/vote?html`).done(function(resp = {}) {
         $voting.children('h2').nextAll().remove();
-        $voting.append(this.html);
+        $voting.append(resp.html);
         $voting.bindDetails();
-      });
+      }).fail($.API.fail('Display voting buttons'));
       $(this).removeData('dyntime-beforeupdate');
       return false;
     }
@@ -118,12 +114,10 @@
 
       $.Dialog.wait('Voting details', 'Getting vote distribution information');
 
-      $.API.get(`/show/${showId}/vote`, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
+      $.API.get(`/show/${showId}/vote`).done(function(resp = {}) {
         const $ul = $.mk('ul');
         let totalVotes = 0;
-        $.each(this.data, (label, value) => {
+        $.each(resp.data, (label, value) => {
           const
             ms = +label === 1 ? '' : 's',
             vs = +value === 1 ? '' : 's';
@@ -131,7 +125,7 @@
           totalVotes += +value;
         });
         const $bars = $.mk('div').attr('class', 'bars');
-        $.each(this.data, (label, value) => {
+        $.each(resp.data, (label, value) => {
           $bars.append(`<div class="bar type-${label}" style="width:${$.roundTo(100 * (value / totalVotes), 2)}%"></div>`);
         });
 
@@ -139,7 +133,7 @@
           $.mk('p').text('Here\'s how the votes are distributed:'),
           $.mk('div').attr('id', 'vote-distrib').append($ul, $bars),
         ]);
-      });
+      }).fail($.API.fail());
     });
   };
   $voting.bindDetails();
@@ -186,10 +180,8 @@
         Kinds = $.capitalize(kinds);
       if (silent !== true)
         $.Dialog.wait($.Dialog.isOpen() ? false : Kinds, `Updating list of ${kinds}`, true);
-      $.API.get(`/show/${showId}/posts`, { section: kinds }, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
-        let $newChildren = $(this.render).filter('section').children();
+      $.API.get(`/show/${showId}/posts`, { section: kinds }).done(function(resp = {}) {
+        let $newChildren = $(resp.render).filter('section').children();
         $section.empty().append($newChildren).rebindHandlers();
         $section.find('.post-form').formBind();
         $section.find('h2 > button').enable();
@@ -199,7 +191,7 @@
           callback();
         else if (silent !== true)
           $.Dialog.close();
-      });
+      }).fail($.API.fail());
     });
   $posts.find('li[id]').each(function() {
     $(this).rebindFluidbox();
@@ -279,15 +271,13 @@
             deviation,
             show_id: showId,
           };
-          $.API.post('/post/reservation', data, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
-            $.Dialog.success(false, this.message);
+          $.API.post('/post/reservation', data).done(function(resp = {}) {
+            $.Dialog.success(false, resp.message);
             $form.closest('.posts').trigger('pls-update', [() => {
               $.Dialog.close();
-              window.location.hash = `#${this.id}`;
+              window.location.hash = `#${resp.id}`;
             }]);
-          });
+          }).fail($.API.fail());
         });
       });
     });
@@ -321,18 +311,17 @@
       imgCheckDisabler(true);
       $.Dialog.wait(title, 'Checking image, this can take a bit of time');
 
-      $.API.post('/post/check-image', { image_url }, function() {
-        let data = this;
-        if (!data.status){
-          $notice.children('p:not(.keep)').remove();
-          $notice.prepend($.mk('p').attr('class', 'color-red').html(data.message)).show();
-          $previewIMG.hide();
-          $formImgCheck.enable();
-          if (typeof $formImgInput.data('prev-url') === 'string')
-            $submitBtn.enable();
-          else $submitBtn.disable();
-          return $.Dialog.close();
-        }
+      $.API.post('/post/check-image', { image_url }).fail($.API.failWith(body => {
+        $notice.children('p:not(.keep)').remove();
+        $notice.prepend($.mk('p').attr('class', 'color-red').html(body.message)).show();
+        $previewIMG.hide();
+        $formImgCheck.enable();
+        if (typeof $formImgInput.data('prev-url') === 'string')
+          $submitBtn.enable();
+        else $submitBtn.disable();
+        $.Dialog.close();
+      })).done(function(resp = {}) {
+        let data = resp;
 
         function load(data, attempts) {
           $.Dialog.wait(title, 'Checking image availability');
@@ -421,21 +410,19 @@
       (function submit() {
         $.Dialog.wait(title, 'Submitting post');
 
-        $.API.post('/post', data, function() {
-          if (!this.status){
-            if (!this.canForce)
-              return $.Dialog.fail(false, this.message);
-            return $.Dialog.confirm(false, this.message, ['Go ahead', 'Never mind'], function(sure) {
-              if (!sure) return;
+        $.API.post('/post', data).fail($.API.failWith(body => {
+          if (!body.canForce)
+            return $.Dialog.fail(false, body.message);
+          $.Dialog.confirm(false, body.message, ['Go ahead', 'Never mind'], function(sure) {
+            if (!sure) return;
 
-              data.allow_nonmember = true;
-              submit();
-            });
-          }
-
+            data.allow_nonmember = true;
+            submit();
+          });
+        })).done(function(resp = {}) {
           $.Dialog.success(false, Kind + ' posted');
 
-          const id = this.id;
+          const id = resp.id;
           $(`#${kind}s`).trigger('pls-update', [function() {
             $.Dialog.close();
             $.Dialog.confirm(Kind + ' posted', 'Would you like to view it or make another?', ['View', 'Make another'], function(view) {
@@ -471,20 +458,19 @@
 
       const { postId, viewonly } = el.dataset;
 
-      $.API.get(`/post/${postId}/lazyload`, { viewonly }, function() {
+      $.API.get(`/post/${postId}/lazyload`, { viewonly }).done(function(loaded = {}) {
         const $el = $(el);
-        if (!this.status){
-          $el.trigger('error');
-          return $.Dialog.fail(`Cannot load post ${postId}`, this.message);
-        }
 
-        $.loadImages(this.html).then(function (resp) {
+        $.loadImages(loaded.html).then(function (resp) {
           if (resp.e) {
             $el.trigger(resp.e);
           }
           $el.closest('.image').replaceWith(resp.$el);
         });
-      });
+      }).fail($.API.failWith(body => {
+        $(el).trigger('error');
+        $.Dialog.fail(`Cannot load post ${postId}`, body.message);
+      }));
     });
   });
   const screencapIO = new IntersectionObserver(entries => {
@@ -556,16 +542,19 @@
 
     if (log)
       console.log(`[POST-FIX] Attempting to reload post #${id}`);
-    $.API.get(`/post/${id}/reload`, { cache: log }, function() {
+    $.API.get(`/post/${id}/reload`, { cache: log }).fail($.API.failWith(() => {
+      // Nothing to report: the post is probably gone, and the list item just stays as it is
+    })).fail(() => {
       reloading[_idAttr] = false;
-      if (!this.status) return;
-      if (this.broken === true){
+    }).done(function(resp = {}) {
+      reloading[_idAttr] = false;
+      if (resp.broken === true){
         $li.remove();
         console.log(`[POST-FIX] Hid (broken) post #${id}`);
         return;
       }
 
-      const $newli = $(this.li);
+      const $newli = $(resp.li);
       $li = $('#' + $newli.attr('id'));
       $li.find('.fluidbox--opened').fluidbox('close');
       $li.find('.fluidbox--initialized').fluidbox('destroy');
@@ -576,8 +565,8 @@
       $newli.rebindFluidbox();
       Time.update();
       $newli.rebindHandlers(true);
-      if (!$newli.parent().is(this.section))
-        $newli.appendTo(this.section);
+      if (!$newli.parent().is(resp.section))
+        $newli.appendTo(resp.section);
       $newli.parent().reorderPosts();
 
       if (log)
@@ -611,15 +600,15 @@
       const title = 'Scroll post into view';
       // Attempt to find the post as a last resort, it might be on a different episode page
       const postID = location.hash.replace(/\D/g, '');
-      $.API.post(`/post/${postID}/locate`, { show_id: showId }, function() {
-        if (!this.status) return $.Dialog.info(title, this.message);
-
-        if (this.refresh){
-          $(`#${this.refresh}s`).triggerHandler('pls-update');
+      $.API.post(`/post/${postID}/locate`, { show_id: showId }).fail($.API.failWith(body => {
+        $.Dialog.info(title, body.message);
+      })).done(function(resp = {}) {
+        if (resp.refresh){
+          $(`#${resp.refresh}s`).triggerHandler('pls-update');
           return;
         }
 
-        const castle = this.castle;
+        const castle = resp.castle;
 
         const $contents =
           $(`<p>Looks like the post you were linked to is in another castle. Want to follow the path?</p>

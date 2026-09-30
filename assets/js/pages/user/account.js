@@ -6,11 +6,9 @@
   if ($changeEmailForm.length === 1) {
     const $resendVerification = $('#resend-verification');
     const sendRequest = data => {
-      $.API.post(`/user/${userId}/email`, data, function () {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
-        $.Dialog.success(false, this.message, true);
-      });
+      $.API.post(`/user/${userId}/email`, data).done(function(resp = {}) {
+        $.Dialog.success(false, resp.message, true);
+      }).fail($.API.fail());
     };
     $changeEmailForm.on('submit', (e) => {
       e.preventDefault();
@@ -56,11 +54,9 @@
       const data = $changePasswordForm.mkData();
 
       $.Dialog.wait('Update password');
-      $.API.post(`/user/password`, data, function () {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
-        $.Dialog.segway(false, this.message);
-      });
+      $.API.post(`/user/password`, data).done(function(resp = {}) {
+        $.Dialog.segway(false, resp.message);
+      }).fail($.API.fail());
     });
   }
 
@@ -90,16 +86,14 @@
 
       $.Dialog.wait(title, `Signing out of ${browser}${platform}`);
 
-      $.API.delete(`/user/session/${sessionID}`, function() {
-        if (!this.status) return $.Dialog.fail(title, this.message);
-
+      $.API.delete(`/user/session/${sessionID}`).done(function(resp = {}) {
         if ($li.siblings().length !== 0){
           $li.remove();
           return $.Dialog.close();
         }
 
         $.Navigation.reload(true);
-      });
+      }).fail($.API.fail(title));
     });
   });
   $sessionList.find('button.useragent').on('click', function(e) {
@@ -114,11 +108,9 @@
 
       $.Dialog.wait(false, 'Signing out');
 
-      $.API.post('/da-auth/signout?everywhere', { userId }, function() {
-        if (!this.status) return $.Dialog.fail(false, this.message);
-
+      $.API.post('/da-auth/signout?everywhere', { userId }).done(function(resp = {}) {
         $.Navigation.reload(true);
-      });
+      }).fail($.API.fail());
     });
   });
 
@@ -128,16 +120,13 @@
 
     $.Dialog.wait('Syncing');
 
-    $.API.post(`/discord-connect/sync/${userId}`, function() {
-      if (!this.status){
-        if (this.segway)
-          $.Dialog.segway(false, $.mk('div').attr('class', 'color-red').html(this.message));
-        else $.Dialog.fail(false, this.message);
-        return;
-      }
-
+    $.API.post(`/discord-connect/sync/${userId}`).done(function() {
       $.Navigation.reload(true);
-    });
+    }).fail($.API.failWith(body => {
+      if (body.segway)
+        $.Dialog.segway(false, $.mk('div').attr('class', 'color-red').html(body.message));
+      else $.Dialog.fail(false, body.message);
+    }));
   });
   $discordConnect.find('.unlink').on('click', function(e) {
     e.preventDefault();
@@ -154,11 +143,9 @@
 
         $.Dialog.wait(false);
 
-        $.API.post(`/discord-connect/unlink/${userId}`, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
-          $.Dialog.segway(false, this.message);
-        });
+        $.API.post(`/discord-connect/unlink/${userId}`).done(function(resp = {}) {
+          $.Dialog.segway(false, resp.message);
+        }).fail($.API.fail());
       },
     );
   });

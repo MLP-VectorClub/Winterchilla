@@ -31,14 +31,12 @@
         let data = $form.mkData();
         $.Dialog.wait(false, 'Moving user to the new group');
 
-        $.API.put(`/user/${userId}/role`, data, function() {
-          if (this.alreadyIn === true)
+        $.API.put(`/user/${userId}/role`, data).done(function(resp = {}) {
+          if (resp.alreadyIn === true)
             return $.Dialog.close();
 
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
           $.Navigation.reload(true);
-        });
+        }).fail($.API.fail());
       });
     });
   });
@@ -57,11 +55,9 @@
         let data = $form.mkData();
         $.Dialog.wait(false, 'Changing role mask');
 
-        $.API.put(`/setting/dev_role_label`, data, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
+        $.API.put(`/setting/dev_role_label`, data).done(function(resp = {}) {
           $.Navigation.reload(true);
-        });
+        }).fail($.API.fail());
       });
     });
   });
@@ -73,11 +69,9 @@
 
     $.Dialog.wait('Purge cached contribution data');
 
-    $.API.delete(`/user/${userId}/contrib-cache`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
-      $.Dialog.success(false, this.message, true);
-      $contributions.html(this.html);
-    });
+    $.API.delete(`/user/${userId}/contrib-cache`).done(function(resp = {}) {
+      $.Dialog.success(false, resp.message, true);
+      $contributions.html(resp.html);
+    }).fail($.API.fail());
   });
 })();

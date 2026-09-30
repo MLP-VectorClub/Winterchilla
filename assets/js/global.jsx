@@ -233,16 +233,14 @@
         }
         if (!cdExists || diff.past){
           clearCD();
-          $.API.get('/about/upcoming', function() {
-            if (!this.status) return console.error(`Failed to load upcoming event list: ${this.message}`);
-
+          $.API.get('/about/upcoming').done(function(resp = {}) {
             const $uc = $('#upcoming');
-            $uc.find('ul').html(this.html);
-            if (!this.html)
+            $uc.find('ul').html(resp.html);
+            if (!resp.html)
               $uc.addClass('hidden');
             else $uc.removeClass('hidden');
             window.setUpcomingCountdown();
-          });
+          }).fail($.API.failWith(body => console.error(`Failed to load upcoming event list: ${body.rawMessage}`)));
           return;
         }
         let text;
@@ -843,11 +841,9 @@
 
       $.Dialog.wait(title, 'Signing out');
 
-      $.API.post('/da-auth/sign-out', function() {
-        if (!this.status) return $.Dialog.fail(title, this.message);
-
+      $.API.post('/da-auth/sign-out').done(function(resp = {}) {
         $.Navigation.reload();
-      });
+      }).fail($.API.fail(title));
     });
   });
 
@@ -859,22 +855,23 @@
       if ($sessionUpdating === null)
         return;
 
-      $.API.get('/da-auth/status', function() {
+      $.API.get('/da-auth/status').done(function(resp = {}) {
         if ($sessionUpdating === null)
           return;
 
-        if (!this.status) return $.Dialog.fail(sessionRefTitle, this.message);
-
-        if (this.updating === true) {
+        if (resp.updating === true) {
           pollInterval *= 1.1;
           setTimeout(poll, pollInterval);
           return;
         }
 
-        if (this.deleted === true)
+        if (resp.deleted === true)
           $.Dialog.fail(sessionRefTitle, 'We couldn\'t refresh your DeviantArt session automatically so you have been signed out. Due to elements on the page assuming you are signed in some actions will not work as expected until the page is reloaded.');
-        $sessionUpdating.replaceWith(this.loggedIn);
-      });
+        $sessionUpdating.replaceWith(resp.loggedIn);
+      }).fail($.API.failWith(body => {
+        if ($sessionUpdating !== null)
+          $.Dialog.fail(sessionRefTitle, body.message);
+      }));
     }, pollInterval);
   }
 

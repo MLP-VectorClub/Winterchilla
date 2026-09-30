@@ -30,10 +30,8 @@
         $.Dialog.wait(false, 'Cancelling reservation');
 
         let postId = $link.prop('hash').substring(1).split('-')[1];
-        $.API.delete(`/post/${postId}/reservation`, { from: 'profile' }, function() {
-          if (!this.status) return $.Dialog.fail(false, this.message);
-
-          let pendingRes = this.pendingReservations;
+        $.API.delete(`/post/${postId}/reservation`, { from: 'profile' }).done(function(resp = {}) {
+          let pendingRes = resp.pendingReservations;
           $btn.closest('li').fadeOut(1000, function() {
             $(this).remove();
             if (pendingRes){
@@ -42,7 +40,7 @@
             }
           });
           $.Dialog.close();
-        });
+        }).fail($.API.fail());
       });
     });
     $pendingRes.on('click', 'button.fix', function() {
@@ -70,12 +68,10 @@
           let data = $form.mkData();
           $.Dialog.wait(false, 'Replacing image');
 
-          $.API.put(`/post/${id}/image`, data, function() {
-            if (!this.status) return $.Dialog.fail(false, this.message);
-
+          $.API.put(`/post/${id}/image`, data).done(function(resp = {}) {
             $.Dialog.success(false, 'Image has been updated');
             $.Navigation.reload(true);
-          });
+          }).fail($.API.fail());
         });
       });
     });
@@ -88,7 +84,7 @@
 
       $.Dialog.wait('Giving PCG points to ' + username, 'Checking user\'s total points');
 
-      $.API.get(`/user/${userId}/pcg/points`, function() {
+      $.API.get(`/user/${userId}/pcg/points`).done(function(resp = {}) {
         const $GiveForm = $.mk('form', 'pcg-point-give-form').append(
           $.mk('label').append(
             `<p>Choose how many <strong>points</strong> you want to give. Enter a negative number to take points. You cannot take more points than what the user has, and the free slot cannot be taken away.</p><p><strong>Remember, 10 points = 1 slot!</strong></p>`,
@@ -96,7 +92,7 @@
               type: 'number',
               name: 'amount',
               step: 1,
-              min: -this.amount,
+              min: -resp.amount,
               'class': 'large-number-input',
               required: true,
             }),
@@ -130,11 +126,9 @@
 
               $.Dialog.wait(false, 'Giving points');
 
-              $.API.post(`/user/${userId}/pcg/points`, data, function() {
-                if (!this.status) return $.Dialog.fail(false, this.message);
-
-                $.Dialog.segway(false, this.message);
-              });
+              $.API.post(`/user/${userId}/pcg/points`, data).done(function(resp = {}) {
+                $.Dialog.segway(false, resp.message);
+              }).fail($.API.fail());
             });
           });
         });
@@ -152,12 +146,8 @@
 
       const { postId, viewonly } = el.dataset;
 
-      $.API.get(`/post/${postId}/lazyload`, { viewonly }, ({ status, message, html }) => {
+      $.API.get(`/post/${postId}/lazyload`, { viewonly }).done(({ html }) => {
         const $el = $(el);
-        if (!status){
-          $el.trigger('error');
-          return $.Dialog.fail(`Cannot load post ${postId}`, message);
-        }
 
         $.loadImages(html).then(function(resp) {
           const $li = $el.closest('li[id]');
@@ -166,7 +156,10 @@
           if (title)
             $li.children('.label').removeClass('hidden').find('a').text(title);
         });
-      });
+      }).fail($.API.failWith(body => {
+        $(el).trigger('error');
+        $.Dialog.fail(`Cannot load post ${postId}`, body.message);
+      }));
     });
   });
 
@@ -181,12 +174,10 @@
 
     $.Dialog.wait('Deviation acceptance status', 'Checking');
 
-    $.API.post(`/post/${id}/approval`, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
+    $.API.post(`/post/${id}/approval`).done(function(resp = {}) {
       $li.remove();
-      $.Dialog.success(false, this.message, true);
-    });
+      $.Dialog.success(false, resp.message, true);
+    }).fail($.API.fail());
   });
 
   function settingChanged(which, from, to_what) {
@@ -245,20 +236,18 @@
 
     $.Dialog.wait('Saving setting', 'Please wait');
 
-    $.API.put(endpoint, data, function() {
-      if (!this.status) return $.Dialog.fail(false, this.message);
-
+    $.API.put(endpoint, data).done(function(resp = {}) {
       if ($input.is('[type=number]'))
-        $input.val(this.value);
+        $input.val(resp.value);
       else if ($input.is('[type=checkbox]')){
-        this.value = Boolean(this.value);
-        $input.prop('checked', this.value);
+        resp.value = Boolean(resp.value);
+        $input.prop('checked', resp.value);
       }
-      const newOrig = this.value === null ? '' : this.value;
+      const newOrig = resp.value === null ? '' : resp.value;
       $input.data('orig', newOrig).triggerHandler('change');
 
-      settingChanged(endpoint.split('/').pop(), orig, this.value);
-    });
+      settingChanged(endpoint.split('/').pop(), orig, resp.value);
+    }).fail($.API.fail());
   });
   $slbl.children('input[type=number]').each(function() {
     let $el = $(this);

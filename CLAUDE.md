@@ -331,13 +331,43 @@ Each phase: add/adjust tests first, keep `vendor/bin/pest tests/Browser` green, 
 - **Writes are in scope:** existing mutation endpoints get the same contract tests and OpenAPI docs as the
   reads.
 
-### Open questions
+### Contract format: Luna's (verified from `Luna/app`)
 
-- Naming: Luna's responses are camelCase (`response()->camelJson`); check what Winterchilla `/api/v0` emits
-  (likely snake_case). Document the difference as part of the contract rather than changing either side,
-  unless you want Winterchilla's contract normalized first.
-- Error shape and status codes per endpoint (unauthenticated 401 vs 403, validation format) — collect them
-  while writing the contract tests.
+The contract follows what Luna already does, so Winterchilla's API converges on it rather than the reverse:
+- **camelCase JSON keys** (`response()->camelJson`); pagination is
+  `{currentPage, totalPages, totalItems, itemsPerPage}` (`Core::mapPagination`).
+- **No `status` envelope.** Success is a proper 2xx with the resource as the body; actions with nothing to
+  return are `204 No Content`. Failure is a proper 4xx/5xx.
+- **Error bodies** (`ErrorResponse` / `ValidationErrorResponse` schemas in `Luna/app/Http/Controllers/Controller.php`):
+  `{"message": "..."}` and, for validation, `422 {"message": "...", "errors": {"field": ["msg", ...]}}`.
+  `401` unauthenticated, `403` forbidden, `404` missing, `429` throttled, `503` dependency down (e.g. ElasticSearch).
+  Luna returns an *empty* 404 body in production, so clients must not rely on a 404 message.
+- **OpenAPI 3 via swagger-php annotations** with shared schemas (`ErrorResponse`, `ValidationErrorResponse`,
+  `PageNumber`, `OneBasedId`/`ZeroBasedId`, `IsoStandardDate`, enums for guide names etc.); reuse the same
+  schema names in Winterchilla's docs so the two specs can be diffed.
+
+### Error and status migration (`success: true/false` → HTTP statuses)
+
+Today every API response is `200` with `{status: bool, message?, ...data}` (`App\Response`; 313 call sites:
+256 `fail`, 2 `failApi`, ~31 `dbError`, 26 `success`, 99 `done`), and ~100 JS call sites check `this.status`
+(`$.mkAjaxHandler` only sees 2xx responses). Failures are shipped as HTML in `message` (e.g. the sign-back-in
+button), which is also not contract-friendly.
+
+`docs/api-error-inventory.md` lists every call with its function and a *heuristic* suggested status — review per
+call, don't apply blindly. Approach, in order:
+1. `Response::fail`/`failApi`/`dbError` gain an explicit HTTP status (default derived from the empty-message
+   auth case: 401 signed-out / 403 signed-in; otherwise required at the call site during migration).
+   `success` sends 200 (or 204 when there is no body). Bodies drop `status` and use Luna's error shape.
+2. **Client shim first** in `$.API` (`shared-utils.js`): on non-2xx, call the same callbacks with
+   `{status: false, message, errors}`, and add `status: true` on 2xx, so the ~100 existing `!this.status`
+   checks keep working while the server moves. Remove the shim (and the checks) at the end.
+3. Migrate controller by controller, each with contract tests asserting status code + body shape, and the
+   matching browser test still green. Suggested order: read endpoints and small controllers
+   (`Auth`, `Setting`, `About`, `Notification`) → `Show`, `Event`, `User`, `Tag`, `ColorGroup` → `Post`,
+   `Appearance` (largest: 44 and 38 failure sites).
+4. HTML-in-message cases become structured fields (`{message, code}`), with the HTML built client-side.
+5. Key-case migration to camelCase is done per endpoint alongside its contract test (many keys are already
+   camelCase or single words); document any endpoint that has to keep a legacy key.
 
 ## Working on this plan
 

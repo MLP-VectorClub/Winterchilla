@@ -100,3 +100,15 @@ it('lets the owner open their private personal appearance page', function () use
     ->assertNoJavaScriptErrors()
     ->assertSee('Private Test Pony');
 });
+
+it('lets staff give personal guide points from a user\'s profile', function () use ($base, $userId, $adminId) {
+  visit($base . '/test-login/' . $adminId)
+    ->navigate($base . '/users/' . $userId)
+    ->assertNoJavaScriptErrors()
+    ->click('#give-pcg-points')
+    // The seeded personal appearances use up more slots than the user has, so the form requires topping them up first
+    ->fill('input[name="amount"]', '15')
+    ->click('[data-testid="dialog-btn-continue"]')
+    ->click('[data-testid="dialog-btn-confirm"]')
+    ->assertSee("You've successfully given 15 points to TestUser");
+});

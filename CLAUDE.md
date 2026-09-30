@@ -245,7 +245,7 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
       binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
       survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above
 
-## API-driven pages migration (audit + plan, nothing implemented yet)
+## API-driven pages migration (done: contract tests, HTTP statuses, promise-based client)
 
 **Purpose:** preparation for the Celestia/Luna reimplementation of these features. The API is the deliverable:
 it is the contract those projects will build against (alongside the browser suite as the behavioral spec).
@@ -361,7 +361,7 @@ Today every API response is `200` with `{status: bool, message?, ...data}` (`App
 (`$.mkAjaxHandler` only sees 2xx responses). Failures are shipped as HTML in `message` (e.g. the sign-back-in
 button), which is also not contract-friendly.
 
-`docs/api-error-inventory.md` lists every call with its function and a *heuristic* suggested status — review per
+`docs/api-error-inventory.md` (generated at the start of the migration, now historical — every call it lists has been migrated) lists every call with its function and a *heuristic* suggested status — review per
 call, don't apply blindly. Approach, in order:
 1. `Response::fail`/`failApi`/`dbError` gain an explicit HTTP status (default derived from the empty-message
    auth case: 401 signed-out / 403 signed-in; otherwise required at the call site during migration).
@@ -495,9 +495,9 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       is the plain text, 422 field errors are joined into the message). Both mark the request `apiHandled` so the global
       `$.ajaxSetup` status dialogs stay quiet. ~100 call sites were converted with an AST codemod (espree) plus ~30 by hand;
       new UI tests cover the admin useful-links CRUD and casting a vote (`UsefulLinksTest`, `VoteTest`), next to the
-      existing appearance/color group/tag synonym/sign-out flows. Untested conversions (worth a click-through before deploying):
-      post reserve/finish/approve/unbreak on episode pages, event entry edit, personal guide points/slots, tag editing dialogs,
-      cutie mark editor, sprite upload/remove, relations editors.
+      existing appearance/color group/tag synonym/sign-out flows, plus `PostReservationTest` (reserve and cancel on an episode page)
+      and giving personal guide points. Untested conversions (worth a click-through before deploying): post finish/approve/
+      unbreak/image update, event entry edit, tag editing dialogs, cutie mark editor, sprite upload/remove, relations editors.
 - [x] The page-level JSON views are API endpoints now, so every client-side data request goes through `$.API`:
       `GET /cg/full?guide&sort_by` (was `/cg/[guide]/full?ajax`; the page and the API share
       `ColorGuideController::getFullListData()`) and `GET /user/contrib/lazyload/{favme}` (was a page route on

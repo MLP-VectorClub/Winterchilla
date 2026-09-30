@@ -318,25 +318,29 @@ What is left to prepare, in order:
    `GET /show/{id}` now also carries `aired`, `willAir`, `canEdit` and `relatedAppearances`, `GET /tags` (public list; the staff
    autocomplete moved to `/tags/autocomplete`), `GET /events` and `GET /events/{id}` (public, with entries; the old staff-only 501 is
    gone), `GET /users/{id}/profile`, `GET /users/{id}/contributions/{type}`, `GET /users/{id}/personal-guide/point-history` and the
-   staff-only `GET /admin/logs`. Left: the admin notices list, the log *details* (still `[label, value]` pairs with HTML values) and the
-   personal guide's appearance list beyond what `profile` carries. The HTML-fragment fields that exist on write endpoints (`li`,
-   `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are Winterchilla-UI details and should not be part of what
-   Luna implements.
+   staff-only `GET /admin/logs` (plus `data` on `GET /admin/logs/{id}`), `GET /users/{id}/personal-guide/appearances`, and the notices
+   resource (`/notices`, `/notices/current`, replacing the always-404 stub). `GET /appearances/{id}` carries `canEdit`. Nothing is left
+   in this step except what the page scripts embed themselves. The HTML-fragment fields that exist on write endpoints (`li`, `html`,
+   `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are marked in the OpenAPI descriptions as Winterchilla UI details
+   that Luna does not implement.
 3. ~~`GET /api/v0/config`~~ — done (`ConfigAPIController`, `ConfigApiTest`): `tagTypes`, `roles`, `showTypes`, `maxUploadSize`, `patterns`
    (`printableAscii`, `hexColor`, `username`, `episodeTitle` as `{source, flags}`), `wsServerHost`, `discordInviteLink`; cacheable for 5
    minutes. Winterchilla's own page scripts still read the `export_vars` globals (phase 4 "prove it" is deliberately not done: fetching
    config before page scripts run would change their startup order for no benefit to Celestia/Luna).
-4. **Permissions in the payload** (`canEdit`, `canDelete`, …) so Celestia doesn't re-derive authorization from roles, and **Luna-shaped
-   pagination** (`{currentPage, totalPages, totalItems, itemsPerPage}`) on every list.
+4. ~~Permissions in the payload and Luna-shaped pagination~~ — done for every new read endpoint (`canEdit`, `canManage`, `canEnter`, …;
+   pagination `{currentPage, totalPages, totalItems, itemsPerPage}` on every list).
 5. **Path and naming alignment for the write API — decided: yes.** Luna is resource-oriented (`/appearances/{id}`, `/users/{id}`, `/color-guide`);
    the write API moves to Luna's style, renamed **in place** (Winterchilla's client is the only consumer and deploys with the API, so no aliases; client calls change in the same commit). The full
    old → canonical mapping, the router change it needs (per-method routes) and the order of work are in
    `docs/api-path-alignment.md` (path renames are **done** for every controller; "As built" there lists the deviations). Request bodies are renamed to camelCase afterwards, also in place.
-6. **Finish the OpenAPI docs**: loose bodies (HTML-fragment fields, some request bodies) and one validation error per response (`Input`
-   still stops at the first) are still open. The regression guard is in place: `tests/ApiSchemaTest.php` (no swagger-php warnings, unique
-   readable operation IDs, no dangling `$ref`, no old path prefixes) runs with the unit tests, and the CI job "API Types" generates the
-   document and converts it with `openapi-typescript@7.13.0` (the version `packages/api-types` uses) and type-checks the result. Celestia's
-   own index generator lives in the other repo; it was run by hand against the current spec (312 exported types, type-checks).
+6. **OpenAPI docs and guard** — done except one deliberate gap: `Input` still stops at the first validation error (one field error per
+   response). Collecting all of them would mean continuing after a failed `Input` with a null value in ~100 controller methods that write
+   to the database between inputs, so it is not worth the risk while the Winterchilla UI only ever shows one error at a time. The
+   regression guard is in place: `tests/ApiSchemaTest.php` (no swagger-php warnings, unique readable operation IDs, no dangling `$ref`, no
+   old path prefixes) runs with the unit tests, and the CI job "API Types" generates the document, converts it with
+   `openapi-typescript@7.13.0` (the version `packages/api-types` uses) and type-checks the result. Celestia's own index generator lives in
+   the other repo; it was run by hand against the spec (312 exported types, type-checks). Discord sync/unlink now have docblocks and
+   contract tests (`DiscordApiTest`; a successful sync needs the real Discord API).
 Every new endpoint ships with its contract test (`tests/Browser/Api/`) and docblock in the same commit, like the existing ones.
 
 ### Current state (audit)

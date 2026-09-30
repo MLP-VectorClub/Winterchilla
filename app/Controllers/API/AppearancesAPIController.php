@@ -628,7 +628,8 @@ class AppearancesAPIController extends APIController {
    *     @OA\Schema(ref="#/components/schemas/Appearance"),
    *     @OA\Schema(
    *       type="object",
-   *       required={"cutieMarks"},
+   *       required={"cutieMarks", "canEdit"},
+   *       @OA\Property(property="canEdit", type="boolean", description="Whether the current user may edit this appearance (its owner, or staff)"),
    *       @OA\Property(property="cutieMarks", type="array", minItems=0, @OA\Items(ref="#/components/schemas/CutieMark"))
    *     )
    *   }
@@ -654,6 +655,7 @@ class AppearancesAPIController extends APIController {
     self::_handlePrivateAppearanceCheck($appearance);
 
     Response::ok(self::mapAppearance($appearance, false) + [
+      'canEdit' => $appearance->canBeManagedByVisitor(),
       'cutieMarks' => array_map(fn(Cutiemark $cm) => self::mapCutieMark($cm), $appearance->cutiemarks),
     ]);
   }

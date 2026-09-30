@@ -985,8 +985,12 @@ class Appearance extends NSModel implements Linkable {
     }
   }
 
+  public function canBeManagedByVisitor():bool {
+    return Auth::$signed_in && (Auth::$user->id === $this->owner_id || Auth::$user->perm('staff'));
+  }
+
   public function enforceManagePermission() {
-    if (!Auth::$signed_in || (Auth::$user->id !== $this->owner_id && !Auth::$user->perm('staff')))
+    if (!$this->canBeManagedByVisitor())
       CoreUtils::noPerm();
   }
 

@@ -117,3 +117,15 @@ it('answers 404 and 403 for the preview of a missing or private appearance', fun
   expect(ApiClient::guest()->get('/appearances/987654/preview')['status'])->toBe(404)
     ->and(ApiClient::guest()->get('/appearances/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID . '/preview')['status'])->toBe(403);
 });
+
+it('tells the current user whether they can edit the appearance', function () {
+  $official = TestSeederConstants::APPEARANCE_ID;
+  $personal = TestSeederConstants::PERSONAL_APPEARANCE_ID;
+
+  expect(ApiClient::guest()->get("/appearances/$official")['json']['canEdit'])->toBeFalse();
+  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get("/appearances/$official")['json']['canEdit'])->toBeFalse();
+  expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get("/appearances/$official")['json']['canEdit'])->toBeTrue();
+  // A personal guide appearance can be edited by its owner
+  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get("/appearances/$personal")['json']['canEdit'])->toBeTrue();
+  expect(ApiClient::guest()->get("/appearances/$personal")['json']['canEdit'])->toBeFalse();
+});

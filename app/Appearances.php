@@ -5,9 +5,8 @@ namespace App;
 use App\Models\Appearance;
 use App\Models\Notification;
 use App\Models\PinnedAppearance;
-use Elasticsearch\Common\Exceptions\BadRequest400Exception as ElasticBadRequest400Exception;
-use Elasticsearch\Common\Exceptions\Missing404Exception as ElasticMissing404Exception;
-use Elasticsearch\Common\Exceptions\NoNodesAvailableException as ElasticNoNodesAvailableException;
+use Elastic\Elasticsearch\Exception\ClientResponseException as ElasticClientResponseException;
+use Elastic\Transport\Exception\NoNodeAvailableException as ElasticNoNodesAvailableException;
 use function count;
 use function is_int;
 use function is_string;
@@ -128,11 +127,11 @@ class Appearances {
     try {
       $elastic_client->indices()->delete(CGUtils::ELASTIC_BASE);
     }
-    catch (ElasticMissing404Exception $e){
-      $message = JSON::decode($e->getMessage());
+    catch (ElasticClientResponseException $e){
+      $message = CoreUtils::elasticErrorBody($e);
 
       // Eat exception if the index we're re-creating does not exist yet
-      if ($message['error']['type'] !== 'index_not_found_exception' || $message['error']['index'] !== CGUtils::ELASTIC_BASE['index'])
+      if ($e->getCode() !== 404 || ($message['error']['type'] ?? null) !== 'index_not_found_exception' || ($message['error']['index'] ?? null) !== CGUtils::ELASTIC_BASE['index'])
         throw $e;
     }
     catch (ElasticNoNodesAvailableException $e){
@@ -184,8 +183,10 @@ class Appearances {
     try {
       $elastic_client->indices()->create($params);
     }
-    catch (ElasticBadRequest400Exception $e){
-      Response::fail('Failed to create index:<br><pre>'.CoreUtils::escapeHTML(JSON::encode(JSON::decode($e->getMessage()), JSON_PRETTY_PRINT)).'</pre>');
+    catch (ElasticClientResponseException $e){
+      if ($e->getCode() !== 400)
+        throw $e;
+      Response::fail('Failed to create index:<br><pre>'.CoreUtils::escapeHTML(JSON::encode(CoreUtils::elasticErrorBody($e), JSON_PRETTY_PRINT)).'</pre>');
     }
     catch (ElasticNoNodesAvailableException $e){
       Response::fail('Re-index failed, ElasticSearch server is down!');
@@ -208,12 +209,12 @@ class Appearances {
       $params['body'][] = $a->getElasticBody();
 
       if ($i % 100 === 0){
-        self::handleBulkError($elastic_client->bulk($params));
+        self::handleBulkError($elastic_client->bulk($params)->asArray());
         $params = ['body' => []];
       }
     }
     if (!empty($params['body'])){
-      self::handleBulkError($elastic_client->bulk($params));
+      self::handleBulkError($elastic_client->bulk($params)->asArray());
     }
 
     Response::success('Re-index completed');

@@ -18,11 +18,10 @@ use App\Time;
 use App\Twig;
 use App\UserPrefs;
 use App\Users;
-use Elasticsearch\Common\Exceptions\Missing404Exception;
-use Elasticsearch\Common\Exceptions\Missing404Exception as ElasticMissing404Exception;
-use Elasticsearch\Common\Exceptions\NoNodesAvailableException;
-use Elasticsearch\Common\Exceptions\NoNodesAvailableException as ElasticNoNodesAvailableException;
-use Elasticsearch\Common\Exceptions\ServerErrorResponseException as ElasticServerErrorResponseException;
+use Elastic\Elasticsearch\Exception\ClientResponseException as ElasticClientResponseException;
+use Elastic\Elasticsearch\Exception\ServerResponseException as ElasticServerErrorResponseException;
+use Elastic\Transport\Exception\NoNodeAvailableException;
+use Elastic\Transport\Exception\NoNodeAvailableException as ElasticNoNodesAvailableException;
 use Exception;
 use League\Uri\Components\Query;
 use League\Uri\Modifier;
@@ -577,7 +576,9 @@ class Appearance extends NSModel implements Linkable {
     catch (ElasticNoNodesAvailableException | ElasticServerErrorResponseException $e){
       CoreUtils::logError("ElasticSearch server was down when server attempted to index appearance {$this->id}");
     }
-    catch (ElasticMissing404Exception $e){
+    catch (ElasticClientResponseException $e){
+      if ($e->getCode() !== 404)
+        throw $e;
       CoreUtils::elasticClient()->update($this->toElasticArray(false));
     }
   }
@@ -855,14 +856,14 @@ class Appearance extends NSModel implements Linkable {
       try {
         CoreUtils::elasticClient()->delete($this->toElasticArray(true));
       }
-      catch (Missing404Exception $e){
-        $message = JSON::decode($e->getMessage());
+      catch (ElasticClientResponseException $e){
+        $message = CoreUtils::elasticErrorBody($e);
 
         // Eat error if appearance was not indexed
-        if (!isset($message['found']) || $message['found'] !== false)
+        if ($e->getCode() !== 404 || (($message['found'] ?? null) !== false && ($message['result'] ?? null) !== 'not_found'))
           throw $e;
       }
-      catch (NoNodesAvailableException $e){
+      catch (NoNodeAvailableException $e){
         CoreUtils::logError("ElasticSearch server was down when server attempted to remove appearance {$this->id}");
       }
     }

@@ -15,8 +15,10 @@ use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 use DOMDocument;
 use DOMElement;
-use Elasticsearch\Client;
-use Elasticsearch\ClientBuilder;
+use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\ClientBuilder;
+use Elastic\Elasticsearch\Exception\ClientResponseException;
+use Elastic\Elasticsearch\Exception\ServerResponseException;
 use enshrined\svgSanitize\data\AllowedAttributes;
 use enshrined\svgSanitize\data\AttributeInterface;
 use enshrined\svgSanitize\data\TagInterface;
@@ -1298,15 +1300,35 @@ class CoreUtils {
     if ($elastiClient !== null)
       return $elastiClient;
 
-    $elastiClient = ClientBuilder::create()
-      ->setHosts([self::env('ELASTIC_HOST') ?: '127.0.0.1:9200'])
-      ->setConnectionParams(['client' => [
+    $builder = ClientBuilder::create()
+      ->setHosts([self::env('ELASTIC_HOST') ?: 'http://127.0.0.1:9200'])
+      ->setHttpClientOptions([
         'timeout' => (float) (self::env('ELASTIC_TIMEOUT') ?: 15),
         'connect_timeout' => (float) (self::env('ELASTIC_CONNECT_TIMEOUT') ?: 5),
-      ]])
-      ->build();
+      ]);
+
+    // Elasticsearch 8 has security enabled by default
+    if (self::env('ELASTIC_API_KEY'))
+      $builder->setApiKey(self::env('ELASTIC_API_KEY'));
+    else if (self::env('ELASTIC_USERNAME'))
+      $builder->setBasicAuthentication(self::env('ELASTIC_USERNAME'), (string) self::env('ELASTIC_PASSWORD'));
+    if (self::env('ELASTIC_CA_BUNDLE'))
+      $builder->setCABundle(self::env('ELASTIC_CA_BUNDLE'));
+
+    $elastiClient = $builder->build();
 
     return $elastiClient;
+  }
+
+  /**
+   * Decodes the JSON error body of a failed ElasticSearch request (the exceptions only expose a plain PSR-7 response)
+   */
+  public static function elasticErrorBody(ClientResponseException|ServerResponseException $e):array {
+    $body = $e->getResponse()->getBody();
+    $body->rewind();
+    $decoded = json_decode($body->getContents(), true);
+
+    return is_array($decoded) ? $decoded : [];
   }
 
   public static function isJSONExpected():bool {

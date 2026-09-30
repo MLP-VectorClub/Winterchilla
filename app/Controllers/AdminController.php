@@ -14,7 +14,7 @@ use App\Models\User;
 use App\Pagination;
 use App\Permission;
 use App\Posts;
-use Elasticsearch\Common\Exceptions\NoNodesAvailableException;
+use Elastic\Transport\Exception\NoNodeAvailableException as NoNodesAvailableException;
 use IPTools\IP;
 use League\Uri\Components\Query;
 use League\Uri\Modifier;
@@ -35,8 +35,8 @@ class AdminController extends Controller {
       try {
         $client = CoreUtils::elasticClient();
         $client->ping();
-        $indices = $client->cat()->indices(['v' => true]);
-        $nodes = $client->cat()->nodes(['v' => true]);
+        $indices = $client->cat()->indices(['format' => 'json'])->asArray();
+        $nodes = $client->cat()->nodes(['format' => 'json'])->asArray();
 
         $usedIndexes = ['appearances'];
         $index_list = '';

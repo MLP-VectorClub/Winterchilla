@@ -24,7 +24,7 @@ The site is known to work with the following set of software, assuming correct c
 | Web Server        | nginx 1.13+                                   |
 | Database Server   | PostgreSQL 10+                                |
 | Asset Compilation | Node.js 8.0+                                  |
-| Search Server     | ElasticSearch 6+                              |
+| Search Server     | ElasticSearch 8                               |
 | Runtime & Dependencies | Composer (latest)<br>PHP 7.3+            |
 | Source Control    | Git<br><small>(the site shows the commit data in the footer, so the binary should be runnable by the application)</small> |
 | SSL Certificate   | Self-signed<br><small>(required to use the site through HTTPS while developing)</small> |
@@ -128,6 +128,12 @@ You can use `wtf db` To see all Phinx-related commands.
 ### ElasticSearch
 
 Once the application is fully configured, visit the Color Guide and use the "Re-index" button to set up the index(es) used by the application.
+
+The app targets ElasticSearch 8 (`elasticsearch/elasticsearch` ^8.19). Security is on by default in 8.x, so either set `ELASTIC_API_KEY` (or `ELASTIC_USERNAME`/`ELASTIC_PASSWORD`) and `ELASTIC_CA_BUNDLE` in your `.env`, or run a local dev node with security off:
+
+```
+$ docker run -d --name es8 -p 127.0.0.1:9200:9200 -e discovery.type=single-node -e xpack.security.enabled=false docker.elastic.co/elasticsearch/elasticsearch:8.19.0
+```
 
 ## Code style
 

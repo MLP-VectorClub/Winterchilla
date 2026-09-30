@@ -11,15 +11,10 @@ use App\Models\PCGSlotHistory;
 use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
-use Elasticsearch\Common\Exceptions\BadRequest400Exception;
-use Elasticsearch\Common\Exceptions\Missing404Exception;
-use Elasticsearch\Common\Exceptions\NoNodesAvailableException;
-use Elasticsearch\Common\Exceptions\ServerErrorResponseException;
+use Elastic\Elasticsearch\Exception\ClientResponseException;
+use Elastic\Elasticsearch\Exception\ServerResponseException;
 use Exception;
 use Generator;
-use ONGR\ElasticsearchDSL;
-use ONGR\ElasticsearchDSL\Query\Compound\BoolQuery;
-use ONGR\ElasticsearchDSL\Query\TermLevel\TermQuery;
 use RuntimeException;
 use SeinopSys\RGBAColor;
 use function array_map;
@@ -1046,7 +1041,7 @@ class CGUtils {
       'body' => $body,
     ]);
 
-    return CoreUtils::elasticClient()->search($params);
+    return CoreUtils::elasticClient()->search($params)->asArray();
   }
 
   /**
@@ -1233,7 +1228,7 @@ class CGUtils {
     if (CoreUtils::env('TEST_MODE'))
       return false;
     try {
-      $elastic_avail = CoreUtils::elasticClient()->ping();
+      $elastic_avail = CoreUtils::elasticClient()->ping()->asBool();
     }
     catch (\Throwable $e){
       return false;
@@ -1249,55 +1244,53 @@ class CGUtils {
    * @param string|null $title
    *
    * @return array
-   * @throws BadRequest400Exception
-   * @throws ServerErrorResponseException
+   * @throws ClientResponseException
+   * @throws ServerResponseException
    */
   public static function searchGuide(Pagination $pagination, string $guide, bool $searching = true, ?string &$title = null):array {
-    $search = new ElasticsearchDSL\Search();
     $in_order = true;
+    $must = [];
 
     // Search query exists
     if ($searching){
       $search_query = preg_replace("~[^\w\s*?'-]~", '', CoreUtils::trim($_GET['q']));
       if ($title !== null)
         $title .= "$search_query - ";
-      $multi_match = new ElasticsearchDSL\Query\FullText\MultiMatchQuery(
-        ['label', 'tags'],
-        $search_query,
-        [
+      $must[] = [
+        'multi_match' => [
+          'query' => $search_query,
+          'fields' => ['label', 'tags'],
           'type' => 'cross_fields',
           'minimum_should_match' => '100%',
-        ]
-      );
-      $search->addQuery($multi_match);
+        ],
+      ];
     }
+    $must[] = ['term' => ['guide' => $guide]];
 
-    $sort = new ElasticsearchDSL\Sort\FieldSort('order', 'asc');
-    $search->addSort($sort);
-
-    $bool_query = new BoolQuery();
-    $bool_query->add(new TermQuery('guide', $guide), BoolQuery::MUST);
-    $search->addQuery($bool_query);
-
-    $search->setSource(false);
-    $search = $search->toArray();
+    $search = [
+      'query' => ['bool' => ['must' => $must]],
+      'sort' => [['order' => ['order' => 'asc']]],
+      '_source' => false,
+    ];
     try {
       $search = self::searchElastic($search, $pagination);
     }
-    catch (Missing404Exception $e){
-      $search = [];
-    }
-    catch (ServerErrorResponseException | BadRequest400Exception $e){
-      $message = $e->getMessage();
-      if (
-        !CoreUtils::contains($message, 'Result window is too large, from + size must be less than or equal to')
-        && !CoreUtils::contains($message, 'Failed to parse int parameter [from] with value')
-      ){
-        throw $e;
+    catch (ClientResponseException | ServerResponseException $e){
+      if ($e instanceof ClientResponseException && $e->getCode() === 404){
+        $search = [];
       }
+      else {
+        $message = json_encode(CoreUtils::elasticErrorBody($e));
+        if (
+          !CoreUtils::contains($message, 'Result window is too large, from + size must be less than or equal to')
+          && !CoreUtils::contains($message, 'Failed to parse int parameter [from] with value')
+        ){
+          throw $e;
+        }
 
-      $search = [];
-      $pagination->calcMaxPages(0);
+        $search = [];
+        $pagination->calcMaxPages(0);
+      }
     }
 
     if (!empty($search)){

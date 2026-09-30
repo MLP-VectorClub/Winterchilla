@@ -104,6 +104,30 @@ class TestSeeder extends AbstractSeed {
       'last_cleared' => null,
     ]])->save();
 
+    // Personal guide of the regular user: a public appearance with a color group (PERSONAL_APPEARANCE_ID) and a
+    // private one (PRIVATE_PERSONAL_APPEARANCE_ID). Slot history is recalculated from these on first view.
+    $personal = ['order' => null, 'notes_src' => null, 'notes_rend' => null, 'owner_id' => 9001, 'guide' => null, 'sprite_hash' => null,
+      'created_at' => date('c'), 'updated_at' => date('c'), 'last_cleared' => null];
+    $this->table('appearances')->insert([
+      $personal + ['id' => 3, 'label' => 'Personal Test Pony', 'private' => false],
+      $personal + ['id' => 4, 'label' => 'Private Test Pony', 'private' => true, 'token' => '0f0e0d0c-0b0a-4000-8000-00000000f004'],
+    ])->save();
+    $this->table('color_groups')->insert([
+      ['id' => 1, 'appearance_id' => 3, 'label' => 'Personal Coat', 'order' => 1],
+    ])->save();
+    $this->table('colors')->insert([
+      ['group_id' => 1, 'order' => 1, 'label' => 'Personal Base', 'hex' => '#AA55CC'],
+    ])->save();
+    // Manual point grant from the admin to the regular user
+    $this->table('pcg_point_grants')->insert([[
+      'amount' => 5, 'comment' => 'Seeded contract test grant', 'receiver_id' => 9001, 'sender_id' => 9002, 'created_at' => date('c'),
+    ]])->save();
+    // Major changes on the official appearance; the newest first on the changes list
+    $this->table('major_changes')->insert([
+      ['appearance_id' => 1, 'reason' => 'Seeded older major change', 'user_id' => 9002, 'created_at' => date('c', strtotime('-2 days')), 'updated_at' => date('c', strtotime('-2 days'))],
+      ['appearance_id' => 1, 'reason' => 'Seeded newest major change', 'user_id' => 9002, 'created_at' => date('c', strtotime('-1 day')), 'updated_at' => date('c', strtotime('-1 day'))],
+    ])->save();
+
     // A cutie mark for the appearance above, backed by a source SVG fixture on disk.
     // ID must match TestSeederConstants::CUTIEMARK_ID (kept high since fs/ is shared with dev).
     $cutiemark_id = 900001;
@@ -190,5 +214,9 @@ class TestSeeder extends AbstractSeed {
         'fullsize' => null,
         'type' => 'png',
       ]);
+
+    // Rows with explicit IDs don't advance their sequences, so the next row created by the app would collide
+    foreach (['appearances', 'color_groups', 'cutiemarks', 'show', 'posts', 'notifications', 'events', 'event_entries'] as $table)
+      $this->execute("SELECT setval(pg_get_serial_sequence('$table', 'id'), GREATEST((SELECT MAX(id) FROM $table), 1))");
   }
 }

@@ -40,7 +40,9 @@ it('shows the seeded appearance detail page', function () use ($base, $appearanc
 it('shows the pony color guide change list', function () use ($base) {
   visit($base . '/cg/pony/changes')
     ->assertNoJavaScriptErrors()
-    ->assertSee('Major Friendship is Magic Color Changes');
+    ->assertSee('Major Friendship is Magic Color Changes')
+    ->assertSee('Seeded newest major change')
+    ->assertSee('Seeded older major change');
 });
 
 it('shows the color picker tool', function () use ($base) {

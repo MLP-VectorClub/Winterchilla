@@ -1,0 +1,46 @@
+<?php
+
+use Tests\Browser\Helpers\ApiClient;
+use Tests\Browser\Helpers\TestSeederConstants;
+
+$base = TestSeederConstants::BASE_URL;
+
+it('makes a tag a synonym of another and removes the synonym again from the tag list', function () use ($base) {
+  $suffix = substr(md5(uniqid('', true)), 0, 6);
+  $sourceName = "syn-source-$suffix";
+  $targetName = "syn-target-$suffix";
+
+  // Set the tags up through the API first: logging in as the admin in the browser replaces the API client's session
+  $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $source = $api->post('/cg/tag', ['name' => $sourceName, 'type' => 'app'])['json'];
+  $target = $api->post('/cg/tag', ['name' => $targetName, 'type' => 'app'])['json'];
+
+  try {
+    $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+      ->navigate($base . '/cg/pony/tags')
+      ->assertNoJavaScriptErrors()
+      ->assertSee($sourceName)
+      // Make the source tag a synonym of the target
+      ->click("tr:has-text(\"$sourceName\") button.synon")
+      ->select('select[name="target_id"]', (string)$target['id'])
+      ->click('[data-testid="dialog-btn-make-synonym"]')
+      ->assertSee('Tag synonyms created')
+      ->click('[data-testid="dialog-btn-reload"]')
+      ->assertSee("Synonym of $targetName");
+
+    // Trying to make it a synonym again offers to remove the existing synonym instead
+    $page
+      ->click("tr:has-text(\"$sourceName\") button.synon")
+      ->assertSee('already a synonym of')
+      ->click('[data-testid="dialog-btn-confirm"]')
+      ->assertSee('Preserve current tag connections')
+      ->click('[data-testid="dialog-btn-remove-synonym"]')
+      ->click('[data-testid="dialog-btn-reload"]')
+      ->assertDontSee("Synonym of $targetName");
+  }
+  finally {
+    $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+    $api->request('DELETE', '/cg/tag/' . $source['id']);
+    $api->request('DELETE', '/cg/tag/' . $target['id']);
+  }
+});

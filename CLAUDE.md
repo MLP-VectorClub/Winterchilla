@@ -114,6 +114,14 @@ New file: `tests/Browser/User/PersonalGuideTest.php`. Covers guest/owner/staff a
 the list and point-history pages (owner-or-staff guard on point-history, open-by-default on list per
 `User::canVisitorSeePCG()`).
 
+`TestSeeder` also seeds the regular user's personal guide (a public appearance with a color group and a private one
+with a fixed `?token=`, plus a manual point grant from the admin) and two major changes on the official appearance,
+so the personal guide list/appearance/point-history pages and the changes list have real content
+(`TestSeederConstants::PERSONAL_*`/`PRIVATE_PERSONAL_*`). Note the guest behavior they pin down: a private personal
+appearance is *listed* to guests as a locked entry, but its page is a 403 without the token. The seeder resets the
+identity sequences of the tables it seeds with explicit IDs at the end — otherwise the first row the app creates
+collides (that bit color groups).
+
 ### Stage 2 — UserController remaining (done)
 
 - [x] `/users` — user browse/list page (guest "Club Members" vs staff "Users")
@@ -423,16 +431,17 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       (replaces the old `confirm: true` + HTML); an already-synonym tag is `409` with `synonymOf {id, name}` (replaces
       `undo: true` + HTML); tag/autocomplete keys are camelCase (`synonymOf`, `synonymTarget`; `tid` is not returned).
       `tag-list.js`/`manage.jsx` build the dialogs' HTML client-side now. Also fixed: creating/updating a tag
-      without a `type` read an undefined index. Not covered by browser tests: the synonym/unsynonym dialogs
-      (only through the API).
+      without a `type` read an undefined index. The synonym/unsynonym dialogs are covered
+      by `tests/Browser/Admin/TagSynonymTest.php`.
 - [x] `ColorGroupAPIController` (`/cg/colorgroup`, `/cg/colorgroup/{id}`) — 401 for guests, 403 without permission on the
       appearance (regular users can't touch official-guide groups), 404 for missing groups/appearances, 422 field
       errors under `ponyid`, `label`, `reason` and `Colors` (the request field keeps its capital `C`; per-color
       problems are reported on it), create is 201 and update 200 with `{id, cgs, notes|cmList, update|changes}`
       (rendered HTML fragments), delete 204. GET is camelCase (`appearanceId`, `colors`). Fixed: the group was saved
       *before* its colors were validated, so a rejected request left an empty/renamed group behind; and the label's
-      invalid-character check was a no-op (`returnError` was passed but the result never used). Not covered: personal
-      guide ownership (no seeded personal appearance) and the major-change/`reason` flow.
+      invalid-character check was a no-op (`returnError` was passed but the result never used). Personal-guide ownership is
+      covered through the seeded personal appearance (owner and staff may manage its groups). Not covered: the
+      major-change/`reason` flow when *creating* a change (the seed only provides existing changes).
 - [ ] Everything else — see the inventory and the order above (`Post` next, then `Appearance`).
 
 Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,

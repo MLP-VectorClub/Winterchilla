@@ -9,6 +9,12 @@ class TestSeederConstants {
   public const USER_DA_ID = '0f0e0d0c-0b0a-4000-8000-000000009001';
   public const ADMIN_DA_ID = '0f0e0d0c-0b0a-4000-8000-000000009002';
   public const APPEARANCE_ID = 1;
+  // The regular user's personal guide: a public and a private appearance, the public one with a color group
+  public const PERSONAL_APPEARANCE_ID = 3;
+  public const PRIVATE_PERSONAL_APPEARANCE_ID = 4;
+  public const PERSONAL_COLOR_GROUP_ID = 1;
+  // Lets anyone view the private appearance when passed as ?token=
+  public const PRIVATE_PERSONAL_TOKEN = '0f0e0d0c-0b0a-4000-8000-00000000f004';
   // Deliberately high: fs/ is shared with the dev environment, so a low ID could clobber a real cm_source file
   public const CUTIEMARK_ID = 900001;
   // An appearance (with a cutie mark and its files on disk) that exists only to be deleted

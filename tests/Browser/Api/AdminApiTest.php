@@ -98,3 +98,19 @@ it('validates the log list query with 422', function () {
   expect($admin->get('/admin/logs', ['size' => 500])['json']['errors'])->toHaveKey('size');
   expect($admin->get('/admin/logs', ['page' => 0])['json']['errors'])->toHaveKey('page');
 });
+
+it('returns the structured data of a log entry next to its rendered details', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $r = $admin->get('/admin/logs/' . TestSeederConstants::LOG_ID);
+
+  expect($r['status'])->toBe(200)
+    ->and($r['json'])->toHaveKeys(['details', 'data'])
+    ->and($r['json']['data'])->toEqual(['target' => TestSeederConstants::USER_ID, 'oldrole' => 'user', 'newrole' => 'member'])
+    ->and($r['json']['details'][0][0])->toBe('Target user');
+
+  $listed = array_column($admin->get('/admin/logs', ['type' => 'rolechange'])['json']['entries'], null, 'id');
+  expect($listed)->toHaveKey(TestSeederConstants::LOG_ID)
+    ->and($listed[TestSeederConstants::LOG_ID]['hasDetails'])->toBeTrue()
+    ->and($listed[TestSeederConstants::LOG_ID]['initiator']['name'])->toBe('TestAdmin');
+  expect(array_column($admin->get('/admin/logs', ['initiatorId' => TestSeederConstants::ADMIN_ID])['json']['entries'], 'id'))->toContain(TestSeederConstants::LOG_ID);
+});

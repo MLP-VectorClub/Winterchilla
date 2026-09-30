@@ -29,6 +29,8 @@ class TestSeederConstants {
   public const SHOW_ID = 1;
   public const MOVIE_ID = 2;
   public const EVENT_ID = 1;
+  // A role change made by ADMIN_ID, with data
+  public const LOG_ID = 1;
   public const POST_ID = 1;
   // Requests by USER_ID: 2 exists to be deleted, 3 is reserved by ADMIN_ID
   public const DELETABLE_POST_ID = 2;

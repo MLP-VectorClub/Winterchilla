@@ -132,12 +132,18 @@ class AdminAPIController extends APIController {
    *     description="OK",
    *     @OA\JsonContent(
    *           type="object",
-   *           required={"details"},
+   *           required={"details", "data"},
    *           @OA\Property(
    *             property="details",
    *             type="array",
-   *             description="A list of [label, value] pairs describing the log entry. Values may be strings, booleans, or other scalar types depending on the entry type",
+   *             description="Winterchilla UI detail: a list of [label, value] pairs describing the log entry, where values may contain HTML (links, images). Prefer `data`.",
    *             @OA\Items(type="array", @OA\Items())
+   *           ),
+   *           @OA\Property(
+   *             property="data",
+   *             type="object",
+   *             additionalProperties=true,
+   *             description="The structured data that was logged with the entry (references by ID, old and new values); its keys depend on the entry type"
    *           )
    *         )
    *   ),
@@ -161,7 +167,7 @@ class AdminAPIController extends APIController {
     if ($main_entry->data === null)
       Response::error(409, 'There are no details to show', ['unclickable' => true]);
 
-    Response::ok(Logs::formatEntryDetails($main_entry, $main_entry->data));
+    Response::ok(Logs::formatEntryDetails($main_entry, $main_entry->data) + ['data' => $main_entry->data]);
   }
 
   /**

@@ -288,8 +288,14 @@ class TestSeeder extends AbstractSeed {
         'type' => 'png',
       ]);
 
+    // A log entry with structured data, for the admin log API tests (TestSeederConstants::LOG_ID)
+    $this->table('logs')->insert([[
+      'id' => 1, 'initiator' => 9002, 'entry_type' => 'rolechange', 'ip' => '127.0.0.1',
+      'data' => json_encode(['target' => 9001, 'oldrole' => 'user', 'newrole' => 'member']), 'created_at' => date('c'),
+    ]])->save();
+
     // Rows with explicit IDs don't advance their sequences, so the next row created by the app would collide
-    foreach (['appearances', 'color_groups', 'cutiemarks', 'show', 'posts', 'notifications', 'events', 'event_entries'] as $table)
+    foreach (['appearances', 'color_groups', 'cutiemarks', 'show', 'posts', 'notifications', 'events', 'event_entries', 'logs'] as $table)
       $this->execute("SELECT setval(pg_get_serial_sequence('$table', 'id'), GREATEST((SELECT MAX(id) FROM $table), 1))");
   }
 }

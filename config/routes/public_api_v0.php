@@ -13,13 +13,19 @@ global $router;
 /**
  * Allowing all request methods lets us reply with HTTP 405 to unsupported methods at the controller level
  *
+ * Canonical paths follow Luna's resource style (see docs/api-path-alignment.md); the old Winterchilla paths stay
+ * registered as aliases for the same target until the client has moved.
+ *
  * @param string $path
  * @param array{0: class-string, 1: string} $target
+ * @param string[] $aliases
  *
  * @return void
  */
-$api_endpoint = function ($path, array $target) use ($router) {
-  $router->map('POST|GET|PUT|DELETE', PUBLIC_API_V0_PATH.$path, $target);
+$api_endpoint = function ($path, array $target, array $aliases = []) use ($router) {
+  foreach (array_merge([$path], $aliases) as $route_path) {
+    $router->map('POST|GET|PUT|DELETE', PUBLIC_API_V0_PATH.$route_path, $target);
+  }
 };
 $api_endpoint('/appearances', [\App\Controllers\API\AppearancesAPIController::class, 'queryPublic']);
 $api_endpoint('/appearances/all', [\App\Controllers\API\AppearancesAPIController::class, 'queryAll']);
@@ -68,8 +74,8 @@ $api_endpoint('/event/[i:id]/check-entries', [\App\Controllers\API\EventAPIContr
 $api_endpoint('/event/[i:id]/entry', [\App\Controllers\API\EventEntryAPIController::class, 'api']);
 $api_endpoint('/event/entry/[i:entryid]', [\App\Controllers\API\EventEntryAPIController::class, 'api']);
 $api_endpoint('/event/entry/[i:entryid]/lazyload', [\App\Controllers\API\EventEntryAPIController::class, 'lazyload']);
-$api_endpoint('/notif', [\App\Controllers\API\NotificationAPIController::class, 'get']);
-$api_endpoint('/notif/[i:id]/mark-read', [\App\Controllers\API\NotificationAPIController::class, 'markRead']);
+$api_endpoint('/notifications', [\App\Controllers\API\NotificationAPIController::class, 'get'], ['/notif']);
+$api_endpoint('/notifications/[i:id]/read', [\App\Controllers\API\NotificationAPIController::class, 'markRead'], ['/notif/[i:id]/mark-read']);
 $api_endpoint('/post/[i:id]?', [\App\Controllers\API\PostAPIController::class, 'api']);
 $api_endpoint('/post/[i:id]/lazyload', [\App\Controllers\API\PostAPIController::class, 'lazyload']);
 $api_endpoint('/post/[i:id]/finish', [\App\Controllers\API\PostAPIController::class, 'finishApi']);
@@ -83,7 +89,7 @@ $api_endpoint('/post/check-image', [\App\Controllers\API\PostAPIController::clas
 $api_endpoint('/post/reservation', [\App\Controllers\API\PostAPIController::class, 'addReservation']);
 $api_endpoint('/post/request/[i:id]', [\App\Controllers\API\PostAPIController::class, 'deleteRequest']);
 $api_endpoint('/post/request/suggestion', [\App\Controllers\API\PostAPIController::class, 'suggestRequest']);
-$api_endpoint('/setting/[au:key]', [\App\Controllers\API\SettingAPIController::class, 'api']);
+$api_endpoint('/settings/[au:key]', [\App\Controllers\API\SettingAPIController::class, 'api'], ['/setting/[au:key]']);
 $api_endpoint('/user/session/[i:id]', [\App\Controllers\API\UserAPIController::class, 'sessionApi']);
 $api_endpoint('/user/password', [\App\Controllers\API\UserAPIController::class, 'passwordApi']);
 $api_endpoint('/user/verify', [\App\Controllers\API\UserAPIController::class, 'verifyApi']);

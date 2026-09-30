@@ -31,7 +31,7 @@ class SettingAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/setting/{key}",
+   *   path="/settings/{key}",
    *   description="Get the value of a global site setting. Requires staff role",
    *   tags={"settings"},
    *   @OA\Parameter(
@@ -54,7 +54,7 @@ class SettingAPIController extends APIController {
    *   @OA\Response(response="404", description="Unknown setting key", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/setting/{key}",
+   *   path="/settings/{key}",
    *   description="Update the value of a global site setting. Requires staff role",
    *   tags={"settings"},
    *   @OA\Parameter(

@@ -20,7 +20,7 @@ class NotificationAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/notif",
+   *   path="/notifications",
    *   description="Get a rendered HTML list of the current user's unread notifications. Requires authentication",
    *   tags={"notifications"},
    *   @OA\Response(
@@ -52,7 +52,7 @@ class NotificationAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/notif/{id}/mark-read",
+   *   path="/notifications/{id}/read",
    *   description="Mark one of the current user's notifications as read. Requires authentication",
    *   tags={"notifications"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),

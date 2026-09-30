@@ -167,7 +167,7 @@ class EventEntryAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", required={"entryHtml"}, additionalProperties=false,
-   *           @OA\Property(property="entryHtml", type="string", description="Rendered HTML for the updated entry list item")
+   *           @OA\Property(property="entryHtml", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the updated entry list item")
    *         )
    *   ),
    *   @OA\Response(response="422", description="Validation error with the submitted link, title or preview image", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
@@ -194,7 +194,7 @@ class EventEntryAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", required={"entryHtml"}, additionalProperties=false,
-   *           @OA\Property(property="entryHtml", type="string", description="Rendered HTML for the updated entry list item")
+   *           @OA\Property(property="entryHtml", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the updated entry list item")
    *         )
    *   ),
    *   @OA\Response(response="422", description="Validation error with the submitted link, title or preview image", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
@@ -276,7 +276,7 @@ class EventEntryAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", required={"html"}, additionalProperties=false,
-   *           @OA\Property(property="html", type="string", description="Rendered HTML of the entry's preview")
+   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the entry's preview")
    *         )
    *   ),
    *   @OA\Response(response="404", description="Entry not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),

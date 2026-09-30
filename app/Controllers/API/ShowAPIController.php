@@ -45,7 +45,7 @@ class ShowAPIController extends APIController {
    *           type="object",
    *           required={"render"},
    *           additionalProperties=false,
-   *           @OA\Property(property="render", type="string", description="Rendered HTML for the requested section")
+   *           @OA\Property(property="render", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the requested section")
    *         )
    *   ),
    *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
@@ -269,7 +269,7 @@ class ShowAPIController extends APIController {
    *           type="object",
    *           required={"upcoming"},
    *           additionalProperties=false,
-   *           @OA\Property(property="upcoming", type="string", description="Rendered HTML for the sidebar's upcoming episode info")
+   *           @OA\Property(property="upcoming", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the sidebar's upcoming episode info")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -430,7 +430,7 @@ class ShowAPIController extends APIController {
    *     @OA\JsonContent(
    *           type="object",
    *           additionalProperties=false,
-   *           @OA\Property(property="html", type="string", description="Rendered sidebar voting HTML (only present if `html` query param was set)"),
+   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered sidebar voting HTML (only present if `html` query param was set)"),
    *           @OA\Property(
    *             property="data",
    *             type="object",
@@ -581,7 +581,7 @@ class ShowAPIController extends APIController {
    *           type="object",
    *           required={"section"},
    *           additionalProperties=false,
-   *           @OA\Property(property="section", type="string", description="Rendered HTML for the show's linked appearances section")
+   *           @OA\Property(property="section", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the show's linked appearances section")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),

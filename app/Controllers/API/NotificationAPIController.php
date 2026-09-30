@@ -29,7 +29,7 @@ class NotificationAPIController extends APIController {
    *     @OA\JsonContent(
    *       required={"list"},
    *       additionalProperties=false,
-   *       @OA\Property(property="list", type="string", description="Rendered HTML for the notification list")
+   *       @OA\Property(property="list", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the notification list")
    *     )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),

@@ -33,7 +33,7 @@ use OpenApi\Annotations as OA;
  *   @OA\Property(property="added_by", ref="#/components/schemas/OneBasedId"),
  *   @OA\Property(property="created_at", type="string", format="date-time"),
  *   @OA\Property(property="desc_src", type="string", nullable=true, description="Source markdown of the event description"),
- *   @OA\Property(property="desc_rend", type="string", nullable=true, description="Rendered HTML of the event description"),
+ *   @OA\Property(property="desc_rend", type="string", nullable=true, description="Winterchilla UI detail, not part of the contract: rendered HTML of the event description"),
  *   @OA\Property(property="result_favme", type="string", nullable=true, description="fav.me ID of the winning entry's deviation, once finalized"),
  *   @OA\Property(property="finalized_by", type="integer", nullable=true, description="ID of the staff member who finalized the event"),
  *   @OA\Property(property="finalized_at", type="string", format="date-time", nullable=true),

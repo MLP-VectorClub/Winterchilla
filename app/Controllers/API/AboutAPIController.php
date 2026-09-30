@@ -110,7 +110,7 @@ class AboutAPIController extends APIController {
    *     @OA\JsonContent(
    *       type="object",
    *       required={"html"},
-   *       @OA\Property(property="html", type="string", description="Rendered upcoming items HTML")
+   *       @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered upcoming items HTML")
    *     )
    *   )
    * )

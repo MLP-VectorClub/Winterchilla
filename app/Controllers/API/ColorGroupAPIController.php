@@ -115,11 +115,11 @@ class ColorGroupAPIController extends APIController {
    *     description="Created",
    *     @OA\JsonContent(type="object",
    *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of the color group"),
-   *         @OA\Property(property="cgs", type="string", description="Rendered HTML of the appearance's color groups"),
-   *         @OA\Property(property="changes", type="string", description="Rendered HTML of the major changes section, present when major changes apply and called from the appearance page"),
-   *         @OA\Property(property="update", type="string", description="Rendered HTML update notice, present when major changes apply and not called from the appearance page"),
-   *         @OA\Property(property="cmList", type="string", description="Rendered HTML of the cutie marks list, present when called from the appearance page"),
-   *         @OA\Property(property="notes", type="string", description="Rendered HTML of the appearance's notes, present when not called from the appearance page")
+   *         @OA\Property(property="cgs", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's color groups"),
+   *         @OA\Property(property="changes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the major changes section, present when major changes apply and called from the appearance page"),
+   *         @OA\Property(property="update", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML update notice, present when major changes apply and not called from the appearance page"),
+   *         @OA\Property(property="cmList", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the cutie marks list, present when called from the appearance page"),
+   *         @OA\Property(property="notes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's notes, present when not called from the appearance page")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -151,11 +151,11 @@ class ColorGroupAPIController extends APIController {
    *     description="OK",
    *     @OA\JsonContent(type="object",
    *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of the color group"),
-   *         @OA\Property(property="cgs", type="string", description="Rendered HTML of the appearance's color groups"),
-   *         @OA\Property(property="changes", type="string", description="Rendered HTML of the major changes section, present when major changes apply and called from the appearance page"),
-   *         @OA\Property(property="update", type="string", description="Rendered HTML update notice, present when major changes apply and not called from the appearance page"),
-   *         @OA\Property(property="cmList", type="string", description="Rendered HTML of the cutie marks list, present when called from the appearance page"),
-   *         @OA\Property(property="notes", type="string", description="Rendered HTML of the appearance's notes, present when not called from the appearance page")
+   *         @OA\Property(property="cgs", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's color groups"),
+   *         @OA\Property(property="changes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the major changes section, present when major changes apply and called from the appearance page"),
+   *         @OA\Property(property="update", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML update notice, present when major changes apply and not called from the appearance page"),
+   *         @OA\Property(property="cmList", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the cutie marks list, present when called from the appearance page"),
+   *         @OA\Property(property="notes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's notes, present when not called from the appearance page")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),

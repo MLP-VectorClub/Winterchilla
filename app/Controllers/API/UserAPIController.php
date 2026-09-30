@@ -495,7 +495,7 @@ class UserAPIController extends APIController {
    *           type="object",
    *           required={"message","html"},
    *           @OA\Property(property="message", type="string"),
-   *           @OA\Property(property="html", type="string", description="Rendered contributions section HTML")
+   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered contributions section HTML")
    *         )
    *   ),
    *   @OA\Response(
@@ -567,7 +567,7 @@ class UserAPIController extends APIController {
    *     @OA\JsonContent(
    *           type="object",
    *           required={"html"},
-   *           @OA\Property(property="html", type="string", description="Rendered avatar wrapper HTML")
+   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered avatar wrapper HTML")
    *         )
    *   ),
    *   @OA\Response(
@@ -596,7 +596,7 @@ class UserAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(type="object", required={"html"}, @OA\Property(property="html", type="string", description="Rendered link with a preview image"))
+   *     @OA\JsonContent(type="object", required={"html"}, @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered link with a preview image"))
    *   ),
    *   @OA\Response(response="404", description="The deviation could not be found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )

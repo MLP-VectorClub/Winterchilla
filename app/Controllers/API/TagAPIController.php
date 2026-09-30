@@ -301,7 +301,7 @@ class TagAPIController extends APIController {
    *     @OA\JsonContent(allOf={
    *       @OA\Schema(ref="#/components/schemas/Tag"),
    *       @OA\Schema(type="object",
-   *         @OA\Property(property="tags", type="string", description="Rendered HTML of the appearance's tags, present when addto was specified and valid"),
+   *         @OA\Property(property="tags", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's tags, present when addto was specified and valid"),
    *         @OA\Property(property="warning", type="string", description="Present when the tag was created but could not be added to the requested appearance")
    *       )
    *     })

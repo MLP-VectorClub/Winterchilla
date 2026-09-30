@@ -118,7 +118,7 @@ class AppearanceAPIController extends APIController {
    *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="label", type="string"),
    *         @OA\Property(property="newUrl", type="string", format="uri", description="New URL if the label changed"),
-   *         @OA\Property(property="notes", type="string", description="Rendered HTML of the notes")
+   *         @OA\Property(property="notes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the notes")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -372,7 +372,7 @@ class AppearanceAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="cgs", type="string", description="Rendered HTML of the appearance's color groups")
+   *         @OA\Property(property="cgs", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's color groups")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -572,7 +572,7 @@ class AppearanceAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="cgs", type="string", description="Rendered HTML of the appearance's color groups")
+   *         @OA\Property(property="cgs", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's color groups")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -744,7 +744,7 @@ class AppearanceAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="section", type="string", description="Rendered HTML of the related appearances section, only present when called from the appearance page")
+   *         @OA\Property(property="section", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the related appearances section, only present when called from the appearance page")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -848,7 +848,7 @@ class AppearanceAPIController extends APIController {
    *           @OA\Property(property="username", type="string", description="Present if the cutie mark is attributed to a contributor"),
    *           @OA\Property(property="rendered", type="string", format="uri", description="URL of the rendered cutie mark image")
    *         )),
-   *         @OA\Property(property="preview", type="string", description="Rendered HTML preview of the cutie marks")
+   *         @OA\Property(property="preview", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML preview of the cutie marks")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -879,7 +879,7 @@ class AppearanceAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="html", type="string", description="Rendered HTML of the cutie marks list, only present when called from the appearance page and cutie marks remain")
+   *         @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the cutie marks list, only present when called from the appearance page and cutie marks remain")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -1249,7 +1249,7 @@ class AppearanceAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="section", type="string", description="Rendered HTML of the related shows section")
+   *         @OA\Property(property="section", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the related shows section")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),

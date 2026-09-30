@@ -128,7 +128,7 @@ class ColorGuideAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="html", type="string", description="Rendered HTML of the full list")
+   *         @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the full list")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -184,7 +184,7 @@ class ColorGuideAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", required={"html","stateUrl"},
-   *       @OA\Property(property="html", type="string", description="Rendered HTML of the full list"),
+   *       @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the full list"),
    *       @OA\Property(property="stateUrl", type="string", description="URL of the full list page in this order")
    *     )
    *   ),

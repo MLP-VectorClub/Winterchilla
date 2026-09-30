@@ -163,7 +163,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="broken", type="boolean", description="True if the post's image became unavailable and the user lacks staff permission to see the updated list item"),
-   *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item"),
+   *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item"),
    *           @OA\Property(property="section", type="string", description="CSS selector for the section the list item belongs in")
    *         )
    *   ),
@@ -273,9 +273,9 @@ class PostAPIController extends APIController {
    *     @OA\JsonContent(
    *           type="object",
    *           additionalProperties=false,
-   *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item (when `from` is not 'suggestion')"),
-   *           @OA\Property(property="button", type="string", description="Rendered HTML for the reserve button (when `from=suggestion`)"),
-   *           @OA\Property(property="pendingReservations", type="string", description="Rendered HTML for the user's pending reservations (when `from=suggestion`)")
+   *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item (when `from` is not 'suggestion')"),
+   *           @OA\Property(property="button", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the reserve button (when `from=suggestion`)"),
+   *           @OA\Property(property="pendingReservations", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the user's pending reservations (when `from=suggestion`)")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -287,7 +287,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"message"},
    *           @OA\Property(property="message", type="string"),
-   *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item (set if already reserved by the current user, or by someone else and not overdue)")
+   *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item (set if already reserved by the current user, or by someone else and not overdue)")
    *         )
    *   ),
    *   @OA\Response(response="422", description="The user to reserve as does not exist", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
@@ -305,8 +305,8 @@ class PostAPIController extends APIController {
    *     @OA\JsonContent(
    *           type="object",
    *           additionalProperties=false,
-   *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item, for requests"),
-   *           @OA\Property(property="pendingReservations", type="string", description="Rendered HTML for the user's pending reservations (when `from=profile`)")
+   *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item, for requests"),
+   *           @OA\Property(property="pendingReservations", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the user's pending reservations (when `from=profile`)")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -442,7 +442,7 @@ class PostAPIController extends APIController {
    *           required={"li"},
    *           additionalProperties=false,
    *           @OA\Property(property="message", type="string"),
-   *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item")
+   *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -906,7 +906,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"li"},
    *           additionalProperties=false,
-   *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item")
+   *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -1088,7 +1088,7 @@ class PostAPIController extends APIController {
    *     @OA\JsonContent(
    *           type="object",
    *           additionalProperties=false,
-   *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item (if the post was previously broken)"),
+   *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item (if the post was previously broken)"),
    *           @OA\Property(property="preview", type="string", format="uri", description="New preview image URL (if the post was not previously broken)")
    *         )
    *   ),
@@ -1164,7 +1164,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"html"},
    *           additionalProperties=false,
-   *           @OA\Property(property="html", type="string", description="Rendered HTML for the post's finished image")
+   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's finished image")
    *         )
    *   ),
    *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
@@ -1269,7 +1269,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"suggestion"},
    *           additionalProperties=false,
-   *           @OA\Property(property="suggestion", type="string", description="Rendered HTML for the suggested request's list item")
+   *           @OA\Property(property="suggestion", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the suggested request's list item")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),

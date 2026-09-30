@@ -313,10 +313,15 @@ What is left to prepare, in order:
    no `generation` on shows (dropped here), `previewData` is built from the appearance's first four colors, `deviceIdentifier` is not
    sent by `/about/connection`. Also fixed on the way: `CoreUtils::fixPath()` dropped array query parameters (`types[]=a`) in its
    canonical redirect.
-2. **Read endpoints for everything Celestia does not have yet** (the features still to be re-implemented): episodes/movies and their posts,
-   events, tags, contributions, profiles/personal guide, admin lists — as *data* (structured lists, flags, permissions), never rendered
-   HTML. The HTML-fragment fields that exist today (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are
-   Winterchilla-UI details and should not be part of what Luna implements; mark them as such in the docs or provide data equivalents.
+2. **Read endpoints for everything Celestia does not have yet** — mostly done, as data (no rendered HTML) with Luna-shaped pagination and
+   visitor permission flags: `GET /posts?showId&kind` (requests/reservations of a show; `/show/{id}/posts` stays the HTML twin),
+   `GET /show/{id}` now also carries `aired`, `willAir`, `canEdit` and `relatedAppearances`, `GET /tags` (public list; the staff
+   autocomplete moved to `/tags/autocomplete`), `GET /events` and `GET /events/{id}` (public, with entries; the old staff-only 501 is
+   gone), `GET /users/{id}/profile`, `GET /users/{id}/contributions/{type}`, `GET /users/{id}/personal-guide/point-history` and the
+   staff-only `GET /admin/logs`. Left: the admin notices list, the log *details* (still `[label, value]` pairs with HTML values) and the
+   personal guide's appearance list beyond what `profile` carries. The HTML-fragment fields that exist on write endpoints (`li`,
+   `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are Winterchilla-UI details and should not be part of what
+   Luna implements.
 3. ~~`GET /api/v0/config`~~ — done (`ConfigAPIController`, `ConfigApiTest`): `tagTypes`, `roles`, `showTypes`, `maxUploadSize`, `patterns`
    (`printableAscii`, `hexColor`, `username`, `episodeTitle` as `{source, flags}`), `wsServerHost`, `discordInviteLink`; cacheable for 5
    minutes. Winterchilla's own page scripts still read the `export_vars` globals (phase 4 "prove it" is deliberately not done: fetching

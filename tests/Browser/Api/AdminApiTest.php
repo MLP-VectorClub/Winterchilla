@@ -68,3 +68,33 @@ it('404s for missing log entries and links', function () {
 it('clears the PHP stat cache with 204', function () {
   expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/admin/stat-cache')['status'])->toBe(204);
 });
+
+it('lists log entries for staff only, with filters and Luna-shaped pagination', function () {
+  expect(ApiClient::guest()->get('/admin/logs')['status'])->toBe(401);
+  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get('/admin/logs')['status'])->toBe(403);
+
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $r = $admin->get('/admin/logs', ['size' => 5]);
+  expect($r['status'])->toBe(200)
+    ->and($r['json']['pagination'])->toHaveKeys(['currentPage', 'totalPages', 'totalItems', 'itemsPerPage'])
+    ->and($r['json']['pagination']['itemsPerPage'])->toBe(5)
+    ->and(count($r['json']['entries']))->toBeLessThanOrEqual(5)
+    ->and($r['json'])->not->toHaveKey('status');
+  foreach ($r['json']['entries'] as $entry)
+    expect($entry)->toHaveKeys(['id', 'type', 'typeLabel', 'initiator', 'ip', 'createdAt', 'hasDetails']);
+
+  $filtered = $admin->get('/admin/logs', ['type' => 'rolechange']);
+  expect($filtered['status'])->toBe(200);
+  foreach ($filtered['json']['entries'] as $entry)
+    expect($entry['type'])->toBe('rolechange');
+  expect($admin->get('/admin/logs', ['initiatorId' => 0])['status'])->toBe(200);
+});
+
+it('validates the log list query with 422', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+
+  expect($admin->get('/admin/logs', ['type' => 'nonsense'])['json']['errors'])->toHaveKey('type');
+  expect($admin->get('/admin/logs', ['initiatorId' => 'x'])['json']['errors'])->toHaveKey('initiatorId');
+  expect($admin->get('/admin/logs', ['size' => 500])['json']['errors'])->toHaveKey('size');
+  expect($admin->get('/admin/logs', ['page' => 0])['json']['errors'])->toHaveKey('page');
+});

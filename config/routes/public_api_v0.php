@@ -56,6 +56,7 @@ $api_endpoint('/config', [\App\Controllers\API\ConfigAPIController::class, 'get'
 $api_endpoint('/about/connection', [\App\Controllers\API\AboutAPIController::class, 'connection']);
 $api_endpoint('/about/members', [\App\Controllers\API\AboutAPIController::class, 'members']);
 $api_endpoint('/about/upcoming', [\App\Controllers\API\AboutAPIController::class, 'upcoming']);
+$api_endpoint('/admin/logs', [\App\Controllers\API\AdminAPIController::class, 'logList'], 'GET');
 $api_endpoint('/admin/logs/[i:id]', [\App\Controllers\API\AdminAPIController::class, 'logDetail']);
 $api_endpoint('/useful-links', [\App\Controllers\API\AdminAPIController::class, 'usefulLinksApi'], 'POST');
 $api_endpoint('/useful-links/[i:id]', [\App\Controllers\API\AdminAPIController::class, 'usefulLinksApi']);

@@ -25,6 +25,99 @@ class AdminAPIController extends APIController {
   }
 
   /**
+   * @OA\Schema(
+   *   schema="LogItem",
+   *   type="object",
+   *   required={"id", "type", "typeLabel", "initiator", "ip", "createdAt", "hasDetails"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="type", type="string", example="rolechange"),
+   *   @OA\Property(property="typeLabel", type="string", example="User group change"),
+   *   @OA\Property(property="initiator", nullable=true, ref="#/components/schemas/PostUser", description="Null when the web server itself made the change"),
+   *   @OA\Property(property="ip", type="string", nullable=true),
+   *   @OA\Property(property="createdAt", type="string", format="date-time"),
+   *   @OA\Property(property="hasDetails", type="boolean", description="Whether GET /admin/logs/{id} has anything to show")
+   * )
+   * @OA\Get(
+   *   path="/admin/logs",
+   *   description="List log entries, newest first. Staff only.",
+   *   tags={"admin"},
+   *   @OA\Parameter(in="query", name="type", @OA\Schema(type="string"), description="Only entries of this type"),
+   *   @OA\Parameter(in="query", name="initiatorId", @OA\Schema(type="integer", minimum=0), description="Only entries made by this user; 0 selects the ones made by the web server"),
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=100, default=20)),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"entries", "pagination"},
+   *       @OA\Property(property="entries", type="array", @OA\Items(ref="#/components/schemas/LogItem")),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
+   *     )
+   *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function logList() {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $conditions = [];
+    $args = [];
+    $type = $_GET['type'] ?? null;
+    if ($type !== null) {
+      if (!is_string($type) || !isset(Logs::LOG_DESCRIPTION[$type]))
+        Response::invalid('type', 'The log entry type is invalid.');
+      $conditions[] = 'entry_type = ?';
+      $args[] = $type;
+    }
+    $initiator = $_GET['initiatorId'] ?? null;
+    if ($initiator !== null) {
+      if (!is_string($initiator) || !ctype_digit($initiator))
+        Response::invalid('initiatorId', 'The initiator ID must be a non-negative integer.');
+      if ((int)$initiator === 0)
+        $conditions[] = 'initiator IS NULL';
+      else {
+        $conditions[] = 'initiator = ?';
+        $args[] = (int)$initiator;
+      }
+    }
+    $size = $_GET['size'] ?? 20;
+    if (!is_numeric($size) || $size < 1 || $size > 100)
+      Response::invalid('size', 'The size must be between 1 and 100.');
+    $size = (int)$size;
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+    $page = (int)$page;
+
+    $where = empty($conditions) ? [] : ['conditions' => array_merge([implode(' AND ', $conditions)], $args)];
+    $total = Log::count($where);
+    $entries = Log::find('all', $where + ['order' => 'created_at desc, id desc', 'limit' => $size, 'offset' => ($page - 1) * $size]);
+
+    Response::ok([
+      'entries' => array_map(fn(Log $l) => [
+        'id' => $l->id,
+        'type' => $l->entry_type,
+        'typeLabel' => Logs::LOG_DESCRIPTION[$l->entry_type] ?? $l->entry_type,
+        'initiator' => $l->actor === null ? null : ['id' => $l->actor->id, 'name' => $l->actor->name],
+        'ip' => $l->ip,
+        'createdAt' => gmdate('c', $l->created_at->getTimestamp()),
+        'hasDetails' => $l->data !== null,
+      ], $entries),
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
+    ]);
+  }
+
+  /**
    * @OA\Get(
    *   path="/admin/logs/{id}",
    *   description="Get the details of a log entry. Requires staff role",

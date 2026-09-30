@@ -2,17 +2,24 @@
 
 use Tests\Browser\Helpers\ApiClient;
 
-// Contract: /about/server and /about/upcoming (tag: server info). Public.
+// Contract: /about/connection, /about/members and /about/upcoming (tag: server info). Public.
 
-it('GET /about/server returns git info', function () {
-  $r = ApiClient::guest()->get('/about/server');
+it('GET /about/connection returns build and connection info', function () {
+  $r = ApiClient::guest()->get('/about/connection');
 
-  // Git info is derived from `.git-deploy-commit` or `git log`; the endpoint fails with 500 when neither exists
-  expect($r['status'])->toBeIn([200, 500])->and($r['json'])->not->toHaveKey('status');
-  if ($r['status'] === 200)
-    expect($r['json']['git'])->toHaveKeys(['commitId', 'commitTime']);
-  else
-    expect($r['json'])->toHaveKey('message');
+  expect($r['status'])->toBe(200)
+    ->and($r['json'])->toHaveKeys(['commitId', 'commitTime', 'ip', 'proxiedIps', 'userAgent'])
+    ->and($r['json']['ip'])->toBeString()
+    ->and($r['json'])->not->toHaveKey('status');
+});
+
+it('GET /about/members lists the members that are not regular users', function () {
+  $r = ApiClient::guest()->get('/about/members');
+
+  expect($r['status'])->toBe(200)->and($r['json'])->toBeArray();
+  $roles = array_unique(array_column($r['json'], 'role'));
+  expect($roles)->not->toContain('user')->and(array_column($r['json'], 'name'))->toContain('TestAdmin');
+  expect($r['json'][0])->toHaveKeys(['id', 'name', 'role', 'avatarUrl']);
 });
 
 it('GET /about/upcoming returns rendered HTML', function () {
@@ -27,6 +34,6 @@ it('GET /about/upcoming returns rendered HTML', function () {
 it('rejects non-GET methods with 405', function () {
   $client = ApiClient::guest();
 
-  expect($client->post('/about/server')['status'])->toBe(405)
+  expect($client->post('/about/connection')['status'])->toBe(405)
     ->and($client->post('/about/upcoming')['status'])->toBe(405);
 });

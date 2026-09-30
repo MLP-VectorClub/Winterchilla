@@ -115,7 +115,7 @@ from what Luna implements.
 | `POST /admin/usefullinks`, `GET,PUT,DELETE /admin/usefullinks/{id}` | `POST /useful-links`, `GET,PUT,DELETE /useful-links/{id}` |
 | `POST /admin/usefullinks/reorder` | `PUT /useful-links/order` |
 | `DELETE /admin/stat-cache` | unchanged |
-| `GET /about/server` | unchanged (Luna has `/about/connection`; see "open") |
+| `GET /about/server` | `GET /about/connection` (Luna's payload; the `git` wrapper is gone) |
 | `GET /about/upcoming` *ui* | — |
 
 ## Order of work
@@ -129,7 +129,6 @@ from what Luna implements.
 
 ## Open
 
-- `/about/server` vs Luna's `/about/connection` (same purpose, different payloads): align when Celestia's connection page is ported.
 - Whether `/show` should also answer as `/shows`.
 - `GET /posts/{id}/location` (was `POST .../locate`, read-only) needs a contract note: it changes the verb.
 

@@ -11,7 +11,7 @@ use OpenApi\Annotations as OA;
 class UsefulLinksAPIController extends APIController {
   /**
    * @OA\Schema(
-   *   schema="UsefulLink",
+   *   schema="SidebarUsefulLink",
    *   type="object",
    *   required={"id", "label", "url", "minRole"},
    *   additionalProperties=false,
@@ -26,7 +26,7 @@ class UsefulLinksAPIController extends APIController {
    *   description="Get the links shown in the sidebar for the current user, in display order. Signed-out visitors get an empty list.",
    *   tags={"useful links"},
    *   security={},
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/UsefulLink")))
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/SidebarUsefulLink")))
    * )
    */
   public function sidebar():void {

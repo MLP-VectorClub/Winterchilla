@@ -3,6 +3,7 @@
 namespace App\Controllers\API;
 
 use App\CoreUtils;
+use App\Models\User;
 use App\Response;
 
 /**
@@ -43,7 +44,8 @@ class AboutAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/about/server",
+   *   path="/about/connection",
+   *   description="Information about the server build and about the connection the request came from",
    *   security={},
    *   tags={"server info"},
    *   @OA\Response(
@@ -51,31 +53,49 @@ class AboutAPIController extends APIController {
    *     description="OK",
    *     @OA\JsonContent(
    *       type="object",
-   *       description="Git revision information under the git key",
-   *       required={"git"},
+   *       required={"commitId", "commitTime", "ip", "proxiedIps", "userAgent"},
    *       additionalProperties=false,
-   *       @OA\Property(
-   *         property="git",
-   *         type="object",
-   *         ref="#/components/schemas/GitInfo"
-   *       )
+   *       @OA\Property(property="commitId", type="string", nullable=true, description="Short hash of the deployed commit"),
+   *       @OA\Property(property="commitTime", type="string", format="date-time", nullable=true),
+   *       @OA\Property(property="ip", type="string", nullable=true),
+   *       @OA\Property(property="proxiedIps", type="string", nullable=true, description="The X-Forwarded-For header, if any"),
+   *       @OA\Property(property="userAgent", type="string", nullable=true)
    *     )
-   *   ),
-   *   @OA\Response(response="500", description="Git revision information is unavailable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   *   )
    * )
    */
-  function server() {
+  function connection() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
 
     $git = CoreUtils::getFooterGitInfoRaw();
-
-    if (empty($git))
-      Response::error(500, 'Git revision information is unavailable');
+    $git = empty($git) ? null : self::mapGit($git);
 
     Response::ok([
-      'git' => self::mapGit($git),
+      'commitId' => $git['commitId'] ?? null,
+      'commitTime' => $git['commitTime'] ?? null,
+      'ip' => $_SERVER['REMOTE_ADDR'] ?? null,
+      'proxiedIps' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
+      'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
     ]);
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/about/members",
+   *   description="The staff and other non-regular members of the club, ordered by name",
+   *   security={},
+   *   tags={"server info"},
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/User")))
+   * )
+   */
+  function members() {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $users = User::find('all', ['conditions' => ["role != 'user'"], 'order' => 'name asc']);
+
+    Response::ok(array_map(fn(User $u) => UsersAPIController::mapPublicUser($u), $users));
   }
 
   /**

@@ -306,12 +306,13 @@ type name meaningless — fixed: `CoreUtils::apiOperationId()` assigns Luna's co
 `API_JSON_PATH=<path to api.json>` (do it in a scratch copy, it overwrites `dist/`).
 
 What is left to prepare, in order:
-1. **Close the gap to Luna's public API.** Same method+path already in both: `GET /appearances`, `/appearances/all`,
-   `/appearances/{id}/color-groups`, `/appearances/{id}/sprite`, `/appearances/{id}/preview`, `/users/me`. Luna has these and Winterchilla
-   does not (they are what Celestia's existing fetchers call): `GET /appearances/{id}`, `/appearances/pinned`, `/appearances/autocomplete`,
-   `/appearances/{id}/locate`, `/color-guide`, `/color-guide/major-changes`, `/show`, `/useful-links/sidebar`, `/user-prefs/me`, `/users`,
-   `/users/{id}`, `/users/da/{username}`, `/about/connection`, `/about/members` (plus Luna's own sign-in/token endpoints, which stay Luna's).
-   Winterchilla's equivalents today are HTML pages or differently named internal endpoints (`/cg/appearance/{id}` is the *management* read).
+1. ~~Close the gap to Luna's public API~~ — done: `GET /appearances/{id}`, `/appearances/pinned`, `/appearances/autocomplete`,
+   `/appearances/{id}/locate`, `/appearances/{id}/preview` (was documented but unrouted), `/color-guide`, `/color-guide/major-changes`,
+   `/show` (paginated list), `/useful-links/sidebar`, `/user-prefs/me`, `/users`, `/users/{id}`, `/users/da/{username}`,
+   `/about/connection` (replaces `/about/server`) and `/about/members` now exist with Luna's shapes and contract tests. Differences:
+   no `generation` on shows (dropped here), `previewData` is built from the appearance's first four colors, `deviceIdentifier` is not
+   sent by `/about/connection`. Also fixed on the way: `CoreUtils::fixPath()` dropped array query parameters (`types[]=a`) in its
+   canonical redirect.
 2. **Read endpoints for everything Celestia does not have yet** (the features still to be re-implemented): episodes/movies and their posts,
    events, tags, contributions, profiles/personal guide, admin lists — as *data* (structured lists, flags, permissions), never rendered
    HTML. The HTML-fragment fields that exist today (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are

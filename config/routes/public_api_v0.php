@@ -50,7 +50,8 @@ $api_endpoint('/users/me', [\App\Controllers\API\UsersAPIController::class, 'me'
 $api_endpoint('/users', [\App\Controllers\API\UsersAPIController::class, 'list'], 'GET');
 $api_endpoint('/users/da/[un:username]', [\App\Controllers\API\UsersAPIController::class, 'getByName']);
 $api_endpoint('/users/[i:id]', [\App\Controllers\API\UsersAPIController::class, 'getById'], 'GET');
-$api_endpoint('/about/server', [\App\Controllers\API\AboutAPIController::class, 'server']);
+$api_endpoint('/about/connection', [\App\Controllers\API\AboutAPIController::class, 'connection']);
+$api_endpoint('/about/members', [\App\Controllers\API\AboutAPIController::class, 'members']);
 $api_endpoint('/about/upcoming', [\App\Controllers\API\AboutAPIController::class, 'upcoming']);
 $api_endpoint('/admin/logs/[i:id]', [\App\Controllers\API\AdminAPIController::class, 'logDetail']);
 $api_endpoint('/useful-links', [\App\Controllers\API\AdminAPIController::class, 'usefulLinksApi'], 'POST');

@@ -317,11 +317,10 @@ What is left to prepare, in order:
 3. **`GET /api/v0/config`**: constants, validation patterns (`{source, flags}`), `wsServerHost`, `discordInviteLink`.
 4. **Permissions in the payload** (`canEdit`, `canDelete`, …) so Celestia doesn't re-derive authorization from roles, and **Luna-shaped
    pagination** (`{currentPage, totalPages, totalItems, itemsPerPage}`) on every list.
-5. **Path and naming alignment for the write API.** Luna is resource-oriented (`/appearances/{id}`, `/users/{id}`, `/color-guide`); the
-   Winterchilla write API grew organically (`/cg/appearance/{id}`, `/user/{id}/role`, `/post`, `/cg/colorgroup`, `/show`, `/event`) and its
-   requests are still snake_case (`image_url`, `show_id`, `allow_nonmember`, `Colors`, `CMData`, `APPEARANCE_PAGE`). Decide the target
-   naming *before* handing the contract over (renaming later breaks the generated types), keep the old paths as aliases while both
-   front ends run, and move the Winterchilla client over last.
+5. **Path and naming alignment for the write API — decided: yes.** Luna is resource-oriented (`/appearances/{id}`, `/users/{id}`, `/color-guide`);
+   the write API moves to Luna's style with the old paths kept as aliases, and Winterchilla's own client moves last. The full
+   old → canonical mapping, the router change it needs (per-method routes + aliases) and the order of work are in
+   `docs/api-path-alignment.md`. Request bodies are renamed to camelCase afterwards (both spellings accepted meanwhile).
 6. **Finish the OpenAPI docs**: loose bodies (HTML-fragment fields, some request bodies), one validation error per response (`Input`
    still stops at the first), and a CI step that generates Celestia's types from the spec so it can't silently regress.
 Every new endpoint ships with its contract test (`tests/Browser/Api/`) and docblock in the same commit, like the existing ones.

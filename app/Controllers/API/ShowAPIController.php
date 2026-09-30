@@ -76,6 +76,95 @@ class ShowAPIController extends APIController {
   }
 
   /**
+   * @OA\Schema(
+   *   schema="ShowListItem",
+   *   type="object",
+   *   required={"id", "type", "title", "season", "episode", "parts", "no", "airs"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="type", type="string", enum={"episode", "movie", "special"}),
+   *   @OA\Property(property="title", type="string"),
+   *   @OA\Property(property="season", type="integer", nullable=true),
+   *   @OA\Property(property="episode", type="integer", nullable=true),
+   *   @OA\Property(property="parts", type="integer", nullable=true),
+   *   @OA\Property(property="no", type="integer", nullable=true, description="Overall number of the show"),
+   *   @OA\Property(property="airs", type="string", format="date-time", nullable=true)
+   * )
+   * @OA\Get(
+   *   path="/show",
+   *   security={},
+   *   description="Get a page of shows (episodes, movies and specials)",
+   *   tags={"shows"},
+   *   @OA\Parameter(in="query", name="types[]", required=true, @OA\Schema(type="array", minItems=1, @OA\Items(type="string", enum={"episode", "movie", "special"}))),
+   *   @OA\Parameter(in="query", name="order", required=true, @OA\Schema(type="string", enum={"series", "overall"})),
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=10, default=8)),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"show", "pagination"},
+   *       @OA\Property(property="show", type="array", @OA\Items(ref="#/components/schemas/ShowListItem")),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
+   *     )
+   *   ),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function list():void {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $types = $_GET['types'] ?? null;
+    if (!is_array($types) || count($types) === 0)
+      Response::invalid('types', 'At least one show type is required.');
+    foreach ($types as $type) {
+      if (!is_string($type) || !isset(ShowHelper::VALID_TYPES[$type]))
+        Response::invalid('types', 'One of the selected show types is invalid.');
+    }
+    $order = $_GET['order'] ?? null;
+    if (!in_array($order, ['series', 'overall'], true))
+      Response::invalid('order', 'The order must be either series or overall.');
+    $size = $_GET['size'] ?? 8;
+    if (!is_numeric($size) || $size < 1 || $size > 10)
+      Response::invalid('size', 'The size must be between 1 and 10.');
+    $size = (int)$size;
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+    $page = (int)$page;
+
+    $conditions = ['type IN (?)', array_values($types)];
+    $total = Show::count(['conditions' => $conditions]);
+    $shows = Show::find('all', [
+      'conditions' => $conditions,
+      'order' => $order === 'series' ? 'season desc, episode desc' : 'no desc',
+      'limit' => $size,
+      'offset' => ($page - 1) * $size,
+    ]);
+
+    Response::ok([
+      'show' => array_map(fn(Show $show) => [
+        'id' => $show->id,
+        'type' => $show->type,
+        'title' => $show->title,
+        'season' => $show->season,
+        'episode' => $show->episode,
+        'parts' => $show->parts,
+        'no' => $show->no,
+        'airs' => $show->airs !== null ? gmdate('c', $show->airs->getTimestamp()) : null,
+      ], $shows),
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
+    ]);
+  }
+
+  /**
    * @OA\Get(
    *   path="/show/{id}",
    *   description="Get information about a single show entry",

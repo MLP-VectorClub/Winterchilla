@@ -226,6 +226,11 @@ class CoreUtilsTest extends TestCase {
     self::assertEquals('?c=e', $result);
     $result = CoreUtils::mergeQuery('?test&a=b', '?a=c', ['test']);
     self::assertEquals('?a=c', $result);
+    // Array parameters survive untouched (they used to be dropped by the canonical redirect)
+    $result = CoreUtils::mergeQuery('?types[]=a&types[]=b&order=x', '?types[]=a&types[]=b&order=x');
+    self::assertEquals('?types[]=a&types[]=b&order=x', $result);
+    $result = CoreUtils::mergeQuery('?types%5B0%5D=a&types%5B1%5D=b', '?types%5B0%5D=a&types%5B1%5D=b');
+    self::assertEquals('?types%5B0%5D=a&types%5B1%5D=b', $result);
   }
 
   public function testAppendFragment():void {

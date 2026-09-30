@@ -69,7 +69,9 @@ $api_endpoint('/color-groups', [\App\Controllers\API\ColorGroupAPIController::cl
 $api_endpoint('/color-groups/[i:id]', [\App\Controllers\API\ColorGroupAPIController::class, 'api']);
 $api_endpoint('/users/session/status', [\App\Controllers\API\AuthAPIController::class, 'sessionStatus']);
 $api_endpoint('/users/signout', [\App\Controllers\API\AuthAPIController::class, 'signOut']);
-$api_endpoint('/show/[i:id]?', [\App\Controllers\API\ShowAPIController::class, 'api']);
+$api_endpoint('/show', [\App\Controllers\API\ShowAPIController::class, 'list'], 'GET');
+$api_endpoint('/show', [\App\Controllers\API\ShowAPIController::class, 'api'], 'POST');
+$api_endpoint('/show/[i:id]', [\App\Controllers\API\ShowAPIController::class, 'api']);
 $api_endpoint('/show/[i:id]/posts', [\App\Controllers\API\ShowAPIController::class, 'postList']);
 $api_endpoint('/show/[i:id]/vote', [\App\Controllers\API\ShowAPIController::class, 'voteApi']);
 $api_endpoint('/show/[i:id]/appearances', [\App\Controllers\API\ShowAPIController::class, 'guideRelationsApi']);

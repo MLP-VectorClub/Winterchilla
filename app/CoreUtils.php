@@ -97,6 +97,15 @@ class CoreUtils {
       $merged[$key] = $item;
     $fix_query_arr = [];
     foreach ($merged as $key => $item){
+      if (is_array($item) && !isset($to_remove[$key])) {
+        // Array parameters (`types[]=a&types[]=b`) are kept exactly as they were sent
+        foreach (explode('&', ltrim($query, '?')) as $pair) {
+          $pair_key = urldecode(explode('=', $pair, 2)[0]);
+          if ($pair_key === $key || str_starts_with($pair_key, $key.'['))
+            $fix_query_arr[] = $pair;
+        }
+        continue;
+      }
       if ($item === null || isset($to_remove[$key]) || !is_string($item) || isset(self::FIXPATH_EMPTY[$item]))
         continue;
 

@@ -239,6 +239,12 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
 
 ## API-driven pages migration (audit + plan, nothing implemented yet)
 
+**Purpose:** preparation for the Celestia/Luna reimplementation of these features. The API is the deliverable:
+it is the contract those projects will build against (alongside the browser suite as the behavioral spec).
+Migrating Winterchilla's own front end onto it is secondary — a way to prove the API is complete — so
+prefer the smallest change that makes each page's data available over JSON, and don't invest in
+client-side rendering of Winterchilla itself beyond what's needed to validate an endpoint.
+
 **Goal (decided):** move data passing from views to an API — ultimately full API-driven pages (server
 stops embedding data and rendering list/table HTML; the front end fetches JSON and renders), which is
 the shape Celestia/Luna will need. The browser suite above is the regression net: it must stay green
@@ -290,32 +296,34 @@ Globals inventory (key → where exported → readers):
   HTML templates shrink to a shell. Decide whether to keep server-rendered first paint for SEO-relevant
   pages (guide/appearance/episode pages are public and indexed) — see open questions.
 
-### Phases
+### Phases (revised for the migration-prep purpose)
 
-0. **Contract tests** — add API-level tests (plain HTTP, no browser) for every endpoint a phase touches,
-   pinning current JSON shape, so both front ends can be verified against the same contract. Also lets
-   Celestia/Luna reuse them.
-1. **Config endpoint** — implement `/api/v0/config`; migrate static-constant globals one page script at a
-   time; delete the corresponding `export_vars` calls; finally drop the layout export except identity.
-2. **Page context** — replace user/show/guide context globals with resource fetches.
-3. **Regexes** — move `usernameRegex`/`episodeTitleRegex` into the config endpoint; retire the
-   regex-string revival in `datastore.js`.
-4. **Lists to data + client rendering**, page by page, starting with the ones that already have a
-   matching API (`/show/[id]/posts`, tag/appearance autocomplete), ending with the guide/appearance
-   pages (largest, most custom markup).
-5. **Remove `datastore.js`/`export_vars`** once nothing uses them.
+0. **Contract tests** — HTTP-level tests (no browser) pinning the JSON shape of every endpoint a phase
+   touches. These double as the spec Celestia/Luna can run against their own implementation.
+1. **Read API completeness** — for every page in the coverage plan, an endpoint that returns exactly the
+   data that page renders (episode list, show + posts, guide page, appearance, tag list, users list,
+   contributions, events, profile, personal guide, admin lists), as data not HTML. Backed by shared
+   serializers so the Twig page and the endpoint use the same source.
+2. **Config endpoint** `GET /api/v0/config` for constants, validation patterns (`{source, flags}`) and
+   client config (replaces the static-constant and regex globals).
+3. **Document** the contract: complete the swagger-php annotations so `/docs` describes every endpoint,
+   error shape and auth rule; treat that OpenAPI output as the artifact handed to Celestia/Luna.
+4. **Prove it** — move Winterchilla's page scripts off `window` globals onto these endpoints where cheap
+   (context globals, constants, regexes), then retire `datastore.js`/`export_vars`. Full client-side list
+   rendering only where an endpoint needs validating end to end.
 
-Each phase: update or add browser tests first where a page's DOM contract changes, keep the suite green,
-update this section's checkboxes.
+Each phase: add/adjust tests first, keep `vendor/bin/pest tests/Browser` green, update checkboxes here.
 
-### Open questions (need a decision before Phase 4)
+### Open questions
 
-- SEO/first paint: keep server-rendered HTML for public indexed pages (guide, appearance, episode,
-  profile) with data-only hydration, or go fully client-rendered? Fully client-rendered needs
-  prerendering or accepting weaker indexing.
-- Versioning: keep changing `/api/v0` in place (it's documented as unstable) or introduce `/api/v1`
-  for the new read endpoints?
-- Auth for the new read endpoints: session cookie only (as today) vs also token auth for Celestia/Luna.
+- Versioning: keep evolving `/api/v0` (documented as unstable) or cut `/api/v1` for the Celestia/Luna
+  contract? Leaning `/api/v1` for read endpoints so the contract can freeze while `v0` keeps changing.
+- Auth for Celestia/Luna: session cookie only (today) vs token auth. They are separate apps, so cookies
+  from another origin won't work — needs a decision before Phase 1 endpoints are declared stable.
+- Which projects call this API server-to-server vs from browsers (CORS)?
+- Write endpoints: the plan above covers reads; existing mutation endpoints need the same contract-test
+  and docs treatment — in scope for this round?
+  (SEO/first-paint questions are Celestia/Luna's to answer, not Winterchilla's.)
 
 ## Working on this plan
 

@@ -165,15 +165,17 @@ the minified output (width/height dropped, viewBox kept) so this can't silently 
 `TestSeeder` now also seeds a movie (`TestSeederConstants::MOVIE_ID`). Extended
 `tests/Browser/User/EpisodeTest.php` (kept the name; it covers the whole show side now).
 
-### Stage 5 — Misc smoke coverage (not started)
+### Stage 5 — Misc smoke coverage (done)
 
-Lower-traffic or non-page routes — smoke-test (loads, no fatal error, no JS error) rather than deep behavior:
-- [ ] `/eqg/[id]` and `/eqg/[adi]` (EQGController) — redirect-only routes
-- [ ] `/s/[thing]/[id]` (PostController) — share-link redirect
-- [ ] `/about/browser/[session]?` (AboutController) — browser diagnostics page
-- [ ] `/components` (ComponentsController) — confirm still user-facing before writing a test; may be dev-only
-- [ ] `/docs` (DocsController)
-- [ ] `/muffin-rating` (MuffinRatingController) — image endpoint, verify it returns a valid image response
+`tests/Browser/Guest/MiscRoutesTest.php`:
+- [x] `/eqg/[id]` and `/eqg/[adi]` (EQGController) — redirect-only routes
+- [x] `/s/[thing]/[id]` (PostController) — share-link redirect; base36 ID resolves to the seeded post
+      (`TestSeederConstants::POST_ID`), unknown/malformed IDs and types 404. The legacy
+      `/s/req|res/[id]` success path isn't covered (no `legacy_post_mappings` seed row)
+- [x] `/about/browser/[session]?` (AboutController) — page loads; session variant 403s for non-developers
+- [x] `/components` (ComponentsController) — loads (noindex page, still reachable)
+- [x] `/docs` (DocsController) — loads
+- [x] `/muffin-rating` (MuffinRatingController) — returns `image/svg+xml` with the requested width
 
 ### Stage 6 — OAuth edges (done)
 

@@ -14,4 +14,5 @@ class TestSeederConstants {
   public const SHOW_ID = 1;
   public const MOVIE_ID = 2;
   public const EVENT_ID = 1;
+  public const POST_ID = 1;
 }

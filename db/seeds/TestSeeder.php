@@ -67,6 +67,18 @@ class TestSeeder extends AbstractSeed {
       'notes'     => null,
     ]])->save();
 
+    // A request on the episode; must match TestSeederConstants::POST_ID
+    $this->table('posts')->insert([[
+      'id'           => 1,
+      'type'         => 'chr',
+      'preview'      => 'https://example.com/preview.png',
+      'fullsize'     => 'https://example.com/full.png',
+      'label'        => 'Seeded Test Request',
+      'requested_at' => date('c'),
+      'show_id'      => 1,
+      'requested_by' => 9001,
+    ]])->save();
+
     // An appearance in the pony color guide
     $this->table('appearances')->insert([[
       'id'          => 1,

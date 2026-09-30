@@ -15,6 +15,7 @@ use App\Testing\FakeOAuth;
 use App\Time;
 use GuzzleHttp\Exception\RequestException;
 use Wohali\OAuth2\Client\Provider\Discord;
+use OpenApi\Annotations as OA;
 use Wohali\OAuth2\Client\Provider\Exception\DiscordIdentityProviderException;
 
 class DiscordAuthController extends Controller {
@@ -25,6 +26,7 @@ class DiscordAuthController extends Controller {
     if (isset($_POST['key'])){
       if (!hash_equals(CoreUtils::env('WS_SERVER_KEY'), $_POST['key']))
         CoreUtils::noPerm();
+      $this->trusted = true;
     }
     else {
       parent::__construct();
@@ -119,20 +121,36 @@ class DiscordAuthController extends Controller {
 
   private ?User $target;
   private bool $same_user;
+  /** The websocket server authenticates with a key instead of a session and may act on any user */
+  private bool $trusted = false;
 
   private function setTarget($params):void {
     $this->target = User::find($params['user_id']);
     if (false === $this->target instanceof User)
       CoreUtils::notFound();
-    if ($this->target->id !== Auth::$user->id && Permission::insufficient('staff'))
+    if (!$this->trusted && $this->target->id !== Auth::$user->id && Permission::insufficient('staff'))
       Response::denied();
 
     if (!$this->target->boundToDiscordMember())
       Response::error(409, 'You must be bound to a Discord user to perform this action');
 
-    $this->same_user = $this->target->id === Auth::$user->id;
+    $this->same_user = !$this->trusted && $this->target->id === Auth::$user->id;
   }
 
+  /**
+   * @OA\Post(
+   *   path="/users/{user_id}/discord/sync",
+   *   description="Refresh the stored Discord account information (name, avatar, server membership) of a user. The user themselves or staff. At most once every 5 minutes.",
+   *   tags={"discord"},
+   *   @OA\Parameter(in="path", name="user_id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Response(response="204", description="Synced"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Not the user or staff", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="No Discord account is bound to the user, or it is not linked", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="429", description="Synced less than 5 minutes ago", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
   public function sync($params) {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
@@ -150,6 +168,20 @@ class DiscordAuthController extends Controller {
     Response::noContent();
   }
 
+  /**
+   * @OA\Delete(
+   *   path="/users/{user_id}/discord",
+   *   description="Revoke the site's access to a user's Discord account and forget the account. The user themselves or staff.",
+   *   tags={"discord"},
+   *   @OA\Parameter(in="path", name="user_id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Response(response="200", description="Unlinked", @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Not the user or staff", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="No Discord account is bound to the user", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="502", description="Discord refused to revoke the access", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
   public function unlink($params) {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();

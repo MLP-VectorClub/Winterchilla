@@ -15,6 +15,17 @@ class TestSeeder extends AbstractSeed {
       // Has done nothing yet: no personal appearances, points or preferences, so it has the defaults every new user gets
       // (the free slot, i.e. 10 points, and permission to create personal appearances)
       ['id' => 9003, 'name' => 'FreshUser', 'role' => 'user', 'created_at' => date('c'), 'updated_at' => date('c')],
+      // Discord members for the sync/unlink API tests: 9004 was synced just now (cooldown), 9005 is linked and gets unlinked,
+      // 9006 is known to the site but has not linked the account (no access token)
+      ['id' => 9004, 'name' => 'DiscordSynced', 'role' => 'user', 'created_at' => date('c'), 'updated_at' => date('c')],
+      ['id' => 9005, 'name' => 'DiscordLinked', 'role' => 'user', 'created_at' => date('c'), 'updated_at' => date('c')],
+      ['id' => 9006, 'name' => 'DiscordUnlinked', 'role' => 'user', 'created_at' => date('c'), 'updated_at' => date('c')],
+    ])->save();
+
+    $this->table('discord_members')->insert([
+      ['id' => 900000000000009004, 'user_id' => 9004, 'username' => 'discordsynced', 'discriminator' => 0, 'access' => 'fake-discord-access-a', 'refresh' => 'fake-discord-refresh-a', 'scope' => 'identify', 'expires' => date('c', strtotime('+10 years')), 'last_synced' => date('c')],
+      ['id' => 900000000000009005, 'user_id' => 9005, 'username' => 'discordlinked', 'discriminator' => 0, 'access' => 'fake-discord-access-b', 'refresh' => 'fake-discord-refresh-b', 'scope' => 'identify', 'expires' => date('c', strtotime('+10 years')), 'last_synced' => null],
+      ['id' => 900000000000009006, 'user_id' => 9006, 'username' => 'discordunlinked', 'discriminator' => 0, 'access' => null, 'refresh' => null, 'scope' => null, 'expires' => null, 'last_synced' => null],
     ])->save();
 
     // DeviantArt linked accounts (access_expires far in the future to avoid token refresh)

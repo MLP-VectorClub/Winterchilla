@@ -8,6 +8,10 @@ class TestSeederConstants {
   public const ADMIN_ID = 9002;
   // A regular user with no personal appearances, points or preferences: it has the defaults new users get
   public const FRESH_USER_ID = 9003;
+  // Discord members: synced just now (sync cooldown), linked (unlinked by a test), and without a linked account
+  public const DISCORD_SYNCED_USER_ID = 9004;
+  public const DISCORD_LINKED_USER_ID = 9005;
+  public const DISCORD_UNLINKED_USER_ID = 9006;
   public const USER_DA_ID = '0f0e0d0c-0b0a-4000-8000-000000009001';
   public const ADMIN_DA_ID = '0f0e0d0c-0b0a-4000-8000-000000009002';
   public const APPEARANCE_ID = 1;

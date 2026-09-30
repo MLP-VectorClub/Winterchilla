@@ -194,6 +194,11 @@ class TestOAuthController extends Controller {
     ]);
   }
 
+  /** POST /test-oauth/discord/api/oauth2/token/revoke (always succeeds, like Discord does for any token) */
+  public function discordRevoke():void {
+    self::json(200, []);
+  }
+
   /** GET /test-oauth/discord/api/users/@me */
   public function discordMe():void {
     $identity = self::bearerIdentity('discord');

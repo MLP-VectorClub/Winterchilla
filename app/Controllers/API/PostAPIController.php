@@ -50,6 +50,104 @@ class PostAPIController extends APIController {
   }
 
   /**
+   * @OA\Schema(
+   *   schema="PostUser",
+   *   type="object",
+   *   required={"id", "name"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="name", type="string")
+   * )
+   * @OA\Schema(
+   *   schema="PostItem",
+   *   type="object",
+   *   description="A request or reservation on a show's page, as data",
+   *   required={"id", "kind", "showId", "label", "previewUrl", "fullsizeUrl", "postedAt", "postedBy", "reservedBy", "reservedAt", "finishedAt", "deviationId", "approved", "broken", "overdue", "canEdit"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="kind", type="string", enum={"request", "reservation"}),
+   *   @OA\Property(property="type", type="string", enum={"chr", "obj", "bg"}, description="What the request asks for; requests only"),
+   *   @OA\Property(property="showId", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="label", type="string"),
+   *   @OA\Property(property="previewUrl", type="string"),
+   *   @OA\Property(property="fullsizeUrl", type="string"),
+   *   @OA\Property(property="postedAt", type="string", format="date-time"),
+   *   @OA\Property(property="postedBy", nullable=true, ref="#/components/schemas/PostUser"),
+   *   @OA\Property(property="reservedBy", nullable=true, ref="#/components/schemas/PostUser"),
+   *   @OA\Property(property="reservedAt", type="string", format="date-time", nullable=true),
+   *   @OA\Property(property="finishedAt", type="string", format="date-time", nullable=true, description="Set once the post has a deviation"),
+   *   @OA\Property(property="deviationId", type="string", nullable=true, description="ID of the finished deviation (https://fav.me/{id})"),
+   *   @OA\Property(property="approved", type="boolean", description="Whether the finished post has been accepted to the club gallery"),
+   *   @OA\Property(property="broken", type="boolean", description="Whether the image was deemed unavailable; only staff see broken posts"),
+   *   @OA\Property(property="overdue", type="boolean", description="Reserved and unfinished for over 3 weeks, so others may reserve it"),
+   *   @OA\Property(property="canEdit", type="boolean", description="Whether the current user may edit the post")
+   * )
+   * @OA\Get(
+   *   path="/posts",
+   *   description="List the requests or reservations of a show as data (the HTML twin is /show/{id}/posts)",
+   *   tags={"posts"},
+   *   security={},
+   *   @OA\Parameter(in="query", name="showId", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="query", name="kind", required=true, @OA\Schema(type="string", enum={"request", "reservation"})),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="object", required={"posts"}, @OA\Property(property="posts", type="array", @OA\Items(ref="#/components/schemas/PostItem")))),
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function list() {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $show_id = $_GET['showId'] ?? null;
+    if (!is_string($show_id) || !ctype_digit($show_id) || (int)$show_id < 1)
+      Response::invalid('showId', 'The show ID must be a positive integer.');
+    $kind = $_GET['kind'] ?? null;
+    if (!in_array($kind, Post::KINDS, true))
+      Response::invalid('kind', 'The kind must be either request or reservation.');
+
+    $show = Show::find((int)$show_id);
+    if ($show === null)
+      Response::error(404, 'The show could not be found');
+
+    $posts = Posts::get($show->id, $kind === 'request' ? ONLY_REQUESTS : ONLY_RESERVATIONS, Permission::sufficient('staff'));
+
+    Response::ok(['posts' => array_map(fn(Post $p) => self::mapPost($p), $posts)]);
+  }
+
+  static function mapPost(Post $p):array {
+    $user = fn(?User $u) => $u === null ? null : ['id' => $u->id, 'name' => $u->name];
+    $can_edit = Auth::$signed_in && (
+      Permission::sufficient('staff')
+      || ($p->is_request && $p->reserved_by === null && $p->requested_by === Auth::$user->id)
+      || ($p->is_reservation && $p->reserved_by === Auth::$user->id)
+    );
+    $iso = fn($t) => $t === null ? null : gmdate('c', $t->getTimestamp());
+
+    $result = [
+      'id' => $p->id,
+      'kind' => $p->kind,
+      'showId' => $p->show_id,
+      'label' => $p->label,
+      'previewUrl' => $p->preview,
+      'fullsizeUrl' => $p->fullsize,
+      'postedAt' => $iso($p->posted_at),
+      'postedBy' => $user($p->poster),
+      'reservedBy' => $user($p->reserver),
+      'reservedAt' => $iso($p->reserved_at),
+      'finishedAt' => $iso($p->finished_at),
+      'deviationId' => $p->deviation_id,
+      'approved' => (bool)$p->lock,
+      'broken' => (bool)$p->broken,
+      'overdue' => $p->isOverdue(),
+      'canEdit' => $can_edit,
+    ];
+    if ($p->is_request)
+      $result['type'] = $p->type;
+
+    return $result;
+  }
+
+  /**
    * @OA\Get(
    *   path="/posts/{id}/reload",
    *   description="Reload a post's list item, checking whether its image is still available and merging the broken image with a Derpibooru match if possible. Marks the post as broken if its image cannot be found.",

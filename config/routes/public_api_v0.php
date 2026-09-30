@@ -91,6 +91,7 @@ $api_endpoint('/event-entries/[i:entryid]', [\App\Controllers\API\EventEntryAPIC
 $api_endpoint('/event-entries/[i:entryid]/lazyload', [\App\Controllers\API\EventEntryAPIController::class, 'lazyload']);
 $api_endpoint('/notifications', [\App\Controllers\API\NotificationAPIController::class, 'get']);
 $api_endpoint('/notifications/[i:id]/read', [\App\Controllers\API\NotificationAPIController::class, 'markRead']);
+$api_endpoint('/posts', [\App\Controllers\API\PostAPIController::class, 'list'], 'GET');
 $api_endpoint('/posts', [\App\Controllers\API\PostAPIController::class, 'api'], 'POST');
 $api_endpoint('/posts/[i:id]', [\App\Controllers\API\PostAPIController::class, 'api']);
 $api_endpoint('/posts/[i:id]/lazyload', [\App\Controllers\API\PostAPIController::class, 'lazyload']);

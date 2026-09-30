@@ -1014,7 +1014,7 @@ class CGUtils {
         'comma' => 'Tag name (@value) cannot contain commas',
       ],
     ]))->out());
-    CoreUtils::checkStringValidity($name, 'Tag name', INVERSE_TAG_NAME_PATTERN);
+    CoreUtils::checkStringValidity($name, 'Tag name', INVERSE_TAG_NAME_PATTERN, field: $key);
 
     return $name;
   }

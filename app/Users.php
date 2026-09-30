@@ -151,7 +151,7 @@ class Users {
     if ($return_as_bool)
       return $overTheLimit;
     if ($overTheLimit)
-      Response::error(409, "You've already reserved {$resserved_count} images, and you can't have more than 4 pending reservations at a time. You can review your reservations on your <a href='/user'>Account page</a>, finish at least one of them before trying to reserve another image.");
+      Response::error(409, "You've already reserved {$resserved_count} images, and you can't have more than 4 pending reservations at a time. You can review your reservations on your Account page (/user), finish at least one of them before trying to reserve another image.");
   }
 
   /**

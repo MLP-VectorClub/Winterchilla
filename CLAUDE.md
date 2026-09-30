@@ -481,9 +481,16 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
 - **CSRF failures are now `419`** (was `401`, which now means "not signed in"). `shared-utils.js` maps 419 to the CSRF
   dialog, and requests made through `$.API` with a callback are marked `apiHandled` so the global status dialogs
   (`$.ajaxSetup`) don't pile on top of the callback's own error handling.
-- [ ] Left: the HTML-in-message sweep (step 4 — messages that still contain markup: duplicate-image/deviation links from
-      `Posts`, `retry` prompts, the notices), then remove the `$.API` shim and the `this.status` checks. Also the
-      page-level JSON views that raw-`$.get` clients read (`/cg/.../full?ajax`, `contribLazyload`) still use their own shapes.
+- [x] HTML-in-message sweep: API messages are plain text now (no `<a>`, `<b>`, `<p>`, smileys or pre-escaped values). Where a
+      message used to carry a link, the details are structured instead: `existingPost {id, kind, url}` (duplicate image or
+      deviation), `reservedBy {id, name}`, `approved`/`notified` on finish. `Input` and `checkStringValidity` no longer
+      HTML-escape the value they quote. The `$.API` shim escapes `message` when handing it to callers (they put it in dialogs
+      as HTML) and keeps the plain text in `rawMessage`; the global status-code dialogs escape too. For 422 responses the shim
+      builds `message` from **all** `errors` (one per line) instead of the generic "The given data was invalid." — without
+      that the dialogs lost the specific reason (found by `tests/Browser/Admin/ErrorMessageTest.php`; it affected every
+      endpoint migrated since `Input` started answering 422).
+- [ ] Left: remove the `$.API` shim and the `this.status` checks (~100 call sites), then retire the shim's `rawMessage`/escaping.
+      The page-level JSON views that raw-`$.get` clients read (`/cg/.../full?ajax`, `contribLazyload`) still use their own shapes.
 
 ## Database cutover to Luna (audit, nothing implemented yet)
 

@@ -50,7 +50,7 @@
       waitingList[this.appearanceId] = [this];
 
       $.API.get(`/../v0/appearances/${this.appearanceId}/color-groups`, data => {
-        if (!data.status) return this.displayError(data.message);
+        if (!data.status) return this.displayError(data.rawMessage ?? data.message);
 
         this.colorData[this.appearanceId] = data.colorGroups;
         this.processWaitingList();

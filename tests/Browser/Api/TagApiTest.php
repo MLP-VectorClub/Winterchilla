@@ -145,3 +145,12 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
   $admin->request('DELETE', '/cg/tag/' . $source['id']);
   $admin->request('DELETE', '/cg/tag/' . $target['id']);
 });
+
+it('reports validation messages as plain text, not HTML', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+
+  // Clients escape messages when they show them as HTML, so the server must not have escaped them already
+  $r = $admin->post('/cg/tag', ['name' => 'bad<b>tag', 'type' => 'app']);
+  expect($r['status'])->toBe(422)
+    ->and(implode(' ', $r['json']['errors']['name']))->toContain('<b>')->not->toContain('&lt;');
+});

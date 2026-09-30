@@ -147,7 +147,7 @@ class ImageProvider {
 
         if (!isset($data['processed'])){
           CoreUtils::logError("Invalid Derpibooru response for ID $id\n".var_export($data, true));
-          throw new RuntimeException('Derpibooru returned an invalid API response. This issue has been logged, please <a class="send-feedback">remind us</a> to take a look.');
+          throw new RuntimeException('Derpibooru returned an invalid API response. This issue has been logged, please remind us to take a look.');
         }
 
         if (!$data['processed'])
@@ -190,13 +190,12 @@ class ImageProvider {
             }
             if ($broke){
               $makesure = count($failed) > 0 ? ' make sure the links below work and' : '';
-              $message = "<p>The submission appears to be unavailable. Please$makesure try again, or re-submit if this persists.</p>";
+              $message = "The submission appears to be unavailable. Please$makesure try again, or re-submit if this persists.";
               foreach ($failed as $identify => $links){
-                $anchors = [];
-                foreach ($links as $name => $url){
-                  $anchors[] = "<a href='".CoreUtils::aposEncode($url)."' target='_blank' rel='noopener'>".CoreUtils::capitalize($name).'</a>';
-                }
-                $message .= '<div><strong>'.CoreUtils::escapeHTML($identify).':</strong> '.implode(', ', $anchors).'</div>';
+                $urls = [];
+                foreach ($links as $name => $url)
+                  $urls[] = CoreUtils::capitalize($name).": $url";
+                $message .= " $identify (".implode(', ', $urls).').';
               }
               throw new RuntimeException($message);
             }

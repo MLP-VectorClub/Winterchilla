@@ -155,7 +155,7 @@ class Posts {
       if ($image->preview !== null && !empty($post)){
         $already_used = Post::find_by_preview($image->preview);
         if (!empty($already_used) && $already_used->id !== $post->id)
-          Response::error(409, "This exact image has already been used for a {$already_used->toAnchor($kind,null,true)} under {$already_used->show->toAnchor()}");
+          Response::error(409, "This exact image has already been used for a {$already_used->kind} under {$already_used->show->formatTitle()}", ['existingPost' => ['id' => $already_used->getIdString(), 'kind' => $already_used->kind, 'url' => $already_used->toURL()]]);
       }
     }
 
@@ -180,7 +180,7 @@ class Posts {
 
       $already_used = Post::find_by_deviation_id($Image->id);
       if (!empty($already_used))
-        Response::error(409, "This exact deviation has already been marked as the finished version of  a {$already_used->toAnchor($already_used->kind,null,true)} under {$already_used->show->toAnchor()}");
+        Response::error(409, "This exact deviation has already been marked as the finished version of a {$already_used->kind} under {$already_used->show->formatTitle()}", ['existingPost' => ['id' => $already_used->getIdString(), 'kind' => $already_used->kind, 'url' => $already_used->toURL()]]);
 
       $return = ['deviation_id' => $Image->id];
       $cached_deviation = DeviantArt::getCachedDeviation($Image->id);
@@ -193,8 +193,8 @@ class Posts {
         if (!isset($_REQUEST['allow_overwrite_reserver']) && $reserver_id !== null && $author->user_id !== $reserver_id){
           $sameUser = Auth::$user->id === $reserver_id;
           $person = $sameUser ? 'you' : 'the user who reserved this post';
-          Response::error(409, "You've linked to an image which was not submitted by $person. If this was intentional, press Continue to proceed with marking the post finished <b>but</b> note that it will make {$author->name} the new reserver.".($sameUser
-              ? "<br><br>This means that you'll no longer be able to interact with this post until {$author->name} or an administrator cancels the reservation on it."
+          Response::error(409, "You've linked to an image which was not submitted by $person. If this was intentional, press Continue to proceed with marking the post finished, but note that it will make {$author->name} the new reserver.".($sameUser
+              ? " This means that you'll no longer be able to interact with this post until {$author->name} or an administrator cancels the reservation on it."
               : ''), ['retry' => true]);
         }
 

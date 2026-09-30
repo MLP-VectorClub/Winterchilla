@@ -879,7 +879,7 @@ class CoreUtils {
       $count = count($invalid);
       $s = $count !== 1 ? 's' : '';
       $the_following = $count !== 1 ? 'the following' : 'an';
-      $Error = "$Thing (".self::escapeHTML($string).") contains $the_following invalid character$s: ".self::arrayToNaturalString($invalid);
+      $Error = "$Thing ($string) contains $the_following invalid character$s: ".self::arrayToNaturalString($invalid, noescape: true);
       if ($returnError)
         return $Error;
       if ($field !== null)

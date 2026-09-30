@@ -967,7 +967,7 @@ class AppearanceAPIController extends APIController {
             if (empty($facing))
               $facing = null;
             else if (!in_array($facing, Cutiemarks::VALID_FACING_VALUES, true))
-              Response::invalid('cutiemarks', 'Body orientation "'.CoreUtils::escapeHTML($facing).'" is invalid');
+              Response::invalid('cutiemarks', 'Body orientation "'.$facing.'" is invalid');
           }
           else $facing = null;
           $cm->facing = $facing;

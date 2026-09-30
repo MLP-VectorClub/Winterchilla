@@ -283,14 +283,16 @@ class Input {
   }
 
   private function _outputError($message, $errorCode = null) {
-    if (is_string($this->_origValue) || is_numeric($this->_origValue)) {
-      $message = str_replace('@value', CoreUtils::escapeHTML(str_replace('@', '&#64;', $this->_origValue)), $message);
-    }
+    // Messages are plain text (clients escape them when they show them as HTML), so the value goes in as is. The range
+    // is substituted first so an '@min' inside the value can't be mistaken for a placeholder.
     if ($errorCode === self::ERROR_RANGE){
       if (isset($this->_range[0]))
         $message = str_replace('@min', $this->_range[0], $message);
       if (isset($this->_range[1]))
         $message = str_replace('@max', $this->_range[1], $message);
+    }
+    if (is_string($this->_origValue) || is_numeric($this->_origValue)) {
+      $message = str_replace('@value', $this->_origValue, $message);
     }
     if ($this->_silentFail){
       if (!$this->_noLog)

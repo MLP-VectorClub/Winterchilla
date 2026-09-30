@@ -34,7 +34,7 @@ class PostAPIController extends APIController {
   public function __construct() {
     parent::__construct();
 
-    self::$CONTRIB_THANKS = 'Thank you for your contribution!'.CoreUtils::responseSmiley(';)');
+    self::$CONTRIB_THANKS = 'Thank you for your contribution! ;)';
   }
 
   public function _authorize() {
@@ -255,7 +255,10 @@ class PostAPIController extends APIController {
           if ($this->is_user_reserver)
             Response::error(409, "You've already reserved this request", ['li' => $this->post->getLi()]);
           if (!$this->post->isOverdue())
-            Response::error(409, 'This request has already been reserved by '.$this->post->reserver->toAnchor(), ['li' => $this->post->getLi()]);
+            Response::error(409, "This request has already been reserved by {$this->post->reserver->name}", [
+              'li' => $this->post->getLi(),
+              'reservedBy' => ['id' => $this->post->reserver->id, 'name' => $this->post->reserver->name],
+            ]);
           $overdue = [
             'reserved_by' => $this->post->reserved_by,
             'reserved_at' => $this->post->reserved_at,
@@ -683,25 +686,26 @@ class PostAPIController extends APIController {
           'id' => $this->post->id,
         ];
         $message = '';
+        $approved = false;
         if (isset($update['lock'])){
-          $message .= '<p>';
-
+          $approved = true;
           LockedPost::record($this->post->id);
           if ($this->is_user_reserver)
             $message .= self::$CONTRIB_THANKS.' ';
           else Notification::send($this->post->reserved_by, 'post-approved', $postdata);
 
-          $message .= "The post has been approved automatically because it's already in the club gallery.</p>";
+          $message .= "The post has been approved automatically because it's already in the club gallery.";
         }
+        $notified = null;
         if ($this->post->is_request && $this->post->requested_by !== Auth::$user->id){
           $notifSent = Notification::send($this->post->requester->id, 'post-finished', $postdata);
-          $message .= "<p><strong>{$this->post->requester->name}</strong> ".($notifSent === 0 ? 'has been notified'
-              : 'will receive a notification shortly').'.</p>'.(is_string($notifSent)
-              ? "<div class='notice fail'><strong>Error:</strong> $notifSent</div>" : '');
+          $message .= ($message !== '' ? ' ' : '')."{$this->post->requester->name} ".($notifSent === 0 ? 'has been notified'
+              : 'will receive a notification shortly').'.'.(is_string($notifSent) ? " Error: $notifSent" : '');
+          $notified = ['id' => $this->post->requester->id, 'name' => $this->post->requester->name];
         }
 
         if (!empty($message))
-          Response::ok(['message' => $message]);
+          Response::ok(['message' => $message, 'approved' => $approved, 'notified' => $notified]);
         Response::noContent();
       break;
       case 'DELETE':
@@ -771,7 +775,7 @@ class PostAPIController extends APIController {
     $this->load_post($params, 'locate');
 
     if (empty($this->post) || $this->post->broken)
-      Response::error(404, "The post you were linked to has either been deleted or didn't exist in the first place. Sorry.".CoreUtils::responseSmiley(':\\'));
+      Response::error(404, "The post you were linked to has either been deleted or didn't exist in the first place. Sorry. :'(");
 
     if (isset($_REQUEST['show_id']) && $this->post->show->id === (int)$_REQUEST['show_id'])
       Response::ok([

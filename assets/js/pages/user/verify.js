@@ -18,6 +18,6 @@
   };
 
   $.API.post('/user/verify', { hash: verifyHash, action: verifyAction }, function() {
-    setStatus(this.status, this.message);
+    setStatus(this.status, this.rawMessage ?? this.message);
   });
 })();

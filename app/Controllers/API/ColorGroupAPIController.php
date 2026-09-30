@@ -289,7 +289,7 @@ class ColorGroupAPIController extends APIController {
           if (!empty($c['hex'])) {
             $hex = CoreUtils::trim($c['hex']);
             if (!Regexes::$hex_color->match($hex, $_match))
-              Response::invalid('Colors', 'Hex color '.CoreUtils::escapeHTML($hex)." is invalid, please leave empty or fix $index");
+              Response::invalid('Colors', 'Hex color '.$hex." is invalid, please leave empty or fix $index");
             $append->hex = '#'.strtoupper($_match[1]);
             if ($this->colorgroup->appearance->owner_id === null)
               $append->hex = CGUtils::roundHex($append->hex);
@@ -309,7 +309,7 @@ class ColorGroupAPIController extends APIController {
         $newlabels = [];
         foreach ($newcolors as $color){
           if (isset($newlabels[$color->label]))
-            Response::invalid('Colors', 'The color name "'.CoreUtils::escapeHTML($color->label).'" appears in this color group more than once. Please choose a unique name or add numbering to the colors.');
+            Response::invalid('Colors', 'The color name "'.$color->label.'" appears in this color group more than once. Please choose a unique name or add numbering to the colors.');
 
           $newlabels[$color->label] = true;
         }

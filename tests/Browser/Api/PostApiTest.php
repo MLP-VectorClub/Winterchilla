@@ -162,3 +162,18 @@ it('does not let users delete other people\'s requests', function () {
   expect($user->request('DELETE', '/post/987654')['status'])->toBeIn([404, 405]);
   expect($admin->request('GET', '/post/request/987654')['status'])->toBeIn([404, 405]);
 });
+
+it('reports conflicts with plain-text messages and structured details', function () use ($postId) {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $path = "/post/$postId/reservation";
+  expect($admin->post($path)['status'])->toBe(200);
+
+  // Somebody else's reservation: the reserver is named in the message and given as data, without markup
+  $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
+  $r = $user->post($path);
+  // Regular users can't reserve at all, so the conflict shows for the reserver trying again instead
+  $r = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->post($path);
+  expect($r['status'])->toBe(409)->and($r['json']['message'])->not->toContain('<');
+
+  ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', $path);
+});

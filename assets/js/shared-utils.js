@@ -425,14 +425,14 @@
 
     let resp;
     if (xhr.responseJSON)
-      resp = xhr.responseJSON.message;
+      resp = errorText(xhr.responseJSON);
     else {
       try {
-        resp = JSON.parse(xhr.responseText).message;
+        resp = errorText(JSON.parse(xhr.responseText));
       } catch (e){ /* ignore */
       }
     }
-    $.Dialog.fail(false, resp);
+    $.Dialog.fail(false, typeof resp === 'string' ? $.mk('div').text(resp).html().replace(/\n/g, '<br>') : resp);
   };
   const statusCodeHandlers = {
     0: () => { /* noop */
@@ -1016,6 +1016,27 @@
     };
   });
 
+  // API messages are plain text, but the callers put them into dialogs as HTML. Keep the plain text as `rawMessage`
+  // for the ones that need it (e.g. `.text()`), and hand out an escaped `message`.
+  // 422 responses carry the useful text in `errors` ({field: [messages]}); `message` is only the generic summary. Show
+  // every field error, one per line.
+  const errorText = body => {
+    if (body && typeof body.errors === 'object' && body.errors !== null){
+      const all = Object.values(body.errors).flat().filter(m => typeof m === 'string');
+      if (all.length > 0)
+        return all.join('\n');
+    }
+
+    return body ? body.message : undefined;
+  };
+  const escapeMessage = data => {
+    if (data !== null && typeof data === 'object' && typeof data.message === 'string' && !('rawMessage' in data)){
+      data.rawMessage = data.message;
+      data.message = $.mk('div').text(data.message).html().replace(/\n/g, '<br>');
+    }
+
+    return data;
+  };
   let nextApiRequestHandled = false;
   $.ajaxPrefilter(function(options) {
     if (nextApiRequestHandled){
@@ -1040,13 +1061,13 @@
                 data = {};
               if (data !== null && typeof data === 'object' && !('status' in data))
                 data.status = true;
-              return handler(data);
+              return handler(escapeMessage(data));
             });
             errorHandler = function(jqXHR) {
               const body = jqXHR.responseJSON;
               if (!body || typeof body !== 'object')
                 return;
-              handler(Object.assign({}, body, { status: false, httpStatus: jqXHR.status }));
+              handler(escapeMessage(Object.assign({}, body, { status: false, httpStatus: jqXHR.status, message: errorText(body) })));
             };
           }
           // The next request is handled by the callback (see the ajaxPrefilter below)

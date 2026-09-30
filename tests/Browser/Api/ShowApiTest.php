@@ -22,6 +22,16 @@ it('GET /show/{id} returns the show with camelCase keys', function () use ($show
     ->and($r['json']['show'])->not->toHaveKey('posted_by');
 });
 
+it('GET /show/{id} includes its state, permissions and related appearances', function () use ($showId) {
+  $guest = ApiClient::guest()->get('/show/' . $showId)['json']['show'];
+  $staff = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get('/show/' . $showId)['json']['show'];
+
+  expect($guest)->toHaveKeys(['aired', 'willAir', 'canEdit', 'relatedAppearances'])
+    ->and($guest['canEdit'])->toBeFalse()
+    ->and($guest['relatedAppearances'])->toBeArray()
+    ->and($staff['canEdit'])->toBeTrue();
+});
+
 it('GET /show/{id} 404s for a missing show', function () {
   $r = ApiClient::guest()->get('/show/987654');
 

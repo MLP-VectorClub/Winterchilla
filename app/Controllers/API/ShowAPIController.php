@@ -178,7 +178,20 @@ class ShowAPIController extends APIController {
    *           type="object",
    *           required={"show"},
    *           additionalProperties=false,
-   *           @OA\Property(property="show", ref="#/components/schemas/Show")
+   *           @OA\Property(
+   *             property="show",
+   *             allOf={
+   *               @OA\Schema(ref="#/components/schemas/Show"),
+   *               @OA\Schema(
+   *                 type="object",
+   *                 required={"aired", "willAir", "canEdit", "relatedAppearances"},
+   *                 @OA\Property(property="aired", type="boolean", description="Whether the show has already aired"),
+   *                 @OA\Property(property="willAir", type="string", format="date-time", description="When the show will have aired (air time plus its running time)"),
+   *                 @OA\Property(property="canEdit", type="boolean", description="Whether the current user may edit or delete the show"),
+   *                 @OA\Property(property="relatedAppearances", type="array", description="Color guide entries linked to this show", @OA\Items(ref="#/components/schemas/PreviewAppearance"))
+   *               )
+   *             }
+   *           )
    *         )
    *   ),
    *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
@@ -273,7 +286,17 @@ class ShowAPIController extends APIController {
 
     switch ($this->action){
       case 'GET':
-        Response::ok(['show' => CoreUtils::camelKeys($this->show->to_array())]);
+        Response::ok([
+          'show' => CoreUtils::camelKeys($this->show->to_array()) + [
+            'aired' => $this->show->aired,
+            'willAir' => $this->show->willair,
+            'canEdit' => Permission::sufficient('staff'),
+            'relatedAppearances' => array_map(
+              fn(Appearance $a) => AppearancesAPIController::mapPreviewAppearance($a),
+              array_filter($this->show->related_appearances, fn(Appearance $a) => !$a->private || Permission::sufficient('staff'))
+            ),
+          ],
+        ]);
       break;
       case 'POST':
       case 'PUT':

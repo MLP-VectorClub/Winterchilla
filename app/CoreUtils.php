@@ -853,7 +853,7 @@ class CoreUtils {
    *
    * @return null|string
    */
-  public static function checkStringValidity($string, $Thing, $pattern = INVERSE_PRINTABLE_ASCII_PATTERN, $returnError = false) {
+  public static function checkStringValidity($string, $Thing, $pattern = INVERSE_PRINTABLE_ASCII_PATTERN, $returnError = false, ?string $field = null) {
     if (preg_match_all(new RegExp($pattern, 'u'), $string, $fails)){
       /** @var $fails string[][] */
       $invalid = [];
@@ -880,8 +880,25 @@ class CoreUtils {
       $Error = "$Thing (".self::escapeHTML($string).") contains $the_following invalid character$s: ".self::arrayToNaturalString($invalid);
       if ($returnError)
         return $Error;
-      Response::fail($Error);
+      if ($field !== null)
+        Response::invalid($field, $Error);
+      Response::error(422, $Error);
     }
+  }
+
+  /**
+   * Converts the keys of a record (or a list of records) from snake_case to camelCase, as the API contract
+   * requires. Only touches keys of associative arrays, never values.
+   */
+  public static function camelKeys(array $data):array {
+    $out = [];
+    foreach ($data as $key => $value){
+      if (is_string($key))
+        $key = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $key))));
+      $out[$key] = is_array($value) ? self::camelKeys($value) : $value;
+    }
+
+    return $out;
   }
 
   /**

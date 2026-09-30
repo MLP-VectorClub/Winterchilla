@@ -42,18 +42,13 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"render"},
    *           additionalProperties=false,
    *           @OA\Property(property="render", type="string", description="Rendered HTML for the requested section")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function postList($params):void {
@@ -62,7 +57,9 @@ class ShowAPIController extends APIController {
 
     $this->load_show($params);
 
-    $section = $_GET['section'];
+    $section = $_GET['section'] ?? null;
+    if (!in_array($section, ['requests', 'reservations'], true))
+      Response::invalid('section', 'The section must be either requests or reservations.');
     $only = $section === 'requests' ? ONLY_REQUESTS : ONLY_RESERVATIONS;
 
     switch ($only){
@@ -74,10 +71,8 @@ class ShowAPIController extends APIController {
         $reservations = $this->show->getReservations();
         $rendered = Posts::getReservationsSection($reservations);
       break;
-      default:
-        Response::fail('This should never happen');
     }
-    Response::done(['render' => $rendered]);
+    Response::ok(['render' => $rendered]);
   }
 
   /**
@@ -91,18 +86,13 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"show"},
    *           additionalProperties=false,
    *           @OA\Property(property="show", ref="#/components/schemas/Show")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
    *   path="/show",
@@ -124,22 +114,19 @@ class ShowAPIController extends APIController {
    *     )
    *   ),
    *   @OA\Response(
-   *     response="200",
-   *     description="OK",
+   *     response="201",
+   *     description="Created",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
-   *           required={"url"},
+   *           required={"id","url"},
    *           additionalProperties=false,
+   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
    *           @OA\Property(property="url", type="string", format="uri", description="URL of the newly created show entry")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
    *   path="/show/{id}",
@@ -161,10 +148,12 @@ class ShowAPIController extends APIController {
    *       @OA\Property(property="notes", type="string", maxLength=1000, nullable=true)
    *     )
    *   ),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Updated"),
+   *   @OA\Response(response="409", description="Another episode already has this season and episode number, or the next part exists", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/show/{id}",
@@ -175,31 +164,27 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"upcoming"},
    *           additionalProperties=false,
    *           @OA\Property(property="upcoming", type="string", description="Rendered HTML for the sidebar's upcoming episode info")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function api($params):void {
     if ($this->action !== 'GET' && Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     if (!$this->creating)
       $this->load_show($params);
 
     switch ($this->action){
       case 'GET':
-        Response::done([ 'show' => $this->show->to_array() ]);
+        Response::ok(['show' => CoreUtils::camelKeys($this->show->to_array())]);
       break;
       case 'POST':
       case 'PUT':
@@ -229,7 +214,7 @@ class ShowAPIController extends APIController {
                 ShowHelper::ALLOW_MOVIES
               );
               if (!empty($target))
-                Response::fail("There's already an episode with the same season & episode number");
+                Response::error(409, "There's already an episode with the same season & episode number");
             }
           }
 
@@ -237,14 +222,14 @@ class ShowAPIController extends APIController {
           if (isset($_REQUEST['twoparter'])){
             $next_part = Show::find_by_season_and_episode($update['season'], $update['episode'] + 1);
             if (!empty($next_part))
-              Response::fail("This episode cannot have two parts because {$next_part->toURL()} already exists.");
+              Response::error(409, "This episode cannot have two parts because {$next_part->toURL()} already exists.");
             $update['parts'] = 2;
           }
         }
         else if (!$this->creating){
           $update['type'] = ShowHelper::validateType();
           if ($update['type'] === 'episode')
-            Response::fail('Show entries cannot be converted to episodes via the interface.');
+            Response::invalid('type', 'Show entries cannot be converted to episodes via the interface.');
         }
 
         $update['no'] = (new Input('no', 'int', [
@@ -263,7 +248,7 @@ class ShowAPIController extends APIController {
             Input::ERROR_RANGE => "$what title must be between @min and @max characters",
           ],
         ]))->out();
-        CoreUtils::checkStringValidity($update['title'], "$what title", INVERSE_EP_TITLE_PATTERN);
+        CoreUtils::checkStringValidity($update['title'], "$what title", INVERSE_EP_TITLE_PATTERN, field: 'title');
 
         $airs = (new Input('airs', 'timestamp', [
           Input::CUSTOM_ERROR_MESSAGES => [
@@ -272,9 +257,9 @@ class ShowAPIController extends APIController {
           ],
         ]))->out();
         if (empty($airs))
-          Response::fail('Please specify an air date & time');
+          Response::invalid('airs', 'Please specify an air date & time');
         if ($airs < strtotime('2010-10-10T00:00:00'))
-          Response::fail('Air dates before October 10th, 2010 are invalid.');
+          Response::invalid('airs', 'Air dates before October 10th, 2010 are invalid.');
         $update['airs'] = date('c', strtotime('this minute', $airs));
 
         $notes = (new Input('notes', 'text', [
@@ -285,7 +270,7 @@ class ShowAPIController extends APIController {
           ],
         ]))->out();
         if ($notes !== null){
-          CoreUtils::checkStringValidity($notes, "$what notes");
+          CoreUtils::checkStringValidity($notes, "$what notes", field: 'notes');
           $notes = CoreUtils::sanitizeHtml($notes, ['a'], ['a.href']);
           if ($this->creating || $notes !== $this->show->notes)
             $update['notes'] = $notes;
@@ -295,22 +280,22 @@ class ShowAPIController extends APIController {
         if ($this->creating){
           $this->show = new Show($update);
           if (!$this->show->save())
-            Response::dbError('Show entry creation failed');
+            Response::dbError('Show entry creation failed', status: 500);
 
-          Response::done(['url' => $this->show->toURL()]);
+          Response::ok(['id' => $this->show->id, 'url' => $this->show->toURL()], 201);
         }
 
         // Updating
         if (!DB::$instance->where('id', $this->show->id)->update(Show::$table_name, $update))
-          Response::dbError('Updating show entry failed');
+          Response::dbError('Updating show entry failed', status: 500);
 
-        Response::done();
+        Response::noContent();
       break;
       case 'DELETE':
         if (!DB::$instance->where('id', $this->show->id)->delete(Show::$table_name))
-          Response::dbError();
+          Response::dbError(status: 500);
 
-        Response::success('Episode deleted successfully', [
+        Response::ok([
           'upcoming' => CoreUtils::getSidebarUpcoming(NOWRAP),
         ]);
       break;
@@ -331,9 +316,6 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="html", type="string", description="Rendered sidebar voting HTML (only present if `html` query param was set)"),
@@ -344,10 +326,8 @@ class ShowAPIController extends APIController {
    *             additionalProperties=@OA\Property(type="integer")
    *           )
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
    *   path="/show/{id}/vote",
@@ -366,20 +346,16 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"newhtml"},
    *           additionalProperties=false,
    *           @OA\Property(property="newhtml", type="string", description="Updated rendered sidebar voting HTML")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Episode hasn't aired yet, already voted, or invalid vote value", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Episode hasn't aired yet, or the user already voted", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid vote value", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function voteApi($params):void {
@@ -388,7 +364,7 @@ class ShowAPIController extends APIController {
     switch ($this->action){
       case 'GET':
         if (isset($_REQUEST['html']))
-          Response::done(['html' => ShowHelper::getSidebarVoting($this->show)]);
+          Response::ok(['html' => ShowHelper::getSidebarVoting($this->show)]);
 
         $vote_count_query = DB::$instance->query(
           "SELECT count(*) as value, vote as label FROM show_votes WHERE show_id = ? GROUP BY vote ORDER BY vote", [$this->show->id]);
@@ -396,18 +372,18 @@ class ShowAPIController extends APIController {
         foreach ($vote_count_query as $row)
           $vote_counts[$row['label']] = $row['value'];
 
-        Response::done(['data' => $vote_counts]);
+        Response::ok(['data' => $vote_counts]);
       break;
       case 'POST':
         if (!Auth::$signed_in)
-          Response::fail();
+          Response::error(401);
 
         if (!$this->show->aired)
-          Response::fail('You can only vote on this episode after it has aired.');
+          Response::error(409, 'You can only vote on this episode after it has aired.');
 
         $user_vote = $this->show->getVoteOf(Auth::$user);
         if (!empty($user_vote))
-          Response::fail("You already voted for this {$this->show->type}");
+          Response::error(409, "You already voted for this {$this->show->type}");
 
         $vote_value = (new Input('vote', 'int', [
           Input::IN_RANGE => [1, 5],
@@ -422,10 +398,10 @@ class ShowAPIController extends APIController {
         $vote->user_id = Auth::$user->id;
         $vote->vote = $vote_value;
         if (!$vote->save())
-          Response::dbError();
+          Response::dbError(status: 500);
 
         $this->show->updateScore();
-        Response::done(['newhtml' => ShowHelper::getSidebarVoting($this->show)]);
+        Response::ok(['newhtml' => ShowHelper::getSidebarVoting($this->show)]);
       break;
       default:
         CoreUtils::notAllowed();
@@ -442,9 +418,6 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"groups","entries","linkedIds"},
    *           additionalProperties=false,
@@ -468,11 +441,10 @@ class ShowAPIController extends APIController {
    *             @OA\Items(ref="#/components/schemas/OneBasedId")
    *           )
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
    *   path="/show/{id}/guide-relations",
@@ -494,25 +466,21 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"section"},
    *           additionalProperties=false,
    *           @OA\Property(property="section", type="string", description="Rendered HTML for the show's linked appearances section")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function guideRelationsApi($params):void {
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     $this->load_show($params);
 
@@ -525,14 +493,18 @@ class ShowAPIController extends APIController {
           $linked_ids[] = $p->id;
         }
 
+        // An empty NOT IN () list is a SQL syntax error, so only exclude pinned appearances if there are any
+        $pinned_ids = PinnedAppearance::getAllIds();
+        $query = DB::$instance->disableAutoClass();
+        if (!empty($pinned_ids))
+          $query->where('id', $pinned_ids, '!=');
         /** @var $appearances Appearance[] */
-        $entries = DB::$instance->disableAutoClass()
-          ->where('id', PinnedAppearance::getAllIds(), '!=')
+        $entries = $query
           ->where('owner_id IS NULL')
           ->orderBy('label')
           ->get('appearances', null, $columns);
 
-        Response::done([
+        Response::ok([
           'groups' => CGUtils::GUIDE_MAP,
           'entries' => $entries,
           'linkedIds' => $linked_ids,
@@ -564,7 +536,7 @@ class ShowAPIController extends APIController {
 
         $this->show->reload();
 
-        Response::done(['section' => ShowHelper::getAppearancesSectionHTML($this->show)]);
+        Response::ok(['section' => ShowHelper::getAppearancesSectionHTML($this->show)]);
       break;
       default:
         CoreUtils::notAllowed();
@@ -581,9 +553,6 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="episode", type="integer"),
@@ -591,22 +560,15 @@ class ShowAPIController extends APIController {
    *           @OA\Property(property="season", type="integer"),
    *           @OA\Property(property="title", type="string")
    *         )
-   *       }
-   *     )
    *   ),
    *   @OA\Response(
-   *     response="400",
+   *     response="404",
    *     description="The show is on hiatus, no upcoming episode is known",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="hiatus", type="boolean")
    *         )
-   *       }
-   *     )
    *   )
    * )
    */
@@ -616,9 +578,9 @@ class ShowAPIController extends APIController {
 
     $next_episode = DB::$instance->where('season is not null AND airs > now()')->orderBy('airs')->getOne(Show::$table_name);
     if (empty($next_episode))
-      Response::fail("The show is on hiatus, the next episode's title and air date is unknown.", ['hiatus' => true]);
+      Response::error(404, "The show is on hiatus, the next episode's title and air date is unknown.", ['hiatus' => true]);
 
-    Response::done($next_episode->to_array([
+    Response::ok($next_episode->to_array([
       'only' => ['episode', 'airs', 'season', 'title'],
     ]));
   }
@@ -632,9 +594,6 @@ class ShowAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"season","episode","no","airday"},
    *           additionalProperties=false,
@@ -643,11 +602,10 @@ class ShowAPIController extends APIController {
    *           @OA\Property(property="no", type="integer", description="Suggested overall number"),
    *           @OA\Property(property="airday", type="string", format="date", description="Suggested air date")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="No last added episode found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="No last added episode found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function prefill():void {
@@ -655,12 +613,12 @@ class ShowAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     /** @var $last_added Show */
     $last_added = DB::$instance->orderBy('no', 'DESC')->where('season is not null')->getOne(Show::$table_name);
     if (empty($last_added))
-      Response::fail('No last added episode found');
+      Response::error(404, 'No last added episode found');
 
     $season = $last_added->season;
     if ($last_added->parts === 2 && $last_added->episode + 1 === 26){
@@ -672,7 +630,7 @@ class ShowAPIController extends APIController {
       $episode = min($last_added->episode + 1, 26);
       $airs = $last_added->airs->add(new DateInterval('P1W'))->format('Y-m-d');
     }
-    Response::done([
+    Response::ok([
       'season' => $season,
       'episode' => $episode,
       'no' => $last_added->no + $last_added->parts,

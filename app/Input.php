@@ -191,7 +191,7 @@ class Input {
           if (self::checkStringLength($this->_origValue, $this->_range, $code))
             return $code;
           if (!preg_match('_^https?://[a-z\d/.-]+(?:/[ -~]+)?$_i', $this->_origValue))
-            Response::fail('Link URL does not appear to be a valid link');
+            Response::invalid($this->_key, 'Link URL does not appear to be a valid link');
         }
       break;
       case 'int[]':
@@ -299,7 +299,7 @@ class Input {
       return;
     }
     if ($this->_respond)
-      Response::fail($message);
+      Response::invalid((string)$this->_key, $message);
     throw new Exception($message);
   }
 

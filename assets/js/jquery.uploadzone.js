@@ -71,13 +71,22 @@
         cache: false,
         data: fd,
         success: $.mkAjaxHandler(function() {
-          if (this.status)
+          // Endpoints are moving from `{status: false}` responses to HTTP error statuses, so only an explicit
+          // `status: false` (legacy) is a failure here; real failures arrive through the error callback
+          if (this.status !== false)
             $input.trigger('set-image', [this]);
           else {
             $.Dialog.fail(title, this.message);
             $this.trigger('uz-uploadfinish');
           }
         }),
+        error: function(jqXHR) {
+          const body = jqXHR.responseJSON;
+          if (!body || typeof body !== 'object')
+            return;
+          $.Dialog.fail(title, body.message);
+          $this.trigger('uz-uploadfinish');
+        },
         complete: function() {
           $this.removeClass('uploading');
           if (opt.helper)

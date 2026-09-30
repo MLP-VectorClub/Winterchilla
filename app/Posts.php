@@ -227,6 +227,7 @@ class Posts {
     return Twig::$env->render('show/_requests.html.twig', [
       'arranged' => $arranged,
       'current_user' => Auth::$user,
+      'signed_in' => Auth::$signed_in,
       'lazyload' => $lazyload,
     ]);
   }
@@ -243,6 +244,7 @@ class Posts {
     return Twig::$env->render('show/_reservations.html.twig', [
       'arranged' => $arranged,
       'current_user' => Auth::$user,
+      'signed_in' => Auth::$signed_in,
       'lazyload' => $lazyload,
     ]);
   }

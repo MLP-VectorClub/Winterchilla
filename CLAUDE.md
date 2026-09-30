@@ -393,7 +393,21 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       notifications (including other users' — ownership is enforced), mark-read is 204. `TestSeeder` seeds
       three unread `post-approved` notifications (`TestSeederConstants::NOTIFICATION_*`). `/notif` still
       returns rendered HTML in `list`.
-- [ ] Everything else — see the inventory and the order above (`Show` next).
+- [x] `ShowAPIController` (`/show`, `/show/{id}` + `/posts`, `/vote`, `/guide-relations`, `/next`, `/prefill`) —
+      201 `{id, url}` on create, 204 on update, `409` for duplicate season/episode and voting conflicts,
+      `422` field errors, 401/403 via `Response::denied()`, hiatus/none-found as 404. `show` payload is camelCase
+      (`postedBy`). Found and fixed two production 500s along the way: `/show/{id}/posts` (template needed
+      `signed_in`, only the page context provided it) and `/show/{id}/guide-relations` GET (SQL syntax error
+      when no appearance is pinned).
+- [ ] Everything else — see the inventory and the order above (`Event` next).
+
+Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,
+$message)` (422 in Laravel's format), `CoreUtils::camelKeys()` for record payloads, and `Input` validation failures
+now respond 422 with `errors.<field>` for *every* controller (legacy ones included — the `$.API` shim keeps the UI
+working; `jquery.uploadzone.js` has its own error handler). Input messages still HTML-escape `@value`, which is a
+display concern to clean up once clients render messages as text.
+`scripts/openapi_drop_server_response.py <file>...` rewrites a controller's docblocks from the legacy
+`ServerResponse` envelope to plain bodies/`ErrorResponse`; the status codes themselves are still edited by hand.
 
 ## Working on this plan
 

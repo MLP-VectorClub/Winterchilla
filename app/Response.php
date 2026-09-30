@@ -22,6 +22,18 @@ class Response {
     exit;
   }
 
+  /** 401 when signed out, 403 when signed in — for "you may not do this" checks. */
+  public static function denied(string $message = ''):never {
+    self::error(Auth::$signed_in ? 403 : 401, $message);
+  }
+
+  /**
+   * 422 in Laravel's validation format: {"message": "The given data was invalid.", "errors": {field: [msg]}}
+   */
+  public static function invalid(string $field, string $message):never {
+    self::error(422, 'The given data was invalid.', ['errors' => [$field => [$message]]]);
+  }
+
   /** Responds 2xx with the given data as the body, without the legacy status envelope. */
   public static function ok(array $data = [], int $httpStatus = 200):never {
     http_response_code($httpStatus);

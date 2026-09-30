@@ -29,7 +29,7 @@ use OpenApi\Annotations as OA;
  *   @OA\Property(property="airs", type="string", format="date-time"),
  *   @OA\Property(property="aired", type="boolean"),
  *   @OA\Property(property="notes", type="string", nullable=true),
- *   @OA\Property(property="posted_by", type="integer", description="ID of the user who created this show entry"),
+ *   @OA\Property(property="postedBy", type="integer", description="ID of the user who created this show entry"),
  * )
  */
 class ShowController extends Controller {

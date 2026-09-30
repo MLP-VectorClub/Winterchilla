@@ -32,7 +32,7 @@
         $.Dialog.wait(false, 'Moving user to the new group');
 
         $.API.put(`/user/${userId}/role`, data, function() {
-          if (this.already_in === true)
+          if (this.alreadyIn === true)
             return $.Dialog.close();
 
           if (!this.status) return $.Dialog.fail(false, this.message);

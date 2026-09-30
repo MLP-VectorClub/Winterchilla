@@ -33,19 +33,23 @@ class UserAPIController extends APIController {
    *     @OA\Schema(ref="#/components/schemas/OneBasedId")
    *   ),
    *   @OA\Response(
-   *     response="200",
-   *     description="Session successfully removed",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     response="204",
+   *     description="Session successfully removed"
+   *   ),
+   *   @OA\Response(
+   *     response="401",
+   *     description="Not signed in",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="403",
    *     description="The session does not belong to the current user and they are not staff",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="404",
    *     description="No session found with this ID, or missing ID",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -53,18 +57,21 @@ class UserAPIController extends APIController {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();
 
+    if (!Auth::$signed_in)
+      Response::error(401);
+
     if (!isset($params['id']))
-      Response::fail('Missing session ID');
+      Response::error(404, 'Missing session ID');
 
     $session = Session::find($params['id']);
     if (empty($session))
-      Response::fail('This session does not exist');
+      Response::error(404, 'This session does not exist');
     if ($session->user_id !== Auth::$user->id && Permission::insufficient('staff'))
-      Response::fail('You are not allowed to delete this session');
+      Response::error(403, 'You are not allowed to delete this session');
 
     $session->delete();
 
-    Response::success('Session successfully removed');
+    Response::noContent();
   }
 
   /**
@@ -89,27 +96,37 @@ class UserAPIController extends APIController {
    *     )
    *   ),
    *   @OA\Response(
+   *     response="204",
+   *     description="Role updated successfully"
+   *   ),
+   *   @OA\Response(
    *     response="200",
-   *     description="Role updated successfully (or already in that role, in which case 'already_in' is true)",
+   *     description="The user was already in the requested role",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
-   *           @OA\Property(property="already_in", type="boolean")
+   *           required={"alreadyIn"},
+   *           @OA\Property(property="alreadyIn", type="boolean")
    *         )
-   *       }
-   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="401",
+   *     description="Not signed in",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="422",
+   *     description="The specified role does not exist",
+   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="403",
    *     description="Insufficient permission, or attempting to change own role, or attempting to change a higher-level user's role",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="404",
    *     description="User not found",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -118,19 +135,19 @@ class UserAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     if (!isset($params['id']))
-      Response::fail('Missing user ID');
+      Response::error(404, 'Missing user ID');
 
     $target_user = User::find($params['id']);
     if (empty($target_user))
-      Response::fail('User not found');
+      Response::error(404, 'User not found');
 
     if ($target_user->id === Auth::$user->id)
-      Response::fail('You cannot modify your own group');
+      Response::error(403, 'You cannot modify your own group');
     if (Permission::insufficient($target_user->role))
-      Response::fail('You can only modify the group of users who are in the same or a lower-level group than you');
+      Response::error(403, 'You can only modify the group of users who are in the same or a lower-level group than you');
 
     $new_role = (new Input('value', 'role', [
       Input::CUSTOM_ERROR_MESSAGES => [
@@ -139,11 +156,11 @@ class UserAPIController extends APIController {
       ],
     ]))->out();
     if ($target_user->role === $new_role)
-      Response::done(['already_in' => true]);
+      Response::ok(['alreadyIn' => true]);
 
     $target_user->updateRole($new_role);
 
-    Response::done();
+    Response::noContent();
   }
 
   /**
@@ -165,17 +182,27 @@ class UserAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="Password successfully changed",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))
    *   ),
    *   @OA\Response(
    *     response="401",
-   *     description="Not signed in, or current password is incorrect",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     description="Not signed in",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="403",
    *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="422",
+   *     description="Invalid new password, or the current password is missing or incorrect",
+   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="500",
+   *     description="The password could not be saved",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -234,15 +261,15 @@ class UserAPIController extends APIController {
     catch (Throwable $e){
       DB::$instance->getConnection()->rollBack();
       CoreUtils::logError("Failed to save new password: {$e->getMessage()}\nStack trace:\n{$e->getTraceAsString()}");
-      Response::dbError('Could not set the password due to a database error');
+      Response::dbError('Could not set the password due to a database error', status: 500);
     }
 
     if (!DB::$instance->getConnection()->commit()){
       CoreUtils::logError("Failed to commit new password changes");
-      Response::dbError('Could not set the password due to a database error');
+      Response::dbError('Could not set the password due to a database error', status: 500);
     }
 
-    Response::success('Your new password has been set successfully. As a security precaution your existing sessions have been deleted, so you will need to log in again.');
+    Response::ok(['message' => 'Your new password has been set successfully. As a security precaution your existing sessions have been deleted, so you will need to log in again.']);
   }
 
   /**
@@ -270,17 +297,37 @@ class UserAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="A confirmation e-mail has been sent",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))
    *   ),
    *   @OA\Response(
    *     response="401",
    *     description="Not signed in",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="403",
    *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="409",
+   *     description="A password must be set before the e-mail address can be changed",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="422",
+   *     description="Invalid, unchanged, blocked or already used e-mail address, or a missing or incorrect current password",
+   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="429",
+   *     description="A confirmation e-mail was sent to this address recently",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="503",
+   *     description="The confirmation e-mail could not be sent",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -322,14 +369,14 @@ class UserAPIController extends APIController {
       ]))->out();
 
       if ($new_email === $this->user->email){
-        Response::fail('You are trying to use same e-mail address '.($same_user ? 'you' : 'this user').' already '.($same_user ? 'have' : 'has').' set');
+        Response::invalid('new_email', 'You are trying to use same e-mail address '.($same_user ? 'you' : 'this user').' already '.($same_user ? 'have' : 'has').' set');
       }
 
       Users::validateEmail($new_email);
 
       if ($same_user){
         if (!$this->user->getPasswordSet()){
-          Response::fail('You will need to set a password first before changing your e-mail address');
+          Response::error(409, 'You will need to set a password first before changing your e-mail address');
         }
 
         Users::validateCurrentPassword($this->user);
@@ -337,15 +384,15 @@ class UserAPIController extends APIController {
 
       $users_with_this_email_exist = User::exists(['conditions' => ['email' => $new_email]]);
       if ($users_with_this_email_exist){
-        Response::fail('This e-mail address is already in use by another user');
+        Response::invalid('new_email', 'This e-mail address is already in use by another user');
       }
     }
 
     if (!Users::sendEmailValidation($this->user, $new_email)){
-      Response::fail('There was an issue while trying to send a confirmation e-mail, please try again later');
+      Response::error(503, 'There was an issue while trying to send a confirmation e-mail, please try again later');
     }
 
-    Response::success('A confirmation e-mail has been sent to the specified address with a link to verify your address. Click the link to update the address in your account.');
+    Response::ok(['message' => 'A confirmation e-mail has been sent to the specified address with a link to verify your address. Click the link to update the address in your account.']);
   }
 
   /**
@@ -367,17 +414,22 @@ class UserAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="The e-mail address was successfully verified or blocked",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))
    *   ),
    *   @OA\Response(
-   *     response="400",
-   *     description="The verification hash is invalid or expired, or the e-mail address could not be updated",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     response="422",
+   *     description="The verification hash or action is invalid, or the hash has expired",
+   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
+   *   ),
+   *   @OA\Response(
+   *     response="500",
+   *     description="The e-mail address could not be updated in the database",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="403",
    *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -400,7 +452,7 @@ class UserAPIController extends APIController {
 
     $verification = EmailVerification::find_by_hash($hash);
     if ($verification === null || !$verification->isValid()) {
-      Response::fail('The specified validation hash is either invalid or has expired');
+      Response::invalid('hash', 'The specified validation hash is either invalid or has expired');
     }
 
     $action = (new Input('action', 'string', [
@@ -414,14 +466,14 @@ class UserAPIController extends APIController {
     if ($action === 'block') {
       BlockedEmail::record($verification->email);
 
-      Response::success('Your e-mail address has been added to our do-not-send list successfully.');
+      Response::ok(['message' => 'Your e-mail address has been added to our do-not-send list successfully.']);
     }
 
     if (!$verification->user->setVerifiedEmail($verification)) {
-      Response::fail('Could not update the e-mail address in the database.');
+      Response::error(500, 'Could not update the e-mail address in the database.');
     }
 
-    Response::success('Your e-mail address has been verified successfully.');
+    Response::ok(['message' => 'Your e-mail address has been verified successfully.']);
   }
 
   /**
@@ -439,25 +491,26 @@ class UserAPIController extends APIController {
    *     response="200",
    *     description="Contributions cache successfully cleared",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
-   *           required={"html"},
+   *           required={"message","html"},
+   *           @OA\Property(property="message", type="string"),
    *           @OA\Property(property="html", type="string", description="Rendered contributions section HTML")
    *         )
-   *       }
-   *     )
+   *   ),
+   *   @OA\Response(
+   *     response="401",
+   *     description="Not signed in",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="403",
    *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   ),
    *   @OA\Response(
    *     response="404",
    *     description="The specified user does not exist, or missing ID",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -466,22 +519,25 @@ class UserAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('staff'))
-      Response::fail('You are not allowed to clear contribution caches');
+      Response::denied('You are not allowed to clear contribution caches');
 
     if (!isset($params['id']))
-      Response::fail('Missing user ID');
+      Response::error(404, 'Missing user ID');
 
     $user = User::find($params['id']);
     if (empty($user))
-      Response::fail('The specified user does not exist');
+      Response::error(404, 'The specified user does not exist');
 
-    unlink($user->getCachedContributionsPath());
+    $cache_path = $user->getCachedContributionsPath();
+    if (file_exists($cache_path))
+      unlink($cache_path);
 
     $same_user = Auth::$signed_in && $user->id === Auth::$user->id;
     $contribs = $user->getCachedContributions();
     $contrib_cache_duration = Users::getContributionsCacheDuration();
 
-    Response::success('Contributions cache successfully cleared', [
+    Response::ok([
+      'message' => 'Contributions cache successfully cleared',
       'html' => Twig::$env->render('user/_profile_contributions.html.twig', [
         'user' => $user,
         'same_user' => $same_user,
@@ -508,20 +564,15 @@ class UserAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"html"},
    *           @OA\Property(property="html", type="string", description="Rendered avatar wrapper HTML")
    *         )
-   *       }
-   *     )
    *   ),
    *   @OA\Response(
    *     response="404",
    *     description="The specified user does not exist",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -531,6 +582,6 @@ class UserAPIController extends APIController {
 
     $this->load_user($params);
 
-    Response::done(['html' => $this->user->getAvatarWrap()]);
+    Response::ok(['html' => $this->user->getAvatarWrap()]);
   }
 }

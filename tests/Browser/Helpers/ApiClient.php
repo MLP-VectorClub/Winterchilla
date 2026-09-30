@@ -43,7 +43,12 @@ class ApiClient {
     return $this->request('POST', $path, $data);
   }
 
-  private function raw(string $method, string $path, array $params = [], bool $followRedirects = true):array {
+  /** Fetches a regular (non-API) page as this client, e.g. to read data rendered into the HTML. */
+  public function page(string $path):string {
+    return $this->raw('GET', $path, accept: 'text/html')['body'];
+  }
+
+  private function raw(string $method, string $path, array $params = [], bool $followRedirects = true, string $accept = 'application/json'):array {
     $url = TestSeederConstants::BASE_URL . $path;
     $ch = curl_init();
     $opts = [
@@ -52,7 +57,7 @@ class ApiClient {
       CURLOPT_COOKIEJAR => $this->jar,
       CURLOPT_COOKIEFILE => $this->jar,
       CURLOPT_CUSTOMREQUEST => $method,
-      CURLOPT_HTTPHEADER => ['Accept: application/json'],
+      CURLOPT_HTTPHEADER => ['Accept: ' . $accept],
     ];
     if ($method !== 'GET') {
       // The server hands out the CSRF cookie on any response; make sure we have one before writing

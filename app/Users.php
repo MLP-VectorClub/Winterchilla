@@ -452,7 +452,7 @@ class Users {
     if (!$hash_manager->check($current_password, $user->password)){
       /** @noinspection RandomApiMigrationInspection */
       usleep(rand(1, 3) * 1e6);
-      Response::fail('The provided current password is incorrect');
+      Response::invalid('current_password', 'The provided current password is incorrect');
     }
   }
 
@@ -461,7 +461,7 @@ class Users {
 
     $block_entry = BlockedEmail::find_by_email($recipient);
     if ($block_entry) {
-      Response::fail('The specified email address has been added to our do-not-send list. If you are the owner of this address and would like to be removed from this list please <a class="send-feedback">contact us</a>.');
+      Response::invalid('new_email', 'The specified email address has been added to our do-not-send list. If you are the owner of this address and would like to be removed from this list, please contact us.');
     }
 
     $previous_validation_attempt = EmailVerification::find('first', [
@@ -472,7 +472,7 @@ class Users {
       'order' => 'created_at desc'
     ]);
     if ($previous_validation_attempt !== null) {
-      Response::fail('A confirmation email was sent to this address recently, please wait a bit before requesting another one');
+      Response::error(429, 'A confirmation email was sent to this address recently, please wait a bit before requesting another one');
     }
 
     try {
@@ -480,7 +480,7 @@ class Users {
     }
     catch (Exception $e){
       CoreUtils::logError("Failed to get random_bytes for email verification link: {$e->getMessage()}\nStack trace:\n{$e->getTraceAsString()}");
-      Response::fail('Could not generate a secure verification link, please try again later');
+      Response::error(500, 'Could not generate a secure verification link, please try again later');
     }
 
     $verification = EmailVerification::create([
@@ -501,10 +501,10 @@ class Users {
   }
 
   public static function validateEmail(string $email):void {
-    CoreUtils::checkStringValidity($email, 'new e-mail');
+    CoreUtils::checkStringValidity($email, 'new e-mail', field: 'new_email');
 
     if(!(new EmailValidator())->isValid($email)) {
-      Response::fail('The provided e-mail address does not pass our validity checks, please use an e-mail address which is properly set up to receive messages.');
+      Response::invalid('new_email', 'The provided e-mail address does not pass our validity checks, please use an e-mail address which is properly set up to receive messages.');
     }
   }
 }

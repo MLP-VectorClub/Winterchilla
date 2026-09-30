@@ -171,7 +171,7 @@ class CoreUtils {
     HTTP::statusCode(403);
 
     if (self::isJSONExpected())
-      Response::error(403, "You don't have permission to access {$_SERVER['REQUEST_URI']}");
+      Response::denied("You don't have permission to access {$_SERVER['REQUEST_URI']}");
 
     Users::authenticate();
     self::checkNutshell();
@@ -222,7 +222,7 @@ class CoreUtils {
    */
   public static function roleGate(string $role = 'developer') {
     if (Permission::insufficient($role)) {
-      Response::fail('This API is currently under testing and is not available to all users, please try again later');
+      Response::error(403, 'This API is currently under testing and is not available to all users, please try again later');
     }
   }
 

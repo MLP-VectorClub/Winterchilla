@@ -5,7 +5,6 @@ namespace App\Controllers\API;
 use App\Auth;
 use App\CoreUtils;
 use App\DeviantArt;
-use App\HTTP;
 use App\Models\User;
 use App\Response;
 use OpenApi\Annotations as OA;
@@ -117,11 +116,15 @@ class UsersAPIController extends APIController {
    *     description="OK",
    *     @OA\JsonContent(
    *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
    *         @OA\Schema(ref="#/components/schemas/ValueOfUser"),
    *         @OA\Schema(ref="#/components/schemas/SessionUpdating")
    *       }
    *     )
+   *   ),
+   *   @OA\Response(
+   *     response="401",
+   *     description="Not signed in",
+   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
    *   )
    * )
    */
@@ -129,12 +132,10 @@ class UsersAPIController extends APIController {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
 
-    if (!Auth::$signed_in){
-      HTTP::statusCode(401);
-      Response::failApi();
-    }
+    if (!Auth::$signed_in)
+      Response::error(401, 'The requested resource requires authentication');
 
-    Response::done([
+    Response::ok([
       'user' => self::mapUser(Auth::$user),
       'sessionUpdating' => Auth::$session->updating,
     ]);

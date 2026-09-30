@@ -406,7 +406,17 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       `TestSeeder` seeds three entries plus their Redis-cached deviation metadata (otherwise the event page asks the
       real DeviantArt oEmbed API about made-up IDs). Not covered: a successful PUT (needs the real DeviantArt link
       check) and the lazyload success body.
-- [ ] Everything else — see the inventory and the order above (`User` next).
+- [x] `UserAPIController` + `/users/me` (`/user/session/{id}`, `/user/{id}/role|email|contrib-cache|avatar-wrap`,
+      `/user/password`, `/user/verify`, `/users/me`) — 401/403/404, 422 field errors (`current_password`,
+      `new_email`, `hash`, `value`), 409 (password must be set first), 429 (confirmation e-mail sent recently), 503
+      (mail not sent). Session delete and role change are 204 (`alreadyIn: true` with 200 when nothing changes).
+      **Success bodies that the UI shows to the user keep a `message`** (password set, confirmation e-mail sent,
+      verified/blocked, cache cleared) — a documented optional field, not the legacy envelope. Password/e-mail/
+      verify are staff-only (`CoreUtils::roleGate`, 403) while the feature is under testing. `CoreUtils::noPerm()`'s
+      JSON branch now goes through `Response::denied()` (401 for guests). Fixed: clearing a contribution cache that
+      doesn't exist crashed on `unlink()`. Not covered: the e-mail flow past validation (needs a real domain with MX
+      records, i.e. the network) and the do-not-send/verification success paths.
+- [ ] Everything else — see the inventory and the order above (`Tag` next).
 
 Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,
 $message)` (422 in Laravel's format), `CoreUtils::camelKeys()` for record payloads, and `Input` validation failures

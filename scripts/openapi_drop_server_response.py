@@ -46,6 +46,15 @@ def fix(path,codes=None):
     ref='ValidationErrorResponse' if code=='422' else 'ErrorResponse'
     return '@OA\\Response(response="%s", description="%s", @OA\\JsonContent(ref="#/components/schemas/%s"))'%(code,m.group(2),ref)
   s=re.sub(r'@OA\\Response\(response="(\d+)", description="([^"]*)",\s*(?:\n\s*\*\s*)?@OA\\JsonContent\(ref="#/components/schemas/ServerResponse"\)\)',rr,s)
+  # MULTILINE-FORM: @OA\Response(\n response="C",\n description="D",\n @OA\JsonContent(ref=ServerResponse)\n )
+  def rm(m):
+    code=m.group(2)
+    if code.startswith('2'):
+      return '%sresponse="%s",%sdescription="%s"%s)'%(m.group(1),code,m.group(3),m.group(4),m.group(5))
+    ref='ValidationErrorResponse' if code=='422' else 'ErrorResponse'
+    return '%sresponse="%s",%sdescription="%s",%s@OA\\JsonContent(ref="#/components/schemas/%s")%s)'%(m.group(1),code,m.group(3),m.group(4),m.group(6),ref,m.group(5))
+  s=re.sub(r'(@OA\\Response\(\s*\n\s*\*\s*)response="(\d+)",(\s*\n\s*\*\s*)description="([^"]*)",(\s*\n\s*\*\s*)@OA\\JsonContent\(ref="#/components/schemas/ServerResponse"\)(\s*\n\s*\*\s*)\)',
+    lambda m: rm(type('M',(),{'group':lambda self,i:{1:m.group(1),2:m.group(2),3:m.group(3),4:m.group(4),5:m.group(6),6:m.group(5)}[i]})()),s)
   open(path,'w').write(s)
   print(path,'unhandled allOf:',left,'remaining ServerResponse refs:',s.count('ServerResponse'))
 if __name__=='__main__':

@@ -26,6 +26,18 @@ class RegExp {
     return $this->_phpRegex;
   }
 
+  /**
+   * The pattern and flags as separate values, the way a JavaScript RegExp constructor takes them
+   *
+   * @return array{source: string, flags: string}
+   */
+  public function toJs():array {
+    return [
+      'source' => $this->_escape($this->_pattern, '/'),
+      'flags' => preg_replace('/[^img]/', '', $this->_modifiers),
+    ];
+  }
+
   public function jsExport():string {
     if (!isset($this->_jsRegex))
       $this->_jsRegex = '/'.$this->_escape($this->_pattern, '/').'/'.preg_replace('/[^img]/', '', $this->_modifiers);

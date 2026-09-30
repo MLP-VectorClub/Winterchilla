@@ -317,7 +317,10 @@ What is left to prepare, in order:
    events, tags, contributions, profiles/personal guide, admin lists — as *data* (structured lists, flags, permissions), never rendered
    HTML. The HTML-fragment fields that exist today (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are
    Winterchilla-UI details and should not be part of what Luna implements; mark them as such in the docs or provide data equivalents.
-3. **`GET /api/v0/config`**: constants, validation patterns (`{source, flags}`), `wsServerHost`, `discordInviteLink`.
+3. ~~`GET /api/v0/config`~~ — done (`ConfigAPIController`, `ConfigApiTest`): `tagTypes`, `roles`, `showTypes`, `maxUploadSize`, `patterns`
+   (`printableAscii`, `hexColor`, `username`, `episodeTitle` as `{source, flags}`), `wsServerHost`, `discordInviteLink`; cacheable for 5
+   minutes. Winterchilla's own page scripts still read the `export_vars` globals (phase 4 "prove it" is deliberately not done: fetching
+   config before page scripts run would change their startup order for no benefit to Celestia/Luna).
 4. **Permissions in the payload** (`canEdit`, `canDelete`, …) so Celestia doesn't re-derive authorization from roles, and **Luna-shaped
    pagination** (`{currentPage, totalPages, totalItems, itemsPerPage}`) on every list.
 5. **Path and naming alignment for the write API — decided: yes.** Luna is resource-oriented (`/appearances/{id}`, `/users/{id}`, `/color-guide`);

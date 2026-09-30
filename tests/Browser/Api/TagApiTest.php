@@ -19,7 +19,7 @@ it('requires staff for every tag endpoint', function () {
   $guest = ApiClient::guest();
   $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
 
-  foreach ([['GET', '/tags'], ['POST', '/tags/recount-uses'], ['GET', '/tags/1'], ['POST', '/tags'], ['PUT', '/tags/1'], ['DELETE', '/tags/1'], ['PUT', '/tags/1/synonym'], ['DELETE', '/tags/1/synonym']] as [$method, $path]) {
+  foreach ([['GET', '/tags/autocomplete'], ['POST', '/tags/recount-uses'], ['GET', '/tags/1'], ['POST', '/tags'], ['PUT', '/tags/1'], ['DELETE', '/tags/1'], ['PUT', '/tags/1/synonym'], ['DELETE', '/tags/1/synonym']] as [$method, $path]) {
     expect($guest->request($method, $path)['status'])->toBe(401, "$method $path as guest")
       ->and($user->request($method, $path)['status'])->toBe(403, "$method $path as user");
   }
@@ -70,12 +70,12 @@ it('lists tags and autocompletes by name', function () {
   $name = uniqueTagName('listed');
   $tag = makeTag($admin, $name);
 
-  $r = $admin->get('/tags');
+  $r = $admin->get('/tags/autocomplete');
   expect($r['status'])->toBe(200)->and($r['json'])->toBeArray();
   $ids = array_column($r['json'], 'id');
   expect($ids)->toContain($tag['id']);
 
-  $r = $admin->get('/tags', ['s' => $name]);
+  $r = $admin->get('/tags/autocomplete', ['s' => $name]);
   expect($r['status'])->toBe(200)
     ->and($r['json'][0])->toHaveKeys(['id', 'name', 'type', 'uses', 'synonymOf'])
     ->and($r['json'][0]['name'])->toBe($name);
@@ -133,7 +133,7 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
 
   // Already a synonym now
   expect($admin->request('PUT', $path, ['targetId' => $target['id']])['status'])->toBe(409);
-  $r = $admin->get('/tags', ['not' => $source['id'], 'action' => 'synon']);
+  $r = $admin->get('/tags/autocomplete', ['not' => $source['id'], 'action' => 'synon']);
   expect($r['status'])->toBe(409)->and($r['json']['synonymOf']['id'])->toBe($target['id']);
 
   $r = $admin->request('DELETE', $path, ['keepTagged' => 1]);
@@ -153,4 +153,32 @@ it('reports validation messages as plain text, not HTML', function () {
   $r = $admin->post('/tags', ['name' => 'bad<b>tag', 'type' => 'app']);
   expect($r['status'])->toBe(422)
     ->and(implode(' ', $r['json']['errors']['name']))->toContain('<b>')->not->toContain('&lt;');
+});
+
+it('lists tags publicly with Luna-shaped pagination', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $tag = makeTag($admin, uniqueTagName('list'));
+
+  try {
+    $r = ApiClient::guest()->get('/tags', ['size' => 100]);
+    expect($r['status'])->toBe(200)
+      ->and($r['json']['canEdit'])->toBeFalse()
+      ->and($r['json']['pagination'])->toHaveKeys(['currentPage', 'totalPages', 'totalItems', 'itemsPerPage'])
+      ->and($r['json']['pagination']['itemsPerPage'])->toBe(100);
+    $listed = array_column($r['json']['tags'], null, 'id');
+    // The new tag may be on a later page when there are more than 100 tags
+    if (isset($listed[$tag['id']]))
+      expect($listed[$tag['id']])->toHaveKeys(['id', 'name', 'type', 'title', 'uses', 'synonymOf'])->and($listed[$tag['id']]['synonymOf'])->toBeNull();
+    expect($admin->get('/tags')['json']['canEdit'])->toBeTrue();
+  }
+  finally {
+    $admin->request('DELETE', '/tags/' . $tag['id']);
+  }
+});
+
+it('validates the tag list query with 422', function () {
+  $guest = ApiClient::guest();
+
+  expect($guest->get('/tags', ['size' => 500])['json']['errors'])->toHaveKey('size');
+  expect($guest->get('/tags', ['page' => 0])['json']['errors'])->toHaveKey('page');
 });

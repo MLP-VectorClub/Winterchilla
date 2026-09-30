@@ -1922,7 +1922,7 @@
             source: (s, callback) => {
               if (tagAutocompleteCache.has(s))
                 return callback(tagAutocompleteCache.get(s));
-              $.API.get(`/tags`, { s }).done(function(resp = {}) {
+              $.API.get(`/tags/autocomplete`, { s }).done(function(resp = {}) {
                 callback(tagAutocompleteCache.set(s, resp));
               });
             },

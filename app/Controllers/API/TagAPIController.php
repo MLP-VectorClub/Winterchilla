@@ -51,8 +51,77 @@ class TagAPIController extends APIController {
   }
 
   /**
+   * @OA\Schema(
+   *   schema="TagListItem",
+   *   type="object",
+   *   required={"id", "name", "type", "title", "uses", "synonymOf"},
+   *   additionalProperties=false,
+   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="name", type="string"),
+   *   @OA\Property(property="type", type="string", nullable=true, enum={"app", "cat", "gen", "spec", "char", null}),
+   *   @OA\Property(property="title", type="string", nullable=true, description="Optional description of the tag"),
+   *   @OA\Property(property="uses", type="integer", minimum=0),
+   *   @OA\Property(property="synonymOf", nullable=true, type="object", required={"id", "name"}, @OA\Property(property="id", ref="#/components/schemas/OneBasedId"), @OA\Property(property="name", type="string"))
+   * )
    * @OA\Get(
    *   path="/tags",
+   *   description="List all tags, grouped by type and ordered by name",
+   *   tags={"tags"},
+   *   security={},
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=100, default=50)),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"tags", "pagination", "canEdit"},
+   *       @OA\Property(property="tags", type="array", @OA\Items(ref="#/components/schemas/TagListItem")),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination"),
+   *       @OA\Property(property="canEdit", type="boolean", description="Whether the current user may manage tags")
+   *     )
+   *   ),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function list() {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $size = $_GET['size'] ?? 50;
+    if (!is_numeric($size) || $size < 1 || $size > 100)
+      Response::invalid('size', 'The size must be between 1 and 100.');
+    $size = (int)$size;
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+    $page = (int)$page;
+
+    $total = DB::$instance->count('tags');
+    $tags = Tags::get([($page - 1) * $size, $size]);
+
+    Response::ok([
+      'tags' => array_map(fn(Tag $t) => [
+        'id' => $t->id,
+        'name' => $t->name,
+        'type' => $t->type,
+        'title' => $t->title,
+        'uses' => $t->uses,
+        'synonymOf' => $t->synonym_of === null ? null : ['id' => $t->synonym->id, 'name' => $t->synonym->name],
+      ], $tags),
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
+      'canEdit' => Permission::sufficient('staff'),
+    ]);
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/tags/autocomplete",
    *   description="Search tags for autocomplete purposes, or list tags for management. Staff only.",
    *   tags={"tags"},
    *   @OA\Parameter(name="not", in="query", description="Exclude a tag ID from the results", @OA\Schema(ref="#/components/schemas/OneBasedId")),

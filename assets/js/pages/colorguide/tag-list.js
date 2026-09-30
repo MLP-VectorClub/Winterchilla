@@ -42,7 +42,7 @@
       case 'synon':
         $.Dialog.wait(`Make ${tagName} a synonym`, 'Retrieving tag list from server');
 
-        $.API.get('/tags', { not: tagID, action: action }).fail($.API.failWith(body => {
+        $.API.get('/tags/autocomplete', { not: tagID, action: action }).fail($.API.failWith(body => {
           // 409: the tag already is a synonym, offer to remove that instead
           if (body.synonymOf) {
             const message = $.mk('div').append(

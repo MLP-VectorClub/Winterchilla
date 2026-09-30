@@ -237,6 +237,86 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
       binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
       survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above
 
+## API-driven pages migration (audit + plan, nothing implemented yet)
+
+**Goal (decided):** move data passing from views to an API — ultimately full API-driven pages (server
+stops embedding data and rendering list/table HTML; the front end fetches JSON and renders), which is
+the shape Celestia/Luna will need. The browser suite above is the regression net: it must stay green
+(or change only where a page's markup legitimately moves) at every step.
+
+### Current state (audit)
+
+Data reaches JS in three ways:
+1. **Datastore blobs.** Templates call `export_vars({...})` (`CoreUtils::exportVars`), emitting
+   `<aside class="datastore">` JSON; `assets/js/datastore.js` copies each key onto `window`. ~27 call
+   sites in 17 templates, read as bare globals by 14 page scripts. Regexes are shipped as `/src/flags`
+   strings and revived by `datastore.js`. `layout/_scripts.html.twig` exports for every page.
+2. **Server-rendered HTML fragments** returned by API endpoints (`'html'` in ~10 API responses: post
+   lists, appearance blocks, `lazyload` endpoints) and whole pages rendered by Twig (episode lists,
+   posts, guide, tag lists, logs).
+3. **Data attributes / inline markup** read by scripts (not audited yet).
+
+Existing API: internal `/api/v0/...` (`config/routes/public_api_v0.php`, 75 endpoints,
+`Controllers/API/*`) is already used by the UI for mutations and some reads; it is not yet a complete
+read API for page data. Note the `/api/v0` docs are generated from swagger-php docblocks.
+
+Globals inventory (key → where exported → readers):
+
+| Group | Keys | Source of value | Readers |
+|---|---|---|---|
+| Static constants | `TAG_TYPES_ASSOC`, `ROLES`, `ROLES_ASSOC`, `showTypes`, `PRINTABLE_ASCII_PATTERN`, `HEX_COLOR_PATTERN`, `MAX_SIZE`, `discordInviteLink` | PHP constants/config | colorguide `manage.jsx`/`tag-list.js`, `user/manage.js`, `admin/useful-links.js`, `event/view.js`, `show/index-manage.jsx`, `global.jsx` |
+| Client config | `wsServerHost`, `signedIn` (unused by JS) | env / session | `websocket.js` |
+| Page context: guide | `GUIDE`, `AppearancePage`, `OwnerId` | route params, appearance owner | `colorguide/guide.js`, `full-list.js`, `manage.jsx` |
+| Page context: user | `username`, `userId`, `sameUser` | profile/account/pcg-slots user | `user/{profile,account,pcg-slots,manage}.js`, `manage.jsx` |
+| Page context: show | `showId`, `showType`, `isEpisodePage`, `linkedPostURL` | show model, share link | `show/{view,manage,index-manage}.js(x)` |
+| Validation regexes | `usernameRegex`, `episodeTitleRegex` | `RegExp` PHP objects | `show/manage.jsx`, `show/index-manage.jsx` |
+| Verify flow | `verifyHash`, `verifyAction` | query string | `user/verify.js` |
+
+### Target design
+
+- **Bootstrap/config endpoint** `GET /api/v0/config` (cacheable): all static constants and validation
+  patterns (as `{source, flags}` objects instead of `/x/` strings), plus `wsServerHost` and
+  `discordInviteLink`. Replaces every "static constants" and "client config" global. The layout's
+  only remaining data is the identity of the page itself (route name + route params), e.g. a
+  `data-page`/`data-params` attribute, or nothing if the router lives in JS.
+- **Resource endpoints for page context**: reuse/complete `/user/[id]`, `/show/[id]`, `/cg/appearance/[id]`,
+  `/cg/guide/[guide]` (new), `/users/me` (exists) so scripts derive `username`, `userId`, `sameUser`,
+  `showType`, `OwnerId`, `GUIDE` from the fetched resource plus URL params, not globals.
+- **List endpoints returning data, not HTML** for: show index (episodes/movies), show posts
+  (`/show/[id]/posts` exists — currently HTML), appearances/guide pages, tag list, users list,
+  contributions, events, admin logs/notices/links. One serializer per resource shared by page and API
+  during the transition so they can't drift.
+- **Client rendering**: page scripts (already React/JSX for the manage screens) render from JSON;
+  HTML templates shrink to a shell. Decide whether to keep server-rendered first paint for SEO-relevant
+  pages (guide/appearance/episode pages are public and indexed) — see open questions.
+
+### Phases
+
+0. **Contract tests** — add API-level tests (plain HTTP, no browser) for every endpoint a phase touches,
+   pinning current JSON shape, so both front ends can be verified against the same contract. Also lets
+   Celestia/Luna reuse them.
+1. **Config endpoint** — implement `/api/v0/config`; migrate static-constant globals one page script at a
+   time; delete the corresponding `export_vars` calls; finally drop the layout export except identity.
+2. **Page context** — replace user/show/guide context globals with resource fetches.
+3. **Regexes** — move `usernameRegex`/`episodeTitleRegex` into the config endpoint; retire the
+   regex-string revival in `datastore.js`.
+4. **Lists to data + client rendering**, page by page, starting with the ones that already have a
+   matching API (`/show/[id]/posts`, tag/appearance autocomplete), ending with the guide/appearance
+   pages (largest, most custom markup).
+5. **Remove `datastore.js`/`export_vars`** once nothing uses them.
+
+Each phase: update or add browser tests first where a page's DOM contract changes, keep the suite green,
+update this section's checkboxes.
+
+### Open questions (need a decision before Phase 4)
+
+- SEO/first paint: keep server-rendered HTML for public indexed pages (guide, appearance, episode,
+  profile) with data-only hydration, or go fully client-rendered? Fully client-rendered needs
+  prerendering or accepting weaker indexing.
+- Versioning: keep changing `/api/v0` in place (it's documented as unstable) or introduce `/api/v1`
+  for the new read endpoints?
+- Auth for the new read endpoints: session cookie only (as today) vs also token auth for Celestia/Luna.
+
 ## Working on this plan
 
 - Update the relevant stage's checkboxes and flip its heading from "not started" → "in progress" →

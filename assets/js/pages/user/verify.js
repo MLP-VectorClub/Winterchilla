@@ -17,7 +17,7 @@
     );
   };
 
-  $.API.post('/user/verify', { hash: verifyHash, action: verifyAction })
+  $.API.post('/users/email/verify', { hash: verifyHash, action: verifyAction })
     .done((resp = {}) => setStatus(true, resp.rawMessage))
     .fail($.API.failWith(body => setStatus(false, body.rawMessage)));
 })();

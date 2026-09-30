@@ -6,7 +6,7 @@
   if ($changeEmailForm.length === 1) {
     const $resendVerification = $('#resend-verification');
     const sendRequest = data => {
-      $.API.post(`/user/${userId}/email`, data).done(function(resp = {}) {
+      $.API.post(`/users/${userId}/email-changes`, data).done(function(resp = {}) {
         $.Dialog.success(false, resp.message, true);
       }).fail($.API.fail());
     };
@@ -54,7 +54,7 @@
       const data = $changePasswordForm.mkData();
 
       $.Dialog.wait('Update password');
-      $.API.post(`/user/password`, data).done(function(resp = {}) {
+      $.API.post(`/users/me/password`, data).done(function(resp = {}) {
         $.Dialog.segway(false, resp.message);
       }).fail($.API.fail());
     });
@@ -86,7 +86,7 @@
 
       $.Dialog.wait(title, `Signing out of ${browser}${platform}`);
 
-      $.API.delete(`/user/session/${sessionID}`).done(function(resp = {}) {
+      $.API.delete(`/users/sessions/${sessionID}`).done(function(resp = {}) {
         if ($li.siblings().length !== 0){
           $li.remove();
           return $.Dialog.close();
@@ -120,7 +120,7 @@
 
     $.Dialog.wait('Syncing');
 
-    $.API.post(`/discord-connect/sync/${userId}`).done(function() {
+    $.API.post(`/users/${userId}/discord/sync`).done(function() {
       $.Navigation.reload(true);
     }).fail($.API.failWith(body => {
       if (body.segway)
@@ -143,7 +143,7 @@
 
         $.Dialog.wait(false);
 
-        $.API.post(`/discord-connect/unlink/${userId}`).done(function(resp = {}) {
+        $.API.delete(`/users/${userId}/discord`).done(function(resp = {}) {
           $.Dialog.segway(false, resp.message);
         }).fail($.API.fail());
       },

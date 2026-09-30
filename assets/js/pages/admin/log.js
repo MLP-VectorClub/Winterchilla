@@ -32,7 +32,7 @@
             $this.addClass('typcn-times color-red').css('cursor', 'not-allowed').off('click');
           };
 
-        $.API.get(`/admin/logs/details/${EntryID}`).fail($.API.failWith(body => {
+        $.API.get(`/admin/logs/${EntryID}`).fail($.API.failWith(body => {
           if (body.unclickable === true)
             $this.replaceWith($this.text().trim());
           $.Dialog.fail(title, body.message);

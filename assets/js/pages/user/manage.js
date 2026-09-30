@@ -31,7 +31,7 @@
         let data = $form.mkData();
         $.Dialog.wait(false, 'Moving user to the new group');
 
-        $.API.put(`/user/${userId}/role`, data).done(function(resp = {}) {
+        $.API.put(`/users/${userId}/role`, data).done(function(resp = {}) {
           if (resp.alreadyIn === true)
             return $.Dialog.close();
 
@@ -69,7 +69,7 @@
 
     $.Dialog.wait('Purge cached contribution data');
 
-    $.API.delete(`/user/${userId}/contrib-cache`).done(function(resp = {}) {
+    $.API.delete(`/users/${userId}/contributions/cache`).done(function(resp = {}) {
       $.Dialog.success(false, resp.message, true);
       $contributions.html(resp.html);
     }).fail($.API.fail());

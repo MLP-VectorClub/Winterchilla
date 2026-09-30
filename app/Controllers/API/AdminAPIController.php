@@ -26,7 +26,7 @@ class AdminAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/admin/logs/details/{id}",
+   *   path="/admin/logs/{id}",
    *   description="Get the details of a log entry. Requires staff role",
    *   tags={"admin"},
    *   @OA\Parameter(
@@ -109,7 +109,7 @@ class AdminAPIController extends APIController {
    *   @OA\Property(property="minrole", ref="#/components/schemas/UserRole")
    * )
    * @OA\Get(
-   *   path="/admin/usefullinks/{id}",
+   *   path="/useful-links/{id}",
    *   description="Get the details of a useful link. Requires staff role",
    *   tags={"admin"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -121,7 +121,7 @@ class AdminAPIController extends APIController {
    *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
-   *   path="/admin/usefullinks",
+   *   path="/useful-links",
    *   description="Create a new useful link. Requires staff role",
    *   tags={"admin"},
    *   @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/UsefulLinkInput")),
@@ -129,7 +129,7 @@ class AdminAPIController extends APIController {
    *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
-   *   path="/admin/usefullinks/{id}",
+   *   path="/useful-links/{id}",
    *   description="Update an existing useful link. Requires staff role",
    *   tags={"admin"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -139,7 +139,7 @@ class AdminAPIController extends APIController {
    *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
-   *   path="/admin/usefullinks/{id}",
+   *   path="/useful-links/{id}",
    *   description="Delete a useful link. Requires staff role",
    *   tags={"admin"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
@@ -236,8 +236,8 @@ class AdminAPIController extends APIController {
   }
 
   /**
-   * @OA\Post(
-   *   path="/admin/usefullinks/reorder",
+   * @OA\Put(
+   *   path="/useful-links/order",
    *   description="Reorder useful links. Requires staff role",
    *   tags={"admin"},
    *   @OA\RequestBody(
@@ -255,7 +255,7 @@ class AdminAPIController extends APIController {
    * )
    */
   public function reorderUsefulLinks() {
-    if ($this->action !== 'POST')
+    if ($this->action !== 'PUT')
       CoreUtils::notAllowed();
 
     $list = (new Input('list', 'int[]', [

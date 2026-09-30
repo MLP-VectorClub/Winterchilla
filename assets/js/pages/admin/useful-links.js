@@ -13,7 +13,7 @@
 
     $.Dialog.wait(`Editing link #${linkid}`, 'Retrieving link information from server');
 
-    $.API.get(`/admin/usefullinks/${linkid}`).done(function(resp = {}) {
+    $.API.get(`/useful-links/${linkid}`).done(function(resp = {}) {
       let data = resp;
       $.Dialog.request(false, getLinkEditForm(linkid), 'Save changes', function($form) {
         $form.find('input[name=label]').val(data.label);
@@ -32,7 +32,7 @@
 
       $.Dialog.wait(false, 'Removing link');
 
-      $.API.delete(`/admin/usefullinks/${linkId}`).done(function(resp = {}) {
+      $.API.delete(`/useful-links/${linkId}`).done(function(resp = {}) {
         $li.remove();
         $('#ufl-link-' + linkId).remove();
         if ($sbUflContainer.is(':empty'))
@@ -79,7 +79,7 @@
         let data = $(this).serialize();
         $.Dialog.wait(false);
 
-        $.API[linkid ? 'put' : 'post'](`/admin/usefullinks${linkid ? `/${linkid}` : ''}`, data).done(function(resp = {}) {
+        $.API[linkid ? 'put' : 'post'](`/useful-links${linkid ? `/${linkid}` : ''}`, data).done(function(resp = {}) {
           $.Navigation.reload(true);
         }).fail($.API.fail());
       });
@@ -106,7 +106,7 @@
         list.push($(this).find('.typcn-arrow-move').remove().end().attr('id').split('-').pop());
       });
 
-      $.API.post('/admin/usefullinks/reorder', { list: list.join(',') }).done(function(resp = {}) {
+      $.API.put('/useful-links/order', { list: list.join(',') }).done(function(resp = {}) {
         $.Navigation.reload(true);
       }).fail($.API.fail());
     }

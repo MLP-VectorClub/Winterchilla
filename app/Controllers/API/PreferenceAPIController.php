@@ -57,7 +57,7 @@ class PreferenceAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/user/{id}/preference/{key}",
+   *   path="/users/{id}/preferences/{key}",
    *   description="Gets the value of a preference for the specified user. Requires user permission, and the requester must be the same user or staff.",
    *   tags={"users"},
    *   @OA\Parameter(
@@ -91,7 +91,7 @@ class PreferenceAPIController extends APIController {
    *   )
    * )
    * @OA\Put(
-   *   path="/user/{id}/preference/{key}",
+   *   path="/users/{id}/preferences/{key}",
    *   description="Sets the value of a preference for the specified user. Requires user permission, and the requester must be the same user or staff.",
    *   tags={"users"},
    *   @OA\Parameter(

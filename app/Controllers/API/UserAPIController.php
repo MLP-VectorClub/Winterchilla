@@ -24,7 +24,7 @@ class UserAPIController extends APIController {
 
   /**
    * @OA\Delete(
-   *   path="/user/session/{id}",
+   *   path="/users/sessions/{id}",
    *   description="Deletes one of the current user's login sessions, or any session if the current user is staff",
    *   tags={"users"},
    *   @OA\Parameter(
@@ -77,7 +77,7 @@ class UserAPIController extends APIController {
 
   /**
    * @OA\Put(
-   *   path="/user/{id}/role",
+   *   path="/users/{id}/role",
    *   description="Changes the role of the specified user. Requires staff permission, the target user must be in the same or a lower-level group than the requester, and a user cannot change their own role.",
    *   tags={"users"},
    *   @OA\Parameter(
@@ -166,7 +166,7 @@ class UserAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/user/password",
+   *   path="/users/me/password",
    *   description="Sets a new password for the currently signed in user. Requires staff permission. If a password is already set, the current password must be provided for verification. On success, all existing sessions of the user are deleted.",
    *   tags={"users","authentication"},
    *   @OA\RequestBody(
@@ -275,7 +275,7 @@ class UserAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/user/{id}/email",
+   *   path="/users/{id}/email-changes",
    *   description="Requests an e-mail address change (or resend of a pending verification e-mail) for the specified user. Requires staff permission. When changing the address of the requester's own account, the current password must be set and verified first.",
    *   tags={"users"},
    *   @OA\Parameter(
@@ -398,7 +398,7 @@ class UserAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/user/verify",
+   *   path="/users/email/verify",
    *   description="Verifies or blocks an e-mail address based on a verification hash sent to that address. Requires staff permission.",
    *   tags={"users"},
    *   @OA\RequestBody(
@@ -479,7 +479,7 @@ class UserAPIController extends APIController {
 
   /**
    * @OA\Delete(
-   *   path="/user/{id}/contrib-cache",
+   *   path="/users/{id}/contributions/cache",
    *   description="Clears the cached contributions list of the specified user and returns the freshly rendered contributions HTML. Requires staff permission.",
    *   tags={"users"},
    *   @OA\Parameter(
@@ -551,7 +551,7 @@ class UserAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/user/{id}/avatar-wrap",
+   *   path="/users/{id}/avatar-wrap",
    *   description="Returns rendered HTML for the avatar of the specified user",
    *   tags={"users"},
    *   security={},
@@ -588,7 +588,7 @@ class UserAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/user/contrib/lazyload/{favme}",
+   *   path="/users/contributions/lazyload/{favme}",
    *   description="Get the rendered link (with preview) of a deviation shown on a contributions page",
    *   tags={"users"},
    *   security={},

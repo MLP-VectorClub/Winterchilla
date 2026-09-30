@@ -121,7 +121,7 @@ from what Luna implements.
 ## Order of work
 
 1. Router helper with a method list (done).
-2. Move resource by resource (settings, notifications, tags, color groups, color-guide export/reindex and appearances, posts, events and show relations are done; next
+2. Move resource by resource (all groups are done — settings, notifications, tags, color groups, color-guide, appearances, posts, events, show relations, users, sessions, preferences, personal guide, Discord, useful links; deviations from the table above are listed under "As built"; before that
    posts/events/show → users/site): route, docblock `path=`, contract tests and client calls in one commit, suite green each time.
 3. Close the read gap (see CLAUDE.md "Next") on the new paths.
 4. Request-body naming (snake_case → camelCase: `image_url`→`imageUrl`, `show_id`→`showId`, `ponyid`→`appearanceId`, `Colors`→`colors`,
@@ -132,3 +132,12 @@ from what Luna implements.
 - `/about/server` vs Luna's `/about/connection` (same purpose, different payloads): align when Celestia's connection page is ported.
 - Whether `/show` should also answer as `/shows`.
 - `GET /posts/{id}/location` (was `POST .../locate`, read-only) needs a contract note: it changes the verb.
+
+## As built (differences from the tables above)
+
+- `POST /users/me/password` stays a POST (the table said PUT); `POST /users/email/verify` and `POST /users/{id}/email-changes` as planned.
+- `DELETE /users/{id}/discord` (unlink) and `POST /users/{id}/discord/sync` have no OpenAPI docblocks yet (the controller never had any).
+- `PUT /useful-links/order` replaces `POST /admin/usefullinks/reorder`; `/admin/notices` and `/admin/stat-cache` are unchanged.
+- UI-only fragment endpoints got the same prefix rename (`/posts/{id}/lazyload`, `/event-entries/{id}/lazyload`, `/users/{id}/avatar-wrap`,
+  `/users/contributions/lazyload/{favme}`) but remain Winterchilla-UI details; `/cg/full` and `/about/upcoming` kept their paths.
+- Request field names are still snake_case (step 4 of the order of work).

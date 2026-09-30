@@ -841,7 +841,7 @@
 
       $.Dialog.wait(title, 'Signing out');
 
-      $.API.post('/da-auth/sign-out').done(function(resp = {}) {
+      $.API.post('/users/signout').done(function(resp = {}) {
         $.Navigation.reload();
       }).fail($.API.fail(title));
     });
@@ -855,7 +855,7 @@
       if ($sessionUpdating === null)
         return;
 
-      $.API.get('/da-auth/status').done(function(resp = {}) {
+      $.API.get('/users/session/status').done(function(resp = {}) {
         if ($sessionUpdating === null)
           return;
 

@@ -151,7 +151,7 @@ class DiscordAuthController extends Controller {
   }
 
   public function unlink($params) {
-    if ($this->action !== 'POST')
+    if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();
 
     $this->setTarget($params);

@@ -11,7 +11,7 @@
 
       const favme = el.dataset.favme;
 
-      $.API.get('/user/contrib/lazyload/' + favme).done(function(resp = {}) {
+      $.API.get('/users/contributions/lazyload/' + favme).done(function(resp = {}) {
         $.loadImages(resp.html).then(function(loaded) {
           $(el).replaceWith(loaded.$el);
         });

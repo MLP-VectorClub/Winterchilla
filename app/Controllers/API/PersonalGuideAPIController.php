@@ -18,7 +18,7 @@ class PersonalGuideAPIController extends APIController {
 
   /**
    * @OA\Post(
-   *   path="/user/{id}/pcg/point-history/recalc",
+   *   path="/users/{id}/personal-guide/point-history/recalculation",
    *   description="Recalculates the Personal Color Guide point history for the specified user. Requires developer permission.",
    *   tags={"personal color guide"},
    *   @OA\Parameter(
@@ -60,7 +60,7 @@ class PersonalGuideAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/user/{id}/pcg/slots",
+   *   path="/users/{id}/personal-guide/slots",
    *   description="Checks whether the specified user is eligible to add a new Personal Color Guide appearance. Fails if PCG appearance creation is disabled for the user, or if they have fewer than 10 available slots.",
    *   tags={"personal color guide"},
    *   security={},
@@ -130,7 +130,7 @@ class PersonalGuideAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/user/{id}/pcg/points",
+   *   path="/users/{id}/personal-guide/points",
    *   description="Gets the number of Personal Color Guide slot points the specified user has available to grant (their available points minus the 10 they need to keep). Requires staff permission.",
    *   tags={"personal color guide"},
    *   @OA\Parameter(
@@ -161,7 +161,7 @@ class PersonalGuideAPIController extends APIController {
    *   )
    * )
    * @OA\Post(
-   *   path="/user/{id}/pcg/points",
+   *   path="/users/{id}/personal-guide/points",
    *   description="Grants or takes Personal Color Guide slot points from the specified user, recording the change with a comment. Requires staff permission. The resulting available point total cannot go below 10.",
    *   tags={"personal color guide"},
    *   @OA\Parameter(

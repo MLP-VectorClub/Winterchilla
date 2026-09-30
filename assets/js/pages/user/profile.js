@@ -84,7 +84,7 @@
 
       $.Dialog.wait('Giving PCG points to ' + username, 'Checking user\'s total points');
 
-      $.API.get(`/user/${userId}/pcg/points`).done(function(resp = {}) {
+      $.API.get(`/users/${userId}/personal-guide/points`).done(function(resp = {}) {
         const $GiveForm = $.mk('form', 'pcg-point-give-form').append(
           $.mk('label').append(
             `<p>Choose how many <strong>points</strong> you want to give. Enter a negative number to take points. You cannot take more points than what the user has, and the free slot cannot be taken away.</p><p><strong>Remember, 10 points = 1 slot!</strong></p>`,
@@ -126,7 +126,7 @@
 
               $.Dialog.wait(false, 'Giving points');
 
-              $.API.post(`/user/${userId}/pcg/points`, data).done(function(resp = {}) {
+              $.API.post(`/users/${userId}/personal-guide/points`, data).done(function(resp = {}) {
                 $.Dialog.segway(false, resp.message);
               }).fail($.API.fail());
             });

@@ -234,7 +234,7 @@
       return mkPonyEditor($this, title);
 
     $.Dialog.wait(title, 'Checking whether there are available slots');
-    $.API.get(`/user/${OwnerId}/pcg/slots`).done(function(resp = {}) {
+    $.API.get(`/users/${OwnerId}/personal-guide/slots`).done(function(resp = {}) {
       mkPonyEditor($this, title);
     }).fail($.API.fail());
   });

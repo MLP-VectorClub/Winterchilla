@@ -70,7 +70,7 @@ class ApiClient {
     if ($method !== 'GET') {
       // The server hands out the CSRF cookie on any response; make sure we have one before writing
       if ($this->cookie('CSRF_TOKEN') === null)
-        $this->raw('GET', TestSeederConstants::API_PATH . '/da-auth/status');
+        $this->raw('GET', TestSeederConstants::API_PATH . '/users/session/status');
       $params['CSRF_TOKEN'] = $this->cookie('CSRF_TOKEN') ?? '';
       // An array (with CURLFile values) is sent as multipart/form-data, a string as urlencoded
       $opts[CURLOPT_POSTFIELDS] = $multipart ? $params : http_build_query($params);

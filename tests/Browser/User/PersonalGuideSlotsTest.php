@@ -11,7 +11,7 @@ $userId = TestSeederConstants::FRESH_USER_ID;
 
 function pcgMake(bool $on):void {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  expect($admin->request('PUT', '/user/' . TestSeederConstants::FRESH_USER_ID . '/preference/a_pcgmake', ['value' => $on ? '1' : '0'])['status'])->toBe(200);
+  expect($admin->request('PUT', '/users/' . TestSeederConstants::FRESH_USER_ID . '/preferences/a_pcgmake', ['value' => $on ? '1' : '0'])['status'])->toBe(200);
 }
 
 it('gives a new user one personal guide appearance and then reports no slots left', function () use ($base, $userId) {

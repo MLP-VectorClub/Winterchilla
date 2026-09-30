@@ -16,7 +16,7 @@
         if (!sure) return;
 
         $.Dialog.wait(false, 'Recalculating');
-        $.API.post(`/user/${userId}/pcg/point-history/recalc`).done(function(resp = {}) {
+        $.API.post(`/users/${userId}/personal-guide/point-history/recalculation`).done(function(resp = {}) {
           $.Navigation.reload(true);
         }).fail($.API.fail());
       },

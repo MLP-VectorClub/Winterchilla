@@ -3,7 +3,7 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-// Contract: /cg/full, /cg/full/reorder and /user/contrib/lazyload/{favme} (tags: color guide, users).
+// Contract: /cg/full, /cg/full/reorder and /users/contributions/lazyload/{favme} (tags: color guide, users).
 
 it('returns the rendered full list of a guide in the requested order', function () {
   $guest = ApiClient::guest();
@@ -46,7 +46,7 @@ it('reorders a guide\'s full list for staff and answers with that guide\'s list 
 });
 
 it('returns the preview link of a cached deviation for the contributions page', function () {
-  $r = ApiClient::guest()->get('/user/contrib/lazyload/dfin001');
+  $r = ApiClient::guest()->get('/users/contributions/lazyload/dfin001');
 
   expect($r['status'])->toBe(200)
     ->and($r['json'])->toHaveKey('html')->not->toHaveKey('status')

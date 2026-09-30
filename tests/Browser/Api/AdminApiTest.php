@@ -10,8 +10,8 @@ it('requires staff for every admin endpoint', function () {
   $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
 
   foreach ([
-    ['GET', '/admin/logs/details/1'], ['GET', '/admin/usefullinks/1'], ['POST', '/admin/usefullinks'], ['PUT', '/admin/usefullinks/1'],
-    ['DELETE', '/admin/usefullinks/1'], ['POST', '/admin/usefullinks/reorder'], ['DELETE', '/admin/stat-cache'],
+    ['GET', '/admin/logs/1'], ['GET', '/useful-links/1'], ['POST', '/useful-links'], ['PUT', '/useful-links/1'],
+    ['DELETE', '/useful-links/1'], ['PUT', '/useful-links/order'], ['DELETE', '/admin/stat-cache'],
   ] as [$method, $path]) {
     expect($guest->request($method, $path)['status'])->toBe(401, "$method $path as guest")
       ->and($user->request($method, $path)['status'])->toBe(403, "$method $path as user");
@@ -22,10 +22,10 @@ it('manages useful links: create, read, update, delete and reorder', function ()
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $label = 'Contract ' . substr(md5(uniqid('', true)), 0, 6);
 
-  $r = $admin->post('/admin/usefullinks', ['label' => $label, 'url' => '/about', 'title' => 'A contract link', 'minrole' => 'guest']);
+  $r = $admin->post('/useful-links', ['label' => $label, 'url' => '/about', 'title' => 'A contract link', 'minrole' => 'guest']);
   expect($r['status'])->toBe(201)->and($r['json'])->toHaveKey('id')->not->toHaveKey('status');
   $id = $r['json']['id'];
-  $path = '/admin/usefullinks/' . $id;
+  $path = '/useful-links/' . $id;
 
   $r = $admin->get($path);
   expect($r['status'])->toBe(200)
@@ -38,7 +38,7 @@ it('manages useful links: create, read, update, delete and reorder', function ()
   // Nothing to change is still a success
   expect($admin->request('PUT', $path, ['label' => $label . ' 2', 'url' => '/about', 'title' => 'A contract link', 'minrole' => 'guest'])['status'])->toBe(204);
 
-  expect($admin->post('/admin/usefullinks/reorder', ['list' => (string)$id])['status'])->toBe(204);
+  expect($admin->request('PUT', '/useful-links/order', ['list' => (string)$id])['status'])->toBe(204);
 
   expect($admin->request('DELETE', $path)['status'])->toBe(204);
   expect($admin->get($path)['status'])->toBe(404);
@@ -47,22 +47,22 @@ it('manages useful links: create, read, update, delete and reorder', function ()
 it('validates useful links with 422 and field errors', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
-  $r = $admin->post('/admin/usefullinks');
+  $r = $admin->post('/useful-links');
   expect($r['status'])->toBe(422)->and($r['json'])->toHaveKeys(['message', 'errors'])->and($r['json']['errors'])->toHaveKey('label');
 
-  $r = $admin->post('/admin/usefullinks', ['label' => 'Valid label', 'url' => '/about', 'minrole' => 'nonsense']);
+  $r = $admin->post('/useful-links', ['label' => 'Valid label', 'url' => '/about', 'minrole' => 'nonsense']);
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('minrole');
 
-  $r = $admin->post('/admin/usefullinks/reorder');
+  $r = $admin->request('PUT', '/useful-links/order');
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('list');
 });
 
 it('404s for missing log entries and links', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
-  expect($admin->get('/admin/logs/details/987654')['status'])->toBe(404)
-    ->and($admin->get('/admin/usefullinks/987654')['status'])->toBe(404)
-    ->and($admin->request('DELETE', '/admin/usefullinks/987654')['status'])->toBe(404);
+  expect($admin->get('/admin/logs/987654')['status'])->toBe(404)
+    ->and($admin->get('/useful-links/987654')['status'])->toBe(404)
+    ->and($admin->request('DELETE', '/useful-links/987654')['status'])->toBe(404);
 });
 
 it('clears the PHP stat cache with 204', function () {

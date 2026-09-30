@@ -426,6 +426,46 @@ display concern to clean up once clients render messages as text.
 `scripts/openapi_drop_server_response.py <file>...` rewrites a controller's docblocks from the legacy
 `ServerResponse` envelope to plain bodies/`ErrorResponse`; the status codes themselves are still edited by hand.
 
+## Database cutover to Luna (audit, nothing implemented yet)
+
+**Goal:** move the prod data into Luna's database and point Winterchilla at it ahead of the cutover.
+Audited 2026-09-30 by comparing migration files (Winterchilla `db/migrations` vs `Luna/database/migrations`) and
+the local dev DB. **Prod was not inspected and no Luna DB was built**, so the drift list below is from source only —
+confirm it with a real schema diff first (see "Next step").
+
+### Status of the earlier schema alignment
+
+Luna's `2020_04_29_190000_import_old_schema` is a port of Winterchilla's post-2020 schema (users table, uuid
+`deviantart_users`, single-column PKs). Later Winterchilla changes Luna followed: blocked_emails and
+email_verifications (`166bfe8`), event cleanup (`9686422`), dropped `notifications.read_action` and
+`show.synopsis_last_checked` (`603f495`), widened `discord_members.access/refresh` (both sides, 2026).
+
+### Drift still open (Winterchilla changed, Luna did not follow)
+
+- [ ] `show_videos` dropped in Winterchilla (2022-03, also deleted `logs` rows of type `video_broken`); Luna still creates it
+- [ ] `show.generation` column and `mlp_generation` enum dropped in Winterchilla (2024-11); Luna's import still creates both,
+      and `MlpGeneration` enum / `MlpGenerationType` DBAL type are still in its code
+- [ ] `discord_members.discriminator` is `smallint` in Winterchilla (2023-05), `char(4)` in Luna
+- [ ] Row cleanups from 2022 that Luna code may still reference: `notifications` of type `sprite-colors`,
+      `user_prefs` key `ep_hidesynopses`
+- `discord_members.display_name` is `varchar(32)` here vs `varchar(128)` in Luna — harmless (Luna's is wider)
+
+### Why a plain dup + reimport is not enough
+
+- **Files are not in the DB.** Sprites, cutie marks and `cm_source` live in `fs/`; Luna reads them via Spatie media
+  library. `php artisan fs:migrate <fs folder> <uid>` (Luna) does the copy and must be part of the cutover.
+- **Luna-owned data would be lost** if Luna's DB is overwritten: `media`, `personal_access_tokens`, `activity_log`,
+  and any users registered natively on Luna. Check whether prod Luna holds anything worth keeping.
+- **Winterchilla on the new DB:** it uses Phinx (`phinxlog`) and expects its own schema. Extra Luna-only tables
+  (`media`, `personal_access_tokens`, `password_resets`, `failed_jobs`, `activity_log`) are fine, but Luna schema changes
+  to shared tables would break it. Safest plan: keep the Winterchilla-schema DB as the source of truth and make Luna's
+  migrations no-ops against it by pre-seeding Laravel's `migrations` table.
+
+### Next step
+
+Copy the prod DB into a scratch DB, `composer install` in Luna, run Luna's migrations on a fresh DB, then diff
+`pg_dump --schema-only` of both. Turn the result into Luna-side "follow Winterchilla" migrations for the open items above.
+
 ## Working on this plan
 
 - Update the relevant stage's checkboxes and flip its heading from "not started" → "in progress" →

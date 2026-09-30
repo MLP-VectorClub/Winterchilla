@@ -90,7 +90,7 @@ class Posts {
       }
     }
     else if (!$editing && $request)
-      Response::fail('Description cannot be empty');
+      Response::invalid('label', 'Description cannot be empty');
     else CoreUtils::set($target, 'label', null);
 
     if ($request){
@@ -104,7 +104,7 @@ class Posts {
         ],
       ]))->out();
       if ($type === null && !$editing)
-        Response::fail('Missing request type');
+        Response::invalid('type', 'Missing request type');
 
       if (!$editing || (isset($type) && $type !== $post->type))
         CoreUtils::set($target, 'type', $type);
@@ -148,14 +148,14 @@ class Posts {
       $image = new ImageProvider($image_url);
     }
     catch (Exception $e){
-      Response::fail($e->getMessage());
+      Response::invalid('image_url', $e->getMessage());
     }
 
     foreach (Post::KINDS as $kind){
       if ($image->preview !== null && !empty($post)){
         $already_used = Post::find_by_preview($image->preview);
         if (!empty($already_used) && $already_used->id !== $post->id)
-          Response::fail("This exact image has already been used for a {$already_used->toAnchor($kind,null,true)} under {$already_used->show->toAnchor()}");
+          Response::error(409, "This exact image has already been used for a {$already_used->toAnchor($kind,null,true)} under {$already_used->show->toAnchor()}");
       }
     }
 
@@ -180,7 +180,7 @@ class Posts {
 
       $already_used = Post::find_by_deviation_id($Image->id);
       if (!empty($already_used))
-        Response::fail("This exact deviation has already been marked as the finished version of  a {$already_used->toAnchor($already_used->kind,null,true)} under {$already_used->show->toAnchor()}");
+        Response::error(409, "This exact deviation has already been marked as the finished version of  a {$already_used->toAnchor($already_used->kind,null,true)} under {$already_used->show->toAnchor()}");
 
       $return = ['deviation_id' => $Image->id];
       $cached_deviation = DeviantArt::getCachedDeviation($Image->id);
@@ -188,12 +188,12 @@ class Posts {
         $author = Users::getDA($cached_deviation->author, 'name');
 
         if (empty($author))
-          Response::fail("Could not fetch local user data for username: $cached_deviation->author");
+          Response::error(502, "Could not fetch local user data for username: $cached_deviation->author");
 
         if (!isset($_REQUEST['allow_overwrite_reserver']) && $reserver_id !== null && $author->user_id !== $reserver_id){
           $sameUser = Auth::$user->id === $reserver_id;
           $person = $sameUser ? 'you' : 'the user who reserved this post';
-          Response::fail("You've linked to an image which was not submitted by $person. If this was intentional, press Continue to proceed with marking the post finished <b>but</b> note that it will make {$author->name} the new reserver.".($sameUser
+          Response::error(409, "You've linked to an image which was not submitted by $person. If this was intentional, press Continue to proceed with marking the post finished <b>but</b> note that it will make {$author->name} the new reserver.".($sameUser
               ? "<br><br>This means that you'll no longer be able to interact with this post until {$author->name} or an administrator cancels the reservation on it."
               : ''), ['retry' => true]);
         }
@@ -207,10 +207,10 @@ class Posts {
       return $return;
     }
     catch (MismatchedProviderException $e){
-      Response::fail('The finished vector must be uploaded to DeviantArt, '.$e->getActualProvider().' links are not allowed');
+      Response::invalid('deviation', 'The finished vector must be uploaded to DeviantArt, '.$e->getActualProvider().' links are not allowed');
     }
     catch (Exception $e){
-      Response::fail($e->getMessage());
+      Response::invalid('deviation', $e->getMessage());
     }
   }
 
@@ -310,9 +310,9 @@ class Posts {
       if ($reserve_as !== null){
         $User = Users::getDA($reserve_as, 'name');
         if (empty($User))
-          Response::fail('User to reserve as does not exist');
+          Response::invalid('as', 'User to reserve as does not exist');
         if (!isset($_POST['screwit']) && Permission::insufficient('member', $User->role))
-          Response::fail('The specified user does not have permission to reserve posts, continue anyway?', ['retry' => true]);
+          Response::error(409, 'The specified user does not have permission to reserve posts, continue anyway?', ['retry' => true]);
 
         $post->reserved_by = $User->id;
       }

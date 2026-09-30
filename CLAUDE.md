@@ -442,7 +442,21 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       invalid-character check was a no-op (`returnError` was passed but the result never used). Personal-guide ownership is
       covered through the seeded personal appearance (owner and staff may manage its groups). Not covered: the
       major-change/`reason` flow when *creating* a change (the seed only provides existing changes).
-- [ ] Everything else — see the inventory and the order above (`Post` next, then `Appearance`).
+- [x] `PostAPIController` (`/post/...`) — statuses only (bodies of the UI-oriented endpoints keep their HTML
+      fragments: `li`, `section`, `pendingReservations`, `button`, `suggestion`, `message`): 401 signed out / 403 without
+      the right role or ownership, 404 missing posts, 409 for state conflicts (already reserved — with the current `li`
+      —, must unfinish first, not reserved/finished yet, locked, reservation limit, duplicate image or deviation,
+      `retry: true` / `canForce: true` flags kept for the "continue anyway" dialogs), 422 field errors (`label`, `type`,
+      `show_id`, `image_url`, `deviation`, `as`), create is 201 (`/post`, `/post/reservation`), edit/finish/delete are 204.
+      GET `/post/{id}` is camelCase (`postedAt`, `reservedAt`, `finishedAt`). Fixed **a real authorization hole**:
+      `_checkPostEditPermission()` joined its request and reservation clauses with `&&` (never both true), so it never
+      denied anyone — signed-out visitors could `GET`/`PUT` any post, and a `PUT` with no fields blanked its label. It now
+      requires sign-in and lets the requester edit an unreserved request, the reserver their reservation, and staff
+      anything. Also fixed: `lazyload` on an unfinished post 500'd (now 409). Not covered (need the network): creating
+      posts, setting images, finishing with a deviation, approval success; `reload` on posts without a deviation
+      would mark the seeded posts broken (their images are `example.com` URLs), so the tests only reload the finished one.
+      `TestSeeder` seeds posts 2 (deletable) and 3 (reserved and finished, with cached deviation metadata).
+- [ ] Everything else — see the inventory and the order above (`Appearance` next; also the HTML-in-message sweep, step 4).
 
 Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,
 $message)` (422 in Laravel's format), `CoreUtils::camelKeys()` for record payloads, and `Input` validation failures

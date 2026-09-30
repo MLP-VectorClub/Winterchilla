@@ -423,7 +423,7 @@
 
         $.API.post('/post', data, function() {
           if (!this.status){
-            if (!this.canforce)
+            if (!this.canForce)
               return $.Dialog.fail(false, this.message);
             return $.Dialog.confirm(false, this.message, ['Go ahead', 'Never mind'], function(sure) {
               if (!sure) return;

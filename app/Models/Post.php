@@ -391,7 +391,7 @@ class Post extends NSModel implements Linkable {
   public function approve() {
     $this->lock = true;
     if (!$this->save())
-      Response::dbError();
+      Response::dbError(status: 500);
 
     LockedPost::record($this->id);
 

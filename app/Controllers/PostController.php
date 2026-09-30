@@ -18,9 +18,9 @@ use OpenApi\Annotations as OA;
  *   additionalProperties=false,
  *   @OA\Property(property="label", type="string", nullable=true, description="Display label for the post"),
  *   @OA\Property(property="type", type="string", enum={"chr","obj","bg"}, description="Request type, only present for requests"),
- *   @OA\Property(property="reserved_at", type="string", format="date-time", description="Date the request was reserved, or an empty string if not set. Only present for developers viewing a reserved request"),
- *   @OA\Property(property="posted_at", type="string", format="date-time", description="Only present for developers"),
- *   @OA\Property(property="finished_at", type="string", format="date-time", description="Date the post was finished, or an empty string if not set. Only present for developers when the post is reserved and finished"),
+ *   @OA\Property(property="reservedAt", type="string", format="date-time", description="Date the request was reserved, or an empty string if not set. Only present for developers viewing a reserved request"),
+ *   @OA\Property(property="postedAt", type="string", format="date-time", description="Only present for developers"),
+ *   @OA\Property(property="finishedAt", type="string", format="date-time", description="Date the post was finished, or an empty string if not set. Only present for developers when the post is reserved and finished"),
  * )
  */
 class PostController extends Controller {

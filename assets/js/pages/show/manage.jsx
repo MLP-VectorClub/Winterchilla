@@ -187,7 +187,7 @@
             ),
           );
 
-        if (typeof data.posted_at === 'string')
+        if (typeof data.postedAt === 'string')
           $PostEditForm.append(
             $.mk('label').append(
               $.mk('span').text('Post timestamp'),
@@ -200,7 +200,7 @@
               }),
             ),
           );
-        if (typeof data.reserved_at === 'string')
+        if (typeof data.reservedAt === 'string')
           $PostEditForm.append(
             $.mk('label').append(
               $.mk('span').text('Reserved at'),
@@ -212,7 +212,7 @@
               }),
             ),
           );
-        if (typeof data.finished_at === 'string')
+        if (typeof data.finishedAt === 'string')
           $PostEditForm.append(
             $.mk('label').append(
               $.mk('span').text('Finished at'),
@@ -265,25 +265,25 @@
             $type.children('option').filter(function() {
               return this.value === data.type;
             }).attr('selected', true);
-          if (typeof data.posted_at === 'string'){
+          if (typeof data.postedAt === 'string'){
             $posted_at = $form.find('[name=posted_at]');
 
-            let posted_at = moment(data.posted_at);
+            let posted_at = moment(data.postedAt);
             $posted_at.val(posted_at.format());
           }
-          if (typeof data.reserved_at === 'string'){
+          if (typeof data.reservedAt === 'string'){
             $reserved_at = $form.find('[name=reserved_at]');
 
-            if (data.reserved_at.length){
-              let reserved = moment(data.reserved_at);
+            if (data.reservedAt.length){
+              let reserved = moment(data.reservedAt);
               $reserved_at.val(reserved.format());
             }
           }
-          if (typeof data.finished_at === 'string'){
+          if (typeof data.finishedAt === 'string'){
             $finished_at = $form.find('[name=finished_at]');
 
-            if (data.finished_at.length){
-              let finished = moment(data.finished_at);
+            if (data.finishedAt.length){
+              let finished = moment(data.finishedAt);
               $finished_at.val(finished.format());
             }
           }
@@ -294,13 +294,13 @@
             if (isRequest)
               newData.type = $type.val();
 
-            if (typeof data.posted_at === 'string'){
+            if (typeof data.postedAt === 'string'){
               newData.posted_at = new Date($posted_at.val());
               if (isNaN(newData.posted_at.getTime()))
                 return $.Dialog.fail(false, 'Post timestamp is invalid');
               newData.posted_at = newData.posted_at.toISOString();
             }
-            if (typeof data.reserved_at === 'string'){
+            if (typeof data.reservedAt === 'string'){
               let reserved_at = $reserved_at.val();
               if (reserved_at.length){
                 newData.reserved_at = new Date(reserved_at);
@@ -309,7 +309,7 @@
                 newData.reserved_at = newData.reserved_at.toISOString();
               }
             }
-            if (typeof data.finished_at === 'string'){
+            if (typeof data.finishedAt === 'string'){
               let finished_at = $finished_at.val().trim();
               if (finished_at.length){
                 newData.finished_at = new Date(finished_at);

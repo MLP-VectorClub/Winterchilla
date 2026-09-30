@@ -24,6 +24,9 @@ class TestSeederConstants {
   public const MOVIE_ID = 2;
   public const EVENT_ID = 1;
   public const POST_ID = 1;
+  // Requests by USER_ID: 2 exists to be deleted, 3 is reserved by ADMIN_ID
+  public const DELETABLE_POST_ID = 2;
+  public const RESERVED_POST_ID = 3;
   // Unread notifications: 1 and 2 belong to USER_ID, 3 to ADMIN_ID
   public const NOTIFICATION_ID = 1;
   public const NOTIFICATION_MARK_READ_ID = 2;

@@ -77,6 +77,29 @@ class TestSeeder extends AbstractSeed {
       'requested_at' => date('c'),
       'show_id'      => 1,
       'requested_by' => 9001,
+    ], [
+      // Requests for the API tests: 2 is deleted by its owner, 3 is already reserved (so its owner can't delete it)
+      'id'           => 2,
+      'type'         => 'chr',
+      'preview'      => 'https://example.com/preview2.png',
+      'fullsize'     => 'https://example.com/full2.png',
+      'label'        => 'Deletable Test Request',
+      'requested_at' => date('c'),
+      'show_id'      => 1,
+      'requested_by' => 9001,
+    ], [
+      'id'           => 3,
+      'type'         => 'obj',
+      'preview'      => 'https://example.com/preview3.png',
+      'fullsize'     => 'https://example.com/full3.png',
+      'label'        => 'Reserved Test Request',
+      'requested_at' => date('c'),
+      'reserved_at'  => date('c'),
+      'deviation_id' => 'dfin001',
+      'finished_at'  => date('c'),
+      'show_id'      => 1,
+      'requested_by' => 9001,
+      'reserved_by'  => 9002,
     ]])->save();
 
     // Notifications about the seeded post: two unread ones for the regular user (the API tests consume one) and
@@ -204,7 +227,7 @@ class TestSeeder extends AbstractSeed {
 
     // Deviation metadata lives in Redis; without these the event page would ask the real DeviantArt oEmbed API
     // about our made-up submission IDs (slow, and a network dependency in tests)
-    foreach (['a1b2c3d' => 'Seeded Entry', 'a1b2c3e' => 'Admin Entry', 'a1b2c3f' => 'Doomed Entry'] as $sub_id => $title)
+    foreach (['a1b2c3d' => 'Seeded Entry', 'a1b2c3e' => 'Admin Entry', 'a1b2c3f' => 'Doomed Entry', 'dfin001' => 'Finished Test Vector'] as $sub_id => $title)
       \App\Models\CachedDeviation::create([
         'provider' => 'fav.me',
         'id' => $sub_id,

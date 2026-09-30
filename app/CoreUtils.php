@@ -156,7 +156,7 @@ class CoreUtils {
     HTTP::statusCode(400);
 
     if (self::isJSONExpected())
-      Response::fail('HTTP 400: Bad Request (e.g. invalid characters in the URL)');
+      Response::error(400, 'Bad Request (e.g. invalid characters in the URL)');
 
     Users::authenticate();
     self::checkNutshell();
@@ -281,7 +281,7 @@ class CoreUtils {
       HTTP::statusCode(400);
       self::logError(__METHOD__.": JSON expected, but this was called instead.\nView: $method_name\nOptions:\n".var_export($options, true)."\nStacktrace:\n".(new Exception())->getTraceAsString(), Logger::WARNING);
       $path = self::escapeHTML($_SERVER['REQUEST_URI']);
-      Response::fail("The requested endpoint ($path) does not support JSON responses");
+      Response::error(406, "The requested endpoint ($path) does not support JSON responses");
     }
 
     // Clear any stray DB parameters before rendering
@@ -1198,7 +1198,7 @@ class CoreUtils {
       );
       if ($throw)
         throw new RuntimeException($errmsg);
-      Response::fail($errmsg);
+      Response::error($Status === false ? 409 : 502, $errmsg);
     }
   }
 

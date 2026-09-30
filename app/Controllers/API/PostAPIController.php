@@ -39,14 +39,14 @@ class PostAPIController extends APIController {
 
   public function _authorize() {
     if (!Auth::$signed_in)
-      Response::fail();
+      Response::error(401);
   }
 
   public function _authorizeMember() {
     $this->_authorize();
 
     if (Permission::insufficient('member'))
-      Response::fail();
+      Response::denied();
   }
 
   /**
@@ -62,19 +62,14 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="broken", type="boolean", description="True if the post's image became unavailable and the user lacks staff permission to see the updated list item"),
    *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item"),
    *           @OA\Property(property="section", type="string", description="CSS selector for the section the list item belongs in")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function reload($params) {
@@ -132,7 +127,7 @@ class PostAPIController extends APIController {
         BrokenPost::record($this->post->id, $response_code, $failing_url, $old_reserver ?? $this->post->reserved_by);
 
         if (Permission::insufficient('staff'))
-          Response::done(['broken' => true]);
+          Response::ok(['broken' => true]);
       }
     }
 
@@ -146,19 +141,25 @@ class PostAPIController extends APIController {
     $section .= ' > ul';
 
     $from_profile = isset($_REQUEST['from']) ? $_REQUEST['from'] === 'profile' : false;
-    Response::done([
+    Response::ok([
       'li' => $this->post->getLi($from_profile, !isset($_REQUEST['cache'])),
       'section' => $section,
     ]);
   }
 
   public function _checkPostEditPermission() {
+    // Requests can be edited by their requester until somebody reserves them, reservations by their reserver,
+    // and everything by staff. (This used to join the request and reservation clauses with && — they can never both
+    // be true — so it never denied anybody, and signed-out visitors could edit or blank any post.)
+    if (!Auth::$signed_in)
+      Response::error(401);
+
     if (
-      ($this->post->is_request && ($this->post->reserved_by !== null || $this->post->requested_by !== Auth::$user->id))
-      && ($this->post->is_reservation && $this->post->reserved_by !== Auth::$user->id)
+      (($this->post->is_request && ($this->post->reserved_by !== null || $this->post->requested_by !== Auth::$user->id))
+        || ($this->post->is_reservation && $this->post->reserved_by !== Auth::$user->id))
       && Permission::insufficient('staff')
     )
-      Response::fail();
+      Response::denied();
   }
 
   /**
@@ -172,34 +173,27 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item (when `from` is not 'suggestion')"),
    *           @OA\Property(property="button", type="string", description="Rendered HTML for the reserve button (when `from=suggestion`)"),
    *           @OA\Property(property="pendingReservations", type="string", description="Rendered HTML for the user's pending reservations (when `from=suggestion`)")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in or insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(
-   *     response="400",
+   *     response="409",
    *     description="Not a request, already reserved, broken, or reservation limit reached",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
-   *           additionalProperties=false,
+   *           required={"message"},
+   *           @OA\Property(property="message", type="string"),
    *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item (set if already reserved by the current user, or by someone else and not overdue)")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="422", description="The user to reserve as does not exist", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/post/{id}/reservation",
@@ -211,20 +205,16 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item, for requests"),
    *           @OA\Property(property="pendingReservations", type="string", description="Rendered HTML for the user's pending reservations (when `from=profile`)")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in or insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Reservation cannot be removed (must unfinish first)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Reservation cannot be removed (must unfinish first)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function reservationApi($params) {
@@ -238,16 +228,16 @@ class PostAPIController extends APIController {
     switch ($this->action){
       case 'POST':
         if (!$this->post->is_request)
-          Response::fail('This endpoint only acts on requests');
+          Response::error(409, 'This endpoint only acts on requests');
 
         $old_reserver = $this->post->reserved_by;
         $is_new_reserver = $old_reserver === null;
         if ($is_new_reserver){
           if (!UserPrefs::get('a_reserve', Auth::$user))
-            Response::fail('You are not allowed to reserve requests');
+            Response::error(403, 'You are not allowed to reserve requests');
 
           if ($this->post->broken)
-            Response::fail('Broken posts cannot be reserved. The image must be updated'.(Permission::sufficient('staff')
+            Response::error(409, 'Broken posts cannot be reserved. The image must be updated'.(Permission::sufficient('staff')
                 ? ' or the broken status cleared' : '').' via the edit menu to make the post reservable.');
 
           Users::checkReservationLimitReached();
@@ -263,9 +253,9 @@ class PostAPIController extends APIController {
         }
         else {
           if ($this->is_user_reserver)
-            Response::fail("You've already reserved this request", ['li' => $this->post->getLi()]);
+            Response::error(409, "You've already reserved this request", ['li' => $this->post->getLi()]);
           if (!$this->post->isOverdue())
-            Response::fail('This request has already been reserved by '.$this->post->reserver->toAnchor(), ['li' => $this->post->getLi()]);
+            Response::error(409, 'This request has already been reserved by '.$this->post->reserver->toAnchor(), ['li' => $this->post->getLi()]);
           $overdue = [
             'reserved_by' => $this->post->reserved_by,
             'reserved_at' => $this->post->reserved_at,
@@ -277,7 +267,7 @@ class PostAPIController extends APIController {
         }
 
         if (!$this->post->save())
-          Response::dbError();
+          Response::dbError(status: 500);
 
         $response = [];
 
@@ -292,44 +282,44 @@ class PostAPIController extends APIController {
         }
         else $response['li'] = $this->post->getLi();
 
-        Response::done($response);
+        Response::ok($response);
       break;
       case 'DELETE':
         $can_delete = $this->is_user_reserver || Permission::sufficient('staff');
         if ($this->post->is_request){
           if ($this->post->reserved_by === null)
-            Response::done(['li' => $this->post->getLi()]);
+            Response::ok(['li' => $this->post->getLi()]);
 
           if (!$can_delete)
-            Response::fail();
+            Response::denied();
 
           if ($this->post->deviation_id !== null)
-            Response::fail('You must unfinish this request before unreserving it.');
+            Response::error(409, 'You must unfinish this request before unreserving it.');
 
           $old_reserver = $this->post->reserved_by;
           $this->post->reserved_by = null;
           $this->post->reserved_at = null;
 
           if (!$this->post->save())
-            Response::dbError();
+            Response::dbError(status: 500);
 
           $response = ['li' => $this->post->getLi()];
           if ($from_profile)
             $response['pendingReservations'] = User::find($old_reserver)->getPendingReservationsHTML($this->is_user_reserver);
 
-          Response::done($response);
+          Response::ok($response);
         }
         else {
           if (!$can_delete)
-            Response::fail();
+            Response::denied();
 
           if ($this->post->deviation_id !== null)
-            Response::fail('You must unfinish this reservation before deleting it.');
+            Response::error(409, 'You must unfinish this reservation before deleting it.');
 
           if (!$this->post->delete())
-            Response::dbError();
+            Response::dbError(status: 500);
 
-          Response::done();
+          Response::noContent();
         }
       break;
       default:
@@ -347,31 +337,28 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"li"},
    *           additionalProperties=false,
    *           @OA\Property(property="message", type="string"),
    *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in or insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Post not reserved/finished, or not in the club gallery", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Post not reserved/finished, or not in the club gallery", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/post/{id}/approval",
    *   description="Revoke approval of a previously approved post (unlock it). Requires staff permission, and developer permission if the deviation is still in the club gallery.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="401", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Post not approved, or still in the club gallery and user is not a developer", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Approval removed"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Post not approved, or still in the club gallery and user is not a developer", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function approvalApi($params) {
@@ -382,10 +369,10 @@ class PostAPIController extends APIController {
     switch ($this->action){
       case 'POST':
         if ($this->post->reserved_by === null)
-          Response::fail('This post has not been reserved by anypony yet');
+          Response::error(409, 'This post has not been reserved by anypony yet');
 
         if (empty($this->post->deviation_id))
-          Response::fail('Only finished posts can be approved');
+          Response::error(409, 'Only finished posts can be approved');
 
         CoreUtils::checkDeviationInClub($this->post->deviation_id);
 
@@ -398,17 +385,17 @@ class PostAPIController extends APIController {
         if ($this->is_user_reserver)
           $response['message'] .= ' '.self::$CONTRIB_THANKS;
 
-        Response::done($response);
+        Response::ok($response);
       break;
       case 'DELETE':
         if (Permission::insufficient('staff'))
-          Response::fail();
+          Response::denied();
 
         if (!$this->post->lock)
-          Response::fail('This post has not been approved yet');
+          Response::error(409, 'This post has not been approved yet');
 
         if (Permission::insufficient('developer') && CoreUtils::isDeviationInClub($this->post->deviation_id) === true)
-          Response::fail("<a href='http://fav.me/{$this->post->deviation_id}' target='_blank' rel='noopener'>This deviation</a> is part of the group gallery, which prevents the post from being unlocked.");
+          Response::error(409, "The deviation (http://fav.me/{$this->post->deviation_id}) is part of the group gallery, which prevents the post from being unlocked.");
 
         $this->post->lock = false;
         $this->post->save();
@@ -419,7 +406,7 @@ class PostAPIController extends APIController {
             'id' => $this->post->id,
           ]);
 
-        Response::done();
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -436,15 +423,11 @@ class PostAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(ref="#/components/schemas/Post")
-   *       }
-   *     )
+   *     @OA\JsonContent(ref="#/components/schemas/Post")
    *   ),
-   *   @OA\Response(response="401", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
    *   path="/post",
@@ -462,36 +445,29 @@ class PostAPIController extends APIController {
    *     )
    *   ),
    *   @OA\Response(
-   *     response="200",
+   *     response="201",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"id","kind"},
    *           additionalProperties=false,
    *           @OA\Property(property="id", type="string", description="Base36-encoded ID of the newly created post"),
    *           @OA\Property(property="kind", type="string", enum={"request","reservation"})
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in or insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(
-   *     response="400",
-   *     description="Validation error",
+   *     response="409",
+   *     description="Reservation limit reached, or the user to post as is not a club member",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
-   *           additionalProperties=false,
-   *           @OA\Property(property="canforce", type="boolean", description="If true, the request can be retried with allow_nonmember set to post a reservation on behalf of a non-member")
+   *           required={"message"},
+   *           @OA\Property(property="message", type="string"),
+   *           @OA\Property(property="canForce", type="boolean", description="If true, the request can be retried with allow_nonmember set to post a reservation on behalf of a non-member")
    *         )
-   *       }
-   *     )
-   *   )
+   *   ),
+   *   @OA\Response(response="422", description="Validation error (image URL, show entry, description, type, user to post as)", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
    *   path="/post/{id}",
@@ -505,15 +481,16 @@ class PostAPIController extends APIController {
    *       description="Fields are only updated if present and changed from the post's current value",
    *       @OA\Property(property="label", type="string", minLength=3, maxLength=255, nullable=true, description="Description for the post (required for requests)"),
    *       @OA\Property(property="type", type="string", enum={"chr","obj","bg"}, description="Request type, only applicable to requests"),
-   *       @OA\Property(property="posted_at", type="string", format="date-time", description="Developer-only: when the post was originally posted/reserved"),
-   *       @OA\Property(property="reserved_at", type="string", format="date-time", nullable=true, description="Developer-only: when the request was reserved (requests only)"),
-   *       @OA\Property(property="finished_at", type="string", format="date-time", nullable=true, description="Developer-only: when the post was marked finished")
+   *       @OA\Property(property="postedAt", type="string", format="date-time", description="Developer-only: when the post was originally posted/reserved"),
+   *       @OA\Property(property="reservedAt", type="string", format="date-time", nullable=true, description="Developer-only: when the request was reserved (requests only)"),
+   *       @OA\Property(property="finishedAt", type="string", format="date-time", nullable=true, description="Developer-only: when the post was marked finished")
    *     )
    *   ),
-   *   @OA\Response(response="200", description="OK (returns success message if nothing was changed)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="401", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Updated (or nothing needed changing)"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function api($params) {
@@ -538,7 +515,7 @@ class PostAPIController extends APIController {
           if (!empty($this->post->reserved_by) && !empty($this->post->deviation_id))
             $response['finished_at'] = !empty($this->post->finished_at) ? date('c', strtotime($this->post->finished_at)) : '';
         }
-        Response::done($response);
+        Response::ok(CoreUtils::camelKeys($response));
       break;
       case 'POST':
         $this->_authorize();
@@ -554,19 +531,19 @@ class PostAPIController extends APIController {
 
         $pref = 'a_post'.mb_substr($kind, 0, 3);
         if (!UserPrefs::get($pref, Auth::$user))
-          Response::fail("You are not allowed to post {$kind}s");
+          Response::error(403, "You are not allowed to post {$kind}s");
 
         $is_reservation = $kind === 'reservation';
         if ($is_reservation){
           if (Permission::insufficient('member'))
-            Response::fail();
+            Response::denied();
           Users::checkReservationLimitReached();
         }
 
         $Image = $this->_checkImage();
         if (!is_object($Image)){
           CoreUtils::logError("Getting post image failed\n".var_export($Image, true));
-          Response::fail('Getting post image failed. If this persists, please <a class="send-feedback">let us know</a>.');
+          Response::error(502, 'Getting post image failed. If this persists, please let us know.');
         }
 
         $post = new Post();
@@ -582,7 +559,7 @@ class PostAPIController extends APIController {
         ]))->out();
         $show = Show::find($show_id);
         if (empty($show))
-          Response::fail('The specified show entry does not exist');
+          Response::invalid('show_id', 'The specified show entry does not exist');
         $post->show_id = $show_id;
 
         $by_id = Auth::$user->id;
@@ -592,10 +569,10 @@ class PostAPIController extends APIController {
             $post_as = Users::getDA($username, 'name');
 
             if (empty($post_as))
-              Response::fail('The user you wanted to post as does not exist');
+              Response::invalid('as', 'The user you wanted to post as does not exist');
 
             if ($kind === 'reservation' && Permission::insufficient('member', $post_as->role) && !isset($_POST['allow_nonmember']))
-              Response::fail('The user you wanted to post as is not a club member, do you want to post as them anyway?', ['canforce' => true]);
+              Response::error(409, 'The user you wanted to post as is not a club member, do you want to post as them anyway?', ['canForce' => true]);
 
             $by_id = $post_as->id;
           }
@@ -605,9 +582,9 @@ class PostAPIController extends APIController {
         Posts::checkPostDetails($post->is_request, $post);
 
         if (!$post->save())
-          Response::dbError();
+          Response::dbError(status: 500);
 
-        Response::done(['id' => $post->getIdString(), 'kind' => $kind]);
+        Response::ok(['id' => $post->getIdString(), 'kind' => $kind], 201);
       break;
       case 'PUT':
         $this->_checkPostEditPermission();
@@ -616,12 +593,12 @@ class PostAPIController extends APIController {
         Posts::checkPostDetails($this->post->is_request, $update, $this->post);
 
         if (empty($update))
-          Response::success('Nothing was changed');
+          Response::noContent();
 
         if (!$this->post->update_attributes($update))
-          Response::dbError();
+          Response::dbError(status: 500);
 
-        Response::done();
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -644,23 +621,21 @@ class PostAPIController extends APIController {
    *       @OA\Property(property="finished_at", type="string", format="date-time", description="Developer-only: overrides the finished timestamp")
    *     )
    *   ),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="401", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="204", description="Marked as finished"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(
-   *     response="400",
-   *     description="Post not reserved, or validation error",
+   *     response="409",
+   *     description="Post not reserved, the deviation is already used, or the linked image was submitted by another user",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
-   *           additionalProperties=false,
+   *           required={"message"},
+   *           @OA\Property(property="message", type="string"),
    *           @OA\Property(property="retry", type="boolean", description="If true, the request can be retried with allow_overwrite_reserver set")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/post/{id}/finish",
@@ -672,19 +647,15 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="remove", type="boolean", description="True if the post was deleted entirely")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Cannot unfinish manually added reservation without unbind", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Cannot unfinish manually added reservation without unbind", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function finishApi($params) {
@@ -695,10 +666,10 @@ class PostAPIController extends APIController {
     switch ($this->action){
       case 'PUT':
         if ($this->post->reserved_by === null)
-          Response::fail('This post has not been reserved by anypony yet');
+          Response::error(409, 'This post has not been reserved by anypony yet');
 
         if (!$this->is_user_reserver && Permission::insufficient('staff'))
-          Response::fail();
+          Response::denied();
 
         $update = Posts::checkPostFinishingImage($this->post->reserved_by);
 
@@ -706,7 +677,7 @@ class PostAPIController extends APIController {
         $update['finished_at'] = $finished_at !== null ? date('c', $finished_at) : date('c');
 
         if (!$this->post->update_attributes($update))
-          Response::dbError();
+          Response::dbError(status: 500);
 
         $postdata = [
           'id' => $this->post->id,
@@ -730,22 +701,22 @@ class PostAPIController extends APIController {
         }
 
         if (!empty($message))
-          Response::success($message);
-        Response::done();
+          Response::ok(['message' => $message]);
+        Response::noContent();
       break;
       case 'DELETE':
         if (!$this->is_user_reserver && Permission::insufficient('staff'))
-          Response::fail();
+          Response::denied();
 
         if (isset($_REQUEST['unbind'])){
           if ($this->post->is_reservation){
             if (!$this->post->delete())
-              Response::dbError();
+              Response::dbError(status: 500);
 
-            Response::success('Reservation deleted', ['remove' => true]);
+            Response::ok(['message' => 'Reservation deleted', 'remove' => true]);
           }
           else if ($this->post->is_request && !$this->is_user_reserver && Permission::insufficient('staff'))
-            Response::fail('You cannot remove the reservation from this post');
+            Response::error(403, 'You cannot remove the reservation from this post');
 
           $update = [
             'reserved_by' => null,
@@ -753,15 +724,15 @@ class PostAPIController extends APIController {
           ];
         }
         else if ($this->post->is_reservation && empty($this->post->preview))
-          Response::fail('This reservation was added directly and cannot be marked unfinished. To remove it, check the unbind from user checkbox.');
+          Response::error(409, 'This reservation was added directly and cannot be marked unfinished. To remove it, check the unbind from user checkbox.');
 
         $update['deviation_id'] = null;
         $update['finished_at'] = null;
 
         if (!$this->post->update_attributes($update))
-          Response::dbError();
+          Response::dbError(status: 500);
 
-        Response::done();
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -780,9 +751,6 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="refresh", type="string", enum={"request","reservation"}, description="Set if the post belongs to the show specified by show_id"),
@@ -795,24 +763,22 @@ class PostAPIController extends APIController {
    *             @OA\Property(property="url", type="string", format="uri", description="URL of the post")
    *           )
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="400", description="Post not found or broken", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="404", description="Post not found or broken", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function locate($params) {
     $this->load_post($params, 'locate');
 
     if (empty($this->post) || $this->post->broken)
-      Response::fail("The post you were linked to has either been deleted or didn't exist in the first place. Sorry.".CoreUtils::responseSmiley(':\\'));
+      Response::error(404, "The post you were linked to has either been deleted or didn't exist in the first place. Sorry.".CoreUtils::responseSmiley(':\\'));
 
     if (isset($_REQUEST['show_id']) && $this->post->show->id === (int)$_REQUEST['show_id'])
-      Response::done([
+      Response::ok([
         'refresh' => $this->post->kind,
       ]);
 
-    Response::done([
+    Response::ok([
       'castle' => [
         'name' => $this->post->show->formatTitle(),
         'url' => $this->post->toURL(),
@@ -830,20 +796,16 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"li"},
    *           additionalProperties=false,
    *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="One of the images is still unavailable", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="One of the images is still unavailable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function unbreak($params) {
@@ -851,7 +813,7 @@ class PostAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     $this->load_post($params, 'finish');
 
@@ -859,7 +821,7 @@ class PostAPIController extends APIController {
       $link = $this->post->{$key};
 
       if (!DeviantArt::isImageAvailable($link))
-        Response::fail("The $key image appears to be unavailable. Please make sure <a href='$link'>this link</a> works and try again. If it doesn't, you will need to replace the image.");
+        Response::error(409, "The $key image appears to be unavailable. Please make sure this link ($link) works and try again. If it doesn't, you will need to replace the image.");
     }
 
     // We fetch the last log entry and restore the reserver from when the post was still up (if applicable)
@@ -877,7 +839,7 @@ class PostAPIController extends APIController {
       'reserved_by' => $this->post->reserved_by,
     ]);
 
-    Response::done(['li' => $this->post->getLi()]);
+    Response::ok(['li' => $this->post->getLi()]);
   }
 
   /**
@@ -904,20 +866,15 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"preview","title"},
    *           additionalProperties=false,
    *           @OA\Property(property="preview", type="string", format="uri"),
    *           @OA\Property(property="title", type="string", nullable=true)
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Invalid or unsupported image URL", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid or unsupported image URL", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function checkImage() {
@@ -928,7 +885,7 @@ class PostAPIController extends APIController {
 
     $Image = $this->_checkImage();
 
-    Response::done([
+    Response::ok([
       'preview' => $Image->preview,
       'title' => $Image->title,
     ]);
@@ -946,10 +903,10 @@ class PostAPIController extends APIController {
       return;
 
     if (empty($this->post))
-      Response::fail("There's no post with the ID $id");
+      Response::error(404, "There's no post with the ID $id");
 
     if ($this->post->lock === true && Permission::insufficient('developer') && !in_array($action, ['unlock', 'lazyload', 'locate'], true))
-      Response::fail('This post has been approved and cannot be edited or removed.');
+      Response::error(409, 'This post has been approved and cannot be edited or removed.');
 
     $this->is_user_reserver = Auth::$signed_in && $this->post->reserved_by === Auth::$user->id;
   }
@@ -960,10 +917,11 @@ class PostAPIController extends APIController {
    *   description="Delete a request post. Requires the user to be signed in and either be the original requester (provided it hasn't been reserved yet) or have staff permission.",
    *   tags={"posts"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="401", description="Not signed in or insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Not a request, or already reserved", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Request deleted"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Not a request, or already reserved", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function deleteRequest($params) {
@@ -975,18 +933,18 @@ class PostAPIController extends APIController {
     $this->load_post($params, 'delete');
 
     if (!$this->post->is_request)
-      Response::fail('Only requests can be deleted using this endpoint');
+      Response::error(409, 'Only requests can be deleted using this endpoint');
 
     if (Permission::insufficient('staff')){
       if (!Auth::$signed_in || $this->post->requested_by !== Auth::$user->id)
-        Response::fail();
+        Response::denied();
 
       if (!empty($this->post->reserved_by))
-        Response::fail('You cannot delete a request that has already been reserved by a group member');
+        Response::error(409, 'You cannot delete a request that has already been reserved by a group member');
     }
 
     if (!$this->post->delete())
-      Response::dbError();
+      Response::dbError(status: 500);
 
     Logs::logAction('req_delete', [
       'show_id' => $this->post->show_id,
@@ -1000,7 +958,7 @@ class PostAPIController extends APIController {
       'lock' => $this->post->lock,
     ]);
 
-    Response::done();
+    Response::noContent();
   }
 
   /**
@@ -1021,20 +979,16 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="li", type="string", description="Rendered HTML for the post's list item (if the post was previously broken)"),
    *           @OA\Property(property="preview", type="string", format="uri", description="New preview image URL (if the post was not previously broken)")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in or insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Post is locked, already reserved, or the image is unavailable", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Post is locked, already reserved, or the image is unavailable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function setImage($params) {
@@ -1045,14 +999,14 @@ class PostAPIController extends APIController {
 
     $this->load_post($params, 'view');
     if ($this->post->lock)
-      Response::fail('This post is locked, its image cannot be changed.');
+      Response::error(409, 'This post is locked, its image cannot be changed.');
 
     if (Permission::insufficient('staff')){
       if ($this->post->posted_by !== Auth::$user->id)
-        Response::fail();
+        Response::denied();
 
       if ($this->post->is_request && $this->post->reserved_by !== null)
-        Response::fail('You cannot change the image of a request that has already been reserved.');
+        Response::error(409, 'You cannot change the image of a request that has already been reserved.');
     }
 
     $image_url = (new Input('image_url', 'string', [
@@ -1064,7 +1018,7 @@ class PostAPIController extends APIController {
 
     // Check image availability
     if (!DeviantArt::isImageAvailable($Image->preview))
-      Response::fail("<p class='align-center'>The specified image doesn't seem to exist. Please verify that you can reach the URL below and try again.<br><a href='{$Image->preview}' target='_blank' rel='noopener'>{$Image->preview}</a></p>");
+      Response::invalid('image_url', "The specified image doesn't seem to exist. Please verify that you can reach this URL and try again: {$Image->preview}");
 
     $old = [
       'preview' => $this->post->preview,
@@ -1075,7 +1029,7 @@ class PostAPIController extends APIController {
     $this->post->fullsize = $Image->fullsize;
     $this->post->broken = false;
     if (!$this->post->save())
-      Response::dbError();
+      Response::dbError(status: 500);
 
     Logs::logAction('img_update', [
       'id' => $this->post->id,
@@ -1085,7 +1039,7 @@ class PostAPIController extends APIController {
       'newfullsize' => $this->post->fullsize,
     ]);
 
-    Response::done($old['broken'] ? ['li' => $this->post->getLi()] : ['preview' => $Image->preview]);
+    Response::ok($old['broken'] ? ['li' => $this->post->getLi()] : ['preview' => $Image->preview]);
   }
 
   /**
@@ -1100,18 +1054,13 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"html"},
    *           additionalProperties=false,
    *           @OA\Property(property="html", type="string", description="Rendered HTML for the post's finished image")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="404", description="Post not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function lazyload($params) {
@@ -1121,9 +1070,11 @@ class PostAPIController extends APIController {
     $this->load_post($params, 'lazyload');
 
     if (empty($this->post))
-      HTTP::statusCode(404, AND_DIE);
+      Response::error(404, 'The post does not exist');
+    if (empty($this->post->deviation_id))
+      Response::error(409, 'This post has not been finished yet');
 
-    Response::done(['html' => $this->post->getFinishedImage(array_key_exists('viewonly', $_GET))]);
+    Response::ok(['html' => $this->post->getFinishedImage(array_key_exists('viewonly', $_GET))]);
   }
 
   /**
@@ -1142,22 +1093,18 @@ class PostAPIController extends APIController {
    *     )
    *   ),
    *   @OA\Response(
-   *     response="200",
+   *     response="201",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"id"},
    *           additionalProperties=false,
    *           @OA\Property(property="id", type="string", description="Base36-encoded ID of the newly created reservation")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in or insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error or show entry does not exist", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error or show entry does not exist", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function addReservation() {
@@ -1167,7 +1114,7 @@ class PostAPIController extends APIController {
     $this->_authorize();
 
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     $_POST['allow_overwrite_reserver'] = true;
     $insert = Posts::checkPostFinishingImage();
@@ -1181,19 +1128,19 @@ class PostAPIController extends APIController {
       ],
     ]))->out();
     if (!DB::$instance->where('id', $show_id)->has(Show::$table_name))
-      Response::fail('The specified show entry does not exist');
+      Response::invalid('show_id', 'The specified show entry does not exist');
     $insert['show_id'] = $show_id;
 
     $insert['finished_at'] = date('c');
 
     $reservation = new Post($insert);
     if (!$reservation->save())
-      Response::dbError();
+      Response::dbError(status: 500);
 
     if (!empty($insert['lock']))
       LockedPost::record($reservation->id);
 
-    Response::success('Reservation added', ['id' => $reservation->getIdString()]);
+    Response::ok(['message' => 'Reservation added', 'id' => $reservation->getIdString()], 201);
   }
 
   /**
@@ -1212,19 +1159,14 @@ class PostAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(
    *           type="object",
    *           required={"suggestion"},
    *           additionalProperties=false,
    *           @OA\Property(property="suggestion", type="string", description="Rendered HTML for the suggested request's list item")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="No more requests available", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="No more requests available", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function suggestRequest() {
@@ -1232,7 +1174,7 @@ class PostAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (Permission::insufficient('user'))
-      Response::fail('You must be signed in to use this feature.');
+      Response::error(401, 'You must be signed in to use this feature.');
 
     $already_loaded = (new Input('already_loaded', 'int[]', [
       Input::IS_OPTIONAL => true,
@@ -1247,13 +1189,13 @@ class PostAPIController extends APIController {
 
     $postIDs = DB::$instance->query($query);
     if (empty($postIDs))
-      Response::fail(($already_loaded !== null ? "You've gone through all" : 'There are no').' available requests, check back later.');
+      Response::error(404, ($already_loaded !== null ? "You've gone through all" : 'There are no').' available requests, check back later.');
     $drawArray = [];
     foreach ($postIDs as $post)
       $drawArray[] = $post['id'];
     $chosen = $drawArray[array_rand($drawArray)];
     /** @var $Request Post */
     $Request = Post::find($chosen);
-    Response::done(['suggestion' => Posts::getSuggestionLi($Request)]);
+    Response::ok(['suggestion' => Posts::getSuggestionLi($Request)]);
   }
 }

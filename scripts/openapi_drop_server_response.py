@@ -45,7 +45,7 @@ def fix(path,codes=None):
     if code.startswith('2'): return '@OA\\Response(response="%s", description="%s")'%(code,m.group(2))
     ref='ValidationErrorResponse' if code=='422' else 'ErrorResponse'
     return '@OA\\Response(response="%s", description="%s", @OA\\JsonContent(ref="#/components/schemas/%s"))'%(code,m.group(2),ref)
-  s=re.sub(r'@OA\\Response\(response="(\d+)", description="([^"]*)", @OA\\JsonContent\(ref="#/components/schemas/ServerResponse"\)\)',rr,s)
+  s=re.sub(r'@OA\\Response\(response="(\d+)", description="([^"]*)",\s*(?:\n\s*\*\s*)?@OA\\JsonContent\(ref="#/components/schemas/ServerResponse"\)\)',rr,s)
   open(path,'w').write(s)
   print(path,'unhandled allOf:',left,'remaining ServerResponse refs:',s.count('ServerResponse'))
 if __name__=='__main__':

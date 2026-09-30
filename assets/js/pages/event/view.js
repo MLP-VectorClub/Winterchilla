@@ -54,8 +54,8 @@
           $form.find('input[name="link"]').val(data.link);
         if (data.title)
           $form.find('input[name="title"]').val(data.title);
-        if (data.prev_src)
-          $form.find('input[name="prev_src"]').val(data.prev_src);
+        if (data.prevSrc)
+          $form.find('input[name="prev_src"]').val(data.prevSrc);
         $form.on('submit', function(e) {
           e.preventDefault();
 
@@ -65,7 +65,7 @@
           $.API.put(`/event/entry/${entryID}`, data, function() {
             if (!this.status) return $.Dialog.fail(false, this.message);
 
-            $li.html(this.entryhtml).rebindFluidbox();
+            $li.html(this.entryHtml).rebindFluidbox();
             $.Dialog.close();
           });
         });

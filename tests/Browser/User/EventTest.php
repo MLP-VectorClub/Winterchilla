@@ -15,7 +15,7 @@ it('shows the seeded event detail page', function () use ($base, $eventId) {
   visit($base . '/event/' . $eventId)
     ->assertNoJavaScriptErrors()
     ->assertSee('Test Coloring Event')
-    ->assertSee('Test Coloring Event');
+    ->assertSee('Seeded Entry');
 });
 
 it('shows event detail for a logged-in user', function () use ($base, $eventId) {

@@ -143,5 +143,27 @@ class TestSeeder extends AbstractSeed {
       'created_at'  => date('c'),
       'updated_at'  => date('c'),
     ]])->save();
+
+    // Event entries: 1 is the regular user's (read/edit tests), 2 the admin's (ownership tests), 3 the regular
+    // user's and only used for deletion. IDs must match TestSeederConstants::EVENT_ENTRY_*.
+    $entry = ['event_id' => 1, 'sub_prov' => 'fav.me', 'prev_src' => null, 'prev_full' => null, 'prev_thumb' => null, 'created_at' => $now = date('c'), 'updated_at' => $now];
+    $this->table('event_entries')->insert([
+      $entry + ['id' => 1, 'sub_id' => 'a1b2c3d', 'title' => 'Seeded Entry', 'submitted_by' => 9001],
+      $entry + ['id' => 2, 'sub_id' => 'a1b2c3e', 'title' => 'Admin Entry', 'submitted_by' => 9002],
+      $entry + ['id' => 3, 'sub_id' => 'a1b2c3f', 'title' => 'Doomed Entry', 'submitted_by' => 9001],
+    ])->save();
+
+    // Deviation metadata lives in Redis; without these the event page would ask the real DeviantArt oEmbed API
+    // about our made-up submission IDs (slow, and a network dependency in tests)
+    foreach (['a1b2c3d' => 'Seeded Entry', 'a1b2c3e' => 'Admin Entry', 'a1b2c3f' => 'Doomed Entry'] as $sub_id => $title)
+      \App\Models\CachedDeviation::create([
+        'provider' => 'fav.me',
+        'id' => $sub_id,
+        'title' => $title,
+        'author' => 'TestUser',
+        'preview' => null,
+        'fullsize' => null,
+        'type' => 'png',
+      ]);
   }
 }

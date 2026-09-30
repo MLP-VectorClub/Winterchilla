@@ -23,11 +23,11 @@ use OpenApi\Annotations as OA;
  *   required={
  *     "link",
  *     "title",
- *     "prev_src",
+ *     "prevSrc",
  *   },
  *   @OA\Property(property="link", type="string", format="uri", description="URL of the submitted deviation or Sta.sh submission"),
  *   @OA\Property(property="title", type="string", minLength=2, maxLength=64),
- *   @OA\Property(property="prev_src", type="string", format="uri", nullable=true, description="URL of the custom preview image, if one was provided"),
+ *   @OA\Property(property="prevSrc", type="string", format="uri", nullable=true, description="URL of the custom preview image, if one was provided"),
  * )
  */
 class EventEntryAPIController extends APIController {
@@ -38,24 +38,24 @@ class EventEntryAPIController extends APIController {
   private function load_event_entry($params, string $action) {
     $lazy_loading = $action === 'lazyload';
     if (!Auth::$signed_in && !$lazy_loading)
-      Response::fail();
+      Response::error(401);
 
     if (!isset($params['entryid']))
-      Response::fail('Entry ID is missing or invalid');
+      Response::error(404, 'Entry ID is missing or invalid');
 
     $this->entry = EventEntry::find((int)$params['entryid']);
     if (empty($this->entry))
-      Response::fail('The requested entry could not be found');
+      Response::error(404, 'The requested entry could not be found');
     if ($lazy_loading)
       return;
 
     if ($action === 'manage' && $this->entry->submitted_by !== Auth::$user->id && Permission::insufficient('staff'))
-      Response::fail("You don't have permission to manage this entry");
+      Response::error(403, "You don't have permission to manage this entry");
 
     $this->load_event(['id' => $this->entry->event_id]);
 
     if ($action !== 'view' && Permission::insufficient('staff') && $this->event->ends_at->getTimestamp() < time())
-      Response::fail('This event has ended, entries can no longer be submitted or modified. Please ask a staff member if you need to make any changes.');
+      Response::error(403, 'This event has ended, entries can no longer be submitted or modified. Please ask a staff member if you need to make any changes.');
   }
 
   private function _processEntryData():array {
@@ -75,10 +75,10 @@ class EventEntryAPIController extends APIController {
       ], false, false);
     }
     catch (MismatchedProviderException | UnsupportedProviderException $e){
-      Response::fail('Entry link must point to a deviation or Sta.sh submission');
+      Response::invalid('link', 'Entry link must point to a deviation or Sta.sh submission');
     }
     catch (Exception $e){
-      Response::fail('Erroe while checking submission link: '.$e->getMessage());
+      Response::invalid('link', 'Error while checking submission link: '.$e->getMessage());
     }
     $update['sub_id'] = $submission->id;
     $update['sub_prov'] = $submission->provider;
@@ -90,7 +90,7 @@ class EventEntryAPIController extends APIController {
         Input::ERROR_INVALID => 'Entry title (@valie) is invalid',
       ],
     ]))->out();
-    CoreUtils::checkStringValidity($title, 'Entry title');
+    CoreUtils::checkStringValidity($title, 'Entry title', field: 'title');
     $update['title'] = $title;
 
     $prev_src = (new Input('prev_src', 'url', [
@@ -104,7 +104,7 @@ class EventEntryAPIController extends APIController {
         $prov = new ImageProvider($prev_src);
       }
       catch (Exception $e){
-        Response::fail('Preview image error: '.$e->getMessage());
+        Response::invalid('prev_src', 'Preview image error: '.$e->getMessage());
       }
       $update['prev_src'] = $prev_src;
       $update['prev_full'] = $prov->fullsize;
@@ -128,16 +128,11 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(ref="#/components/schemas/EventEntry")
-   *       }
-   *     )
+   *     @OA\JsonContent(ref="#/components/schemas/EventEntry")
    *   ),
-   *   @OA\Response(response="403", description="Not signed in, or insufficient permissions to manage this entry",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions to manage this entry", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Get(
    *   path="/event/entry/{entryid}",
@@ -147,16 +142,11 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(ref="#/components/schemas/EventEntry")
-   *       }
-   *     )
+   *     @OA\JsonContent(ref="#/components/schemas/EventEntry")
    *   ),
-   *   @OA\Response(response="403", description="Not signed in, or insufficient permissions to manage this entry",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions to manage this entry", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Put(
    *   path="/event/{id}/entry",
@@ -176,20 +166,14 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(type="object", required={"entryhtml"}, additionalProperties=false,
-   *           @OA\Property(property="entryhtml", type="string", description="Rendered HTML for the updated entry list item")
+   *     @OA\JsonContent(type="object", required={"entryHtml"}, additionalProperties=false,
+   *           @OA\Property(property="entryHtml", type="string", description="Rendered HTML for the updated entry list item")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="400", description="Validation error with the submitted link, title or preview image",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Not signed in, insufficient permissions, or the event has ended",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="422", description="Validation error with the submitted link, title or preview image", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions, or the event has ended", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Put(
    *   path="/event/entry/{entryid}",
@@ -209,42 +193,36 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(type="object", required={"entryhtml"}, additionalProperties=false,
-   *           @OA\Property(property="entryhtml", type="string", description="Rendered HTML for the updated entry list item")
+   *     @OA\JsonContent(type="object", required={"entryHtml"}, additionalProperties=false,
+   *           @OA\Property(property="entryHtml", type="string", description="Rendered HTML for the updated entry list item")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="400", description="Validation error with the submitted link, title or preview image",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Not signed in, insufficient permissions, or the event has ended",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="422", description="Validation error with the submitted link, title or preview image", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions, or the event has ended", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Delete(
    *   path="/event/{id}/entry",
    *   description="Delete the currently logged in user's entry. Requires the entry to belong to the current user (or staff permissions), and the event must not have ended (unless staff).",
    *   tags={"events"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Not signed in, insufficient permissions, or the event has ended",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="500", description="Database error while deleting the entry", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="204", description="Deleted"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions, or the event has ended", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="500", description="Database error while deleting the entry", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    * @OA\Delete(
    *   path="/event/entry/{entryid}",
    *   description="Delete an existing entry. Requires the entry to belong to the current user (or staff permissions), and the event must not have ended (unless staff).",
    *   tags={"events"},
    *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Not signed in, insufficient permissions, or the event has ended",
-   *     @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="500", description="Database error while deleting the entry", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="204", description="Deleted"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions, or the event has ended", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="500", description="Database error while deleting the entry", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    */
   public function api($params) {
@@ -252,10 +230,10 @@ class EventEntryAPIController extends APIController {
       case 'GET':
         $this->load_event_entry($params, 'manage');
 
-        Response::done([
+        Response::ok([
           'link' => "http://{$this->entry->sub_prov}/{$this->entry->sub_id}",
           'title' => $this->entry->title,
-          'prev_src' => $this->entry->prev_src,
+          'prevSrc' => $this->entry->prev_src,
         ]);
       break;
       case 'PUT':
@@ -272,15 +250,15 @@ class EventEntryAPIController extends APIController {
           $this->entry->update_attributes($changes);
         }
 
-        Response::done(['entryhtml' => $this->entry->toListItemHTML($this->event, false, NOWRAP)]);
+        Response::ok(['entryHtml' => $this->entry->toListItemHTML($this->event, false, NOWRAP)]);
       break;
       case 'DELETE':
         $this->load_event_entry($params, 'manage');
 
         if (!$this->entry->delete())
-          Response::dbError('Failed to delete entry');
+          Response::dbError('Failed to delete entry', status: 500);
 
-        Response::done();
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -297,16 +275,11 @@ class EventEntryAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(
-   *       allOf={
-   *         @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *         @OA\Schema(type="object", required={"html"}, additionalProperties=false,
+   *     @OA\JsonContent(type="object", required={"html"}, additionalProperties=false,
    *           @OA\Property(property="html", type="string", description="Rendered HTML of the entry's preview")
    *         )
-   *       }
-   *     )
    *   ),
-   *   @OA\Response(response="404", description="Entry not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
+   *   @OA\Response(response="404", description="Entry not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    * )
    */
   public function lazyload($params) {
@@ -315,6 +288,6 @@ class EventEntryAPIController extends APIController {
 
     $this->load_event_entry($params, 'lazyload');
 
-    Response::done(['html' => $this->entry->getListItemPreview()]);
+    Response::ok(['html' => $this->entry->getListItemPreview()]);
   }
 }

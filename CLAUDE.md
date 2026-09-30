@@ -399,7 +399,14 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       (`postedBy`). Found and fixed two production 500s along the way: `/show/{id}/posts` (template needed
       `signed_in`, only the page context provided it) and `/show/{id}/guide-relations` GET (SQL syntax error
       when no appearance is pinned).
-- [ ] Everything else — see the inventory and the order above (`Event` next).
+- [x] `EventAPIController` + `EventEntryAPIController` (`/event/...`, `/event/entry/...`) — event management,
+      finalizing and entry submission are switched off in the app; they now answer 401/403 first and then `501`
+      (previously a 200 `{status: false}`). Entry read/update/delete: 401/403/404, 422 field errors, delete is 204,
+      `prev_src` → `prevSrc` and `entryhtml` → `entryHtml` in responses (request field names are unchanged).
+      `TestSeeder` seeds three entries plus their Redis-cached deviation metadata (otherwise the event page asks the
+      real DeviantArt oEmbed API about made-up IDs). Not covered: a successful PUT (needs the real DeviantArt link
+      check) and the lazyload success body.
+- [ ] Everything else — see the inventory and the order above (`User` next).
 
 Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,
 $message)` (422 in Laravel's format), `CoreUtils::camelKeys()` for record payloads, and `Input` validation failures

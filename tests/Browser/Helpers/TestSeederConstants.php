@@ -19,5 +19,9 @@ class TestSeederConstants {
   public const NOTIFICATION_ID = 1;
   public const NOTIFICATION_MARK_READ_ID = 2;
   public const ADMIN_NOTIFICATION_ID = 3;
+  // Event entries: 1 and 3 belong to USER_ID (3 is for deletion), 2 to ADMIN_ID
+  public const EVENT_ENTRY_ID = 1;
+  public const ADMIN_EVENT_ENTRY_ID = 2;
+  public const EVENT_ENTRY_DELETE_ID = 3;
   public const API_PATH = '/api/v0';
 }

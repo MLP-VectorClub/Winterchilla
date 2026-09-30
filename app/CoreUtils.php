@@ -1625,6 +1625,27 @@ class CoreUtils {
    *
    * @return void
    */
+  /**
+   * Readable operation IDs in Luna's convention (HTTP method + path segments in PascalCase, `{param}` segments by name):
+   * `GET /appearances/{id}/color-groups` is `GetAppearancesIdColorGroups`. Celestia's type generator
+   * (packages/api-types) names every request/result type after the operation ID, and swagger-php's default is an md5 hash.
+   */
+  public static function apiOperationId(string $method, string $path):string {
+    $segments = preg_split('~[^A-Za-z0-9]+~', $path, -1, PREG_SPLIT_NO_EMPTY);
+
+    return ucfirst(strtolower($method)).implode('', array_map('ucfirst', $segments));
+  }
+
+  private static function assignOperationIds(\OpenApi\Annotations\OpenApi $openapi):void {
+    foreach ($openapi->paths as $path_item){
+      foreach (['get', 'post', 'put', 'delete', 'patch', 'options', 'head'] as $method){
+        $operation = $path_item->{$method};
+        if (is_object($operation))
+          $operation->operationId = self::apiOperationId($method, $path_item->path);
+      }
+    }
+  }
+
   public static function generateApiSchema($only_if_missing = false):void {
     $output_path = APPATH.API_SCHEMA_PATH;
     if ($only_if_missing && file_exists($output_path))
@@ -1643,6 +1664,7 @@ class CoreUtils {
       PROJPATH.'app/Controllers/ColorGuideController.php',
       PROJPATH.'app/Controllers/AdminController.php',
     ]);
+    self::assignOperationIds($openapi);
     if (!$openapi->validate())
       throw new RuntimeException("Invalid OpenAPI schema, could not generate $output_path");
     self::createFoldersFor($output_path);

@@ -280,30 +280,51 @@ the shape Celestia/Luna will need. The browser suite above is the regression net
 4. **Write endpoints' request naming**: requests still use snake_case field names (`image_url`, `show_id`, `target_id`, `allow_nonmember`),
    `Colors`, `CMData`, `APPEARANCE_PAGE`/`FULL_CHANGES_SECTION` flags; responses are camelCase. Decide whether to normalize requests.
 5. **OpenAPI completeness** (phase 3): the docblocks describe statuses and most bodies, but schemas for the HTML-fragment fields and some
-   request bodies are loose; `/docs` hasn't been diffed against Luna's spec.
+   request bodies are loose. Operation IDs are readable and unique now (Luna's convention), and the spec generates Celestia's types; the
+   remaining diff against Luna's spec is listed under "Next" below.
 6. Smaller known gaps: sprite upload of a *successful* personal-guide appearance; `Input` still halts at the first validation error (one
    field error per response); `app/Controllers/...` page routes that answer JSON for `Accept: application/json` are still 406.
 
-### Next: prepare the endpoints first, page rendering later (SSR-ready by construction)
+### Next: prepare the endpoints for Celestia's SSR (Winterchilla itself gets no SSR work)
 
-The intended end state is pages that get their data through the API *and* can be server-rendered. The decision for now is to **prepare
-the endpoints only** and leave page rendering as it is. Constraints to build them with, so the later step is cheap:
-- **One source of truth per resource**: a serializer (`App\Api\…`, plain functions/classes returning arrays) used by the API controller
-  *and* callable in-process by a Twig controller. The page then renders from exactly the data the endpoint returns — no HTTP round trip
-  during SSR, and no second mapping to keep in sync (the existing `mapAppearance`/`to_array`+`camelKeys` calls are the seeds of this).
-- **Data, not HTML**: new endpoints return structured data (lists, flags, permissions); any HTML stays a separate, optional concern
-  (server-rendered fragments are a rendering choice, not part of the contract).
-- **Permissions in the payload**: include what the signed-in caller may do (`canEdit`, `canDelete`, …) so a renderer (Twig today,
-  Celestia/React later) doesn't re-derive authorization from roles.
-- **Initial state for hydration**: when a page is rendered from a serializer, embed the same JSON (`<script type="application/json">`,
-  replacing the `datastore` aside) so the client starts from it instead of refetching; the client falls back to `$.API` when absent.
-- **Config is data too**: `GET /api/v0/config` (constants, `{source, flags}` patterns, `wsServerHost`, `discordInviteLink`) is cacheable and
-  also embeddable as initial state; client code reads it from one module instead of `window.*` globals.
-- **Caching/ETags** on read endpoints that will be hit by SSR (guide, appearance, config), using the existing Redis helpers.
-- Every new endpoint ships with its contract test (`tests/Browser/Api/`) and OpenAPI docblock in the same commit, like the existing ones.
+Winterchilla keeps rendering with Twig until it is retired; **server-side rendering is Celestia's job**, and Celestia already does it. So
+the goal of the remaining API work is that Celestia (Next.js) can build every page from these endpoints, and nothing more — no
+serializer layer for Twig, no hydration state, no in-process rendering path in this repo.
 
-Suggested order when it's picked up: `config` endpoint → appearance/guide reads → show/episode + posts → tag list/users/contributions/events
-→ profile/personal guide/admin lists → then (separately) switch pages to render from the serializers and embed their state.
+How Celestia consumes the API (read from `Celestia/apps/celestia` and `packages/api-types`):
+- Pages fetch in `getServerSideProps` through typed services/fetchers (`src/fetchers/*`, `ColorGuideService(req)` forwards the incoming
+  request's cookies) and pass the result as `initialData`; the browser then talks to the same API through the Next.js `/api` rewrite.
+- Types come from the **OpenAPI spec**: `packages/api-types` turns a spec (`API_JSON_PATH`) into `Get…Request`/`Get…Result` types named after
+  each **operationId**. So the spec is the real interface: a missing, wrong or hash-named operation is a missing type.
+
+Verified 2026-09-30: Celestia's generator runs on our spec (`public/dist/api.json`, written by `scripts/generate_api_schema.php`) and
+the result type-checks (214 request/result types). It exposed that our operationIds were md5 hashes (swagger-php default), which made every
+type name meaningless — fixed: `CoreUtils::apiOperationId()` assigns Luna's convention (`GET /appearances/{id}/color-groups` →
+`GetAppearancesIdColorGroups`), covered by unit tests that also check uniqueness. To re-check by hand: build `packages/api-types` with
+`API_JSON_PATH=<path to api.json>` (do it in a scratch copy, it overwrites `dist/`).
+
+What is left to prepare, in order:
+1. **Close the gap to Luna's public API.** Same method+path already in both: `GET /appearances`, `/appearances/all`,
+   `/appearances/{id}/color-groups`, `/appearances/{id}/sprite`, `/appearances/{id}/preview`, `/users/me`. Luna has these and Winterchilla
+   does not (they are what Celestia's existing fetchers call): `GET /appearances/{id}`, `/appearances/pinned`, `/appearances/autocomplete`,
+   `/appearances/{id}/locate`, `/color-guide`, `/color-guide/major-changes`, `/show`, `/useful-links/sidebar`, `/user-prefs/me`, `/users`,
+   `/users/{id}`, `/users/da/{username}`, `/about/connection`, `/about/members` (plus Luna's own sign-in/token endpoints, which stay Luna's).
+   Winterchilla's equivalents today are HTML pages or differently named internal endpoints (`/cg/appearance/{id}` is the *management* read).
+2. **Read endpoints for everything Celestia does not have yet** (the features still to be re-implemented): episodes/movies and their posts,
+   events, tags, contributions, profiles/personal guide, admin lists — as *data* (structured lists, flags, permissions), never rendered
+   HTML. The HTML-fragment fields that exist today (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are
+   Winterchilla-UI details and should not be part of what Luna implements; mark them as such in the docs or provide data equivalents.
+3. **`GET /api/v0/config`**: constants, validation patterns (`{source, flags}`), `wsServerHost`, `discordInviteLink`.
+4. **Permissions in the payload** (`canEdit`, `canDelete`, …) so Celestia doesn't re-derive authorization from roles, and **Luna-shaped
+   pagination** (`{currentPage, totalPages, totalItems, itemsPerPage}`) on every list.
+5. **Path and naming alignment for the write API.** Luna is resource-oriented (`/appearances/{id}`, `/users/{id}`, `/color-guide`); the
+   Winterchilla write API grew organically (`/cg/appearance/{id}`, `/user/{id}/role`, `/post`, `/cg/colorgroup`, `/show`, `/event`) and its
+   requests are still snake_case (`image_url`, `show_id`, `allow_nonmember`, `Colors`, `CMData`, `APPEARANCE_PAGE`). Decide the target
+   naming *before* handing the contract over (renaming later breaks the generated types), keep the old paths as aliases while both
+   front ends run, and move the Winterchilla client over last.
+6. **Finish the OpenAPI docs**: loose bodies (HTML-fragment fields, some request bodies), one validation error per response (`Input`
+   still stops at the first), and a CI step that generates Celestia's types from the spec so it can't silently regress.
+Every new endpoint ships with its contract test (`tests/Browser/Api/`) and docblock in the same commit, like the existing ones.
 
 ### Current state (audit)
 

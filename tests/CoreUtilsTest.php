@@ -302,4 +302,28 @@ class CoreUtilsTest extends TestCase {
     self::assertEquals('what_the_f_v1', CoreUtils::generateCacheKey(1, 'what', 'the', false));
     self::assertEquals('in_the_name_of_null_v1', CoreUtils::generateCacheKey(1, 'in the name of', null));
   }
+
+  public function testApiOperationId():void {
+    self::assertEquals('GetAppearancesAll', CoreUtils::apiOperationId('get', '/appearances/all'));
+    self::assertEquals('GetAppearancesIdColorGroups', CoreUtils::apiOperationId('GET', '/appearances/{id}/color-groups'));
+    self::assertEquals('PostCgTagsRecountUses', CoreUtils::apiOperationId('post', '/cg/tags/recount-uses'));
+    self::assertEquals('DeleteUserContribLazyloadFavme', CoreUtils::apiOperationId('delete', '/user/contrib/lazyload/{favme}'));
+  }
+
+  public function testGeneratedApiSchemaHasUniqueReadableOperationIds():void {
+    CoreUtils::generateApiSchema();
+    $schema = json_decode(file_get_contents(APPATH.API_SCHEMA_PATH), true, 512, JSON_THROW_ON_ERROR);
+
+    $ids = [];
+    foreach ($schema['paths'] as $path => $operations){
+      foreach ($operations as $method => $operation){
+        if (!is_array($operation))
+          continue;
+        self::assertMatchesRegularExpression('/^[A-Z][A-Za-z0-9]+$/', $operation['operationId'], "$method $path");
+        $ids[] = $operation['operationId'];
+      }
+    }
+    self::assertNotEmpty($ids);
+    self::assertSame($ids, array_values(array_unique($ids)), 'operation IDs must be unique');
+  }
 }

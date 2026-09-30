@@ -171,7 +171,7 @@ class CoreUtils {
     HTTP::statusCode(403);
 
     if (self::isJSONExpected())
-      Response::fail("HTTP 403: You don't have permission to access {$_SERVER['REQUEST_URI']}");
+      Response::error(403, "You don't have permission to access {$_SERVER['REQUEST_URI']}");
 
     Users::authenticate();
     self::checkNutshell();
@@ -188,7 +188,7 @@ class CoreUtils {
     HTTP::statusCode(404);
 
     if (self::isJSONExpected())
-      Response::fail("HTTP 404: Endpoint ({$_SERVER['REQUEST_URI']}) does not exist");
+      Response::error(404, "Endpoint ({$_SERVER['REQUEST_URI']}) does not exist");
 
     Users::authenticate();
     self::checkNutshell();
@@ -205,7 +205,7 @@ class CoreUtils {
     HTTP::statusCode(405);
 
     if (self::isJSONExpected())
-      Response::fail("HTTP 405: The endpoint {$_SERVER['REQUEST_URI']} does not support the {$_SERVER['REQUEST_METHOD']} method");
+      Response::error(405, "The endpoint {$_SERVER['REQUEST_URI']} does not support the {$_SERVER['REQUEST_METHOD']} method");
 
     Users::authenticate();
     self::checkNutshell();

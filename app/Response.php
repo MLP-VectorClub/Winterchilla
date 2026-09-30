@@ -6,7 +6,43 @@ use RuntimeException;
 use function is_array;
 
 class Response {
-  public static function fail(string $message = '', $data = [], bool $prettyPrint = false):never {
+  /**
+   * Responds with a proper HTTP error status and Luna-style body: {"message": "...", ...$extra}
+   * (validation failures use 422 with $extra = ['errors' => ['field' => ['msg', ...]]]).
+   * This is the target format for the API contract; fail() keeps the legacy 200-ish {status:false} body
+   * until the call site is migrated by passing an explicit status.
+   */
+  public static function error(int $httpStatus, string $message = '', array $extra = []):never {
+    if ($message === '')
+      $message = HTTP::STATUS_CODES[$httpStatus] ?? 'Error';
+
+    http_response_code($httpStatus);
+    header('Content-Type: application/json');
+    echo JSON::encode(array_merge(['message' => $message], $extra), JSON_UNESCAPED_SLASHES);
+    exit;
+  }
+
+  /** Responds 2xx with the given data as the body, without the legacy status envelope. */
+  public static function ok(array $data = [], int $httpStatus = 200):never {
+    http_response_code($httpStatus);
+    header('Content-Type: application/json');
+    echo JSON::encode($data, JSON_UNESCAPED_SLASHES);
+    exit;
+  }
+
+  public static function noContent():never {
+    http_response_code(204);
+    exit;
+  }
+
+  /**
+   * Empty message resolves to 401 when signed out and 403 when signed in. Passing $status (during the
+   * migration to HTTP statuses) switches the response to the error() format.
+   */
+  public static function fail(string $message = '', $data = [], bool $prettyPrint = false, ?int $status = null):never {
+    if ($status !== null)
+      self::error($status, $message, is_array($data) ? $data : []);
+
     if (empty($message)){
       $message = Auth::$signed_in ? 'Insufficient permissions.'
         : '<p>You are not signed in (or your session expired).</p><p class="align-center"><button class="typcn green btn-da da-login" id="turbo-sign-in" data-url="/da-auth/begin">Sign back in</button></p>';

@@ -1006,10 +1006,30 @@
       ((method) => {
         $.API[method] = function(url, ...args) {
           const lastArg = args.slice(-1)[0];
+          let errorHandler = null;
           if (typeof lastArg === 'function'){
-            args.splice(-1, 1, $.mkAjaxHandler(lastArg));
+            // Endpoints are moving from `200 {status: false, message}` to proper HTTP error statuses. Keep the
+            // legacy `this.status` / `this.message` contract for callers: 2xx gets `status: true` (204 has no
+            // body at all) and 4xx/5xx JSON errors are delivered to the same callback with `status: false`.
+            const handler = $.mkAjaxHandler(lastArg);
+            args.splice(-1, 1, function(data, textStatus, jqXHR) {
+              if ((jqXHR && jqXHR.status === 204) || data === undefined || data === '')
+                data = {};
+              if (data !== null && typeof data === 'object' && !('status' in data))
+                data.status = true;
+              return handler(data);
+            });
+            errorHandler = function(jqXHR) {
+              const body = jqXHR.responseJSON;
+              if (!body || typeof body !== 'object')
+                return;
+              handler(Object.assign({}, body, { status: false, httpStatus: jqXHR.status }));
+            };
           }
-          return $[method]($.API.API_PATH + url, ...args);
+          const request = $[method]($.API.API_PATH + url, ...args);
+          if (errorHandler !== null)
+            request.fail(errorHandler);
+          return request;
         };
       })(el);
     });

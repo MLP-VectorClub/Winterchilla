@@ -54,6 +54,30 @@ use OpenApi\Annotations as OA;
  *   description="Required for all non-GET requests. The server sets a `CSRF_TOKEN` cookie on every response; its value must be echoed back as a `CSRF_TOKEN` request parameter (query string or body) on subsequent state-changing (POST/PUT/DELETE) requests, or the request will fail with `401 Unauthorized`. This is purely an anti-CSRF measure and is unrelated to user authentication."
  * )
  * @OA\Schema(
+ *   schema="ErrorResponse",
+ *   type="object",
+ *   required={"message"},
+ *   additionalProperties=true,
+ *   @OA\Property(property="message", type="string", description="An error message describing what caused the request to fail", example="The given data was invalid.")
+ * )
+ * @OA\Schema(
+ *   schema="ValidationErrorResponse",
+ *   allOf={
+ *     @OA\Schema(
+ *       type="object",
+ *       required={"errors"},
+ *       @OA\Property(
+ *         property="errors",
+ *         type="object",
+ *         description="A map containing error messages for each field that did not pass validation",
+ *         minProperties=1,
+ *         @OA\AdditionalProperties(type="array", minItems=1, @OA\Items(type="string"))
+ *       )
+ *     ),
+ *     @OA\Schema(ref="#/components/schemas/ErrorResponse")
+ *   }
+ * )
+ * @OA\Schema(
  *   schema="ServerResponse",
  *   required={
  *     "status"

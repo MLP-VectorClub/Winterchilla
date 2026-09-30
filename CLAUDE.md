@@ -425,7 +425,15 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       `tag-list.js`/`manage.jsx` build the dialogs' HTML client-side now. Also fixed: creating/updating a tag
       without a `type` read an undefined index. Not covered by browser tests: the synonym/unsynonym dialogs
       (only through the API).
-- [ ] Everything else — see the inventory and the order above (`ColorGroup` next).
+- [x] `ColorGroupAPIController` (`/cg/colorgroup`, `/cg/colorgroup/{id}`) — 401 for guests, 403 without permission on the
+      appearance (regular users can't touch official-guide groups), 404 for missing groups/appearances, 422 field
+      errors under `ponyid`, `label`, `reason` and `Colors` (the request field keeps its capital `C`; per-color
+      problems are reported on it), create is 201 and update 200 with `{id, cgs, notes|cmList, update|changes}`
+      (rendered HTML fragments), delete 204. GET is camelCase (`appearanceId`, `colors`). Fixed: the group was saved
+      *before* its colors were validated, so a rejected request left an empty/renamed group behind; and the label's
+      invalid-character check was a no-op (`returnError` was passed but the result never used). Not covered: personal
+      guide ownership (no seeded personal appearance) and the major-change/`reason` flow.
+- [ ] Everything else — see the inventory and the order above (`Post` next, then `Appearance`).
 
 Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,
 $message)` (422 in Laravel's format), `CoreUtils::camelKeys()` for record payloads, and `Input` validation failures
@@ -480,6 +488,27 @@ Pulled `fs/cm_source`, `fs/sprites`, `fs/sprites_pcg` (5.5 MB; the rest of `fs/`
   deliberately not documented in its OpenAPI. `fs:migrate` (rightly) refuses to run with orphans, so the rehearsal used a scratch
   copy without them. For the real run, exclude them (or delete them on the server first).
 - The command was run with `--user $(id -u)`; a root-owned `storage/` from earlier root container runs needs a `chown`.
+
+### Running both apps on the imported data (done 2026-09-30)
+
+**Luna** (nginx vhosts `api.luna.lc` / `cdn.luna.lc` from `Luna/setup`, host php-fpm, `.env` pointing at `luna_import`)
+serves the imported data: `/users/{id}`, `/users/da/{name}`, `/about/members`, `/appearances/{id}` (+ `/color-groups`,
+`/full`, `/pinned`), `/color-guide` (418 pony incl. Universal Colors + 21 eqg, matches prod),
+`/color-guide/major-changes`, `/show?types[]=..&order=overall|series` (153 episodes+movies+specials, matches prod).
+Sprites redirect to the CDN vhost and resolve (`200 image/png`). Not usable locally: anything backed by ElasticSearch
+(`/appearances`, `/appearances/autocomplete` fail with "No alive nodes"). `/useful-links/sidebar` is `[]` for guests by
+design. Luna's `/show` payload still has a `generation` field (always `null` on imported data).
+
+**Winterchilla on the Luna-schema DB works.** Started with `php -d variables_order=EGPCS -S ...` and `DB_NAME=luna_import`
+(plain `DB_NAME=... php -S` is *ignored*: `$_ENV` isn't populated from the real environment, so `.env` wins; confirm the
+override took effect with a bogus `DB_NAME`, which should 503), next to the same server on `prod_copy`: 20
+pages/endpoints (cg lists, appearances, tags, blending, show, users, profiles, about, admin 403, `/api/v0/*`) return
+identical status codes and byte-identical bodies apart from the CSP nonce. Caveat: both servers share Redis, so cached
+fragments could hide differences.
+
+**Still not verified:** logged-in flows (DeviantArt sign-in, Sanctum tokens, Luna auth), write endpoints on either app,
+ElasticSearch-backed search on Luna, Luna's response shapes vs Winterchilla's `/api/v0` (different contracts), and a
+full repeat of import + `fs:migrate` into prod's real (empty, migrated) `luna` DB.
 
 ### Why a plain dup + reimport is not enough
 

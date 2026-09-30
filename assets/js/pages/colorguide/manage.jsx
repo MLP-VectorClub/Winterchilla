@@ -380,7 +380,7 @@
   class ColorGroupEditor {
     constructor($group, data = {}) {
       this.mode = 'gui';
-      this.editing = typeof data === 'object' && data.label && data.Colors;
+      this.editing = typeof data === 'object' && data.label && data.colors;
       if (typeof $group !== 'undefined'){
         if ($group instanceof jQuery){
           this.group_id = $group.attr('id').replace(/\D/g, '');
@@ -562,8 +562,8 @@
             ctxmenus();
             if (this.update || this.changes)
               Time.update();
-            if (AppearancePage && this.cm_list)
-              $('#pony-cm-list').html(this.cm_list);
+            if (AppearancePage && this.cmList)
+              $('#pony-cm-list').html(this.cmList);
             $.Dialog.close();
           }
           else $.Dialog.close();
@@ -571,7 +571,7 @@
       });
 
       if (this.editing)
-        this.setColorValues(data.Colors).renderColorInputs();
+        this.setColorValues(data.colors).renderColorInputs();
     }
 
     static factory(title, $group, data) {

@@ -47,7 +47,7 @@ trait ColorGuideAccessTrait {
 
   public function load_appearance($params, bool $set_properties = true):void {
     if (!isset($params['id']))
-      Response::fail('Missing appearance ID');
+      Response::error(404, 'Missing appearance ID');
     $this->appearance = Appearance::find($params['id']);
     if (empty($this->appearance))
       CoreUtils::notFound();

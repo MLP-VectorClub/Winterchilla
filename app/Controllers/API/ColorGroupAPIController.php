@@ -43,10 +43,10 @@ use function count;
  *     "label"
  *   },
  *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
- *   @OA\Property(property="appearance_id", ref="#/components/schemas/OneBasedId"),
+ *   @OA\Property(property="appearanceId", ref="#/components/schemas/OneBasedId"),
  *   @OA\Property(property="order", type="integer", minimum=1),
  *   @OA\Property(property="label", type="string", minLength=2, maxLength=30),
- *   @OA\Property(property="Colors", type="array", description="Only present in the GET response", @OA\Items(ref="#/components/schemas/PrivateColor"))
+ *   @OA\Property(property="colors", type="array", description="Only present in the GET response", @OA\Items(ref="#/components/schemas/PrivateColor"))
  * )
  */
 class ColorGroupAPIController extends APIController {
@@ -64,17 +64,17 @@ class ColorGroupAPIController extends APIController {
   private function load_colorgroup($params) {
     $this->_initialize($params);
     if (!Auth::$signed_in)
-      Response::fail();
+      Response::error(401);
 
     if (!$this->creating){
       if (empty($params['id']))
-        Response::fail('Missing color group ID');
+        Response::error(404, 'Missing color group ID');
       $groupID = (int)$params['id'];
       $this->colorgroup = ColorGroup::find($groupID);
       if (empty($this->colorgroup))
-        Response::fail("There's no color group with the ID of $groupID");
+        Response::error(404, "There's no color group with the ID of $groupID");
       if (($this->colorgroup->appearance->owner_id === null || $this->colorgroup->appearance->owner_id !== Auth::$user->id) && Permission::insufficient('staff'))
-        Response::fail();
+        Response::error(403);
     }
   }
 
@@ -87,13 +87,11 @@ class ColorGroupAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(ref="#/components/schemas/PrivateColorGroup")
-   *     })
+   *     @OA\JsonContent(ref="#/components/schemas/PrivateColorGroup")
    *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Missing/invalid color group ID, or insufficient permission", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Color group not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
    *   path="/cg/colorgroup",
@@ -113,21 +111,21 @@ class ColorGroupAPIController extends APIController {
    *     @OA\Property(property="APPEARANCE_PAGE", type="boolean", description="Whether this request originates from the appearance page; affects which HTML fragments are returned")
    *   )),
    *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object",
+   *     response="201",
+   *     description="Created",
+   *     @OA\JsonContent(type="object",
+   *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of the color group"),
    *         @OA\Property(property="cgs", type="string", description="Rendered HTML of the appearance's color groups"),
    *         @OA\Property(property="changes", type="string", description="Rendered HTML of the major changes section, present when major changes apply and called from the appearance page"),
    *         @OA\Property(property="update", type="string", description="Rendered HTML update notice, present when major changes apply and not called from the appearance page"),
-   *         @OA\Property(property="cm_list", type="string", description="Rendered HTML of the cutie marks list, present when called from the appearance page"),
+   *         @OA\Property(property="cmList", type="string", description="Rendered HTML of the cutie marks list, present when called from the appearance page"),
    *         @OA\Property(property="notes", type="string", description="Rendered HTML of the appearance's notes, present when not called from the appearance page")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error, e.g. duplicate color group label or invalid color data", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error, e.g. duplicate color group label or invalid color data (errors are reported under label, reason or Colors)", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
    *   path="/cg/colorgroup/{id}",
@@ -151,27 +149,29 @@ class ColorGroupAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object",
+   *     @OA\JsonContent(type="object",
+   *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of the color group"),
    *         @OA\Property(property="cgs", type="string", description="Rendered HTML of the appearance's color groups"),
    *         @OA\Property(property="changes", type="string", description="Rendered HTML of the major changes section, present when major changes apply and called from the appearance page"),
    *         @OA\Property(property="update", type="string", description="Rendered HTML update notice, present when major changes apply and not called from the appearance page"),
-   *         @OA\Property(property="cm_list", type="string", description="Rendered HTML of the cutie marks list, present when called from the appearance page"),
+   *         @OA\Property(property="cmList", type="string", description="Rendered HTML of the cutie marks list, present when called from the appearance page"),
    *         @OA\Property(property="notes", type="string", description="Rendered HTML of the appearance's notes, present when not called from the appearance page")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="400", description="Color group not found, insufficient permission, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Color group not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error (errors are reported under label, reason or Colors)", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/cg/colorgroup/{id}",
    *   description="Delete a color group and its colors. The user must be signed in and either own the appearance's personal guide or be staff.",
    *   tags={"color groups"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Color group not found or insufficient permission", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Deleted"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Color group not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function api($params) {
@@ -180,14 +180,14 @@ class ColorGroupAPIController extends APIController {
     switch ($this->action){
       case 'GET':
         $out = $this->colorgroup->to_array();
-        $out['Colors'] = [];
+        $out['colors'] = [];
         foreach ($this->colorgroup->colors as $c){
           /** @noinspection UnsupportedStringOffsetOperationsInspection */
-          $out['Colors'][] = $c->to_array([
+          $out['colors'][] = $c->to_array([
             'except' => 'group_id',
           ]);
         }
-        Response::done($out);
+        Response::ok(CoreUtils::camelKeys($out));
       break;
       case 'POST':
       case 'PUT':
@@ -214,11 +214,11 @@ class ColorGroupAPIController extends APIController {
             Input::ERROR_RANGE => 'Color group label must be between @min and @max characters long',
           ],
         ]))->out();
-        CoreUtils::checkStringValidity($label, 'Color group label', INVERSE_PRINTABLE_ASCII_PATTERN, true);
+        CoreUtils::checkStringValidity($label, 'Color group label', INVERSE_PRINTABLE_ASCII_PATTERN, field: 'label');
         if (!$this->creating)
           DB::$instance->where('id', $this->colorgroup->id, '!=');
         if (DB::$instance->where('appearance_id', $this->colorgroup->appearance_id)->where('label', $label)->has(ColorGroup::$table_name))
-          Response::fail('There is already a color group with the same name on this appearance.');
+          Response::invalid('label', 'There is already a color group with the same name on this appearance.');
         $this->colorgroup->label = $label;
 
         if ($this->colorgroup->appearance->owner_id === null){
@@ -231,12 +231,11 @@ class ColorGroupAPIController extends APIController {
                 Input::ERROR_RANGE => 'The reason cannot be longer than @max characters',
               ],
             ]))->out();
-            CoreUtils::checkStringValidity($reason, 'Change reason');
+            CoreUtils::checkStringValidity($reason, 'Change reason', field: 'reason');
           }
         }
 
-        $this->colorgroup->save();
-
+        // The group itself is saved after the colors have been validated so a rejected request changes nothing
         $oldcolors = $this->creating ? null : $this->colorgroup->colors;
         $oldColorIDs = [];
         if (!$this->creating){
@@ -252,7 +251,7 @@ class ColorGroupAPIController extends APIController {
           ],
         ]))->out();
         if (count($recvColors) < 1)
-          Response::fail('Each color group must have at least one color');
+          Response::invalid('Colors', 'Each color group must have at least one color');
 
         /** @var $newcolors Color[] */
         $newcolors = [];
@@ -264,34 +263,33 @@ class ColorGroupAPIController extends APIController {
           if (!empty($c['id'])){
             $append = Color::find($c['id']);
             if (empty($append))
-              Response::fail("Trying to edit color with ID {$c['id']} which does not exist");
+              Response::invalid('Colors', "Trying to edit color with ID {$c['id']} which does not exist");
             if ($append->group_id !== $this->colorgroup->id)
-              Response::fail("Trying to modify color with ID {$c['id']} which is not part of the color group you're editing");
+              Response::invalid('Colors', "Trying to modify color with ID {$c['id']} which is not part of the color group you're editing");
             $append->order = $part + 1;
             $index = "(ID: {$c['id']})";
             $recvColorIDs[] = $c['id'];
           }
           else {
             $append = new Color([
-              'group_id' => $this->colorgroup->id,
               'order' => $part + 1,
             ]);
             $index = "(index: $part)";
           }
 
           if (empty($c['label']))
-            Response::fail("You must specify a color name $index");
+            Response::invalid('Colors', "You must specify a color name $index");
           $label = CoreUtils::trim($c['label']);
-          CoreUtils::checkStringValidity($label, "Color $index name");
+          CoreUtils::checkStringValidity($label, "Color $index name", field: 'Colors');
           $ll = mb_strlen($label);
           if ($ll < 3 || $ll > 30)
-            Response::fail("The color name must be between 3 and 30 characters in length $index");
+            Response::invalid('Colors', "The color name must be between 3 and 30 characters in length $index");
           $append->label = $label;
 
           if (!empty($c['hex'])) {
             $hex = CoreUtils::trim($c['hex']);
             if (!Regexes::$hex_color->match($hex, $_match))
-              Response::fail('Hex color '.CoreUtils::escapeHTML($hex)." is invalid, please leave empty or fix $index");
+              Response::invalid('Colors', 'Hex color '.CoreUtils::escapeHTML($hex)." is invalid, please leave empty or fix $index");
             $append->hex = '#'.strtoupper($_match[1]);
             if ($this->colorgroup->appearance->owner_id === null)
               $append->hex = CGUtils::roundHex($append->hex);
@@ -311,15 +309,18 @@ class ColorGroupAPIController extends APIController {
         $newlabels = [];
         foreach ($newcolors as $color){
           if (isset($newlabels[$color->label]))
-            Response::fail('The color name "'.CoreUtils::escapeHTML($color->label).'" appears in this color group more than once. Please choose a unique name or add numbering to the colors.');
+            Response::invalid('Colors', 'The color name "'.CoreUtils::escapeHTML($color->label).'" appears in this color group more than once. Please choose a unique name or add numbering to the colors.');
 
           $newlabels[$color->label] = true;
         }
         unset($newlabels);
         #### Validation ends here - No removal/modification of any colors before this point ####
 
+        $this->colorgroup->save();
+
         $colorError = false;
         foreach ($newcolors as $c){
+          $c->group_id = $this->colorgroup->id;
           if ($c->save())
             continue;
 
@@ -332,7 +333,7 @@ class ColorGroupAPIController extends APIController {
         }
         /** @var $newcolors Color[] */
         if ($colorError)
-          Response::fail("There were some issues while saving the colors. Please <a class='send-feedback'>let us know</a> about this error, so we can look into why it might've happened.");
+          Response::error(500, "There were some issues while saving the colors. Please let us know about this error, so we can look into why it might've happened.");
 
         if (!isset($check_colors_of[$this->colorgroup->appearance_id]))
           $check_colors_of[$this->colorgroup->appearance_id] = $this->colorgroup->appearance;
@@ -343,7 +344,7 @@ class ColorGroupAPIController extends APIController {
             $appearance->clearRenderedImages([Appearance::CLEAR_CM]);
         }
 
-        $response = ['cgs' => $this->colorgroup->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)];
+        $response = ['id' => $this->colorgroup->id, 'cgs' => $this->colorgroup->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)];
 
         if ($this->colorgroup->appearance->owner_id === null && $major){
           MajorChange::record($this->colorgroup->appearance_id, $reason);
@@ -357,7 +358,7 @@ class ColorGroupAPIController extends APIController {
         }
 
         if ($this->appearance_page)
-          $response['cm_list'] = Cutiemarks::getListForAppearancePage(CutieMarks::get($this->colorgroup->appearance), NOWRAP);
+          $response['cmList'] = Cutiemarks::getListForAppearancePage(CutieMarks::get($this->colorgroup->appearance), NOWRAP);
         else $response['notes'] = Appearance::find($this->colorgroup->appearance_id)->getNotesHTML(NOWRAP);
 
         $logdata = [];
@@ -386,7 +387,7 @@ class ColorGroupAPIController extends APIController {
           Logs::logAction('cg_modify', $logdata);
         }
 
-        Response::done($response);
+        Response::ok($response, $this->creating ? 201 : 200);
       break;
       case 'DELETE':
         $Appearance = $this->colorgroup->appearance;
@@ -401,7 +402,7 @@ class ColorGroupAPIController extends APIController {
           'order' => $this->colorgroup->order,
         ]);
 
-        Response::success('Color group deleted successfully');
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();

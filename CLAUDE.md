@@ -456,7 +456,22 @@ directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `g
       posts, setting images, finishing with a deviation, approval success; `reload` on posts without a deviation
       would mark the seeded posts broken (their images are `example.com` URLs), so the tests only reload the finished one.
       `TestSeeder` seeds posts 2 (deletable) and 3 (reserved and finished, with cached deviation metadata).
-- [ ] Everything else — see the inventory and the order above (`Appearance` next; also the HTML-in-message sweep, step 4).
+- [x] `AppearanceAPIController` (`/cg/appearance/...`) and the helpers behind it (`Appearance::checkCreatePermission`,
+      `Image`, `CGUtils` uploads, `Appearances` reindexing) — 401/403/404; 422 field errors (`label`, `guide`, `cgs`,
+      `cutiemarks`, `CMData`, `file`, `image_url`); 409 for state conflicts (pinned appearances can't be deleted,
+      personal guides have no tags/relations/pins, not enough color groups to reorder, no slots left); create is 201
+      (`{id, goto, message}`), delete/selective clear/tag update are 204, pin/unpin keep a `message` body the UI shows;
+      ElasticSearch down is 503 (reindex). `keep_dialog` → `keepDialog`, `newurl` → `newUrl`. Regular users get 403 when
+      creating personal appearances (the `a_pcgmake` preference is off by default) — the success path needs that
+      preference and isn't covered. Not covered: sprite upload, template application, sanitize-svg, cutie mark saving
+      (file/network heavy).
+- [ ] **Still legacy (`{status: bool}` + HTTP 200)** — found by grepping `Response::fail|success|done` after the above:
+      `AdminAPIController` (log details, useful links, notices), `PreferenceAPIController` (+ `UserPrefs`),
+      `PersonalGuideAPIController` (slots/points), `ColorGuideAPIController` (full-list reorder, export/reindex),
+      `AppearancesAPIController` (the *public* API — returns string codes like `COLOR_GUIDE.APPEARANCE_NOT_FOUND`
+      with 200; Luna's equivalent is the reference), `DiscordAuthController` sync/unlink, `UserController::contribLazyload`,
+      `ColorGuideController` search, `DiscordMember` and `Notification` model failures. Then the HTML-in-message sweep
+      (step 4) and removing the `$.API` shim.
 
 Shared helpers added along the way: `Response::denied()` (401 signed out / 403 signed in), `Response::invalid($field,
 $message)` (422 in Laravel's format), `CoreUtils::camelKeys()` for record payloads, and `Input` validation failures

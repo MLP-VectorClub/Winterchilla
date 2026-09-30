@@ -29,11 +29,11 @@ class Image {
       throw new RuntimeException("getimagesize could not read $tmp");
     /** @var $imageSize array */
     if (is_array($allowedMimeTypes) && !in_array($imageSize['mime'], $allowedMimeTypes, true))
-      Response::fail('This type of image is now allowed: '.$imageSize['mime']);
+      Response::invalid('file', 'This type of image is now allowed: '.$imageSize['mime']);
     [$width, $height] = $imageSize;
 
     if ($width + $height === 0)
-      Response::fail('The uploaded file is not an image');
+      Response::invalid('file', 'The uploaded file is not an image');
 
     return [$width, $height];
   }
@@ -52,7 +52,7 @@ class Image {
     $tooBig = $width > $max[0] || $height > $max[1];
     if ($tooSmall || $tooBig){
       CoreUtils::deleteFile($path);
-      Response::fail("The image's ".(
+      Response::invalid('file', "The image's ".(
         ($tooBig ? $width > $max[0] : $width < $min[0])
           ? (
         ($tooBig ? $height > $max[1] : $height < $min[1])

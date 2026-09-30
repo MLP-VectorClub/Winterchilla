@@ -68,14 +68,11 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(ref="#/components/schemas/PrivateAppearance")
-   *     })
+   *     @OA\JsonContent(ref="#/components/schemas/PrivateAppearance")
    *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Post(
    *   path="/cg/appearance",
@@ -90,19 +87,17 @@ class AppearanceAPIController extends APIController {
    *     @OA\Property(property="template", type="boolean", description="Whether to apply the default color group template to the new appearance")
    *   )),
    *   @OA\Response(
-   *     response="200",
+   *     response="201",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
+   *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
    *         @OA\Property(property="goto", type="string", format="uri", description="URL of the newly created appearance"),
    *         @OA\Property(property="info", type="string", description="Additional info, e.g. if applying the template failed")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to create appearances", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to create appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Put(
    *   path="/cg/appearance/{id}",
@@ -115,42 +110,39 @@ class AppearanceAPIController extends APIController {
    *     @OA\Property(property="label", type="string", minLength=2, maxLength=70, description="Appearance name"),
    *     @OA\Property(property="notes", type="string", nullable=true, maxLength=1000, description="Raw (markdown) notes"),
    *     @OA\Property(property="private", type="boolean", description="Whether the appearance should be private"),
-   *     @OA\Property(property="APPEARANCE_PAGE", type="boolean", description="Whether this request originates from the appearance page; when set, the response will not include 'label', 'newurl' or 'notes'")
+   *     @OA\Property(property="APPEARANCE_PAGE", type="boolean", description="Whether this request originates from the appearance page; when set, the response will not include 'label', 'newUrl' or 'notes'")
    *   )),
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="label", type="string"),
-   *         @OA\Property(property="newurl", type="string", format="uri", description="New URL if the label changed"),
+   *         @OA\Property(property="newUrl", type="string", format="uri", description="New URL if the label changed"),
    *         @OA\Property(property="notes", type="string", description="Rendered HTML of the notes")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/cg/appearance/{id}",
    *   description="Delete an appearance. The user must be signed in and have permission to manage the appearance. Pinned appearances cannot be deleted.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="The appearance is currently pinned and cannot be deleted", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Deleted"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="The appearance is currently pinned and cannot be deleted", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function api($params):void {
     $this->_initialize($params);
 
     if (!Auth::$signed_in)
-      Response::fail();
+      Response::error(401);
 
     if ($this->creating){
       Appearance::checkCreatePermission(Auth::$user, $this->guide === null);
@@ -162,7 +154,7 @@ class AppearanceAPIController extends APIController {
 
     switch ($this->action){
       case 'GET':
-        Response::done([
+        Response::ok([
           'label' => $this->appearance->label,
           'notes' => $this->appearance->notes_src,
           'private' => $this->appearance->private,
@@ -205,9 +197,9 @@ class AppearanceAPIController extends APIController {
         ]);
         if (!empty($dupe)){
           if ($this->guide === null)
-            Response::fail('You already have an appearance with the same name in your Personal Color Guide');
+            Response::invalid('label', 'You already have an appearance with the same name in your Personal Color Guide');
 
-          Response::fail("An appearance <a href='{$dupe->toURL()}' target='_blank'>already exists</a> in the ".CGUtils::GUIDE_MAP[$this->guide].' guide with this exact name. Consider adding an identifier in brackets or choosing a different name.');
+          Response::invalid('label', "An appearance already exists in the ({$dupe->toURL()}) ".CGUtils::GUIDE_MAP[$this->guide].' guide with this exact name. Consider adding an identifier in brackets or choosing a different name.');
         }
         if ($this->creating || $label !== $this->appearance->label)
           $data['label'] = $label;
@@ -262,6 +254,7 @@ class AppearanceAPIController extends APIController {
         if ($this->creating){
           $data['id'] = $new_appearance->id;
           $response = [
+            'id' => $new_appearance->id,
             'message' => 'Appearance added successfully',
             'goto' => $new_appearance->toURL(),
           ];
@@ -299,7 +292,7 @@ class AppearanceAPIController extends APIController {
             $new_appearance->owner->syncPCGSlotCount();
           }
 
-          Response::done($response);
+          Response::ok($response, 201);
         }
 
         $this->appearance->clearRenderedImages([Appearance::CLEAR_PALETTE, Appearance::CLEAR_PREVIEW]);
@@ -323,20 +316,20 @@ class AppearanceAPIController extends APIController {
         if (!$this->appearance_page){
           $response['label'] = $edited_appearance->label;
           if (isset($old_data['label']) && $old_data['label'] !== $this->appearance->label)
-            $response['newurl'] = $edited_appearance->toURL();
+            $response['newUrl'] = $edited_appearance->toURL();
           $response['notes'] = $edited_appearance->getNotesHTML(NOWRAP);
         }
 
-        Response::done($response);
+        Response::ok($response);
       break;
       case 'DELETE':
         if ($this->appearance->pinned)
-          Response::fail('This appearance cannot be deleted because it\'s currently pinned');
+          Response::error(409, 'This appearance cannot be deleted because it\'s currently pinned');
 
         $tagged = Tags::getFor($this->appearance->id);
 
         if (!$this->appearance->delete())
-          Response::dbError();
+          Response::dbError(status: 500);
 
         if (!empty($tagged))
           foreach ($tagged as $tag)
@@ -362,7 +355,7 @@ class AppearanceAPIController extends APIController {
           $this->appearance->owner->syncPCGSlotCount();
         }
 
-        Response::success('Appearance removed');
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -378,16 +371,14 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="cgs", type="string", description="Rendered HTML of the appearance's color groups")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Applying the template failed", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Applying the template failed", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function applyTemplate($params):void {
@@ -401,10 +392,10 @@ class AppearanceAPIController extends APIController {
       $this->appearance->applyTemplate();
     }
     catch (Exception $e){
-      Response::fail('Applying the template failed. Reason: '.$e->getMessage());
+      Response::error(409, 'Applying the template failed. Reason: '.$e->getMessage());
     }
 
-    Response::done(['cgs' => $this->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)]);
+    Response::ok(['cgs' => $this->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)]);
   }
 
   /**
@@ -424,9 +415,10 @@ class AppearanceAPIController extends APIController {
    *     @OA\Property(property="mkpriv", type="boolean", description="Mark the appearance as private"),
    *     @OA\Property(property="reset_priv_key", type="boolean", description="Regenerate the appearance's private share token")
    *   )),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Cleared"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function selectiveClear($params):void {
@@ -474,21 +466,21 @@ class AppearanceAPIController extends APIController {
         if ($this->appearance->hasColors(true)){
           /** @noinspection NestedPositiveIfStatementsInspection */
           if (!DB::$instance->query('UPDATE colors SET hex = null WHERE group_id IN (SELECT id FROM color_groups WHERE appearance_id = ?)', [$this->appearance->id]))
-            Response::dbError();
+            Response::dbError(status: 500);
         }
       break;
       case 'color_all':
         if ($this->appearance->hasColors()){
           /** @noinspection NestedPositiveIfStatementsInspection */
           if (!DB::$instance->query('DELETE FROM colors WHERE group_id IN (SELECT id FROM color_groups WHERE appearance_id = ?)', [$this->appearance->id]))
-            Response::dbError();
+            Response::dbError(status: 500);
         }
       break;
       case 'all':
         if (ColorGroup::exists(['conditions' => ['appearance_id = ?', $this->appearance->id]])){
           /** @noinspection NestedPositiveIfStatementsInspection */
           if (!DB::$instance->query('DELETE FROM color_groups WHERE appearance_id = ?', [$this->appearance->id]))
-            Response::dbError();
+            Response::dbError(status: 500);
         }
       break;
     }
@@ -499,7 +491,7 @@ class AppearanceAPIController extends APIController {
       ]))->out();
       if ($wipe_tags && !empty($this->appearance->tagged)){
         if (!DB::$instance->where('appearance_id', $this->appearance->id)->delete('tagged'))
-          Response::dbError('Failed to wipe tags');
+          Response::dbError('Failed to wipe tags', status: 500);
         foreach ($this->appearance->tagged as $tag)
           Tags::updateUses($tag->tag_id);
       }
@@ -543,7 +535,7 @@ class AppearanceAPIController extends APIController {
     if (!empty($update))
       DB::$instance->where('id', $this->appearance->id)->update('appearances', $update);
 
-    Response::done();
+    Response::noContent();
   }
 
   /**
@@ -555,19 +547,17 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="cgs", type="array", @OA\Items(type="object", additionalProperties=false,
    *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
    *           @OA\Property(property="label", type="string")
    *         ))
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Not enough color groups to reorder", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Not enough color groups to reorder", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
    *   path="/cg/appearance/{id}/colorgroups",
@@ -581,16 +571,14 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="cgs", type="string", description="Rendered HTML of the appearance's color groups")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error, e.g. an unknown color group ID was given", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error, e.g. an unknown color group ID was given", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function colorGroupsApi($params):void {
@@ -601,14 +589,14 @@ class AppearanceAPIController extends APIController {
       case 'GET':
         $cgs = $this->appearance->color_groups;
         if (empty($cgs))
-          Response::fail('This appearance does not have any color groups');
+          Response::error(409, 'This appearance does not have any color groups');
         if (count($cgs) < 2)
-          Response::fail('An appearance needs at least 2 color groups before you can change their order');
+          Response::error(409, 'An appearance needs at least 2 color groups before you can change their order');
         foreach ($cgs as $i => $cg)
           $cgs[$i] = $cg->to_array([
             'only' => ['id', 'label'],
           ]);
-        Response::done(['cgs' => $cgs]);
+        Response::ok(['cgs' => $cgs]);
       break;
       case 'PUT':
         /** @var $order int[] */
@@ -624,7 +612,7 @@ class AppearanceAPIController extends APIController {
           $possibleIDs[$cg->id] = true;
         foreach ($order as $i => $GroupID){
           if (empty($possibleIDs[$GroupID]))
-            Response::fail("There's no group with the ID of $GroupID on this appearance");
+            Response::invalid('cgs', "There's no group with the ID of $GroupID on this appearance");
 
           DB::$instance->where('id', $GroupID)->update('color_groups', ['order' => $i]);
         }
@@ -641,7 +629,7 @@ class AppearanceAPIController extends APIController {
           'newgroups' => $newCGs,
         ]);
 
-        Response::done(['cgs' => $this->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)]);
+        Response::ok(['cgs' => $this->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)]);
       break;
       default:
         CoreUtils::notAllowed();
@@ -661,16 +649,14 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="path", type="string", format="uri", description="URL of the newly uploaded sprite")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error, e.g. invalid image format or size", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error, e.g. invalid image format or size", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/cg/appearance/{id}/sprite",
@@ -680,16 +666,14 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="sprite", type="string", description="Path of the default sprite image")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="No sprite file found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="No sprite file found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function spriteApi($params):void {
@@ -701,20 +685,20 @@ class AppearanceAPIController extends APIController {
     switch ($this->action){
       case 'POST':
         if ($this->appearance->owner_id === Auth::$user->id && !UserPrefs::get('a_pcgsprite'))
-          Response::fail('You are not allowed to upload sprite images on your own PCG appearances');
+          Response::error(403, 'You are not allowed to upload sprite images on your own PCG appearances');
         CGUtils::processUploadedImage('sprite', $final_path, ['image/png'], [300], [700, 300]);
         $this->appearance->clearRenderedImages();
         $this->appearance->regenerateSpriteHash();
 
-        Response::done(['path' => $this->appearance->getSpriteURL()]);
+        Response::ok(['path' => $this->appearance->getSpriteURL()]);
       break;
       case 'DELETE':
         if (!$this->appearance->hasSprite())
-          Response::fail('No sprite file found');
+          Response::error(404, 'No sprite file found');
 
         $this->appearance->deleteSprite($final_path);
 
-        Response::done(['sprite' => DEFAULT_SPRITE]);
+        Response::ok(['sprite' => DEFAULT_SPRITE]);
       break;
       default:
         CoreUtils::notAllowed();
@@ -730,9 +714,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="unlinked", type="array", @OA\Items(type="object", additionalProperties=false,
    *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
    *           @OA\Property(property="label", type="string")
@@ -743,11 +725,11 @@ class AppearanceAPIController extends APIController {
    *           @OA\Property(property="mutual", type="boolean")
    *         ))
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Relations are unavailable for personal guide appearances", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Relations are unavailable for personal guide appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
    *   path="/cg/appearance/{id}/relations",
@@ -762,16 +744,15 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="section", type="string", description="Rendered HTML of the related appearances section, only present when called from the appearance page")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Relations are unavailable for personal guide appearances, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Relations are unavailable for personal guide appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Relations are unavailable for personal guide appearances, or validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function relationsApi($params):void {
@@ -779,7 +760,7 @@ class AppearanceAPIController extends APIController {
     $this->appearance->enforceManagePermission();
 
     if (!empty($this->appearance->owner_id))
-      Response::fail('Relations are unavailable for appearances in personal guides');
+      Response::error(409, 'Relations are unavailable for appearances in personal guides');
 
     switch ($this->action){
       case 'GET':
@@ -805,7 +786,7 @@ class AppearanceAPIController extends APIController {
           $Sorted[$linked ? 'linked' : 'unlinked'][] = $a;
         }
 
-        Response::done($Sorted);
+        Response::ok($Sorted);
       break;
       case 'PUT':
         /** @var $AppearanceIDs int[] */
@@ -841,7 +822,7 @@ class AppearanceAPIController extends APIController {
         $out = [];
         if ($this->appearance_page)
           $out['section'] = $this->appearance->getRelatedHTML();
-        Response::done($out);
+        Response::ok($out);
       break;
       default:
         CoreUtils::notAllowed();
@@ -857,9 +838,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="cms", type="array", @OA\Items(type="object", additionalProperties=true,
    *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
    *           @OA\Property(property="appearance_id", ref="#/components/schemas/OneBasedId"),
@@ -872,10 +851,10 @@ class AppearanceAPIController extends APIController {
    *         )),
    *         @OA\Property(property="preview", type="string", description="Rendered HTML preview of the cutie marks")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
    *   path="/cg/appearance/{id}/cutiemarks",
@@ -900,16 +879,14 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="html", type="string", description="Rendered HTML of the cutie marks list, only present when called from the appearance page and cutie marks remain")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error in one of the cutie mark entries", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error in one of the cutie mark entries", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function cutiemarkApi($params):void {
@@ -925,7 +902,7 @@ class AppearanceAPIController extends APIController {
 
         $processed_cms = Cutiemarks::get($this->appearance);
 
-        Response::done(['cms' => $cms, 'preview' => Cutiemarks::getListForAppearancePage($processed_cms, NOWRAP)]);
+        Response::ok(['cms' => $cms, 'preview' => Cutiemarks::getListForAppearancePage($processed_cms, NOWRAP)]);
       break;
       case 'PUT':
         $grab_cms = Cutiemarks::get($this->appearance);
@@ -941,7 +918,7 @@ class AppearanceAPIController extends APIController {
           ],
         ]))->out();
         if (count($data) > 4)
-          Response::fail('Appearances can only have a maximum of 4 cutie marks.');
+          Response::invalid('cutiemarks', 'Appearances can only have a maximum of 4 cutie marks.');
         /** @var $new_cms Cutiemark[] */
         $new_cms = [];
         $new_svgs = [];
@@ -951,7 +928,7 @@ class AppearanceAPIController extends APIController {
           if (isset($item['id'])){
             $cm = Cutiemark::find($item['id']);
             if (empty($cm))
-              Response::fail("The cutie mark you're trying to update (#{$item['id']}) does not exist");
+              Response::invalid('cutiemarks', "The cutie mark you're trying to update (#{$item['id']}) does not exist");
             $new_ids[] = $cm->id;
           }
           else $cm = new Cutiemark([
@@ -961,11 +938,11 @@ class AppearanceAPIController extends APIController {
           $svg_data_missing = empty($item['svgdata']);
           if ($cm->id === null || !$svg_data_missing){
             if ($svg_data_missing)
-              Response::fail('SVG data is missing');
+              Response::invalid('cutiemarks', 'SVG data is missing');
             if (CoreUtils::stringSize($item['svgdata']) > UploadedFile::SIZES['megabyte'])
-              Response::fail('SVG data exceeds the maximum size of 1 MB');
+              Response::invalid('cutiemarks', 'SVG data exceeds the maximum size of 1 MB');
             if (CoreUtils::validateSvg($item['svgdata']) !== Input::ERROR_NONE)
-              Response::fail('SVG data is invalid');
+              Response::invalid('cutiemarks', 'SVG data is invalid');
             $svgdata = $item['svgdata'];
           }
           else $svgdata = null;
@@ -976,9 +953,9 @@ class AppearanceAPIController extends APIController {
             if (!empty($item['label'])){
               CoreUtils::checkStringValidity($item['label'], 'Cutie Mark label');
               if (Input::checkStringLength($item['label'], [1, 32]) === Input::ERROR_RANGE)
-                Response::fail('Cutie mark label must be between 1 and 32 chars long');
+                Response::invalid('cutiemarks', 'Cutie mark label must be between 1 and 32 chars long');
               if (isset($labels[$item['label']]))
-                Response::fail('Cutie mark labels must be unique within an appearance');
+                Response::invalid('cutiemarks', 'Cutie mark labels must be unique within an appearance');
               else $labels[$item['label']] = true;
               $label = $item['label'];
             }
@@ -990,7 +967,7 @@ class AppearanceAPIController extends APIController {
             if (empty($facing))
               $facing = null;
             else if (!in_array($facing, Cutiemarks::VALID_FACING_VALUES, true))
-              Response::fail('Body orientation "'.CoreUtils::escapeHTML($facing).'" is invalid');
+              Response::invalid('cutiemarks', 'Body orientation "'.CoreUtils::escapeHTML($facing).'" is invalid');
           }
           else $facing = null;
           $cm->facing = $facing;
@@ -998,7 +975,7 @@ class AppearanceAPIController extends APIController {
           switch ($item['attribution']){
             case 'deviation':
               if (empty($item['deviation']))
-                Response::fail('Deviation link is missing');
+                Response::invalid('cutiemarks', 'Deviation link is missing');
 
               try {
                 $image = new ImageProvider(CoreUtils::trim($item['deviation']), ImageProvider::PROV_DEVIATION, true);
@@ -1006,28 +983,28 @@ class AppearanceAPIController extends APIController {
                 $deviation = $image->extra;
               }
               catch (MismatchedProviderException $e){
-                Response::fail('The link must point to a DeviantArt submission, '.$e->getActualProvider().' links are not allowed');
+                Response::invalid('cutiemarks', 'The link must point to a DeviantArt submission, '.$e->getActualProvider().' links are not allowed');
               }
               catch (Exception $e){
-                Response::fail('Error while checking deviation link: '.$e->getMessage());
+                Response::invalid('cutiemarks', 'Error while checking deviation link: '.$e->getMessage());
               }
 
               if (empty($deviation))
-                Response::fail('The provided deviation could not be fetched');
+                Response::error(502, 'The provided deviation could not be fetched');
               $cm->favme = $deviation->id;
               $contributor = Users::getDA($deviation->author, 'name');
               if (empty($contributor))
-                Response::fail("The provided deviation's creator could not be fetched");
+                Response::error(502, "The provided deviation's creator could not be fetched");
               $cm->contributor_id = $contributor->id;
             break;
             case 'user':
               if (empty($item['username']))
-                Response::fail('Username is missing');
+                Response::invalid('cutiemarks', 'Username is missing');
               if (!preg_match(Regexes::$username, $item['username']))
-                Response::fail("Username ({$item['username']}) is invalid");
+                Response::invalid('cutiemarks', "Username ({$item['username']}) is invalid");
               $contributor = Users::getDA($item['username'], 'name');
               if (empty($contributor))
-                Response::fail("The provided deviation's creator could not be fetched");
+                Response::error(502, "The provided deviation's creator could not be fetched");
               $cm->favme = null;
               $cm->contributor_id = $contributor->id;
             break;
@@ -1036,16 +1013,16 @@ class AppearanceAPIController extends APIController {
               $cm->contributor_id = null;
             break;
             default:
-              Response::fail('The specified attribution method is invalid');
+              Response::invalid('cutiemarks', 'The specified attribution method is invalid');
           }
 
           if (!isset($item['rotation']))
-            Response::fail('Preview rotation amount is missing');
+            Response::invalid('cutiemarks', 'Preview rotation amount is missing');
           if (!is_numeric($item['rotation']))
-            Response::fail('Preview rotation must be a number');
+            Response::invalid('cutiemarks', 'Preview rotation must be a number');
           $rotation = (int)$item['rotation'];
           if (abs($rotation) > 45)
-            Response::fail('Preview rotation must be between -45 and 45');
+            Response::invalid('cutiemarks', 'Preview rotation must be between -45 and 45');
           $cm->rotation = $rotation;
 
           $new_cms[$i] = $cm;
@@ -1056,7 +1033,7 @@ class AppearanceAPIController extends APIController {
           CoreUtils::createFoldersFor(Cutiemark::SOURCE_FOLDER);
           foreach ($new_cms as $i => $cm){
             if (!$cm->save())
-              Response::dbError("Saving cutie mark (index $i) failed");
+              Response::dbError("Saving cutie mark (index $i) failed", status: 500);
 
             if ($new_svgs[$i] !== null){
               if (false !== File::put($cm->getSourceFilePath(), $new_svgs[$i])){
@@ -1065,7 +1042,7 @@ class AppearanceAPIController extends APIController {
                 continue;
               }
 
-              Response::fail("Saving SVG data for cutie mark (index $i) failed");
+              Response::error(500, "Saving SVG data for cutie mark (index $i) failed");
             }
           }
 
@@ -1102,7 +1079,7 @@ class AppearanceAPIController extends APIController {
         $data = [];
         if ($this->appearance_page && !empty($cutie_marks))
           $data['html'] = Cutiemarks::getListForAppearancePage(Cutiemarks::get($this->appearance));
-        Response::done($data);
+        Response::ok($data);
       break;
       default:
         CoreUtils::notAllowed();
@@ -1118,16 +1095,14 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="tags", type="string", description="Space-separated list of tags")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Tagging is unavailable for this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Tagging is unavailable for this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
    *   path="/cg/appearance/{id}/tagged",
@@ -1139,10 +1114,12 @@ class AppearanceAPIController extends APIController {
    *     @OA\Property(property="orig_tags", type="string", description="Space-separated list of tags as they were before editing"),
    *     @OA\Property(property="tags", type="string", description="Space-separated list of the new tags")
    *   )),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Tagging is unavailable for this appearance, or validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="204", description="Tags updated"),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Relations are unavailable for personal guide appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Tagging is unavailable for this appearance, or validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function taggedApi($params):void {
@@ -1150,14 +1127,14 @@ class AppearanceAPIController extends APIController {
     $this->appearance->enforceManagePermission();
 
     if ($this->appearance->owner_id !== null)
-      Response::fail('Tagging is unavailable for appearances in personal guides');
+      Response::error(409, 'Tagging is unavailable for appearances in personal guides');
 
     if ($this->appearance->pinned)
-      Response::fail('This appearance cannot be tagged');
+      Response::error(409, 'This appearance cannot be tagged');
 
     switch ($this->action){
       case 'GET':
-        Response::done(['tags' => $this->appearance->getTagsAsText(false)]);
+        Response::ok(['tags' => $this->appearance->getTagsAsText(false)]);
       break;
       case 'PUT':
         $orig_tags = (new Input('orig_tags', 'string', [
@@ -1176,7 +1153,7 @@ class AppearanceAPIController extends APIController {
         $this->appearance->processTagChanges($orig_tags ?? '', $tags, $this->guide);
         $this->appearance->updateIndex();
 
-        Response::done();
+        Response::noContent();
       break;
       default:
         CoreUtils::notAllowed();
@@ -1196,20 +1173,17 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="svgel", type="string", description="Untokenized, sanitized SVG markup"),
    *         @OA\Property(property="svgdata", type="string", description="Original uploaded SVG markup"),
-   *         @OA\Property(property="keep_dialog", type="boolean"),
+   *         @OA\Property(property="keepDialog", type="boolean"),
    *         @OA\Property(property="warnings", type="array", @OA\Items(type="string"))
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="SVG data is missing, invalid or too large", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="SVG data is missing, invalid or too large", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function sanitizeSvg($params):void {
@@ -1217,7 +1191,7 @@ class AppearanceAPIController extends APIController {
       CoreUtils::notAllowed();
 
     if (!Auth::$signed_in)
-      Response::fail();
+      Response::denied();
 
     $this->load_appearance($params, false);
     $this->appearance->enforceManagePermission();
@@ -1238,7 +1212,7 @@ class AppearanceAPIController extends APIController {
     $tokenized_svg = CGUtils::tokenizeSvg($sanitized_svg, $this->appearance->id);
     $svgel = CGUtils::untokenizeSvg($tokenized_svg, $this->appearance->id, $warnings);
 
-    Response::done(['svgel' => $svgel, 'svgdata' => $svgdata, 'keep_dialog' => true, 'warnings' => $warnings]);
+    Response::ok(['svgel' => $svgel, 'svgdata' => $svgdata, 'keepDialog' => true, 'warnings' => $warnings]);
   }
 
   /**
@@ -1250,9 +1224,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="groups", type="object", description="Map of valid show/episode types to their display names"),
    *         @OA\Property(property="entries", type="array", @OA\Items(type="object", additionalProperties=false,
    *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
@@ -1261,10 +1233,10 @@ class AppearanceAPIController extends APIController {
    *         )),
    *         @OA\Property(property="linkedIds", type="array", @OA\Items(ref="#/components/schemas/OneBasedId"))
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Put(
    *   path="/cg/appearance/{id}/guide-relations",
@@ -1277,21 +1249,19 @@ class AppearanceAPIController extends APIController {
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(allOf={
-   *       @OA\Schema(ref="#/components/schemas/ServerResponse"),
-   *       @OA\Schema(type="object", additionalProperties=false,
+   *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="section", type="string", description="Rendered HTML of the related shows section")
    *       )
-   *     })
    *   ),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function guideRelationsApi($params):void {
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     $this->load_appearance($params);
 
@@ -1317,7 +1287,7 @@ class AppearanceAPIController extends APIController {
           ];
         }
 
-        Response::done([
+        Response::ok([
           'groups' => ShowHelper::VALID_TYPES,
           'entries' => $entries,
           'linkedIds' => $linked_ids,
@@ -1347,7 +1317,7 @@ class AppearanceAPIController extends APIController {
 
         $this->appearance->reload();
 
-        Response::done(['section' => $this->appearance->getRelatedShowsHTML()]);
+        Response::ok(['section' => $this->appearance->getRelatedShowsHTML()]);
       break;
       default:
         CoreUtils::notAllowed();
@@ -1360,36 +1330,38 @@ class AppearanceAPIController extends APIController {
    *   description="Pin an appearance to the top of its guide. Staff only. Not available for personal guide appearances.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Appearances in personal guides cannot be pinned", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Appearances in personal guides cannot be pinned", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    * @OA\Delete(
    *   path="/cg/appearance/{id}/pin",
    *   description="Unpin a previously pinned appearance. Staff only. Not available for personal guide appearances.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ServerResponse")),
-   *   @OA\Response(response="400", description="Appearances in personal guides cannot be pinned", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="409", description="Appearances in personal guides cannot be pinned", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   public function pinApi($params):void {
     if (Permission::insufficient('staff'))
-      Response::fail();
+      Response::denied();
 
     $this->load_appearance($params);
 
     if ($this->appearance->guide === null) {
-      Response::fail('Appearances in personal guides cannot be pinned');
+      Response::error(409, 'Appearances in personal guides cannot be pinned');
     }
 
     switch ($this->action){
       case 'POST':
         if (PinnedAppearance::existsForAppearance($this->appearance->id)) {
-          Response::success('This appearance is already pinned');
+          Response::ok(['message' => 'This appearance is already pinned']);
         }
 
         PinnedAppearance::create([
@@ -1398,18 +1370,18 @@ class AppearanceAPIController extends APIController {
           'order' => $this->appearance->order,
         ]);
 
-        Response::success('The appearance has been pinned successfully');
+        Response::ok(['message' => 'The appearance has been pinned successfully']);
       break;
       case 'DELETE':
         $entry = PinnedAppearance::find_by_appearance_id($this->appearance->id);
 
         if ($entry === null) {
-          Response::success('This appearance was not pinned before');
+          Response::ok(['message' => 'This appearance was not pinned before']);
         }
 
         $entry->delete();
 
-        Response::success('The appearance has been unpinned successfully');
+        Response::ok(['message' => 'The appearance has been unpinned successfully']);
       break;
       default:
         CoreUtils::notAllowed();
@@ -1433,7 +1405,7 @@ class AppearanceAPIController extends APIController {
    *       @OA\Property(property="image", type="string", format="uri")
    *     ))
    *   ),
-   *   @OA\Response(response="400", description="Invalid guide", @OA\JsonContent(ref="#/components/schemas/ServerResponse"))
+   *   @OA\Response(response="422", description="Invalid guide", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */
   public function autocomplete():void {

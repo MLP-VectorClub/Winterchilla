@@ -42,7 +42,7 @@
 
         $this.trigger('uz-uploadfinish', [response]);
       };
-      if (response.keep_dialog === true)
+      if (response.keepDialog === true)
         actions();
       else $.Dialog.close(actions);
     });

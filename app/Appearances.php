@@ -112,7 +112,7 @@ class Appearances {
 
       $app->order = $order_map[$app->id];
       if (!$app->save())
-        Response::fail("Updating appearance #{$app->id} failed, process halted");
+        Response::error(500, "Updating appearance #{$app->id} failed, process halted");
 
       $app->updateIndex();
     }
@@ -135,7 +135,7 @@ class Appearances {
         throw $e;
     }
     catch (ElasticNoNodesAvailableException $e){
-      Response::fail('Re-index failed, ElasticSearch server is down!');
+      Response::error(503, 'Re-index failed, ElasticSearch server is down!');
     }
     $params = array_merge(CGUtils::ELASTIC_BASE, [
       'body' => [
@@ -188,10 +188,10 @@ class Appearances {
     catch (ElasticClientResponseException $e){
       if ($e->getCode() !== 400)
         throw $e;
-      Response::fail('Failed to create index:<br><pre>'.CoreUtils::escapeHTML(JSON::encode(CoreUtils::elasticErrorBody($e), JSON_PRETTY_PRINT)).'</pre>');
+      Response::error(500, 'Failed to create index', ['details' => CoreUtils::elasticErrorBody($e)]);
     }
     catch (ElasticNoNodesAvailableException $e){
-      Response::fail('Re-index failed, ElasticSearch server is down!');
+      Response::error(503, 'Re-index failed, ElasticSearch server is down!');
     }
 
     $pinned_appearances = array_map(static fn(PinnedAppearance $a) => $a->appearance_id, PinnedAppearance::all());
@@ -219,7 +219,7 @@ class Appearances {
       self::handleBulkError($elastic_client->bulk($params)->asArray());
     }
 
-    Response::success('Re-index completed');
+    Response::ok(['message' => 'Re-index completed']);
   }
 
   private static function handleBulkError(array $bulkResult) {
@@ -232,6 +232,6 @@ class Appearances {
       $error_messages[] = "#{$ix['_id']}: HTTP {$ix['status']}: {$ix['error']['type']} - {$ix['error']['reason']}";
     }
 
-    Response::fail('Bulk index update failed, see the errors below.<br><pre>'.CoreUtils::escapeHTML(implode("\n", $error_messages)).'</pre>');
+    Response::error(500, 'Bulk index update failed, see the errors', ['failures' => $error_messages]);
   }
 }

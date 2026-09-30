@@ -962,7 +962,7 @@ class Appearance extends NSModel implements Linkable {
     if (!CoreUtils::deleteFile($path ?? $this->getSpriteFilePath())){
       if ($silent)
         return;
-      Response::fail('File could not be deleted');
+      Response::error(500, 'File could not be deleted');
     }
     $this->sprite_hash = null;
     $this->save();
@@ -972,16 +972,16 @@ class Appearance extends NSModel implements Linkable {
   public static function checkCreatePermission(User $user, bool $personal) {
     if (!$personal){
       if (!$user->perm('staff'))
-        Response::fail("You don't have permission to add appearances to the official Color Guide");
+        Response::denied("You don't have permission to add appearances to the official Color Guide");
     }
     else {
       $availPoints = $user->getPCGAvailablePoints(false);
       if ($availPoints < 10){
         $remain = Users::calculatePersonalCGNextSlot($user->getPCGAppearanceCount());
-        Response::fail("You don't have enough slots to create another appearance. Delete other ones or finish $remain more ".CoreUtils::makePlural('request', $remain).'. Visit <a href="/u">your profile</a> and click the <strong class="color-darkblue"><span class="typcn typcn-info-large"></span> What?</strong> button next to the Personal Color Guide heading for more information.');
+        Response::error(409, "You don't have enough slots to create another appearance. Delete other ones or finish $remain more ".CoreUtils::makePlural('request', $remain).'. Visit your profile and click the "What?" button next to the Personal Color Guide heading for more information.');
       }
       if (!UserPrefs::get('a_pcgmake', $user))
-        Response::fail(Appearances::PCG_APPEARANCE_MAKE_DISABLED);
+        Response::error(403, Appearances::PCG_APPEARANCE_MAKE_DISABLED);
     }
   }
 

@@ -146,7 +146,7 @@ class CGUtils {
           $HTML .= '</ul></section>';
         break;
         default:
-          Response::fail("Unknown full list sorting order: $order_by");
+          Response::invalid('sort', "Unknown full list sorting order: $order_by");
       }
     }
 
@@ -236,7 +236,7 @@ class CGUtils {
     $file = $_FILES[$key];
     $tmp = $file['tmp_name'];
     if (empty($tmp))
-      Response::fail('File upload failed; Reason unknown');
+      Response::error(400, 'File upload failed; Reason unknown');
 
     [$width, $height] = Image::checkType($tmp, $allowedMimeTypes);
     Image::checkSize($tmp, $width, $height, $min, $max);
@@ -244,7 +244,7 @@ class CGUtils {
 
     if (!move_uploaded_file($tmp, $path)){
       CoreUtils::deleteFile($tmp);
-      Response::fail('File upload failed; Writing image file was unsuccessful');
+      Response::error(500, 'File upload failed; Writing image file was unsuccessful');
     }
   }
 
@@ -261,17 +261,17 @@ class CGUtils {
       $Image = new ImageProvider(Posts::validateImageURL());
     }
     catch (Exception $e){
-      Response::fail($e->getMessage());
+      Response::invalid('image_url', $e->getMessage());
     }
 
     if ($Image->fullsize === false)
-      Response::fail('Image could not be retrieved from external provider');
+      Response::error(502, 'Image could not be retrieved from external provider');
 
     $remoteFile = @File::get($Image->fullsize);
     if (empty($remoteFile))
-      Response::fail('Remote file could not be found');
+      Response::invalid('image_url', 'Remote file could not be found');
     if (File::put($path, $remoteFile) === false)
-      Response::fail('Writing local image file was unsuccessful');
+      Response::error(500, 'Writing local image file was unsuccessful');
 
     [$width, $height] = Image::checkType($path, $allowedMimeTypes);
     Image::checkSize($path, $width, $height, $min, $max);
@@ -556,7 +556,7 @@ class CGUtils {
     Image::copyExact($final_base, $base_image, 0, 0, $output_width, $output_height);
 
     if (!CoreUtils::createFoldersFor($output_path))
-      Response::fail('Failed to create render directory');
+      Response::error(500, 'Failed to create render directory');
     Image::outputPNG($final_base, $output_path, $file_relative_path);
   }
 
@@ -566,7 +566,7 @@ class CGUtils {
   public static function renderCMFacingSVG(Appearance $appearance):void {
     $facing = $_GET['facing'] ?? 'left';
     if (!in_array($facing, Cutiemarks::VALID_FACING_VALUES, true))
-      Response::fail('Invalid facing value specified!');
+      Response::invalid('facing', 'Invalid facing value specified!');
 
     $output_path = str_replace(['#', '@'], [$appearance->id, $facing], self::CMDIR_SVG_PATH);
     $file_rel_path = $appearance->getFacingSVGURL($facing, false);
@@ -623,7 +623,7 @@ class CGUtils {
       $map = $map_file->read();
     else {
       if (!file_exists($png_path))
-        Response::fail("There's no sprite image for appearance #$AppearanceID");
+        Response::error(404, "There's no sprite image for appearance #$AppearanceID");
 
       $img_size = getimagesize($png_path);
       if ($img_size === false){

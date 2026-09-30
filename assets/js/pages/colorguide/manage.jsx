@@ -213,8 +213,8 @@
                 return $.Navigation.reload(true);
 
               $ponyLabel.text(data.label);
-              if (data.newurl)
-                $ponyLabel.attr('href', data.newurl);
+              if (data.newUrl)
+                $ponyLabel.attr('href', data.newUrl);
               $ponyNotes.html(data.notes);
               $.Dialog.close();
               return;

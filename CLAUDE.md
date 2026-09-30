@@ -258,6 +258,53 @@ stops embedding data and rendering list/table HTML; the front end fetches JSON a
 the shape Celestia/Luna will need. The browser suite above is the regression net: it must stay green
 (or change only where a page's markup legitimately moves) at every step.
 
+### Status (2026-09-30) and what is left
+
+**Done and deployed** (production runs `f635938b`; `24de1b11` is pushed to `origin` but not deployed yet):
+- Contract tests for every API controller (`tests/Browser/Api/`), browser tests for every converted UI flow, CI green.
+- Every API endpoint answers with proper HTTP statuses (401/403/404/409/422/429/501/503, `419` for CSRF) and Luna-style bodies
+  (camelCase, `{message}`, `{message, errors}`, 201/204); no `{status: bool}` envelope left; messages are plain text.
+- The client uses promises (`$.API.get(...).done(...).fail($.API.fail())`); the compatibility shim and the `this.status`
+  checks are gone; all client data requests go through `$.API`.
+- Security holes found on the way and fixed: post edit authorization, the admin API having no staff check.
+- Test infrastructure that makes the flows testable without the network: fake OAuth provider, Redis-seeded deviations with local
+  images, club-gallery marker files (`ClubGallery`), seeded users/posts/entries/personal guides/major changes.
+
+**Left** (nothing here is required for the Celestia/Luna contract to be usable today):
+1. **Deploy `24de1b11`** (JSON-for-page 406 fix, 401-before-409 for posts, OpenAPI duplicates).
+2. **Read endpoints as data** (phase 1 above, still open): most page data is still rendered by Twig and embedded via `export_vars`/HTML
+   fragments. Endpoints that return *data* (not HTML) for the list/detail pages — show index, show + posts, guide page, appearance,
+   tag list, users, contributions, events, profile, personal guide, admin lists — don't exist yet; several existing endpoints still
+   return rendered HTML fragments (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …).
+3. **`GET /api/v0/config`** (phase 2): constants, validation patterns, client config — replaces the `export_vars` globals (`datastore.js`).
+4. **Write endpoints' request naming**: requests still use snake_case field names (`image_url`, `show_id`, `target_id`, `allow_nonmember`),
+   `Colors`, `CMData`, `APPEARANCE_PAGE`/`FULL_CHANGES_SECTION` flags; responses are camelCase. Decide whether to normalize requests.
+5. **OpenAPI completeness** (phase 3): the docblocks describe statuses and most bodies, but schemas for the HTML-fragment fields and some
+   request bodies are loose; `/docs` hasn't been diffed against Luna's spec.
+6. Smaller known gaps: sprite upload of a *successful* personal-guide appearance; `Input` still halts at the first validation error (one
+   field error per response); `app/Controllers/...` page routes that answer JSON for `Accept: application/json` are still 406.
+
+### Next: prepare the endpoints first, page rendering later (SSR-ready by construction)
+
+The intended end state is pages that get their data through the API *and* can be server-rendered. The decision for now is to **prepare
+the endpoints only** and leave page rendering as it is. Constraints to build them with, so the later step is cheap:
+- **One source of truth per resource**: a serializer (`App\Api\…`, plain functions/classes returning arrays) used by the API controller
+  *and* callable in-process by a Twig controller. The page then renders from exactly the data the endpoint returns — no HTTP round trip
+  during SSR, and no second mapping to keep in sync (the existing `mapAppearance`/`to_array`+`camelKeys` calls are the seeds of this).
+- **Data, not HTML**: new endpoints return structured data (lists, flags, permissions); any HTML stays a separate, optional concern
+  (server-rendered fragments are a rendering choice, not part of the contract).
+- **Permissions in the payload**: include what the signed-in caller may do (`canEdit`, `canDelete`, …) so a renderer (Twig today,
+  Celestia/React later) doesn't re-derive authorization from roles.
+- **Initial state for hydration**: when a page is rendered from a serializer, embed the same JSON (`<script type="application/json">`,
+  replacing the `datastore` aside) so the client starts from it instead of refetching; the client falls back to `$.API` when absent.
+- **Config is data too**: `GET /api/v0/config` (constants, `{source, flags}` patterns, `wsServerHost`, `discordInviteLink`) is cacheable and
+  also embeddable as initial state; client code reads it from one module instead of `window.*` globals.
+- **Caching/ETags** on read endpoints that will be hit by SSR (guide, appearance, config), using the existing Redis helpers.
+- Every new endpoint ships with its contract test (`tests/Browser/Api/`) and OpenAPI docblock in the same commit, like the existing ones.
+
+Suggested order when it's picked up: `config` endpoint → appearance/guide reads → show/episode + posts → tag list/users/contributions/events
+→ profile/personal guide/admin lists → then (separately) switch pages to render from the serializers and embed their state.
+
 ### Current state (audit)
 
 Data reaches JS in three ways:

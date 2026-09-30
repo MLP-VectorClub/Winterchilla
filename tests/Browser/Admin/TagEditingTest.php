@@ -11,7 +11,7 @@ it('edits and deletes a tag from the appearance page context menu', function () 
 
   // Tag the appearance through the API first (the browser login below replaces the API client's session)
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $tag = $api->post('/tags', ['name' => $name, 'type' => 'app', 'addto' => TestSeederConstants::APPEARANCE_ID])['json'];
+  $tag = $api->post('/tags', ['name' => $name, 'type' => 'app', 'addTo' => TestSeederConstants::APPEARANCE_ID])['json'];
 
   try {
     $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
@@ -35,6 +35,6 @@ it('edits and deletes a tag from the appearance page context menu', function () 
       ->assertDontSee($name . '-ed');
   }
   finally {
-    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/tags/' . $tag['id'], ['sanitycheck' => 1]);
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
   }
 });

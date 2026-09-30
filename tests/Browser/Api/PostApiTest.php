@@ -77,10 +77,10 @@ it('validates post edits with 422 and field errors', function () use ($postId) {
 it('locates posts for the share/link redirect flow', function () use ($postId) {
   $guest = ApiClient::guest();
 
-  $r = $guest->get("/posts/$postId/location", ['show_id' => TestSeederConstants::SHOW_ID]);
+  $r = $guest->get("/posts/$postId/location", ['showId' => TestSeederConstants::SHOW_ID]);
   expect($r['status'])->toBe(200)->and($r['json'])->toBe(['refresh' => 'request']);
 
-  $r = $guest->get("/posts/$postId/location", ['show_id' => TestSeederConstants::MOVIE_ID]);
+  $r = $guest->get("/posts/$postId/location", ['showId' => TestSeederConstants::MOVIE_ID]);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('castle')->and($r['json']['castle'])->toHaveKeys(['name', 'url']);
 });
 
@@ -114,7 +114,7 @@ it('suggests an unreserved request to signed-in users', function () {
 it('rejects an unusable image URL when checking images', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->post('/posts/check-image');
 
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('image_url');
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('imageUrl');
 });
 
 it('reserves, re-reserves and unreserves a request', function () use ($postId) {

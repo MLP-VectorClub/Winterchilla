@@ -15,11 +15,11 @@ $postId = TestSeederConstants::POST_ID;
 it('creates a request and a reservation from an image URL', function () use ($image) {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
-  $r = $admin->post('/posts', ['kind' => 'request', 'show_id' => TestSeederConstants::SHOW_ID, 'label' => 'A new request', 'type' => 'chr', 'image_url' => $image]);
+  $r = $admin->post('/posts', ['kind' => 'request', 'showId' => TestSeederConstants::SHOW_ID, 'label' => 'A new request', 'type' => 'chr', 'imageUrl' => $image]);
   expect($r['status'])->toBe(201)->and($r['json'])->toHaveKeys(['id', 'kind'])->and($r['json']['kind'])->toBe('request');
   $requestId = $r['json']['id'];
 
-  $r = $admin->post('/posts', ['kind' => 'reservation', 'show_id' => TestSeederConstants::SHOW_ID, 'label' => 'A new reservation', 'image_url' => $image]);
+  $r = $admin->post('/posts', ['kind' => 'reservation', 'showId' => TestSeederConstants::SHOW_ID, 'label' => 'A new reservation', 'imageUrl' => $image]);
   expect($r['status'])->toBe(201)->and($r['json']['kind'])->toBe('reservation');
 
   // Clean up the request through the API (the ID comes back as "post-<number>")
@@ -32,12 +32,12 @@ it('validates new posts with 422 and field errors', function () use ($image) {
   $r = $admin->post('/posts', ['kind' => 'nonsense']);
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('kind');
 
-  $r = $admin->post('/posts', ['kind' => 'request', 'show_id' => 987654, 'label' => 'A new request', 'type' => 'chr', 'image_url' => $image]);
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('show_id');
+  $r = $admin->post('/posts', ['kind' => 'request', 'showId' => 987654, 'label' => 'A new request', 'type' => 'chr', 'imageUrl' => $image]);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('showId');
 });
 
 it('checks an image URL and returns its preview', function () use ($image) {
-  $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->post('/posts/check-image', ['image_url' => $image]);
+  $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->post('/posts/check-image', ['imageUrl' => $image]);
 
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKeys(['preview', 'title'])->not->toHaveKey('status');
 });
@@ -45,13 +45,13 @@ it('checks an image URL and returns its preview', function () use ($image) {
 it('changes the image of a post', function () use ($otherImage, $postId) {
   $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
 
-  $r = $user->request('PUT', "/posts/$postId/image", ['image_url' => $otherImage]);
+  $r = $user->request('PUT', "/posts/$postId/image", ['imageUrl' => $otherImage]);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('preview');
 
   // The seeded reserved request can't get a new image once somebody reserved it
-  expect($user->request('PUT', '/posts/' . TestSeederConstants::RESERVED_POST_ID . '/image', ['image_url' => $otherImage])['status'])->toBe(409);
+  expect($user->request('PUT', '/posts/' . TestSeederConstants::RESERVED_POST_ID . '/image', ['imageUrl' => $otherImage])['status'])->toBe(409);
 
-  expect(ApiClient::guest()->request('PUT', "/posts/$postId/image", ['image_url' => $otherImage])['status'])->toBe(401);
+  expect(ApiClient::guest()->request('PUT', "/posts/$postId/image", ['imageUrl' => $otherImage])['status'])->toBe(401);
 });
 
 it('unbreaks a post whose images are available again', function () {

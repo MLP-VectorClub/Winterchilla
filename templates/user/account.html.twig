@@ -71,13 +71,13 @@
             </label>
             <label>
               <span>New E-mail Address</span>
-              <input type="email" name="new_email" required>
+              <input type="email" name="newEmail" required>
             </label>
             {# Staf can change users' email without their password #}
             {% if same_user %}
               <label>
                 <span>Current Password</span>
-                <input type="password" name="current_password" autocomplete="current-password" required>
+                <input type="password" name="currentPassword" autocomplete="current-password" required>
               </label>
             {% endif %}
             <button class="btn green">
@@ -94,7 +94,7 @@
               <label>
                 <span>Current Password</span>
                 {% if user.passwordSet %}
-                  <input type="password" name="current_password" autocomplete="current-password" {% if not user.passwordSet -%}
+                  <input type="password" name="currentPassword" autocomplete="current-password" {% if not user.passwordSet -%}
                     disabled
                   {%- else -%}
                     required
@@ -110,7 +110,7 @@
               </label>
               <label>
                 <span>New Password</span>
-                <input type="password" name="new_password" autocomplete="new-password" id="new-password-input" minlength="8" required>
+                <input type="password" name="newPassword" autocomplete="new-password" id="new-password-input" minlength="8" required>
                 <button id="reveal-new-password" type="button" class="btn ui"><span class="typcn typcn-eye"></span> Reveal characters</button>
                 <button id="hide-new-password" type="button" class="btn ui hidden"><span class="typcn typcn-eye"></span> Conceal characters</button>
                 <span class="padded">Must be at least 8 characters long and not commonly used.</span>

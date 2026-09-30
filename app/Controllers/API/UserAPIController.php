@@ -174,9 +174,9 @@ class UserAPIController extends APIController {
    *     @OA\MediaType(
    *       mediaType="application/x-www-form-urlencoded",
    *       @OA\Schema(
-   *         required={"new_password"},
-   *         @OA\Property(property="current_password", type="string", description="The user's current password, required if a password is already set"),
-   *         @OA\Property(property="new_password", type="string", minLength=8, maxLength=300, description="The new password to set")
+   *         required={"newPassword"},
+   *         @OA\Property(property="currentPassword", type="string", description="The user's current password, required if a password is already set"),
+   *         @OA\Property(property="newPassword", type="string", minLength=8, maxLength=300, description="The new password to set")
    *       )
    *     )
    *   ),
@@ -225,7 +225,7 @@ class UserAPIController extends APIController {
       Users::validateCurrentPassword(Auth::$user, $hash_manager);
     }
 
-    $new_password = (new Input('new_password', 'string', [
+    $new_password = (new Input('newPassword', 'string', [
       Input::IS_OPTIONAL => false,
       Input::IN_RANGE => [8, 300],
       Input::CUSTOM_ERROR_MESSAGES => [
@@ -290,8 +290,8 @@ class UserAPIController extends APIController {
    *       mediaType="application/x-www-form-urlencoded",
    *       @OA\Schema(
    *         @OA\Property(property="resend", type="boolean", description="If true, resends the existing pending verification e-mail instead of requesting a new address change"),
-   *         @OA\Property(property="new_email", type="string", minLength=3, maxLength=128, description="The new e-mail address to verify, required unless 'resend' is true"),
-   *         @OA\Property(property="current_password", type="string", description="The user's current password, required when changing their own e-mail address")
+   *         @OA\Property(property="newEmail", type="string", minLength=3, maxLength=128, description="The new e-mail address to verify, required unless 'resend' is true"),
+   *         @OA\Property(property="currentPassword", type="string", description="The user's current password, required when changing their own e-mail address")
    *       )
    *     )
    *   ),
@@ -359,7 +359,7 @@ class UserAPIController extends APIController {
 
     $new_email = null;
     if (!$resend){
-      $new_email = (new Input('new_email', 'string', [
+      $new_email = (new Input('newEmail', 'string', [
         Input::IS_OPTIONAL => false,
         Input::IN_RANGE => [3, 128],
         Input::CUSTOM_ERROR_MESSAGES => [
@@ -370,7 +370,7 @@ class UserAPIController extends APIController {
       ]))->out();
 
       if ($new_email === $this->user->email){
-        Response::invalid('new_email', 'You are trying to use same e-mail address '.($same_user ? 'you' : 'this user').' already '.($same_user ? 'have' : 'has').' set');
+        Response::invalid('newEmail', 'You are trying to use same e-mail address '.($same_user ? 'you' : 'this user').' already '.($same_user ? 'have' : 'has').' set');
       }
 
       Users::validateEmail($new_email);
@@ -385,7 +385,7 @@ class UserAPIController extends APIController {
 
       $users_with_this_email_exist = User::exists(['conditions' => ['email' => $new_email]]);
       if ($users_with_this_email_exist){
-        Response::invalid('new_email', 'This e-mail address is already in use by another user');
+        Response::invalid('newEmail', 'This e-mail address is already in use by another user');
       }
     }
 

@@ -133,8 +133,8 @@ class TagAPIController extends APIController {
    *   description="Recalculate the use counts of the given tags. Staff only.",
    *   tags={"tags"},
    *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"tagids"},
-   *     @OA\Property(property="tagids", type="array", description="IDs of tags to recount", @OA\Items(ref="#/components/schemas/OneBasedId"))
+   *     required={"tagIds"},
+   *     @OA\Property(property="tagIds", type="array", description="IDs of tags to recount", @OA\Items(ref="#/components/schemas/OneBasedId"))
    *   )),
    *   @OA\Response(
    *     response="200",
@@ -157,7 +157,7 @@ class TagAPIController extends APIController {
       Response::denied();
 
     /** @var $tagIDs int[] */
-    $tagIDs = (new Input('tagids', 'int[]', [
+    $tagIDs = (new Input('tagIds', 'int[]', [
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_MISSING => 'Missing list of tags to update',
         Input::ERROR_INVALID => 'List of tags is invalid',
@@ -224,11 +224,11 @@ class TagAPIController extends APIController {
    *     @OA\Property(property="name", type="string", description="Tag name"),
    *     @OA\Property(property="type", type="string", description="Tag type/category"),
    *     @OA\Property(property="title", type="string", maxLength=255, nullable=true, description="Optional human-friendly title"),
-   *     @OA\Property(property="addto", ref="#/components/schemas/ZeroBasedId", description="ID of an appearance to add the new tag to; 0 means the tag cannot be applied")
+   *     @OA\Property(property="addTo", ref="#/components/schemas/ZeroBasedId", description="ID of an appearance to add the new tag to; 0 means the tag cannot be applied")
    *   )),
    *   @OA\Response(
    *     response="201",
-   *     description="Created. The response is the new tag; if 'addto' was valid it also carries the appearance's rendered tag list in 'tags', and if it was not it carries a 'warning'.",
+   *     description="Created. The response is the new tag; if 'addTo' was valid it also carries the appearance's rendered tag list in 'tags', and if it was not it carries a 'warning'.",
    *     @OA\JsonContent(allOf={
    *       @OA\Schema(ref="#/components/schemas/Tag"),
    *       @OA\Schema(type="object",
@@ -263,10 +263,10 @@ class TagAPIController extends APIController {
    * )
    * @OA\Delete(
    *   path="/tags/{id}",
-   *   description="Delete a tag (or its synonym target if it's a synonym). Staff only. If the tag is in use, a confirmation must be sent via the 'sanitycheck' parameter.",
+   *   description="Delete a tag (or its synonym target if it's a synonym). Staff only. If the tag is in use, a confirmation must be sent via the 'sanityCheck' parameter.",
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(name="sanitycheck", in="query", description="Set to confirm deletion of an in-use tag", @OA\Schema(type="string")),
+   *   @OA\Parameter(name="sanityCheck", in="query", description="Set to confirm deletion of an in-use tag", @OA\Schema(type="string")),
    *   @OA\Response(response="204", description="Deleted"),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -285,7 +285,7 @@ class TagAPIController extends APIController {
         $tid = $this->tag->synonym_of ?? $this->tag->id;
         $Uses = Tagged::by_tag($tid);
         $UseCount = count($Uses);
-        if (!isset($_REQUEST['sanitycheck']) && $UseCount > 0)
+        if (!isset($_REQUEST['sanityCheck']) && $UseCount > 0)
           Response::error(409, 'This tag is currently used on '.CoreUtils::makePlural('appearance', $UseCount, PREPEND_NUMBER).'. Deleting will permanently remove the tag from those appearances. Repeat the request with sanitycheck set to confirm.', ['uses' => $UseCount]);
 
         $this->tag->delete();
@@ -339,7 +339,7 @@ class TagAPIController extends APIController {
           $created = CoreUtils::camelKeys($Tag->to_array());
           // The id comes back from the insert as a string
           $created['id'] = (int)$created['id'];
-          $appearance_id = (new Input('addto', 'int', [Input::IS_OPTIONAL => true]))->out();
+          $appearance_id = (new Input('addTo', 'int', [Input::IS_OPTIONAL => true]))->out();
           if ($appearance_id !== null){
             if ($appearance_id === 0)
               Response::ok($created + ['warning' => "The tag was created, but it could not be added to the appearance because it can't be tagged."], 201);
@@ -376,8 +376,8 @@ class TagAPIController extends APIController {
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"target_id"},
-   *     @OA\Property(property="target_id", ref="#/components/schemas/OneBasedId", description="ID of the tag to become a synonym of")
+   *     required={"targetId"},
+   *     @OA\Property(property="targetId", ref="#/components/schemas/OneBasedId", description="ID of the tag to become a synonym of")
    *   )),
    *   @OA\Response(
    *     response="200",
@@ -397,7 +397,7 @@ class TagAPIController extends APIController {
    *   description="Remove a tag's synonym relationship, restoring it as a standalone tag. Staff only.",
    *   tags={"tags"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(name="keep_tagged", in="query", description="If present, the tag will be reapplied to all appearances tagged with its synonym target", @OA\Schema(type="string")),
+   *   @OA\Parameter(name="keepTagged", in="query", description="If present, the tag will be reapplied to all appearances tagged with its synonym target", @OA\Schema(type="string")),
    *   @OA\Response(
    *     response="200",
    *     description="Synonym removed",
@@ -419,7 +419,7 @@ class TagAPIController extends APIController {
         if ($this->tag->synonym_of !== null)
           Response::error(409, "The selected tag is already a synonym of the \"{$this->tag->synonym->name}\" (".Tags::TAG_TYPES[$this->tag->synonym->type].') tag');
 
-        $target_id = (new Input('target_id', 'int', [
+        $target_id = (new Input('targetId', 'int', [
           Input::CUSTOM_ERROR_MESSAGES => [
             Input::ERROR_MISSING => 'Target tag ID is missing',
             Input::ERROR_INVALID => 'Target tag ID is invalid',
@@ -427,7 +427,7 @@ class TagAPIController extends APIController {
         ]))->out();
         $target = Tag::find($target_id);
         if (empty($target))
-          Response::invalid('target_id', 'Target tag does not exist');
+          Response::invalid('targetId', 'Target tag does not exist');
         if ($target->synonym_of !== null)
           Response::error(409, "The target tag is already a synonym of the \"{$target->synonym->name}\" (".Tags::TAG_TYPES[$target->synonym->type].') tag');
 
@@ -468,7 +468,7 @@ class TagAPIController extends APIController {
           Response::noContent();
 
         if ($this->tag->synonym){
-          $keep_tagged = isset($_REQUEST['keep_tagged']);
+          $keep_tagged = isset($_REQUEST['keepTagged']);
           if ($keep_tagged){
             $target_tagged = Tagged::by_tag($this->tag->synonym->id);
             foreach ($target_tagged as $tg)

@@ -437,7 +437,7 @@ class Users {
   }
 
   public static function validateCurrentPassword(User $user, ?HashManager $hash_manager = null) {
-    $current_password = (new Input('current_password', 'string', [
+    $current_password = (new Input('currentPassword', 'string', [
       Input::IS_OPTIONAL => false,
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_MISSING => 'The current password is required',
@@ -452,7 +452,7 @@ class Users {
     if (!$hash_manager->check($current_password, $user->password)){
       /** @noinspection RandomApiMigrationInspection */
       usleep(rand(1, 3) * 1e6);
-      Response::invalid('current_password', 'The provided current password is incorrect');
+      Response::invalid('currentPassword', 'The provided current password is incorrect');
     }
   }
 
@@ -461,7 +461,7 @@ class Users {
 
     $block_entry = BlockedEmail::find_by_email($recipient);
     if ($block_entry) {
-      Response::invalid('new_email', 'The specified email address has been added to our do-not-send list. If you are the owner of this address and would like to be removed from this list, please contact us.');
+      Response::invalid('newEmail', 'The specified email address has been added to our do-not-send list. If you are the owner of this address and would like to be removed from this list, please contact us.');
     }
 
     $previous_validation_attempt = EmailVerification::find('first', [
@@ -501,10 +501,10 @@ class Users {
   }
 
   public static function validateEmail(string $email):void {
-    CoreUtils::checkStringValidity($email, 'new e-mail', field: 'new_email');
+    CoreUtils::checkStringValidity($email, 'new e-mail', field: 'newEmail');
 
     if(!(new EmailValidator())->isValid($email)) {
-      Response::invalid('new_email', 'The provided e-mail address does not pass our validity checks, please use an e-mail address which is properly set up to receive messages.');
+      Response::invalid('newEmail', 'The provided e-mail address does not pass our validity checks, please use an e-mail address which is properly set up to receive messages.');
     }
   }
 }

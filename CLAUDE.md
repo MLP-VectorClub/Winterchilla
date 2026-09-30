@@ -277,8 +277,10 @@ the shape Celestia/Luna will need. The browser suite above is the regression net
    tag list, users, contributions, events, profile, personal guide, admin lists — don't exist yet; several existing endpoints still
    return rendered HTML fragments (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …).
 3. **`GET /api/v0/config`** (phase 2): constants, validation patterns, client config — replaces the `export_vars` globals (`datastore.js`).
-4. **Write endpoints' request naming**: requests still use snake_case field names (`image_url`, `show_id`, `target_id`, `allow_nonmember`),
-   `Colors`, `CMData`, `APPEARANCE_PAGE`/`FULL_CHANGES_SECTION` flags; responses are camelCase. Decide whether to normalize requests.
+4. ~~Write endpoints' request naming~~ — done: request fields are camelCase (`imageUrl`, `showId`, `targetId`, `tagIds`, `sanityCheck`,
+   `addTo`, `appearanceId` (was `ponyid`), `colors`, `cutieMarks` (was `CMData`), `appearancePage`/`fullChangesSection`, `wipe*`, `ownerId`,
+   `newEmail`, …), renamed in place with the client, tests and OpenAPI. Still snake_case on purpose: OAuth protocol parameters and the
+   page-level `sort_by` query parameter (shared with the `/cg/.../full` page URL).
 5. **OpenAPI completeness** (phase 3): the docblocks describe statuses and most bodies, but schemas for the HTML-fragment fields and some
    request bodies are loose. Operation IDs are readable and unique now (Luna's convention), and the spec generates Celestia's types; the
    remaining diff against Luna's spec is listed under "Next" below.

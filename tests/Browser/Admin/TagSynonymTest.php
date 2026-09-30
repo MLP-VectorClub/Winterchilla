@@ -22,7 +22,7 @@ it('makes a tag a synonym of another and removes the synonym again from the tag 
       ->assertSee($sourceName)
       // Make the source tag a synonym of the target
       ->click("tr:has-text(\"$sourceName\") button.synon")
-      ->select('select[name="target_id"]', (string)$target['id'])
+      ->select('select[name="targetId"]', (string)$target['id'])
       ->click('[data-testid="dialog-btn-make-synonym"]')
       ->assertSee('Tag synonyms created')
       ->click('[data-testid="dialog-btn-reload"]')
@@ -48,7 +48,7 @@ it('makes a tag a synonym of another and removes the synonym again from the tag 
 it('recounts tag uses from the refresh buttons of the tag list', function () use ($base) {
   $name = 'refresh-tag-' . substr(md5(uniqid('', true)), 0, 6);
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $tag = $api->post('/tags', ['name' => $name, 'type' => 'app', 'addto' => TestSeederConstants::APPEARANCE_ID])['json'];
+  $tag = $api->post('/tags', ['name' => $name, 'type' => 'app', 'addTo' => TestSeederConstants::APPEARANCE_ID])['json'];
 
   try {
     $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
@@ -64,6 +64,6 @@ it('recounts tag uses from the refresh buttons of the tag list', function () use
       ->assertSee('use count was updated');
   }
   finally {
-    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/tags/' . $tag['id'], ['sanitycheck' => 1]);
+    ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
   }
 });

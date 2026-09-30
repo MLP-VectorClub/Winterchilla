@@ -34,7 +34,7 @@
 
           $.Dialog.wait(false, 'Deleting tag');
 
-          $.API.delete(`/tags/${tagID}`, { sanitycheck: true }).done(function(resp = {}) {
+          $.API.delete(`/tags/${tagID}`, { sanityCheck: true }).done(function(resp = {}) {
             updateList.call(resp, $tr, action);
           }).fail($.API.fail());
         });
@@ -61,7 +61,7 @@
             return $.Dialog.fail(false, 'There are no other tags to make a synonym of');
 
           let $TagActionForm = $.mk('form', `tag-${action}`),
-            $select = $.mk('select').attr('required', true).attr('name', 'target_id'),
+            $select = $.mk('select').attr('required', true).attr('name', 'targetId'),
             optgroups = {}, ogorder = [];
 
           $.each(resp, function(_, tag) {
@@ -113,7 +113,7 @@
               $SynonRemoveForm = $.mk('form', 'synon-remove').html(
                 `<p>If you leave the option below checked, <strong>${tagName}</strong> will be added to all appearances where ${targetTagName} is used, preserving how the tags worked while the synonym was active.</p>
 								<p>If you made these tags synonyms by accident and don't want <strong>${tagName}</strong> to be added to each appearance where ${targetTagName} is used, you should uncheck the box below.</p>
-								<label><input type="checkbox" name="keep_tagged" checked><span>Preserve current tag connections</span></label>`,
+								<label><input type="checkbox" name="keepTagged" checked><span>Preserve current tag connections</span></label>`,
               );
 
             $.Dialog.request(false, $SynonRemoveForm, 'Remove synonym', function($form) {
@@ -135,7 +135,7 @@
       case 'refresh':
         $.Dialog.wait(`Refresh use count of ${tagName}`, 'Updating use count');
 
-        $.API.post('/tags/recount-uses', { tagids: tagID }).done(tagUseUpdateHandler()).fail($.API.fail());
+        $.API.post('/tags/recount-uses', { tagIds: tagID }).done(tagUseUpdateHandler()).fail($.API.fail());
         break;
     }
   };
@@ -159,6 +159,6 @@
 
     $.Dialog.wait(title, 'Updating use count' + (tagIDs.length !== 1 ? 's' : ''));
 
-    $.API.post('/tags/recount-uses', { tagids: tagIDs.join(',') }).done(tagUseUpdateHandler(true)).fail($.API.fail());
+    $.API.post('/tags/recount-uses', { tagIds: tagIDs.join(',') }).done(tagUseUpdateHandler(true)).fail($.API.fail());
   });
 })();

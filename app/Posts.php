@@ -148,7 +148,7 @@ class Posts {
       $image = new ImageProvider($image_url);
     }
     catch (Exception $e){
-      Response::invalid('image_url', $e->getMessage());
+      Response::invalid('imageUrl', $e->getMessage());
     }
 
     foreach (Post::KINDS as $kind){
@@ -190,7 +190,7 @@ class Posts {
         if (empty($author))
           Response::error(502, "Could not fetch local user data for username: $cached_deviation->author");
 
-        if (!isset($_REQUEST['allow_overwrite_reserver']) && $reserver_id !== null && $author->user_id !== $reserver_id){
+        if (!isset($_REQUEST['allowOverwriteReserver']) && $reserver_id !== null && $author->user_id !== $reserver_id){
           $sameUser = Auth::$user->id === $reserver_id;
           $person = $sameUser ? 'you' : 'the user who reserved this post';
           Response::error(409, "You've linked to an image which was not submitted by $person. If this was intentional, press Continue to proceed with marking the post finished, but note that it will make {$author->name} the new reserver.".($sameUser
@@ -320,7 +320,7 @@ class Posts {
   }
 
   public static function validateImageURL():string {
-    return (new Input('image_url', 'string', [
+    return (new Input('imageUrl', 'string', [
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_MISSING => 'Please provide an image URL.',
       ],
@@ -334,7 +334,7 @@ class Posts {
   }
 
   public static function validatePostedAt() {
-    return (new Input('posted_at', 'timestamp', [
+    return (new Input('postedAt', 'timestamp', [
       Input::IS_OPTIONAL => true,
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_INVALID => '"Posted at" timestamp (@value) is invalid',
@@ -343,7 +343,7 @@ class Posts {
   }
 
   public static function validateReservedAt() {
-    return (new Input('reserved_at', 'timestamp', [
+    return (new Input('reservedAt', 'timestamp', [
       Input::IS_OPTIONAL => true,
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_INVALID => '"Reserved at" timestamp (@value) is invalid',
@@ -352,7 +352,7 @@ class Posts {
   }
 
   public static function validateFinishedAt() {
-    return (new Input('finished_at', 'timestamp', [
+    return (new Input('finishedAt', 'timestamp', [
       Input::IS_OPTIONAL => true,
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_INVALID => '"Finished at" timestamp (@value) is invalid',

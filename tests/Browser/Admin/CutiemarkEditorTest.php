@@ -8,7 +8,7 @@ $base = TestSeederConstants::BASE_URL;
 it('renames a cutie mark in the cutie mark editor', function () use ($base) {
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $id = $api->post('/appearances', ['guide' => 'pony', 'label' => 'CM Editor Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
-  $api->request('PUT', "/appearances/$id/cutie-marks", ['CMData' => json_encode([[
+  $api->request('PUT', "/appearances/$id/cutie-marks", ['cutieMarks' => json_encode([[
     'svgdata' => file_get_contents(dirname(__DIR__) . '/fixtures/cutiemark.svg'), 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0, 'label' => 'Before Editing',
   ]])]);
 

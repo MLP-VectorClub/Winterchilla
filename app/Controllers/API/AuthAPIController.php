@@ -28,7 +28,7 @@ class AuthAPIController extends APIController {
    *       mediaType="application/x-www-form-urlencoded",
    *       @OA\Schema(
    *         @OA\Property(property="everywhere", type="string", description="If present, signs out of all sessions instead of just the current one"),
-   *         @OA\Property(property="user_id", ref="#/components/schemas/OneBasedId", description="When 'everywhere' is set, the ID of another user whose sessions should be deleted instead of the current user's. Requires staff permission.")
+   *         @OA\Property(property="userId", ref="#/components/schemas/OneBasedId", description="When 'everywhere' is set, the ID of another user whose sessions should be deleted instead of the current user's. Requires staff permission.")
    *       )
    *     )
    *   ),
@@ -63,7 +63,7 @@ class AuthAPIController extends APIController {
     if (isset($_REQUEST['everywhere'])){
       $col = 'user_id';
       $val = Auth::$user->id;
-      $user_id = $_REQUEST['user_id'] ?? null;
+      $user_id = $_REQUEST['userId'] ?? null;
       if ($user_id !== null){
         if (Permission::insufficient('staff'))
           Response::error(403);

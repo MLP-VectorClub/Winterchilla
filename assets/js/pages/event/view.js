@@ -24,7 +24,7 @@
       `<div class="notice info">Here you can enter the name of the character you're submitting for example.</div>
 		<label>
 			<span>Preview (optional)</span>
-			<input type="url" name="prev_src">
+			<input type="url" name="prevSrc">
 		</label>
 		<div class="notice info">You can link to a preview of your submission from any of the <a href="/about#supported-providers" target="_blank">supported image providers</a>. This will be displayed alongside your submission on the event page. You should only use this if your submission doesn't have a preview of its own.</div>`,
     );
@@ -53,7 +53,7 @@
         if (data.title)
           $form.find('input[name="title"]').val(data.title);
         if (data.prevSrc)
-          $form.find('input[name="prev_src"]').val(data.prevSrc);
+          $form.find('input[name="prevSrc"]').val(data.prevSrc);
         $form.on('submit', function(e) {
           e.preventDefault();
 

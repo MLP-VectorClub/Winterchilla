@@ -93,7 +93,7 @@ class EventEntryAPIController extends APIController {
     CoreUtils::checkStringValidity($title, 'Entry title', field: 'title');
     $update['title'] = $title;
 
-    $prev_src = (new Input('prev_src', 'url', [
+    $prev_src = (new Input('prevSrc', 'url', [
       Input::IS_OPTIONAL => true,
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_INVALID => 'Preview (@value) is invalid',
@@ -104,7 +104,7 @@ class EventEntryAPIController extends APIController {
         $prov = new ImageProvider($prev_src);
       }
       catch (Exception $e){
-        Response::invalid('prev_src', 'Preview image error: '.$e->getMessage());
+        Response::invalid('prevSrc', 'Preview image error: '.$e->getMessage());
       }
       $update['prev_src'] = $prev_src;
       $update['prev_full'] = $prov->fullsize;
@@ -160,7 +160,7 @@ class EventEntryAPIController extends APIController {
    *       required={"link", "title"},
    *       @OA\Property(property="link", type="string", format="uri", description="URL of a deviation or Sta.sh submission"),
    *       @OA\Property(property="title", type="string", minLength=2, maxLength=64),
-   *       @OA\Property(property="prev_src", type="string", format="uri", nullable=true, description="Optional custom preview image URL"),
+   *       @OA\Property(property="prevSrc", type="string", format="uri", nullable=true, description="Optional custom preview image URL"),
    *     )
    *   ),
    *   @OA\Response(
@@ -187,7 +187,7 @@ class EventEntryAPIController extends APIController {
    *       required={"link", "title"},
    *       @OA\Property(property="link", type="string", format="uri", description="URL of a deviation or Sta.sh submission"),
    *       @OA\Property(property="title", type="string", minLength=2, maxLength=64),
-   *       @OA\Property(property="prev_src", type="string", format="uri", nullable=true, description="Optional custom preview image URL"),
+   *       @OA\Property(property="prevSrc", type="string", format="uri", nullable=true, description="Optional custom preview image URL"),
    *     )
    *   ),
    *   @OA\Response(

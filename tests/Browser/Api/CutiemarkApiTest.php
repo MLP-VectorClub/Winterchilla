@@ -18,7 +18,7 @@ it('adds, renames and removes cutie marks on an appearance', function () use ($s
   $id = scratchPony($admin);
   $path = "/appearances/$id/cutie-marks";
 
-  $r = $admin->request('PUT', $path, ['CMData' => json_encode([['svgdata' => $svg, 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0, 'label' => 'Scratch CM']])]);
+  $r = $admin->request('PUT', $path, ['cutieMarks' => json_encode([['svgdata' => $svg, 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0, 'label' => 'Scratch CM']])]);
   expect($r['status'])->toBe(200)->and($r['json'])->not->toHaveKey('status');
 
   $r = $admin->get($path);
@@ -27,13 +27,13 @@ it('adds, renames and removes cutie marks on an appearance', function () use ($s
   expect($cm['label'])->toBe('Scratch CM')->and($cm['facing'])->toBe('left');
 
   // Update it (no new SVG data needed for an existing mark)
-  $r = $admin->request('PUT', $path, ['CMData' => json_encode([['id' => $cm['id'], 'facing' => 'right', 'attribution' => 'none', 'rotation' => 10, 'label' => 'Renamed CM']])]);
+  $r = $admin->request('PUT', $path, ['cutieMarks' => json_encode([['id' => $cm['id'], 'facing' => 'right', 'attribution' => 'none', 'rotation' => 10, 'label' => 'Renamed CM']])]);
   expect($r['status'])->toBe(200);
   $cm = $admin->get($path)['json']['cms'][0];
   expect($cm['label'])->toBe('Renamed CM')->and($cm['facing'])->toBe('right');
 
   // Leaving it out of the list removes it
-  expect($admin->request('PUT', $path, ['CMData' => '[]'])['status'])->toBe(200);
+  expect($admin->request('PUT', $path, ['cutieMarks' => '[]'])['status'])->toBe(200);
   expect($admin->get($path)['json']['cms'])->toBe([]);
 
   $admin->request('DELETE', "/appearances/$id");
@@ -46,7 +46,7 @@ it('rejects a cutie mark with an invalid rotation or attribution', function () u
   $base = ['svgdata' => $svg, 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0];
 
   foreach ([['rotation' => 90], ['attribution' => 'nonsense'], ['facing' => 'sideways']] as $bad) {
-    $r = $admin->request('PUT', $path, ['CMData' => json_encode([$bad + $base])]);
+    $r = $admin->request('PUT', $path, ['cutieMarks' => json_encode([$bad + $base])]);
     expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('cutiemarks');
   }
   expect($admin->get($path)['json']['cms'])->toBe([]);

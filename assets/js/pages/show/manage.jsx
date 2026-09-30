@@ -402,7 +402,7 @@
               if (body.retry){
                 $.Dialog.confirm(false, body.message, ['Continue', 'Cancel'], function(sure) {
                   if (!sure) return;
-                  sent_data.allow_overwrite_reserver = true;
+                  sent_data.allowOverwriteReserver = true;
                   attempt();
                 });
               }
@@ -524,7 +524,7 @@
               type: 'text',
               maxlength: 255,
               pattern: '^.{2,255}$',
-              name: 'image_url',
+              name: 'imageUrl',
               required: true,
               autocomplete: 'off',
               spellcheck: 'false',

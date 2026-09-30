@@ -110,7 +110,7 @@ class AppearanceAPIController extends APIController {
    *     @OA\Property(property="label", type="string", minLength=2, maxLength=70, description="Appearance name"),
    *     @OA\Property(property="notes", type="string", nullable=true, maxLength=1000, description="Raw (markdown) notes"),
    *     @OA\Property(property="private", type="boolean", description="Whether the appearance should be private"),
-   *     @OA\Property(property="APPEARANCE_PAGE", type="boolean", description="Whether this request originates from the appearance page; when set, the response will not include 'label', 'newUrl' or 'notes'")
+   *     @OA\Property(property="appearancePage", type="boolean", description="Whether this request originates from the appearance page; when set, the response will not include 'label', 'newUrl' or 'notes'")
    *   )),
    *   @OA\Response(
    *     response="200",
@@ -405,13 +405,13 @@ class AppearanceAPIController extends APIController {
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(@OA\JsonContent(
-   *     @OA\Property(property="wipe_cache", type="boolean", description="Clear rendered preview/palette images"),
-   *     @OA\Property(property="wipe_cm_tokenized", type="boolean", description="Delete tokenized and rendered cutie mark files"),
-   *     @OA\Property(property="wipe_cm_source", type="boolean", description="Delete cutie mark source SVG files"),
-   *     @OA\Property(property="wipe_sprite", type="boolean", description="Delete the sprite image"),
-   *     @OA\Property(property="wipe_colors", type="string", enum={"color_hex","color_all","all"}, description="color_hex: clear hex values; color_all: delete all colors; all: delete all color groups"),
-   *     @OA\Property(property="wipe_tags", type="boolean", description="Remove all tags (only for appearances not in a personal guide)"),
-   *     @OA\Property(property="wipe_notes", type="boolean", description="Clear the appearance's notes"),
+   *     @OA\Property(property="wipeCache", type="boolean", description="Clear rendered preview/palette images"),
+   *     @OA\Property(property="wipeCmTokenized", type="boolean", description="Delete tokenized and rendered cutie mark files"),
+   *     @OA\Property(property="wipeCmSource", type="boolean", description="Delete cutie mark source SVG files"),
+   *     @OA\Property(property="wipeSprite", type="boolean", description="Delete the sprite image"),
+   *     @OA\Property(property="wipeColors", type="string", enum={"color_hex","color_all","all"}, description="color_hex: clear hex values; color_all: delete all colors; all: delete all color groups"),
+   *     @OA\Property(property="wipeTags", type="boolean", description="Remove all tags (only for appearances not in a personal guide)"),
+   *     @OA\Property(property="wipeNotes", type="boolean", description="Clear the appearance's notes"),
    *     @OA\Property(property="mkpriv", type="boolean", description="Mark the appearance as private"),
    *     @OA\Property(property="reset_priv_key", type="boolean", description="Regenerate the appearance's private share token")
    *   )),
@@ -428,13 +428,13 @@ class AppearanceAPIController extends APIController {
     $this->load_appearance($params);
     $this->appearance->enforceManagePermission();
 
-    $wipe_cache = (new Input('wipe_cache', 'bool', [
+    $wipe_cache = (new Input('wipeCache', 'bool', [
       Input::IS_OPTIONAL => true,
     ]))->out();
     if ($wipe_cache)
       $this->appearance->clearRenderedImages();
 
-    $wipe_cm_tokenized = (new Input('wipe_cm_tokenized', 'bool', [
+    $wipe_cm_tokenized = (new Input('wipeCmTokenized', 'bool', [
       Input::IS_OPTIONAL => true,
     ]))->out();
     if ($wipe_cm_tokenized){
@@ -444,7 +444,7 @@ class AppearanceAPIController extends APIController {
       }
     }
 
-    $wipe_cm_source = (new Input('wipe_cm_source', 'bool', [
+    $wipe_cm_source = (new Input('wipeCmSource', 'bool', [
       Input::IS_OPTIONAL => true,
     ]))->out();
     if ($wipe_cm_source){
@@ -452,13 +452,13 @@ class AppearanceAPIController extends APIController {
         CoreUtils::deleteFile($cm->getSourceFilePath());
     }
 
-    $wipe_sprite = (new Input('wipe_sprite', 'bool', [
+    $wipe_sprite = (new Input('wipeSprite', 'bool', [
       Input::IS_OPTIONAL => true,
     ]))->out();
     if ($wipe_sprite)
       $this->appearance->deleteSprite();
 
-    $wipe_colors = (new Input('wipe_colors', 'string', [
+    $wipe_colors = (new Input('wipeColors', 'string', [
       Input::IS_OPTIONAL => true,
     ]))->out();
     switch ($wipe_colors){
@@ -486,7 +486,7 @@ class AppearanceAPIController extends APIController {
     }
 
     if (empty($this->appearance->owner_id)){
-      $wipe_tags = (new Input('wipe_tags', 'bool', [
+      $wipe_tags = (new Input('wipeTags', 'bool', [
         Input::IS_OPTIONAL => true,
       ]))->out();
       if ($wipe_tags && !empty($this->appearance->tagged)){
@@ -502,7 +502,7 @@ class AppearanceAPIController extends APIController {
      */
     $update = ['last_cleared' => date('c')];
 
-    $wipe_notes = (new Input('wipe_notes', 'bool', [
+    $wipe_notes = (new Input('wipeNotes', 'bool', [
       Input::IS_OPTIONAL => true,
     ]))->out();
     /**
@@ -738,7 +738,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\RequestBody(@OA\JsonContent(
    *     @OA\Property(property="ids", type="array", description="IDs of related appearances", @OA\Items(ref="#/components/schemas/OneBasedId")),
    *     @OA\Property(property="mutuals", type="array", description="IDs (a subset of ids) for which the relation should be marked as mutual", @OA\Items(ref="#/components/schemas/OneBasedId")),
-   *     @OA\Property(property="APPEARANCE_PAGE", type="boolean", description="Whether this request originates from the appearance page; when set, 'section' is returned")
+   *     @OA\Property(property="appearancePage", type="boolean", description="Whether this request originates from the appearance page; when set, 'section' is returned")
    *   )),
    *   @OA\Response(
    *     response="200",
@@ -861,8 +861,8 @@ class AppearanceAPIController extends APIController {
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"CMData"},
-   *     @OA\Property(property="CMData", type="array", description="List of cutie mark definitions, max 4 items", @OA\Items(type="object",
+   *     required={"cutieMarks"},
+   *     @OA\Property(property="cutieMarks", type="array", description="List of cutie mark definitions, max 4 items", @OA\Items(type="object",
    *       required={"attribution", "rotation"},
    *       @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of an existing cutie mark to update; omit to create a new one"),
    *       @OA\Property(property="svgdata", ref="#/components/schemas/SVGFile", description="Required when creating a new cutie mark, max 1MB"),
@@ -873,7 +873,7 @@ class AppearanceAPIController extends APIController {
    *       @OA\Property(property="username", type="string", description="DeviantArt username, required when attribution is 'user'"),
    *       @OA\Property(property="rotation", type="integer", minimum=-45, maximum=45, description="Preview rotation amount in degrees")
    *     )),
-   *     @OA\Property(property="APPEARANCE_PAGE", type="boolean", description="Whether this request originates from the appearance page; affects whether 'html' is returned")
+   *     @OA\Property(property="appearancePage", type="boolean", description="Whether this request originates from the appearance page; affects whether 'html' is returned")
    *   )),
    *   @OA\Response(
    *     response="200",
@@ -910,7 +910,7 @@ class AppearanceAPIController extends APIController {
         foreach ($grab_cms as $cm)
           $current_cms[$cm->id] = $cm;
         /** @var $data array */
-        $data = (new Input('CMData', 'json', [
+        $data = (new Input('cutieMarks', 'json', [
           Input::CUSTOM_ERROR_MESSAGES => [
             Input::ERROR_MISSING => 'Cutie mark data is missing',
             Input::ERROR_INVALID => 'Cutie mark data (@value) is invalid',
@@ -1110,7 +1110,7 @@ class AppearanceAPIController extends APIController {
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(required=true, @OA\JsonContent(
    *     required={"tags"},
-   *     @OA\Property(property="orig_tags", type="string", description="Space-separated list of tags as they were before editing"),
+   *     @OA\Property(property="origTags", type="string", description="Space-separated list of tags as they were before editing"),
    *     @OA\Property(property="tags", type="string", description="Space-separated list of the new tags")
    *   )),
    *   @OA\Response(response="204", description="Tags updated"),
@@ -1136,7 +1136,7 @@ class AppearanceAPIController extends APIController {
         Response::ok(['tags' => $this->appearance->getTagsAsText(false)]);
       break;
       case 'PUT':
-        $orig_tags = (new Input('orig_tags', 'string', [
+        $orig_tags = (new Input('origTags', 'string', [
           Input::IS_OPTIONAL => true,
           Input::CUSTOM_ERROR_MESSAGES => [
             Input::ERROR_MISSING => 'Initial list of tags is missing',

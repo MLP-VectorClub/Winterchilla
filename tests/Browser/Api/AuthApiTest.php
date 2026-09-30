@@ -50,7 +50,7 @@ it('POST /users/signout signs the user out with 204', function () {
 
 it('forbids non-staff from signing out another user everywhere with 403', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)
-    ->post('/users/signout', ['everywhere' => 1, 'user_id' => TestSeederConstants::ADMIN_ID]);
+    ->post('/users/signout', ['everywhere' => 1, 'userId' => TestSeederConstants::ADMIN_ID]);
 
   expect($r['status'])->toBe(403)
     ->and($r['json'])->toHaveKey('message')
@@ -59,7 +59,7 @@ it('forbids non-staff from signing out another user everywhere with 403', functi
 
 it('404s when staff target a user that does not exist', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)
-    ->post('/users/signout', ['everywhere' => 1, 'user_id' => 987654]);
+    ->post('/users/signout', ['everywhere' => 1, 'userId' => 987654]);
 
   expect($r['status'])->toBe(404)->and($r['json'])->toHaveKey('message');
 });

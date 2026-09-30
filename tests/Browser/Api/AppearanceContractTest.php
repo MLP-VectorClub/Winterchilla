@@ -124,13 +124,13 @@ it('lists an appearance\'s cutie marks and validates cutie mark updates', functi
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKeys(['cms', 'preview']);
 
   $r = $admin->request('PUT', "/appearances/$appearanceId/cutie-marks");
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('CMData');
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('cutieMarks');
 
   $five = json_encode(array_fill(0, 5, ['facing' => 'left']));
-  $r = $admin->request('PUT', "/appearances/$appearanceId/cutie-marks", ['CMData' => $five]);
+  $r = $admin->request('PUT', "/appearances/$appearanceId/cutie-marks", ['cutieMarks' => $five]);
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('cutiemarks');
 
-  $r = $admin->request('PUT', "/appearances/$appearanceId/cutie-marks", ['CMData' => json_encode([['id' => 987654]])]);
+  $r = $admin->request('PUT', "/appearances/$appearanceId/cutie-marks", ['cutieMarks' => json_encode([['id' => 987654]])]);
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('cutiemarks');
 });
 
@@ -158,7 +158,7 @@ it('clears an appearance selectively with 204', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $created = createOfficial($admin);
 
-  $r = $admin->request('DELETE', '/appearances/' . $created['id'] . '/contents', ['wipe_notes' => 1]);
+  $r = $admin->request('DELETE', '/appearances/' . $created['id'] . '/contents', ['wipeNotes' => 1]);
   expect($r['status'])->toBe(204);
 
   $admin->request('DELETE', '/appearances/' . $created['id']);

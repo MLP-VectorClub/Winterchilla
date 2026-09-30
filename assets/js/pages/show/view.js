@@ -207,7 +207,7 @@
       $submitBtn = $form.find('button.submit'),
       $formImgPreview = $form.find('.img-preview'),
       $formDescInput = $form.find('input[name=label]'),
-      $formImgInput = $form.find('input[name=image_url]'),
+      $formImgInput = $form.find('input[name=imageUrl]'),
       $formLabelInput = $form.find('input[name=label]'),
       $notice = $formImgPreview.children('.notice'),
       noticeHTML = $notice.html(),
@@ -269,7 +269,7 @@
 
           const data = {
             deviation,
-            show_id: showId,
+            showId: showId,
           };
           $.API.post('/posts/reservations', data).done(function(resp = {}) {
             $.Dialog.success(false, resp.message);
@@ -311,7 +311,7 @@
       imgCheckDisabler(true);
       $.Dialog.wait(title, 'Checking image, this can take a bit of time');
 
-      $.API.post('/posts/check-image', { image_url }).fail($.API.failWith(body => {
+      $.API.post('/posts/check-image', { imageUrl: image_url }).fail($.API.failWith(body => {
         $notice.children('p:not(.keep)').remove();
         $notice.prepend($.mk('p').attr('class', 'color-red').html(body.message)).show();
         $previewIMG.hide();
@@ -403,8 +403,8 @@
 
       let data = $form.mkData({
         kind: kind,
-        show_id: showId,
-        image_url: $formImgInput.data('prev-url'),
+        showId: showId,
+        imageUrl: $formImgInput.data('prev-url'),
       });
 
       (function submit() {
@@ -416,7 +416,7 @@
           $.Dialog.confirm(false, body.message, ['Go ahead', 'Never mind'], function(sure) {
             if (!sure) return;
 
-            data.allow_nonmember = true;
+            data.allowNonmember = true;
             submit();
           });
         })).done(function(resp = {}) {
@@ -600,7 +600,7 @@
       const title = 'Scroll post into view';
       // Attempt to find the post as a last resort, it might be on a different episode page
       const postID = location.hash.replace(/\D/g, '');
-      $.API.get(`/posts/${postID}/location`, { show_id: showId }).fail($.API.failWith(body => {
+      $.API.get(`/posts/${postID}/location`, { showId: showId }).fail($.API.failWith(body => {
         $.Dialog.info(title, body.message);
       })).done(function(resp = {}) {
         if (resp.refresh){

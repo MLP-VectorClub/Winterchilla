@@ -101,12 +101,12 @@ class AdminAPIController extends APIController {
    *   schema="UsefulLinkInput",
    *   type="object",
    *   description="Used to create or update a useful link. 'title' is optional and defaults to an empty string if omitted",
-   *   required={"label","url","minrole"},
+   *   required={"label","url","minRole"},
    *   additionalProperties=false,
    *   @OA\Property(property="label", type="string", minLength=3, maxLength=35),
    *   @OA\Property(property="url", type="string", format="uri", minLength=3, maxLength=255),
    *   @OA\Property(property="title", type="string", maxLength=255),
-   *   @OA\Property(property="minrole", ref="#/components/schemas/UserRole")
+   *   @OA\Property(property="minRole", ref="#/components/schemas/UserRole")
    * )
    * @OA\Get(
    *   path="/useful-links/{id}",
@@ -206,7 +206,7 @@ class AdminAPIController extends APIController {
           $data['title'] = $title;
         }
 
-        $minrole = (new Input('minrole', function ($value) {
+        $minrole = (new Input('minRole', function ($value) {
           if (empty(Permission::ROLES_ASSOC[$value]) || Permission::insufficient('guest', $value))
             return Input::ERROR_INVALID;
         }, [
@@ -301,7 +301,7 @@ class AdminAPIController extends APIController {
           ]);
         }
 
-        $message_html = (new Input('message_html', 'string', [
+        $message_html = (new Input('messageHtml', 'string', [
           Input::IN_RANGE => [null, 500],
           Input::CUSTOM_ERROR_MESSAGES => [
             Input::ERROR_MISSING => 'Message is missing',
@@ -312,7 +312,7 @@ class AdminAPIController extends APIController {
         CoreUtils::checkStringValidity($message_html, INVERSE_PRINTABLE_ASCII_PATTERN, 'Message');
         $this->notice->message_html = CoreUtils::sanitizeHtml($message_html);
 
-        $hide_after = (new Input('hide_after', 'timestamp', [
+        $hide_after = (new Input('hideAfter', 'timestamp', [
           Input::IN_RANGE => [time(), null],
           Input::CUSTOM_ERROR_MESSAGES => [
             Input::ERROR_MISSING => 'Hide after date is missing',

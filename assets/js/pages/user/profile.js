@@ -54,7 +54,7 @@
               type: 'text',
               maxlength: 255,
               pattern: '^.{2,255}$',
-              name: 'image_url',
+              name: 'imageUrl',
               required: true,
               autocomplete: 'off',
               spellcheck: 'false',

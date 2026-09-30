@@ -22,7 +22,7 @@
           $btn.disable();
           $loadNotice.hide();
 
-          $.API.get('/posts/requests/suggestion', { already_loaded: already_loaded.join(',') }).done(function(resp = {}) {
+          $.API.get('/posts/requests/suggestion', { alreadyLoaded: already_loaded.join(',') }).done(function(resp = {}) {
             let $result = $(resp.suggestion),
               postID = parseInt($result.attr('id').split('-')[1], 10);
 

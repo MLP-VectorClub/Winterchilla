@@ -442,11 +442,11 @@ class PostAPIController extends APIController {
    *     required=true,
    *     @OA\JsonContent(
    *       type="object",
-   *       required={"kind","show_id"},
+   *       required={"kind","showId"},
    *       @OA\Property(property="kind", type="string", enum={"request","reservation"}),
-   *       @OA\Property(property="show_id", type="integer", description="ID of the show entry this post belongs to"),
+   *       @OA\Property(property="showId", type="integer", description="ID of the show entry this post belongs to"),
    *       @OA\Property(property="postas", type="string", description="Developer-only: post on behalf of another user (by DA username)"),
-   *       @OA\Property(property="allow_nonmember", type="boolean", description="Developer-only: allow posting a reservation on behalf of a non-member")
+   *       @OA\Property(property="allowNonmember", type="boolean", description="Developer-only: allow posting a reservation on behalf of a non-member")
    *     )
    *   ),
    *   @OA\Response(
@@ -558,7 +558,7 @@ class PostAPIController extends APIController {
         $post->preview = $Image->preview;
         $post->fullsize = $Image->fullsize;
 
-        $show_id = (new Input('show_id', 'int', [
+        $show_id = (new Input('showId', 'int', [
           Input::IS_OPTIONAL => false,
           Input::CUSTOM_ERROR_MESSAGES => [
             Input::ERROR_MISSING => 'Show entry ID is missing',
@@ -567,7 +567,7 @@ class PostAPIController extends APIController {
         ]))->out();
         $show = Show::find($show_id);
         if (empty($show))
-          Response::invalid('show_id', 'The specified show entry does not exist');
+          Response::invalid('showId', 'The specified show entry does not exist');
         $post->show_id = $show_id;
 
         $by_id = Auth::$user->id;
@@ -579,7 +579,7 @@ class PostAPIController extends APIController {
             if (empty($post_as))
               Response::invalid('as', 'The user you wanted to post as does not exist');
 
-            if ($kind === 'reservation' && Permission::insufficient('member', $post_as->role) && !isset($_POST['allow_nonmember']))
+            if ($kind === 'reservation' && Permission::insufficient('member', $post_as->role) && !isset($_POST['allowNonmember']))
               Response::error(409, 'The user you wanted to post as is not a club member, do you want to post as them anyway?', ['canForce' => true]);
 
             $by_id = $post_as->id;
@@ -625,8 +625,8 @@ class PostAPIController extends APIController {
    *       type="object",
    *       required={"deviation"},
    *       @OA\Property(property="deviation", type="string", format="uri", description="URL of the finished deviation"),
-   *       @OA\Property(property="allow_overwrite_reserver", type="boolean", description="If set, allows the reserver to be changed to the deviation's author even if it differs from the current reserver"),
-   *       @OA\Property(property="finished_at", type="string", format="date-time", description="Developer-only: overrides the finished timestamp")
+   *       @OA\Property(property="allowOverwriteReserver", type="boolean", description="If set, allows the reserver to be changed to the deviation's author even if it differs from the current reserver"),
+   *       @OA\Property(property="finishedAt", type="string", format="date-time", description="Developer-only: overrides the finished timestamp")
    *     )
    *   ),
    *   @OA\Response(response="204", description="Marked as finished"),
@@ -755,7 +755,7 @@ class PostAPIController extends APIController {
    *   tags={"posts"},
    *   security={},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(name="show_id", in="query", required=false, @OA\Schema(ref="#/components/schemas/OneBasedId"), description="ID of the show currently being viewed, to check whether the post belongs to it"),
+   *   @OA\Parameter(name="showId", in="query", required=false, @OA\Schema(ref="#/components/schemas/OneBasedId"), description="ID of the show currently being viewed, to check whether the post belongs to it"),
    *   @OA\Response(
    *     response="200",
    *     description="OK",
@@ -782,7 +782,7 @@ class PostAPIController extends APIController {
     if (empty($this->post) || $this->post->broken)
       Response::error(404, "The post you were linked to has either been deleted or didn't exist in the first place. Sorry. :'(");
 
-    if (isset($_REQUEST['show_id']) && $this->post->show->id === (int)$_REQUEST['show_id'])
+    if (isset($_REQUEST['showId']) && $this->post->show->id === (int)$_REQUEST['showId'])
       Response::ok([
         'refresh' => $this->post->kind,
       ]);
@@ -980,8 +980,8 @@ class PostAPIController extends APIController {
    *     required=true,
    *     @OA\JsonContent(
    *       type="object",
-   *       required={"image_url"},
-   *       @OA\Property(property="image_url", type="string", format="uri", description="New image URL (deviation or supported external image provider)")
+   *       required={"imageUrl"},
+   *       @OA\Property(property="imageUrl", type="string", format="uri", description="New image URL (deviation or supported external image provider)")
    *     )
    *   ),
    *   @OA\Response(
@@ -1018,7 +1018,7 @@ class PostAPIController extends APIController {
         Response::error(409, 'You cannot change the image of a request that has already been reserved.');
     }
 
-    $image_url = (new Input('image_url', 'string', [
+    $image_url = (new Input('imageUrl', 'string', [
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_MISSING => 'Image URL is missing',
       ],
@@ -1027,7 +1027,7 @@ class PostAPIController extends APIController {
 
     // Check image availability
     if (!DeviantArt::isImageAvailable($Image->preview))
-      Response::invalid('image_url', "The specified image doesn't seem to exist. Please verify that you can reach this URL and try again: {$Image->preview}");
+      Response::invalid('imageUrl', "The specified image doesn't seem to exist. Please verify that you can reach this URL and try again: {$Image->preview}");
 
     $old = [
       'preview' => $this->post->preview,
@@ -1095,10 +1095,10 @@ class PostAPIController extends APIController {
    *     required=true,
    *     @OA\JsonContent(
    *       type="object",
-   *       required={"show_id","deviation"},
-   *       @OA\Property(property="show_id", type="integer", description="ID of the show entry this reservation belongs to"),
+   *       required={"showId","deviation"},
+   *       @OA\Property(property="showId", type="integer", description="ID of the show entry this reservation belongs to"),
    *       @OA\Property(property="deviation", type="string", format="uri", description="URL of the finished deviation"),
-   *       @OA\Property(property="allow_overwrite_reserver", type="boolean", description="If set, allows the reserver to be changed to the deviation's author even if it differs from the current user")
+   *       @OA\Property(property="allowOverwriteReserver", type="boolean", description="If set, allows the reserver to be changed to the deviation's author even if it differs from the current user")
    *     )
    *   ),
    *   @OA\Response(
@@ -1125,19 +1125,19 @@ class PostAPIController extends APIController {
     if (Permission::insufficient('staff'))
       Response::denied();
 
-    $_POST['allow_overwrite_reserver'] = true;
+    $_POST['allowOverwriteReserver'] = true;
     $insert = Posts::checkPostFinishingImage();
     if (empty($insert['reserved_by']))
       $insert['reserved_by'] = Auth::$user->id;
 
-    $show_id = (new Input('show_id', 'int', [
+    $show_id = (new Input('showId', 'int', [
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_MISSING => 'Show ID is missing',
         Input::ERROR_INVALID => 'Show ID (@value) is invalid',
       ],
     ]))->out();
     if (!DB::$instance->where('id', $show_id)->has(Show::$table_name))
-      Response::invalid('show_id', 'The specified show entry does not exist');
+      Response::invalid('showId', 'The specified show entry does not exist');
     $insert['show_id'] = $show_id;
 
     $insert['finished_at'] = date('c');
@@ -1158,7 +1158,7 @@ class PostAPIController extends APIController {
    *   description="Suggest a random unfinished, unreserved (or long-overdue) request the user could work on. Requires the user to be signed in.",
    *   tags={"posts"},
    *   @OA\Parameter(
-   *     name="already_loaded",
+   *     name="alreadyLoaded",
    *     in="query",
    *     required=false,
    *     description="List of post IDs already shown to the user, to exclude from the suggestion",
@@ -1185,7 +1185,7 @@ class PostAPIController extends APIController {
     if (Permission::insufficient('user'))
       Response::error(401, 'You must be signed in to use this feature.');
 
-    $already_loaded = (new Input('already_loaded', 'int[]', [
+    $already_loaded = (new Input('alreadyLoaded', 'int[]', [
       Input::IS_OPTIONAL => true,
       Input::CUSTOM_ERROR_MESSAGES => [
         Input::ERROR_INVALID => 'List of already loaded image IDs is invalid',

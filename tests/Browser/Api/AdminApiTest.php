@@ -22,7 +22,7 @@ it('manages useful links: create, read, update, delete and reorder', function ()
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $label = 'Contract ' . substr(md5(uniqid('', true)), 0, 6);
 
-  $r = $admin->post('/useful-links', ['label' => $label, 'url' => '/about', 'title' => 'A contract link', 'minrole' => 'guest']);
+  $r = $admin->post('/useful-links', ['label' => $label, 'url' => '/about', 'title' => 'A contract link', 'minRole' => 'guest']);
   expect($r['status'])->toBe(201)->and($r['json'])->toHaveKey('id')->not->toHaveKey('status');
   $id = $r['json']['id'];
   $path = '/useful-links/' . $id;
@@ -31,12 +31,12 @@ it('manages useful links: create, read, update, delete and reorder', function ()
   expect($r['status'])->toBe(200)
     ->and($r['json'])->toMatchArray(['label' => $label, 'url' => '/about', 'title' => 'A contract link', 'minRole' => 'guest']);
 
-  $r = $admin->request('PUT', $path, ['label' => $label . ' 2', 'url' => '/about', 'title' => 'A contract link', 'minrole' => 'guest']);
+  $r = $admin->request('PUT', $path, ['label' => $label . ' 2', 'url' => '/about', 'title' => 'A contract link', 'minRole' => 'guest']);
   expect($r['status'])->toBe(204)->and($r['body'])->toBe('');
   expect($admin->get($path)['json']['label'])->toBe($label . ' 2');
 
   // Nothing to change is still a success
-  expect($admin->request('PUT', $path, ['label' => $label . ' 2', 'url' => '/about', 'title' => 'A contract link', 'minrole' => 'guest'])['status'])->toBe(204);
+  expect($admin->request('PUT', $path, ['label' => $label . ' 2', 'url' => '/about', 'title' => 'A contract link', 'minRole' => 'guest'])['status'])->toBe(204);
 
   expect($admin->request('PUT', '/useful-links/order', ['list' => (string)$id])['status'])->toBe(204);
 
@@ -50,8 +50,8 @@ it('validates useful links with 422 and field errors', function () {
   $r = $admin->post('/useful-links');
   expect($r['status'])->toBe(422)->and($r['json'])->toHaveKeys(['message', 'errors'])->and($r['json']['errors'])->toHaveKey('label');
 
-  $r = $admin->post('/useful-links', ['label' => 'Valid label', 'url' => '/about', 'minrole' => 'nonsense']);
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('minrole');
+  $r = $admin->post('/useful-links', ['label' => 'Valid label', 'url' => '/about', 'minRole' => 'nonsense']);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('minRole');
 
   $r = $admin->request('PUT', '/useful-links/order');
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('list');

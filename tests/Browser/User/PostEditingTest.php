@@ -24,7 +24,7 @@ it('replaces the image of a post from its edit dialog', function () use ($base) 
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
     ->click("$post .edit")
     ->click('#dialog-update-image')
-    ->fill('#img-update-form input[name="image_url"]', 'http://fav.me/dfin007')
+    ->fill('#img-update-form input[name="imageUrl"]', 'http://fav.me/dfin007')
     ->click('[data-testid="dialog-btn-update"]')
     ->assertSee('Image has been updated');
 });

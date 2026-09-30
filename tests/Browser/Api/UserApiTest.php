@@ -101,37 +101,37 @@ it('POST /users/email/verify is staff-only and validates the hash', function () 
 });
 
 it('POST /users/{id}/email-changes is staff-only and validates the new address', function () use ($userId, $adminId) {
-  expect(ApiClient::guest()->post('/users/' . $userId . '/email-changes', ['new_email' => 'a@example.com'])['status'])->toBe(401);
-  expect(ApiClient::loggedInAs($userId)->post('/users/' . $userId . '/email-changes', ['new_email' => 'a@example.com'])['status'])->toBe(403);
+  expect(ApiClient::guest()->post('/users/' . $userId . '/email-changes', ['newEmail' => 'a@example.com'])['status'])->toBe(401);
+  expect(ApiClient::loggedInAs($userId)->post('/users/' . $userId . '/email-changes', ['newEmail' => 'a@example.com'])['status'])->toBe(403);
 
   $admin = ApiClient::loggedInAs($adminId);
-  expect($admin->post('/user/987654/email', ['new_email' => 'a@example.com'])['status'])->toBe(404);
+  expect($admin->post('/user/987654/email', ['newEmail' => 'a@example.com'])['status'])->toBe(404);
 
   $r = $admin->post('/users/' . $adminId . '/email-changes');
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('new_email');
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('newEmail');
 
   // The address is checked for deliverability (MX records) before anything else, so example.com is rejected.
   // The 409 for "set a password first" and the confirmation e-mail itself need a real domain, i.e. the network.
-  $r = $admin->post('/users/' . $adminId . '/email-changes', ['new_email' => 'admin@example.com']);
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('new_email');
+  $r = $admin->post('/users/' . $adminId . '/email-changes', ['newEmail' => 'admin@example.com']);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('newEmail');
 });
 
 it('POST /users/me/password is staff-only and validates the new password', function () use ($userId, $adminId) {
-  expect(ApiClient::guest()->post('/users/me/password', ['new_password' => 'a-long-enough-password'])['status'])->toBe(401);
-  expect(ApiClient::loggedInAs($userId)->post('/users/me/password', ['new_password' => 'a-long-enough-password'])['status'])->toBe(403);
+  expect(ApiClient::guest()->post('/users/me/password', ['newPassword' => 'a-long-enough-password'])['status'])->toBe(401);
+  expect(ApiClient::loggedInAs($userId)->post('/users/me/password', ['newPassword' => 'a-long-enough-password'])['status'])->toBe(403);
 
   $admin = ApiClient::loggedInAs($adminId);
-  $r = $admin->post('/users/me/password', ['new_password' => 'short']);
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('new_password');
+  $r = $admin->post('/users/me/password', ['newPassword' => 'short']);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('newPassword');
 
-  $r = $admin->post('/users/me/password', ['new_password' => 'a-long-enough-password']);
+  $r = $admin->post('/users/me/password', ['newPassword' => 'a-long-enough-password']);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('message')->not->toHaveKey('status');
 
   // Setting a password signs the user out everywhere, and from now on the current password is required
   expect($admin->get('/users/me')['status'])->toBe(401);
   $admin = ApiClient::loggedInAs($adminId);
-  $r = $admin->post('/users/me/password', ['new_password' => 'another-long-password']);
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('current_password');
-  $r = $admin->post('/users/me/password', ['new_password' => 'another-long-password', 'current_password' => 'wrong-password']);
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('current_password');
+  $r = $admin->post('/users/me/password', ['newPassword' => 'another-long-password']);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('currentPassword');
+  $r = $admin->post('/users/me/password', ['newPassword' => 'another-long-password', 'currentPassword' => 'wrong-password']);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('currentPassword');
 });

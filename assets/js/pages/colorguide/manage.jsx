@@ -49,7 +49,7 @@
   let $SpriteUploadFormTemplate = $.mk('form', 'sprite-upload').html(
     (OwnerId ? `<div class="notice info"><label>About sprites</label><p>Sprites are small, pixelated images showcasing all of the colors a given character has. They are most useful if they contain a full body image of your character with any difficult details highlighted. You can use it together with the notes, adding explanations about anything that might be confusing.</p><p>Sprites have a height limit of 300px, a width limit between 300 and 700 pixels, and are expected to be PNG files with a transparent background.</p><p>We provide templates that fit these guidelines for anyone to use through the <a class="sprite-template-gen">Template Generator</a>. If you decide to use this generator, you must add at least the mane and tail before uploading the sprite to the site.</p><p class="color-red">The staff reserves the right to remove any sprites that do not follow these guidelines.</p></div>` : '') +
     `<p class="align-center"><a class="upload-link">Click here to upload a file</a> (max. ${window.MAX_SIZE}) or enter a URL below.</p>
-		<label><input type="text" name="image_url" placeholder="External image URL" required></label>
+		<label><input type="text" name="imageUrl" placeholder="External image URL" required></label>
 		<p class="align-center">The URL will be checked against the supported provider list, and if an image is found, it'll be downloaded to the server and set as this appearance's sprite image.</p>`,
   );
 
@@ -87,21 +87,21 @@
           ponyLabel = data.label,
           $form = $.mk('form', 'selective-wipe').html(
             `<p>Select which of the following actions to execute below.</p>
-						<label><input type="checkbox" name="wipe_cache"> Clear cached images</label>
-						<label><input type="checkbox" name="wipe_cm_tokenized"> Clear tokenized cutie mark</label>
-						<label><input type="checkbox" name="wipe_cm_source"> Clear cutie mark source file</label>
-						<label><input type="checkbox" name="wipe_sprite"> Clear sprite image</label>
+						<label><input type="checkbox" name="wipeCache"> Clear cached images</label>
+						<label><input type="checkbox" name="wipeCmTokenized"> Clear tokenized cutie mark</label>
+						<label><input type="checkbox" name="wipeCmSource"> Clear cutie mark source file</label>
+						<label><input type="checkbox" name="wipeSprite"> Clear sprite image</label>
 						<fieldset>
 							<legend>Color Groups</legend>
 							<div class="radio-group">
-								<label><input type="radio" name="wipe_colors" value="" checked><span>Nothing</span></label>
-								<label><input type="radio" name="wipe_colors" value="color_hex"><span>HEX values</span></label>
-								<label><input type="radio" name="wipe_colors" value="color_all"><span>Colors</span></label>
-								<label><input type="radio" name="wipe_colors" value="all"><span>Color groups</span></label>
+								<label><input type="radio" name="wipeColors" value="" checked><span>Nothing</span></label>
+								<label><input type="radio" name="wipeColors" value="color_hex"><span>HEX values</span></label>
+								<label><input type="radio" name="wipeColors" value="color_all"><span>Colors</span></label>
+								<label><input type="radio" name="wipeColors" value="all"><span>Color groups</span></label>
 							</div>
 						</fieldset>
-						<label><input type="checkbox" name="wipe_notes"> Clear notes</label>
-						${OwnerId ? '' : `<label><input type="checkbox" name="wipe_tags"> Remove all tags</label>`}
+						<label><input type="checkbox" name="wipeNotes"> Clear notes</label>
+						${OwnerId ? '' : `<label><input type="checkbox" name="wipeTags"> Remove all tags</label>`}
 						<label><input type="checkbox" name="mkpriv"> Make private</label>
 						<label><input type="checkbox" name="reset_priv_key"> Generate new private sharing key</label>`,
           );
@@ -111,8 +111,8 @@
             e.preventDefault();
 
             let data = $form.mkData();
-            if (!data.wipe_colors)
-              delete data.wipe_colors;
+            if (!data.wipeColors)
+              delete data.wipeColors;
             if (Object.keys(data).length === 0)
               return $.Dialog.fail(false, 'You didn\'t select any data to clear');
             $.Dialog.clearNotice(/select any data/);
@@ -193,9 +193,9 @@
           data.notes = notesEditor.getValue();
           $.Dialog.wait(false, 'Saving changes');
           if (AppearancePage)
-            data.APPEARANCE_PAGE = true;
+            data.appearancePage = true;
           if (OwnerId)
-            data.owner_id = OwnerId;
+            data.ownerId = OwnerId;
           if (GUIDE)
             data.guide = GUIDE;
 
@@ -295,7 +295,7 @@
                   ctxmenus();
                   break;
                 case 'unsynon':
-                  if (this.keep_tagged)
+                  if (this.keepTagged)
                     $affected.removeClass('synonym');
                   else $affected.remove();
                   break;
@@ -332,7 +332,7 @@
         $.mk('label').append(
           $.mk('input').attr({
             type: 'checkbox',
-            name: 'addto',
+            name: 'addTo',
           }).val(appearanceID).prop('checked', typeof name === 'string'),
           ` Add this tag to the appearance "${ponyName}" after creation`,
         ),
@@ -350,8 +350,8 @@
         let data = $form.mkData();
         $.Dialog.wait(false, 'Creating tag');
 
-        if (data.addto && AppearancePage)
-          data.APPEARANCE_PAGE = true;
+        if (data.addTo && AppearancePage)
+          data.appearancePage = true;
 
         $.API.post(`/tags`, data).done(function(resp = {}) {
           if (resp.tags){
@@ -505,22 +505,22 @@
 
         let data = this.$form.mkData(),
           appearance_id = this.appearance_id;
-        data.Colors = [];
+        data.colors = [];
         $.each(this.colorValues, (_, el) => {
           if (!el.deleted)
-            data.Colors.push(el);
+            data.colors.push(el);
         });
         if (!this.editing)
-          data.ponyid = this.appearance_id;
-        if (data.Colors.length === 0)
+          data.appearanceId = this.appearance_id;
+        if (data.colors.length === 0)
           return $.Dialog.fail(false, 'You need to add at least one valid color');
-        data.Colors = JSON.stringify(data.Colors);
+        data.colors = JSON.stringify(data.colors);
 
         if (AppearancePage)
-          data.APPEARANCE_PAGE = true;
+          data.appearancePage = true;
         const $changes = $('#changes');
         if (!$changes.length)
-          data.FULL_CHANGES_SECTION = true;
+          data.fullChangesSection = true;
 
         $.Dialog.wait(false, 'Saving changes');
 
@@ -908,9 +908,9 @@
         if (stahp)
           return;
 
-        const data = { CMData: JSON.stringify(CMData) };
+        const data = { cutieMarks: JSON.stringify(CMData) };
         if (AppearancePage)
-          data.APPEARANCE_PAGE = true;
+          data.appearancePage = true;
         $.Dialog.wait(false, 'Saving cutie mark data');
         $.API.put(`/appearances/${appearance_id}/cutie-marks`, data).done((data = {}) => {
           $.Dialog.close();
@@ -1197,7 +1197,7 @@
 
       let data = {};
       if (AppearancePage)
-        data.APPEARANCE_PAGE = true;
+        data.appearancePage = true;
       $.API.post(`/appearances/${appearanceID}/template`, data).done(function(resp = {}) {
         let $pony = $(`#p${appearanceID}`);
         $pony.find('ul.colors').html(resp.cgs);
@@ -1246,7 +1246,7 @@
 
                 let data = $form.mkData();
                 if (AppearancePage)
-                  data.APPEARANCE_PAGE = $tag.closest('div[id^=p]').attr('id').replace(/\D/g, '');
+                  data.appearancePage = $tag.closest('div[id^=p]').attr('id').replace(/\D/g, '');
                 $.Dialog.wait(false, 'Saving changes');
 
                 $.API.put(`/tags/${tagID}`, data).done(function(resp = {}) {
@@ -1286,7 +1286,7 @@
 
             let data = {};
             if (AppearancePage)
-              data.APPEARANCE_PAGE = $tag.closest('[id^=p]').attr('id').substring(1);
+              data.appearancePage = $tag.closest('[id^=p]').attr('id').substring(1);
             (function send(data) {
               $.Dialog.wait(title, 'Sending removal request');
 
@@ -1301,7 +1301,7 @@
                   $.Dialog.confirm(false, body.message, ['NUKE TAG', 'Never mind'], function(sure) {
                     if (!sure) return;
 
-                    data.sanitycheck = true;
+                    data.sanityCheck = true;
                     send(data);
                   });
                 else $.Dialog.fail(title, body.message);
@@ -1366,7 +1366,7 @@
 
                   $.Dialog.wait(false, 'Saving changes');
                   if (AppearancePage)
-                    data.APPEARANCE_PAGE = true;
+                    data.appearancePage = true;
 
                   $.API.put(endpoint, data).done(function(resp = {}) {
                     $colors.html(resp.cgs);
@@ -1515,7 +1515,7 @@
               let title = 'Upload sprite image',
                 $uploadInput = $this.find('input[type="file"]');
               $.Dialog.request(title, $SpriteUploadFormTemplate.clone(), 'Download image', function($form) {
-                const $image_url = $form.find('input[name=image_url]');
+                const $image_url = $form.find('input[name=imageUrl]');
                 $form.find('.upload-link').on('click', function(e) {
                   e.preventDefault();
                   e.stopPropagation();
@@ -1541,7 +1541,7 @@
 
                   $.Dialog.wait(title, 'Downloading external image to the server');
 
-                  $.API.post(`/appearances/${appearanceID}/sprite`, { image_url: image_url }).done(function(resp = {}) {
+                  $.API.post(`/appearances/${appearanceID}/sprite`, { imageUrl: image_url }).done(function(resp = {}) {
                     $uploadInput.trigger('set-image', [resp]);
                   }).fail($.API.fail(title));
                 });
@@ -1807,7 +1807,7 @@
             mutuals: mutuals.join(','),
           };
           if (AppearancePage)
-            data.APPEARANCE_PAGE = true;
+            data.appearancePage = true;
           $.API.put(`/appearances/${appearanceID}/relations`, data).done(function(resp = {}) {
             if (resp.section){
               if (!$cgRelations.length)
@@ -2021,7 +2021,7 @@
       const editor = new TagEditor(orig_tags, tags => {
         editor.disableButtons();
 
-        $.API.put(`/appearances/${appearanceID}/tags`, { tags, orig_tags }).done(function() {
+        $.API.put(`/appearances/${appearanceID}/tags`, { tags, origTags: orig_tags }).done(function() {
           window.location.reload();
         }).fail($.API.fail('Saving tags')).fail(() => {
           editor.enableButtons();

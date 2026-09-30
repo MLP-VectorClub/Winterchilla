@@ -261,7 +261,7 @@ class CGUtils {
       $Image = new ImageProvider(Posts::validateImageURL());
     }
     catch (Exception $e){
-      Response::invalid('image_url', $e->getMessage());
+      Response::invalid('imageUrl', $e->getMessage());
     }
 
     if ($Image->fullsize === false)
@@ -269,7 +269,7 @@ class CGUtils {
 
     $remoteFile = @File::get($Image->fullsize);
     if (empty($remoteFile))
-      Response::invalid('image_url', 'Remote file could not be found');
+      Response::invalid('imageUrl', 'Remote file could not be found');
     if (File::put($path, $remoteFile) === false)
       Response::error(500, 'Writing local image file was unsuccessful');
 

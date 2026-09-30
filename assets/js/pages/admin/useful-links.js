@@ -19,7 +19,7 @@
         $form.find('input[name=label]').val(data.label);
         $form.find('input[name=url]').val(data.url);
         $form.find('input[name=title]').val(data.title);
-        $form.find('select[name=minrole]').val(data.minRole);
+        $form.find('select[name=minRole]').val(data.minRole);
       });
     }).fail($.API.fail());
   });
@@ -48,7 +48,7 @@
   function getLinkEditForm(linkid) {
     if (typeof $LinkEditFormTemplate === 'undefined'){
       let roleSelect =
-        `<select name='minrole' required>
+        `<select name='minRole' required>
 					<option value='' selected style='display:none'>Select one</option>
 					<optgroup label="Available roles">`;
       $.each(ROLES_ASSOC, (name, label) => {

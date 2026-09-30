@@ -13,7 +13,7 @@ it('adds, edits and deletes a useful link through the admin page', function () u
     ->click('#add-link')
     ->fill('input[name="label"]', $label)
     ->fill('input[name="url"]', '/about')
-    ->select('select[name="minrole"]', 'guest')
+    ->select('select[name="minRole"]', 'guest')
     ->click('[data-testid="dialog-btn-add"]')
     // The page reloads after saving
     ->assertSee($label);

@@ -108,7 +108,7 @@
 
       $.Dialog.wait(false, 'Signing out');
 
-      $.API.post('/da-auth/signout?everywhere', { userId }).done(function(resp = {}) {
+      $.API.post('/users/signout?everywhere', { userId }).done(function(resp = {}) {
         $.Navigation.reload(true);
       }).fail($.API.fail());
     });

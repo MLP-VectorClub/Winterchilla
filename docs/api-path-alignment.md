@@ -140,4 +140,4 @@ from what Luna implements.
 - `PUT /useful-links/order` replaces `POST /admin/usefullinks/reorder`; `/admin/notices` and `/admin/stat-cache` are unchanged.
 - UI-only fragment endpoints got the same prefix rename (`/posts/{id}/lazyload`, `/event-entries/{id}/lazyload`, `/users/{id}/avatar-wrap`,
   `/users/contributions/lazyload/{favme}`) but remain Winterchilla-UI details; `/cg/full` and `/about/upcoming` kept their paths.
-- Request field names are still snake_case (step 4 of the order of work).
+- Request field names are camelCase now too (step 4, done in place); `sort_by` stays snake_case because the `/cg/.../full` page shares it.

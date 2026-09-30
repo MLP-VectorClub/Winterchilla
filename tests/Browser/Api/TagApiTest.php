@@ -85,20 +85,20 @@ it('lists tags and autocompletes by name', function () {
 
 it('confirms before deleting a tag that is in use', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
-  $tag = makeTag($admin, uniqueTagName('inuse'), ['addto' => TestSeederConstants::APPEARANCE_ID]);
+  $tag = makeTag($admin, uniqueTagName('inuse'), ['addTo' => TestSeederConstants::APPEARANCE_ID]);
   expect($tag)->toHaveKey('tags');
 
   $r = $admin->request('DELETE', '/tags/' . $tag['id']);
   expect($r['status'])->toBe(409)->and($r['json'])->toHaveKeys(['message', 'uses'])->and($r['json']['uses'])->toBe(1);
 
-  $r = $admin->request('DELETE', '/tags/' . $tag['id'], ['sanitycheck' => 1]);
+  $r = $admin->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
   expect($r['status'])->toBe(204);
 });
 
 it('warns instead of failing when a new tag cannot be added to the requested appearance', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
-  $tag = makeTag($admin, uniqueTagName('warn'), ['addto' => 987654]);
+  $tag = makeTag($admin, uniqueTagName('warn'), ['addTo' => 987654]);
   expect($tag)->toHaveKey('warning');
 
   $admin->request('DELETE', '/tags/' . $tag['id']);
@@ -108,12 +108,12 @@ it('recounts tag uses', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $tag = makeTag($admin, uniqueTagName('recount'));
 
-  $r = $admin->post('/tags/recount-uses', ['tagids' => (string)$tag['id']]);
+  $r = $admin->post('/tags/recount-uses', ['tagIds' => (string)$tag['id']]);
   expect($r['status'])->toBe(200)
     ->and($r['json'])->toHaveKeys(['message', 'counts'])->not->toHaveKey('status');
 
   $r = $admin->post('/tags/recount-uses');
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('tagids');
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('tagIds');
 
   $admin->request('DELETE', '/tags/' . $tag['id']);
 });
@@ -125,22 +125,22 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
   $path = '/tags/' . $source['id'] . '/synonym';
 
   $r = $admin->request('PUT', $path);
-  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('target_id');
-  expect($admin->request('PUT', $path, ['target_id' => 987654])['status'])->toBe(422);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('targetId');
+  expect($admin->request('PUT', $path, ['targetId' => 987654])['status'])->toBe(422);
 
-  $r = $admin->request('PUT', $path, ['target_id' => $target['id']]);
+  $r = $admin->request('PUT', $path, ['targetId' => $target['id']]);
   expect($r['status'])->toBe(200)->and($r['json']['target']['id'])->toBe($target['id']);
 
   // Already a synonym now
-  expect($admin->request('PUT', $path, ['target_id' => $target['id']])['status'])->toBe(409);
+  expect($admin->request('PUT', $path, ['targetId' => $target['id']])['status'])->toBe(409);
   $r = $admin->get('/tags', ['not' => $source['id'], 'action' => 'synon']);
   expect($r['status'])->toBe(409)->and($r['json']['synonymOf']['id'])->toBe($target['id']);
 
-  $r = $admin->request('DELETE', $path, ['keep_tagged' => 1]);
+  $r = $admin->request('DELETE', $path, ['keepTagged' => 1]);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('keepTagged');
   expect($admin->request('DELETE', $path)['status'])->toBe(204);
 
-  expect($admin->request('PUT', '/tags/987654/synonym', ['target_id' => $target['id']])['status'])->toBe(404);
+  expect($admin->request('PUT', '/tags/987654/synonym', ['targetId' => $target['id']])['status'])->toBe(404);
 
   $admin->request('DELETE', '/tags/' . $source['id']);
   $admin->request('DELETE', '/tags/' . $target['id']);

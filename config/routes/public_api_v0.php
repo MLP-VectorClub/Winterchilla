@@ -126,6 +126,7 @@ $api_endpoint('/users/[i:id]/contributions/cache', [\App\Controllers\API\UserAPI
 $api_endpoint('/users/[i:id]/role', [\App\Controllers\API\UserAPIController::class, 'roleApi']);
 $api_endpoint('/users/[i:id]/email-changes', [\App\Controllers\API\UserAPIController::class, 'emailApi']);
 $api_endpoint('/users/[i:id]/preferences/[au:key]', [\App\Controllers\API\PreferenceAPIController::class, 'api']);
+$api_endpoint('/users/[i:id]/personal-guide/appearances', [\App\Controllers\API\PersonalGuideAPIController::class, 'appearances'], 'GET');
 $api_endpoint('/users/[i:id]/personal-guide/point-history', [\App\Controllers\API\PersonalGuideAPIController::class, 'pointHistory'], 'GET');
 $api_endpoint('/users/[i:id]/personal-guide/point-history/recalculation', [\App\Controllers\API\PersonalGuideAPIController::class, 'pointRecalc']);
 $api_endpoint('/users/[i:id]/personal-guide/points', [\App\Controllers\API\PersonalGuideAPIController::class, 'pointsApi']);

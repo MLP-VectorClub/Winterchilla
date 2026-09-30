@@ -41,3 +41,29 @@ it('validates the point history query with 422', function () use ($path) {
   expect($user->get($path, ['size' => 500])['json']['errors'])->toHaveKey('size');
   expect($user->get($path, ['page' => 0])['json']['errors'])->toHaveKey('page');
 });
+
+it('lists the personal guide appearances, hiding private ones from visitors', function () {
+  $path = '/users/' . TestSeederConstants::USER_ID . '/personal-guide/appearances';
+  $guest = ApiClient::guest()->get($path);
+
+  expect($guest['status'])->toBe(200)
+    ->and($guest['json']['pagination'])->toHaveKeys(['currentPage', 'totalPages', 'totalItems', 'itemsPerPage'])
+    ->and($guest['json']['canManage'])->toBeFalse();
+  $listed = array_column($guest['json']['appearances'], null, 'id');
+  expect($listed)->toHaveKeys([TestSeederConstants::PERSONAL_APPEARANCE_ID, TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID])
+    ->and($listed[TestSeederConstants::PERSONAL_APPEARANCE_ID])->toHaveKeys(['id', 'label', 'sprite', 'colorGroups', 'private'])
+    ->and($listed[TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID])->toBe(['id' => TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID, 'label' => $listed[TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID]['label'], 'private' => true]);
+
+  $owner = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get($path);
+  $own = array_column($owner['json']['appearances'], null, 'id');
+  expect($owner['json']['canManage'])->toBeTrue()
+    ->and($own[TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID])->toHaveKey('colorGroups');
+});
+
+it('validates the personal guide appearance list', function () {
+  $path = '/users/' . TestSeederConstants::USER_ID . '/personal-guide/appearances';
+
+  expect(ApiClient::guest()->get($path, ['size' => 99])['json']['errors'])->toHaveKey('size');
+  expect(ApiClient::guest()->get($path, ['page' => 0])['json']['errors'])->toHaveKey('page');
+  expect(ApiClient::guest()->get('/users/987654/personal-guide/appearances')['status'])->toBe(404);
+});

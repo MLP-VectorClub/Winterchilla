@@ -8,6 +8,7 @@ use App\Controllers\Traits\UserLoaderTrait;
 use App\CoreUtils;
 use App\Input;
 use App\JSON;
+use App\Models\Appearance;
 use App\Models\PCGPointGrant;
 use App\Models\PCGSlotHistory;
 use App\Pagination;
@@ -18,6 +19,71 @@ use OpenApi\Annotations as OA;
 
 class PersonalGuideAPIController extends APIController {
   use UserLoaderTrait;
+
+  /**
+   * @OA\Get(
+   *   path="/users/{id}/personal-guide/appearances",
+   *   security={},
+   *   description="List the appearances of a user's personal guide, in their display order. Private appearances are listed to everyone but only carry their ID, label and `private: true` unless the visitor is the owner or staff.",
+   *   tags={"personal guide"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=50), description="Defaults to the visitor's items-per-page preference"),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"appearances", "pagination", "canManage"},
+   *       @OA\Property(property="appearances", type="array", @OA\Items(oneOf={@OA\Schema(ref="#/components/schemas/Appearance"), @OA\Schema(type="object", required={"id", "label", "private"}, @OA\Property(property="id", ref="#/components/schemas/OneBasedId"), @OA\Property(property="label", type="string"), @OA\Property(property="private", type="boolean"))})),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination"),
+   *       @OA\Property(property="canManage", type="boolean", description="Whether the visitor may add and edit appearances in this guide")
+   *     )
+   *   ),
+   *   @OA\Response(response="401", description="The owner keeps the guide private and the visitor is signed out", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="The owner keeps the guide private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function appearances($params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $this->load_user($params);
+
+    if (!$this->user->canVisitorSeePCG())
+      Response::denied();
+
+    $size = $_GET['size'] ?? UserPrefs::get('cg_itemsperpage');
+    if (!is_numeric($size) || $size < 1 || $size > 50)
+      Response::invalid('size', 'The size must be between 1 and 50.');
+    $size = (int)$size;
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+    $page = (int)$page;
+
+    $total = $this->user->getPCGAppearanceCount();
+    $pagination = (new Pagination('', $size))->forcePage($page)->calcMaxPages($total);
+    $can_manage = Auth::$signed_in && ($this->user->id === Auth::$user->id || Permission::sufficient('staff'));
+
+    Response::ok([
+      'appearances' => array_map(
+        fn(Appearance $a) => $a->private && !$can_manage
+          ? ['id' => $a->id, 'label' => $a->label, 'private' => true]
+          : AppearancesAPIController::mapAppearance($a, false) + ['private' => (bool)$a->private],
+        $this->user->getPCGAppearances($pagination) ?? []
+      ),
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
+      'canManage' => $can_manage,
+    ]);
+  }
 
   /**
    * @OA\Get(

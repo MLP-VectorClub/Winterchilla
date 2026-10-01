@@ -245,7 +245,7 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
       binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
       survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above
 
-## API contract for the Celestia/Luna reimplementation (done; production runs `3ec4e41c`, `origin/main` is ahead, see below)
+## API contract for the Celestia/Luna reimplementation (built; production runs `f8724347`, `origin/main` is ahead, see "Open items")
 
 **Purpose:** the `/api/v0` API is the deliverable Celestia (Next.js SSR front end) and Luna (Laravel + Sanctum back end) build against,
 alongside the browser/contract suites as the behavioral spec. Winterchilla keeps rendering with Twig until it is retired — no SSR,
@@ -269,8 +269,11 @@ hydration state or serializer layer for Twig lives here. Nothing in this section
 
 **Contract format (Luna's, verified from `Luna/app`)**
 - camelCase JSON keys for requests and responses (kept snake_case on purpose: OAuth protocol parameters, the page-level `sort_by` and the
-  preference keys such as `cg_itemsperpage`). Write bodies may be `application/json` (scalars are strings internally, lists of scalars become
-  comma lists, nested values stay JSON strings; `Controller::readJsonBody`) or form-encoded; the on/off preferences are booleans.
+  preference keys such as `cg_itemsperpage`). Write bodies may be `application/json` or form-encoded. JSON values are turned into the form
+  representation the inputs read (`Controller::readJsonBody`: booleans become `1`/`0`, lists of scalars comma lists, nested values JSON strings), so
+  read on/off request fields with `CoreUtils::requestFlag()`/`truthy()`, never `isset()` or a bare `$value ? …` (`"0"`/`false` must count as off).
+  The on/off preferences are booleans on the wire. An edit that omits an optional field leaves it unchanged (`guide`, `private`; `notes` is
+  cleared only when sent empty).
 - No `status` envelope: success is a proper 2xx with the resource as the body (201 on create, 204 for actions without a body), failure a proper
   4xx/5xx: `401` signed out, `403` forbidden, `404`, `409` state conflict, `419` CSRF, `422` validation, `429` throttled, `501` disabled feature,
   `502/503` dependency down. Error bodies are `{message}` and `{message, errors: {field: [..]}}` (one field error per response: `Input` stops at the
@@ -301,10 +304,25 @@ is the appearance's first four colors, `/about/connection` has no `deviceIdentif
 Not covered by automated tests because they need the real network: creating posts with real images, finishing with a deviation, approval success,
 event entry submission (disabled in the app anyway), a successful Discord sync, the e-mail flow past validation.
 
-**Open items for the next deploy** (decide with the user): `origin/main` is ahead of production; deploying runs the Phinx migration
-`20261001000000_restore_show_season_episode_unique_key` (the unique key on `show (season, episode)` was lost when `generation` was dropped).
-The Luna and Celestia plans live in their repos (`Luna/docs/winterchilla-contract-plan.md`, `Celestia/docs/winterchilla-parity-plan.md`);
-their sessions report spec gaps back and the fixes land here.
+**Open items (what is left)**
+- **Deploy:** production runs `f8724347`; `origin/main` (`14079113`) is ahead. Deploying needs the user's go-ahead and runs two Phinx data
+  migrations on production: `20261001010000_clear_invalid_default_guide_prefs` (deletes the 2 `cg_defaultguide = 'pl'` rows; the
+  `20261001000000` show unique key already shipped in `f8724347`). The new commits also contain behavior changes worth a signed-in smoke test
+  after deploying: JSON-bodies/false handling, `postAs` (was `post_as`), appearance edits keeping `guide`/`notes`/`private` when omitted.
+- **Luna and Celestia are building from this contract** in their own repos/sessions (`Luna/docs/winterchilla-contract-plan.md`,
+  `Celestia/docs/winterchilla-parity-plan.md`). They report spec/runtime mismatches back; fixes land here, and the seeded API for them is
+  `scripts/serve-seeded-api.sh [port] [database]` (own port + database, never port 8765 / `winterchilla_test`). Luna's progress was 91 of 127
+  contract operations at the last report. Open questions from Luna: which image providers the post endpoints must cover (answer: DeviantArt
+  `fav.me`/`sta.sh`, Imgur, Derpibooru, Lightshot/prntscr via `ImageProvider`; hosts outside that list are rejected with 422 `imageUrl`) and
+  which post operations Celestia actually calls (not yet answered by Celestia).
+- **Not done on purpose:** `Input` reports one validation error at a time; Winterchilla's own page scripts still read the `export_vars`
+  globals; no data endpoints for the admin PCG appearance list, tag changes, the browser-recognition page, profile by DeviantArt UUID or
+  appearance PNG/GPL exports; a successful Discord sync and the network-dependent post flows have no automated test (they need the real
+  providers).
+- **Tests that assert Winterchilla UI details** were loosened where Luna could not satisfy them (appearance create `goto`/`message`, color
+  group `cgs`, show `url`/`upcoming`/`newhtml`/`html`/`section`, log `details`, default-sprite fallback). A few tests still cover `x-internal`
+  operations (tag autocomplete, `GET /notifications`, `stat-cache`, sessions, password/e-mail, avatar-wrap, lazyload/reload/suggestion,
+  `about/upcoming`, `cg/full`, `show/{id}/posts`, contributions cache, preview); another implementation should skip them.
 
 **Guards in CI** (`.github/workflows/ci.yml`): `tests/ApiSchemaTest.php` (no swagger-php warnings, unique readable operation IDs, no dangling
 `$ref`, no old path prefixes), the "API Types" job (generates the document, converts it with `openapi-typescript@7.13.0` — Celestia's major — and

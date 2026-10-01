@@ -18,6 +18,7 @@ use OpenApi\Annotations as OA;
  *   schema="Show",
  *   type="object",
  *   description="Represents a show entry (episode or movie/special)",
+ *   required={"id", "type", "season", "episode", "parts", "no", "title", "airs", "notes", "createdAt", "updatedAt", "score", "postedBy"},
  *   additionalProperties=false,
  *   @OA\Property(property="id", type="integer", example=1),
  *   @OA\Property(property="type", type="string", enum={"episode","movie","short","special"}),
@@ -27,8 +28,10 @@ use OpenApi\Annotations as OA;
  *   @OA\Property(property="no", type="integer", nullable=true, description="Overall number"),
  *   @OA\Property(property="title", type="string"),
  *   @OA\Property(property="airs", type="string", format="date-time"),
- *   @OA\Property(property="aired", type="boolean"),
  *   @OA\Property(property="notes", type="string", nullable=true),
+ *   @OA\Property(property="score", type="number", nullable=true, description="Average rating"),
+ *   @OA\Property(property="createdAt", type="string", format="date-time"),
+ *   @OA\Property(property="updatedAt", type="string", format="date-time", nullable=true),
  *   @OA\Property(property="postedBy", type="integer", description="ID of the user who created this show entry"),
  * )
  */

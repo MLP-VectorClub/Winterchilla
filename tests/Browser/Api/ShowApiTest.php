@@ -177,3 +177,13 @@ it('GET /show/prefill suggests the next episode for staff', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get('/show/prefill');
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKeys(['season', 'episode', 'no', 'airday']);
 });
+
+it('sends an empty vote map as an object and the show with every field', function () use ($showId) {
+  // The seeded movie is never rated by a test, so its vote map is empty (and must not serialize as a list)
+  $r = ApiClient::guest()->get('/show/' . TestSeederConstants::MOVIE_ID . '/vote');
+  expect($r['status'])->toBe(200)->and($r['body'])->toContain('"data":{}');
+
+  $show = ApiClient::guest()->get('/show/' . $showId)['json']['show'];
+  expect($show)->toHaveKeys(['id', 'type', 'season', 'episode', 'parts', 'no', 'title', 'airs', 'notes', 'createdAt', 'updatedAt', 'score', 'postedBy', 'aired']);
+  expect($show['score'])->toBeFloat()->or->toBeNull();
+});

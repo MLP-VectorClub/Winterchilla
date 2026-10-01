@@ -27,8 +27,8 @@ class EventAPIController extends APIController {
    *   @OA\Property(property="startsAt", type="string", format="date-time"),
    *   @OA\Property(property="endsAt", type="string", format="date-time"),
    *   @OA\Property(property="maxEntries", type="integer", nullable=true, description="Maximum number of entries a single user may submit"),
-   *   @OA\Property(property="entryRole", type="string", description="Minimum role (or special role identifier) required to submit entries"),
-   *   @OA\Property(property="voteRole", type="string", description="Minimum role (or special role identifier) required to vote"),
+   *   @OA\Property(property="entryRole", type="string", nullable=true, description="Minimum role (or special role identifier) required to submit entries"),
+   *   @OA\Property(property="voteRole", type="string", nullable=true, description="Minimum role (or special role identifier) required to vote"),
    *   @OA\Property(property="resultFavMe", type="string", nullable=true, description="fav.me ID of the winning entry's deviation, once finalized"),
    *   @OA\Property(property="finalizedAt", type="string", format="date-time", nullable=true)
    * )

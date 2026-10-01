@@ -95,7 +95,6 @@ class AppearancesAPIController extends APIController {
    *     "ownerId",
    *     "previewData"
    *   },
-   *   additionalProperties=false,
    *   @OA\Property(
    *     property="id",
    *     ref="#/components/schemas/ZeroBasedId"
@@ -175,7 +174,6 @@ class AppearancesAPIController extends APIController {
    *   schema="Appearance",
    *   type="object",
    *   description="Represents an entry in the color guide",
-   *   additionalProperties=false,
    *   allOf={
    *     @OA\Schema(ref="#/components/schemas/SlimAppearance"),
    *     @OA\Schema(ref="#/components/schemas/ListOfColorGroups")
@@ -387,9 +385,8 @@ class AppearancesAPIController extends APIController {
    *     property="linkedTo",
    *     deprecated=true,
    *     description="This field used to indicate if this color was linked to another color, however, this feature was removed and this field now only ever returns null",
-   *     type="object",
    *     nullable=true,
-   *     ref="#/components/schemas/Color",
+   *     allOf={@OA\Schema(ref="#/components/schemas/Color")},
    *     example=null
    *   ),
    * )
@@ -712,7 +709,6 @@ class AppearancesAPIController extends APIController {
    *   schema="DetailedAppearance",
    *   type="object",
    *   description="An appearance object containing the full range of information available",
-   *   additionalProperties=false,
    *   allOf={
    *     @OA\Schema(ref="#/components/schemas/Appearance"),
    *     @OA\Schema(

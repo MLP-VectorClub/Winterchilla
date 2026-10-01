@@ -87,3 +87,10 @@ it('sends the on/off preferences as booleans', function () {
     expect($r[$flag])->toBeBool($flag);
   expect($r['cg_itemsperpage'])->toBeInt()->and($r['a_pcgmake'])->toBeTrue()->and($r['p_hidediscord'])->toBeFalse();
 });
+
+it('sends numeric preferences as numbers', function () {
+  $r = ApiClient::guest()->get('/user-prefs/me', ['keys' => ['pcg_slots', 'cg_itemsperpage']])['json'];
+
+  expect($r['cg_itemsperpage'])->toBeInt();
+  expect($r['pcg_slots'])->toBeNull();
+});

@@ -35,7 +35,7 @@ class PersonalGuideAPIController extends APIController {
    *     @OA\JsonContent(
    *       type="object",
    *       required={"appearances", "pagination", "canManage"},
-   *       @OA\Property(property="appearances", type="array", @OA\Items(oneOf={@OA\Schema(ref="#/components/schemas/Appearance"), @OA\Schema(type="object", required={"id", "label", "private"}, @OA\Property(property="id", ref="#/components/schemas/OneBasedId"), @OA\Property(property="label", type="string"), @OA\Property(property="private", type="boolean"))})),
+   *       @OA\Property(property="appearances", type="array", @OA\Items(anyOf={@OA\Schema(allOf={@OA\Schema(ref="#/components/schemas/Appearance"), @OA\Schema(type="object", required={"private"}, @OA\Property(property="private", type="boolean"))}), @OA\Schema(type="object", required={"id", "label", "private"}, @OA\Property(property="id", ref="#/components/schemas/OneBasedId"), @OA\Property(property="label", type="string"), @OA\Property(property="private", type="boolean", enum={true}))})),
    *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination"),
    *       @OA\Property(property="canManage", type="boolean", description="Whether the visitor may add and edit appearances in this guide")
    *     )

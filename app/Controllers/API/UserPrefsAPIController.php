@@ -43,7 +43,7 @@ class UserPrefsAPIController extends APIController {
     foreach ($keys as $key) {
       $value = UserPrefs::get($key, $user);
       // The on/off preferences are stored as 0/1; the API speaks booleans
-      $result[$key] = in_array($key, self::FLAGS, true) ? (bool)$value : $value;
+      $result[$key] = in_array($key, self::FLAGS, true) ? (bool)$value : (in_array($key, ['pcg_slots', 'cg_itemsperpage'], true) && $value !== null ? (int)$value : $value);
     }
 
     Response::ok($result);

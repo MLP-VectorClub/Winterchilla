@@ -322,7 +322,7 @@ class ShowAPIController extends APIController {
     switch ($this->action){
       case 'GET':
         Response::ok([
-          'show' => CoreUtils::camelKeys($this->show->to_array()) + [
+          'show' => ['score' => $this->show->score === null ? null : (float)$this->show->score] + CoreUtils::camelKeys($this->show->to_array()) + [
             'aired' => $this->show->aired,
             'willAir' => $this->show->willair,
             'canEdit' => Permission::sufficient('staff'),
@@ -519,7 +519,7 @@ class ShowAPIController extends APIController {
         foreach ($vote_count_query as $row)
           $vote_counts[$row['label']] = $row['value'];
 
-        Response::ok(['data' => $vote_counts]);
+        Response::ok(['data' => (object)$vote_counts]);
       break;
       case 'POST':
         if (!Auth::$signed_in)

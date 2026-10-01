@@ -17,7 +17,8 @@ it('lists every appearance of a guide with camelCase keys', function () use ($ap
   $ids = array_column($r['json']['appearances'], 'id');
   expect($ids)->toContain($appearanceId);
   $first = $r['json']['appearances'][0];
-  expect($first)->toHaveKeys(['id', 'label', 'createdAt', 'sprite', 'hasCutieMarks'])->not->toHaveKey('created_at');
+  expect($first)->toHaveKeys(['id', 'guide', 'ownerId', 'previewData', 'label', 'createdAt', 'sprite', 'hasCutieMarks'])->not->toHaveKey('created_at');
+  expect($first['guide'])->toBe('pony')->and($first['ownerId'])->toBeNull()->and($first['previewData'])->toBeArray();
 
   // Served from the cache the second time, byte for byte
   expect(ApiClient::guest()->get('/appearances/full', ['guide' => 'pony'])['body'])->toBe($r['body']);
@@ -139,4 +140,13 @@ it('includes the related appearances and shows of an appearance', function () {
     ->and($r['json']['relatedShows'])->toBeArray();
   foreach ($r['json']['relatedShows'] as $show)
     expect($show)->toHaveKeys(['id', 'type', 'title', 'season', 'episode', 'parts', 'no', 'airs']);
+});
+
+it('carries the guide, owner and preview colors on every appearance shape', function () {
+  $detail = ApiClient::guest()->get('/appearances/' . TestSeederConstants::APPEARANCE_ID)['json'];
+  expect($detail)->toHaveKeys(['guide', 'ownerId', 'previewData'])->and($detail['guide'])->toBe('pony')->and($detail['ownerId'])->toBeNull();
+
+  // Personal guide appearances have an owner instead of a guide
+  $personal = ApiClient::guest()->get('/appearances/' . TestSeederConstants::PERSONAL_APPEARANCE_ID)['json'];
+  expect($personal['guide'])->toBeNull()->and($personal['ownerId'])->toBe(TestSeederConstants::USER_ID);
 });

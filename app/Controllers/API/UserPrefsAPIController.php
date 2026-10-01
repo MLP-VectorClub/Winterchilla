@@ -16,7 +16,7 @@ class UserPrefsAPIController extends APIController {
    *   tags={"user preferences"},
    *   security={},
    *   @OA\Parameter(in="query", name="keys[]", @OA\Schema(type="array", minItems=1, @OA\Items(type="string"))),
-   *   @OA\Response(response="200", description="Preference key to value", @OA\JsonContent(type="object", additionalProperties=true, example={"cg_itemsperpage": 7, "p_hidediscord": 0})),
+   *   @OA\Response(response="200", description="Preference key to value", @OA\JsonContent(ref="#/components/schemas/UserPrefs")),
    *   @OA\Response(response="422", description="Unknown or repeated key", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
    */

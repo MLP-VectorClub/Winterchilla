@@ -120,6 +120,31 @@ use OpenApi\Annotations as OA;
  *   minimum=0,
  *   example=1
  * )
+ * @OA\Schema(
+ *   schema="UserPrefs",
+ *   type="object",
+ *   description="The effective preference values (every key is optional when `keys[]` limits the result). The `0`/`1` flags are on/off; defaults are in brackets in the descriptions below.",
+ *   additionalProperties=false,
+ *   @OA\Property(property="cg_itemsperpage", type="integer", minimum=7, maximum=20, description="Appearances per page in the color guide [7]"),
+ *   @OA\Property(property="cg_hidesynon", type="integer", enum={0, 1}),
+ *   @OA\Property(property="cg_hideclrinfo", type="integer", enum={0, 1}),
+ *   @OA\Property(property="cg_fulllstprev", type="integer", enum={0, 1}),
+ *   @OA\Property(property="cg_nutshell", type="integer", enum={0, 1}),
+ *   @OA\Property(property="p_hidediscord", type="integer", enum={0, 1}),
+ *   @OA\Property(property="p_hidepcg", type="integer", enum={0, 1}),
+ *   @OA\Property(property="p_homelastep", type="integer", enum={0, 1}),
+ *   @OA\Property(property="ep_noappprev", type="integer", enum={0, 1}),
+ *   @OA\Property(property="ep_revstepbtn", type="integer", enum={0, 1}),
+ *   @OA\Property(property="a_pcgearn", type="integer", enum={0, 1}),
+ *   @OA\Property(property="a_pcgmake", type="integer", enum={0, 1}),
+ *   @OA\Property(property="a_pcgsprite", type="integer", enum={0, 1}),
+ *   @OA\Property(property="a_postreq", type="integer", enum={0, 1}),
+ *   @OA\Property(property="a_postres", type="integer", enum={0, 1}),
+ *   @OA\Property(property="a_reserve", type="integer", enum={0, 1}),
+ *   @OA\Property(property="p_vectorapp", type="string", description="The vector app shown next to the user's name, empty for none"),
+ *   @OA\Property(property="cg_defaultguide", type="string", nullable=true, enum={"pony", "eqg", null}, description="Preferred color guide [null]"),
+ *   @OA\Property(property="pcg_slots", type="integer", nullable=true, description="Personal guide slots granted by staff [null]")
+ * )
  */
 final class ApiSchemas {
 }

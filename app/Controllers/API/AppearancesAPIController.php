@@ -40,16 +40,18 @@ use function count;
  * @OA\Schema(
  *   schema="AppearanceList",
  *   type="object",
- *   description="An array of appearances under the appearances key",
+ *   description="A page of appearances under the appearances key",
  *   required={
- *     "appearances"
+ *     "appearances",
+ *     "pagination"
  *   },
  *   additionalProperties=false,
  *   @OA\Property(
  *     property="appearances",
  *     type="array",
  *     @OA\Items(ref="#/components/schemas/Appearance")
- *   )
+ *   ),
+ *   @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
  * )
  * @OA\Schema(
  *   schema="PreviewsIndicator",
@@ -80,12 +82,34 @@ class AppearancesAPIController extends APIController {
    *     "notes",
    *     "tags",
    *     "sprite",
-   *     "hasCutieMarks"
+   *     "hasCutieMarks",
+   *     "guide",
+   *     "ownerId",
+   *     "previewData"
    *   },
    *   additionalProperties=false,
    *   @OA\Property(
    *     property="id",
    *     ref="#/components/schemas/ZeroBasedId"
+   *   ),
+   *   @OA\Property(
+   *     property="guide",
+   *     type="string",
+   *     nullable=true,
+   *     enum={"pony", "eqg", null},
+   *     description="The official guide the appearance belongs to; null for personal guide appearances (see ownerId)"
+   *   ),
+   *   @OA\Property(
+   *     property="ownerId",
+   *     type="integer",
+   *     nullable=true,
+   *     description="ID of the user whose personal guide the appearance belongs to; null for the official guides"
+   *   ),
+   *   @OA\Property(
+   *     property="previewData",
+   *     type="array",
+   *     description="Up to four hex colors (#rrggbb) that represent the appearance, for small previews and cards",
+   *     @OA\Items(type="string")
    *   ),
    *   @OA\Property(
    *     property="label",
@@ -162,6 +186,9 @@ class AppearancesAPIController extends APIController {
 
     $appearance = [
       'id' => $a->id,
+      'guide' => $a->guide,
+      'ownerId' => $a->owner_id === null ? null : (int)$a->owner_id,
+      'previewData' => array_map(fn(Color $c) => $c->hex, $a->getPreviewColors()),
       'label' => $a->label,
       'createdAt' => gmdate('c', $a->created_at->getTimestamp()),
       'notes' => $a->notes_rend,
@@ -230,7 +257,7 @@ class AppearancesAPIController extends APIController {
    * @OA\Schema(
    *   schema="Sprite",
    *   type="object",
-   *   description="Data related to an appearance's sprite file. The actual file is available from a different endpoint.",
+   *   description="Data related to an appearance's sprite file. The image itself is `GET /appearances/{id}/sprite?size=300|600&hash={hash}` (the hash is only there for cache busting); `preview`, when sent, is a tiny data URI with the same proportions for laying the page out before the image loads.",
    *   required={
    *     "hash",
    *   },

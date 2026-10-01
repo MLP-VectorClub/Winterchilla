@@ -56,7 +56,7 @@ it('creates, reads, updates and deletes an official appearance', function () {
   $label = uniqueAppearance();
 
   $created = createOfficial($admin, $label);
-  expect($created)->toHaveKeys(['id', 'goto', 'message'])->not->toHaveKey('status');
+  expect($created)->toHaveKey('id')->not->toHaveKey('status');
   $path = '/appearances/' . $created['id'];
 
   $r = $admin->post('/appearances', ['guide' => 'pony', 'label' => $label]);

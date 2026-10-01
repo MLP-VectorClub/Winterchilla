@@ -91,8 +91,9 @@ class AppearanceAPIController extends APIController {
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *         @OA\Property(property="goto", type="string", format="uri", description="URL of the newly created appearance"),
-   *         @OA\Property(property="info", type="string", description="Additional info, e.g. if applying the template failed")
+   *         @OA\Property(property="message", type="string", description="Winterchilla UI detail, not part of the contract: confirmation text for its dialog"),
+   *         @OA\Property(property="goto", type="string", format="uri", description="Winterchilla UI detail, not part of the contract: page path of the new appearance"),
+   *         @OA\Property(property="info", type="string", description="Winterchilla UI detail, not part of the contract: extra text, e.g. when applying the template failed")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -667,9 +668,10 @@ class AppearanceAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="sprite", type="string", description="Path of the default sprite image")
+   *         @OA\Property(property="sprite", type="string", description="Winterchilla UI detail, not part of the contract: path of the default sprite image")
    *       )
    *   ),
+   *   @OA\Response(response="204", description="Removed (an implementation without a default sprite image answers this instead of 200; afterwards GET /appearances/{id}/sprite answers 404 there, while Winterchilla serves its default image)"),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(response="404", description="Appearance not found, or (when deleting) no sprite file found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
@@ -1095,7 +1097,7 @@ class AppearanceAPIController extends APIController {
    *     response="200",
    *     description="OK",
    *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="tags", type="string", description="Space-separated list of tags")
+   *         @OA\Property(property="tags", type="string", description="Comma-separated list of tag names")
    *       )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -1110,8 +1112,8 @@ class AppearanceAPIController extends APIController {
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(required=true, @OA\JsonContent(
    *     required={"tags"},
-   *     @OA\Property(property="origTags", type="string", description="Space-separated list of tags as they were before editing"),
-   *     @OA\Property(property="tags", type="string", description="Space-separated list of the new tags")
+   *     @OA\Property(property="origTags", type="string", description="Comma-separated list of tag names as they were before editing"),
+   *     @OA\Property(property="tags", type="string", description="Comma-separated list of the new tag names")
    *   )),
    *   @OA\Response(response="204", description="Tags updated"),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),

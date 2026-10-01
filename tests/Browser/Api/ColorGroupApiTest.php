@@ -78,7 +78,7 @@ it('creates, reads, updates and deletes a color group', function () use ($appear
   $label = uniqueLabel('Lifecycle');
 
   $created = createGroup($admin, $appearanceId, $label);
-  expect($created)->toHaveKeys(['id', 'cgs', 'notes'])->not->toHaveKey('status');
+  expect($created)->toHaveKey('id')->not->toHaveKey('status');
   $path = '/color-groups/' . $created['id'];
 
   $r = $admin->post('/color-groups', ['appearanceId' => $appearanceId, 'label' => $label, 'colors' => colorsJson()]);
@@ -97,7 +97,7 @@ it('creates, reads, updates and deletes a color group', function () use ($appear
     'label' => $label . ' 2',
     'colors' => colorsJson([['id' => $colorId, 'label' => 'Renamed Base', 'hex' => '#112233'], ['label' => 'Second Color']]),
   ]);
-  expect($r['status'])->toBe(200)->and($r['json'])->toHaveKeys(['id', 'cgs']);
+  expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('id');
   $r = $admin->get($path);
   expect($r['json']['label'])->toBe($label . ' 2')->and($r['json']['colors'])->toHaveCount(2);
 

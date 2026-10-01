@@ -16,14 +16,14 @@ it('creates a request and a reservation from an image URL', function () use ($im
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
   $r = $admin->post('/posts', ['kind' => 'request', 'showId' => TestSeederConstants::SHOW_ID, 'label' => 'A new request', 'type' => 'chr', 'imageUrl' => $image]);
-  expect($r['status'])->toBe(201)->and($r['json'])->toHaveKeys(['id', 'kind'])->and($r['json']['kind'])->toBe('request');
+  expect($r['status'])->toBe(201)->and($r['json'])->toHaveKeys(['id', 'idString', 'kind'])->and($r['json']['kind'])->toBe('request')->and($r['json']['id'])->toBeInt()->and($r['json']['idString'])->toBe('post-' . $r['json']['id']);
   $requestId = $r['json']['id'];
 
   $r = $admin->post('/posts', ['kind' => 'reservation', 'showId' => TestSeederConstants::SHOW_ID, 'label' => 'A new reservation', 'imageUrl' => $image]);
   expect($r['status'])->toBe(201)->and($r['json']['kind'])->toBe('reservation');
 
-  // Clean up the request through the API (the ID comes back as "post-<number>")
-  expect($admin->request('DELETE', '/posts/requests/' . preg_replace('/\D/', '', $requestId))['status'])->toBe(204);
+  // Clean up the request through the API
+  expect($admin->request('DELETE', '/posts/requests/' . $requestId)['status'])->toBe(204);
 });
 
 it('validates new posts with 422 and field errors', function () use ($image) {

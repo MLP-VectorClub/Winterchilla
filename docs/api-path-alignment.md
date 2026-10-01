@@ -45,7 +45,7 @@ from what Luna implements.
 | `GET,PUT /cg/appearance/{id}/guide-relations` | `GET,PUT /appearances/{id}/shows` |
 | `POST,DELETE /cg/appearance/{id}/pin` | `POST,DELETE /appearances/{id}/pin` |
 | `GET /cg/appearances` (autocomplete) | `GET /appearances/autocomplete` (Luna has it) |
-| `GET /cg/full` *ui* | — (`GET /appearances/all` is the data equivalent) |
+| `GET /cg/full` *ui* | — (`GET /appearances/full` is the data equivalent) |
 | `POST /cg/full/reorder` | `PUT /appearances/order` |
 
 ### Color groups, tags, color guide
@@ -140,3 +140,34 @@ from what Luna implements.
 - UI-only fragment endpoints got the same prefix rename (`/posts/{id}/lazyload`, `/event-entries/{id}/lazyload`, `/users/{id}/avatar-wrap`,
   `/users/contributions/lazyload/{favme}`) but remain Winterchilla-UI details; `/cg/full` and `/about/upcoming` kept their paths.
 - Request field names are camelCase now too (step 4, done in place); `sort_by` stays snake_case because the `/cg/.../full` page shares it.
+
+## Handoff notes (2026-10-01, after the first Luna/Celestia plan reviews)
+
+- **Spec size:** `public/dist/api.json` lists 142+ method+path pairs, one operation each (operation IDs are unique, `tests/ApiSchemaTest.php`
+  checks it); older notes that say 135 counted an earlier state.
+- **`x-internal` operations** (`CoreUtils::INTERNAL_OPERATIONS`, enforced by `ApiSchemaTest`): the HTML-only endpoints (`/about/upcoming`,
+  `/cg/full`, `*/lazyload`, `/posts/{id}/reload`, `/show/{id}/posts`, `/posts/requests/suggestion`, `/notifications`,
+  `/users/{id}/avatar-wrap`, `DELETE /users/{id}/contributions/cache`), Winterchilla's own session handling (`GET /users/session/status`,
+  `DELETE /users/sessions/{id}`; Luna has tokens and `/users/me`), `DELETE /admin/stat-cache`, and the staff-only e-mail/password flows
+  under testing (`POST /users/me/password`, `/users/email/verify`, `/users/{id}/email-changes`: they really are `roleGate('staff')`, not a
+  copy-paste error; Luna's signed-link verification and resend flow wins). Luna and Celestia need not implement these.
+- **Auth is not in the contract.** Sign-in, token issuing, `/sanctum/csrf-cookie`, `/users/signin`, `/users/oauth/signin/{provider}`, `POST /users`,
+  `/users/tokens` and `/about/sleep` belong to Luna (Winterchilla signs in through DeviantArt OAuth pages, not the API). `POST /users/signout`
+  is the one auth endpoint both have. The spec has a global default `security: SessionCookie` and public endpoints say `security={}`; read
+  "SessionCookie" as "signed in" and map it to Sanctum.
+- **`GET /appearances/full`** replaces `/appearances/all` (the path Luna and Celestia call). The Discord sync/unlink endpoints are in the
+  spec now (the generator did not scan `DiscordAuthController`).
+- **Request bodies:** `application/json` is accepted next to form-encoded (JSON lists of scalars are read as comma lists, nested values
+  as JSON strings; `tests/Browser/Api/JsonBodyApiTest.php`). The shared OpenAPI schemas live on `ApiSchemas` now; `Tag`, `EventEntry`,
+  `ValueOfUser`, `PreferenceValue`, … no longer inherit a legacy `status` + `pagination` envelope.
+- **Added for the Celestia plan:** `relatedAppearances`/`relatedShows` on `GET /appearances/{id}`, `GET /useful-links` (staff), `GET /show/latest`,
+  `season`/`episode` filters on `GET /show`, a `post` (`PostItem`) next to `li` in the post write responses, int `id` (+ `idString`) from
+  `POST /posts` and `/posts/reservations`, camelCase cutie mark and event docs, `resetPrivKey`, `POST`→`PUT` fixed in the docs of
+  `/show/{id}/appearances`.
+- **Not provided, on purpose:** a login sessions list (Luna's `/users/tokens`), profile by DeviantArt UUID (`/u/{uuid}` is a developer-only
+  tool), appearance palette exports (PNG/GPL/JSON are generated files; compose them from `colorGroups`), data endpoints for the admin
+  PCG appearance list, tag changes and the browser-recognition page (staff/dev tools that are not being ported).
+- **Running the contract tests against another server:** see `tests/Browser/Helpers/ApiClient.php` (`CONTRACT_BASE_URL`, `CONTRACT_AUTH=bearer`,
+  `CONTRACT_LOGIN_URL`, …) and `scripts/dump-contract-seed.sh` (the seeded data as INSERTs; the cutie mark file and the Redis-cached
+  deviations are not in the dump, so the tests that need them will fail on another server until it provides equivalents; Luna should write its
+  own tests for the network-dependent flows).

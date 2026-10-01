@@ -103,7 +103,7 @@
 						<label><input type="checkbox" name="wipeNotes"> Clear notes</label>
 						${OwnerId ? '' : `<label><input type="checkbox" name="wipeTags"> Remove all tags</label>`}
 						<label><input type="checkbox" name="mkpriv"> Make private</label>
-						<label><input type="checkbox" name="reset_priv_key"> Generate new private sharing key</label>`,
+						<label><input type="checkbox" name="resetPrivKey"> Generate new private sharing key</label>`,
           );
         $.Dialog.close();
         $.Dialog.request('Selectively wipe data from ' + ponyLabel, $form, 'Clear data', function() {

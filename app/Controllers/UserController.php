@@ -22,32 +22,6 @@ use OpenApi\Annotations as OA;
 use RuntimeException;
 use function count;
 
-/**
- * @OA\Schema(
- *   schema="Session",
- *   type="object",
- *   description="Represents a login session for a user",
- *   required={
- *     "id",
- *     "user_id",
- *     "platform",
- *     "browser_name",
- *     "browser_ver",
- *     "created",
- *     "last_visit",
- *     "expired"
- *   },
- *   additionalProperties=false,
- *   @OA\Property(property="id", type="integer"),
- *   @OA\Property(property="user_id", type="integer"),
- *   @OA\Property(property="platform", type="string", nullable=true),
- *   @OA\Property(property="browser_name", type="string", nullable=true),
- *   @OA\Property(property="browser_ver", type="string", nullable=true),
- *   @OA\Property(property="created", type="string", format="date-time"),
- *   @OA\Property(property="last_visit", type="string", format="date-time"),
- *   @OA\Property(property="expired", type="boolean")
- * )
- */
 class UserController extends Controller {
   use UserLoaderTrait;
 

@@ -77,3 +77,20 @@ it('uses Luna-style resource paths', function () {
   foreach ($paths as $path)
     expect($path)->not->toMatch('#^/(cg|post|event|notif|setting|user|admin/usefullinks)(/|$)#');
 });
+
+it('marks the UI-only and Winterchilla-specific operations as x-internal', function () {
+  $schema = generatedApiSchema();
+  $internal = [];
+  foreach ($schema['paths'] as $path => $operations) {
+    foreach ($operations as $method => $operation) {
+      if (is_array($operation) && ($operation['x-internal'] ?? false) === true)
+        $internal[] = strtoupper($method) . " $path";
+    }
+  }
+
+  // Every entry of the list matches a documented operation (a rename must not silently drop the marker)...
+  expect($internal)->toEqualCanonicalizing(CoreUtils::INTERNAL_OPERATIONS);
+  // ...and an operation whose only purpose is a rendered-HTML body is on it
+  foreach (['GET /about/upcoming', 'GET /cg/full', 'GET /posts/{id}/lazyload', 'GET /show/{id}/posts'] as $pure_ui)
+    expect($internal)->toContain($pure_ui);
+});

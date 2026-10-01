@@ -3,11 +3,37 @@
 namespace Tests\Browser\Helpers;
 
 /**
- * Minimal HTTP client for the API contract tests. Keeps a cookie jar (session + CSRF token) and echoes the
- * CSRF_TOKEN cookie back on state-changing requests, like the site's own JS does.
+ * Minimal HTTP client for the API contract tests. By default it talks to Winterchilla's test server, keeps a cookie jar
+ * (session + CSRF token) and echoes the CSRF_TOKEN cookie back on state-changing requests, like the site's own JS does.
+ *
+ * The contract tests can be pointed at another implementation of the API (Luna) through the environment:
+ *  - CONTRACT_BASE_URL   origin of the server under test (default: Winterchilla's test server)
+ *  - CONTRACT_API_PATH   API prefix (default: /api/v0)
+ *  - CONTRACT_AUTH       `cookie` (default) or `bearer`; bearer mode sends `Authorization: Bearer <token>` and no CSRF token
+ *  - CONTRACT_LOGIN_URL  where loggedInAs() logs in, `{id}` is the seeded user ID (default: /test-login/{id}); in bearer mode the
+ *                        endpoint must answer JSON with a `token` key (e.g. a test-only POST /test/login/{id})
+ *  - CONTRACT_LOGIN_METHOD  HTTP method of the login request (default: GET for cookies, POST for bearer)
+ * With CONTRACT_BASE_URL set, the browser suite's bootstrap neither resets the database nor starts Winterchilla's server.
  */
 class ApiClient {
   private string $jar;
+  private ?string $token = null;
+
+  public static function external():bool {
+    return getenv('CONTRACT_BASE_URL') !== false && getenv('CONTRACT_BASE_URL') !== '';
+  }
+
+  public static function baseUrl():string {
+    return rtrim(self::external() ? getenv('CONTRACT_BASE_URL') : TestSeederConstants::BASE_URL, '/');
+  }
+
+  public static function apiPath():string {
+    return getenv('CONTRACT_API_PATH') ?: TestSeederConstants::API_PATH;
+  }
+
+  private static function bearer():bool {
+    return getenv('CONTRACT_AUTH') === 'bearer';
+  }
 
   public function __construct() {
     $this->jar = tempnam(sys_get_temp_dir(), 'apijar');
@@ -23,8 +49,17 @@ class ApiClient {
 
   public static function loggedInAs(int $userId):self {
     $client = new self();
-    // Sets the session cookie and redirects; we only need the cookie
-    $client->raw('GET', '/test-login/' . $userId, followRedirects: false);
+    $login = str_replace('{id}', (string)$userId, getenv('CONTRACT_LOGIN_URL') ?: '/test-login/{id}');
+    if (self::bearer()) {
+      $method = getenv('CONTRACT_LOGIN_METHOD') ?: 'POST';
+      $client->token = $client->raw($method, $login, accept: 'application/json')['json']['token'] ?? null;
+      if ($client->token === null)
+        throw new \RuntimeException("The login endpoint $login did not return a token");
+    }
+    else {
+      // Sets the session cookie and redirects; we only need the cookie
+      $client->raw(getenv('CONTRACT_LOGIN_METHOD') ?: 'GET', $login, followRedirects: false);
+    }
     return $client;
   }
 
@@ -32,11 +67,22 @@ class ApiClient {
    * @return array{status: int, body: string, json: mixed, contentType: ?string}
    */
   public function request(string $method, string $path, array $params = []):array {
-    return $this->raw($method, TestSeederConstants::API_PATH . $path, $params);
+    return $this->raw($method, self::apiPath() . $path, $params);
   }
 
   public function get(string $path, array $query = []):array {
     return $this->request('GET', $path, $query);
+  }
+
+  /** Sends the data as an `application/json` body, the way a fetch()-based front end would. */
+  public function json(string $method, string $path, array $data = []):array {
+    if (!self::bearer()) {
+      if ($this->cookie('CSRF_TOKEN') === null)
+        $this->raw('GET', self::apiPath() . '/users/session/status');
+      $data['CSRF_TOKEN'] = $this->cookie('CSRF_TOKEN') ?? '';
+    }
+
+    return $this->raw($method, self::apiPath() . $path, [], rawBody: json_encode($data), contentType: 'application/json');
   }
 
   public function post(string $path, array $data = []):array {
@@ -53,11 +99,11 @@ class ApiClient {
    */
   public function upload(string $path, string $field, string $file, array $data = [], string $mime = 'image/png'):array {
     $data[$field] = new \CURLFile($file, $mime, basename($file));
-    return $this->raw('POST', TestSeederConstants::API_PATH . $path, $data, multipart: true);
+    return $this->raw('POST', self::apiPath() . $path, $data, multipart: true);
   }
 
-  private function raw(string $method, string $path, array $params = [], bool $followRedirects = true, string $accept = 'application/json', bool $multipart = false):array {
-    $url = TestSeederConstants::BASE_URL . $path;
+  private function raw(string $method, string $path, array $params = [], bool $followRedirects = true, string $accept = 'application/json', bool $multipart = false, ?string $rawBody = null, ?string $contentType = null):array {
+    $url = self::baseUrl() . $path;
     $ch = curl_init();
     $opts = [
       CURLOPT_RETURNTRANSFER => true,
@@ -65,13 +111,19 @@ class ApiClient {
       CURLOPT_COOKIEJAR => $this->jar,
       CURLOPT_COOKIEFILE => $this->jar,
       CURLOPT_CUSTOMREQUEST => $method,
-      CURLOPT_HTTPHEADER => ['Accept: ' . $accept],
+      CURLOPT_HTTPHEADER => array_filter(['Accept: ' . $accept, $this->token !== null ? 'Authorization: Bearer ' . $this->token : null]),
     ];
-    if ($method !== 'GET') {
-      // The server hands out the CSRF cookie on any response; make sure we have one before writing
-      if ($this->cookie('CSRF_TOKEN') === null)
-        $this->raw('GET', TestSeederConstants::API_PATH . '/users/session/status');
-      $params['CSRF_TOKEN'] = $this->cookie('CSRF_TOKEN') ?? '';
+    if ($rawBody !== null) {
+      $opts[CURLOPT_POSTFIELDS] = $rawBody;
+      $opts[CURLOPT_HTTPHEADER][] = 'Content-Type: ' . $contentType;
+    }
+    elseif ($method !== 'GET') {
+      if (!self::bearer()) {
+        // The server hands out the CSRF cookie on any response; make sure we have one before writing
+        if ($this->cookie('CSRF_TOKEN') === null)
+          $this->raw('GET', self::apiPath() . '/users/session/status');
+        $params['CSRF_TOKEN'] = $this->cookie('CSRF_TOKEN') ?? '';
+      }
       // An array (with CURLFile values) is sent as multipart/form-data, a string as urlencoded
       $opts[CURLOPT_POSTFIELDS] = $multipart ? $params : http_build_query($params);
     }

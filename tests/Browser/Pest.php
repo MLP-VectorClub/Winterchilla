@@ -1,10 +1,15 @@
 <?php
 
+use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\AuthHelper;
 use Tests\Browser\Helpers\ServerManager;
 
 uses(AuthHelper::class)
   ->beforeAll(function () {
+    // Contract tests pointed at another implementation of the API (see ApiClient) need none of Winterchilla's own server
+    if (ApiClient::external())
+      return;
+
     $root = dirname(__DIR__, 2);
     $resetScript = $root . '/scripts/reset-test-db.sh';
     if (file_exists($resetScript)) {
@@ -15,6 +20,8 @@ uses(AuthHelper::class)
     ServerManager::start();
   })
   ->afterAll(function () {
+    if (ApiClient::external())
+      return;
     ServerManager::stop();
   })
   ->in(__DIR__);

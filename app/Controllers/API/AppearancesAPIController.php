@@ -12,6 +12,7 @@ use App\Models\Color;
 use App\Models\ColorGroup;
 use App\Models\Cutiemark;
 use App\Models\PinnedAppearance;
+use App\Models\Show;
 use App\Models\Tag;
 use App\Pagination;
 use App\Permission;
@@ -462,7 +463,7 @@ class AppearancesAPIController extends APIController {
 
   /**
    * @OA\Get(
-   *   path="/appearances/all",
+   *   path="/appearances/full",
    *   security={},
    *   description="Get a list of every appearance in the database (without color group data)",
    *   tags={"color guide", "appearances"},
@@ -628,7 +629,9 @@ class AppearancesAPIController extends APIController {
    *     @OA\Schema(ref="#/components/schemas/Appearance"),
    *     @OA\Schema(
    *       type="object",
-   *       required={"cutieMarks", "canEdit"},
+   *       required={"cutieMarks", "canEdit", "relatedAppearances", "relatedShows"},
+   *       @OA\Property(property="relatedAppearances", type="array", description="Appearances this one is linked to, e.g. other versions of the same character", @OA\Items(ref="#/components/schemas/PreviewAppearance")),
+   *       @OA\Property(property="relatedShows", type="array", description="Shows this appearance is linked to", @OA\Items(ref="#/components/schemas/ShowListItem")),
    *       @OA\Property(property="canEdit", type="boolean", description="Whether the current user may edit this appearance (its owner, or staff)"),
    *       @OA\Property(property="cutieMarks", type="array", minItems=0, @OA\Items(ref="#/components/schemas/CutieMark"))
    *     )
@@ -656,6 +659,11 @@ class AppearancesAPIController extends APIController {
 
     Response::ok(self::mapAppearance($appearance, false) + [
       'canEdit' => $appearance->canBeManagedByVisitor(),
+      'relatedAppearances' => array_values(array_map(
+        fn($r) => self::mapPreviewAppearance($r->target),
+        array_filter($appearance->related_appearances, fn($r) => $r->target !== null && (!$r->target->private || $r->target->canBeManagedByVisitor()))
+      )),
+      'relatedShows' => array_map(fn(Show $show) => ShowAPIController::mapShowListItem($show), $appearance->related_shows),
       'cutieMarks' => array_map(fn(Cutiemark $cm) => self::mapCutieMark($cm), $appearance->cutiemarks),
     ]);
   }

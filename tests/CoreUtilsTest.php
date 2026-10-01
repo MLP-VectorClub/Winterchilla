@@ -309,7 +309,7 @@ class CoreUtilsTest extends TestCase {
   }
 
   public function testApiOperationId():void {
-    self::assertEquals('GetAppearancesAll', CoreUtils::apiOperationId('get', '/appearances/all'));
+    self::assertEquals('GetAppearancesFull', CoreUtils::apiOperationId('get', '/appearances/full'));
     self::assertEquals('GetAppearancesIdColorGroups', CoreUtils::apiOperationId('GET', '/appearances/{id}/color-groups'));
     self::assertEquals('PostCgTagsRecountUses', CoreUtils::apiOperationId('post', '/cg/tags/recount-uses'));
     self::assertEquals('DeleteUserContribLazyloadFavme', CoreUtils::apiOperationId('delete', '/user/contrib/lazyload/{favme}'));

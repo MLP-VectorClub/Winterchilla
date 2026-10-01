@@ -5,6 +5,7 @@ namespace App\Controllers\API;
 use App\Auth;
 use App\CoreUtils;
 use App\Models\UsefulLink;
+use App\Permission;
 use App\Response;
 use OpenApi\Annotations as OA;
 
@@ -48,5 +49,30 @@ class UsefulLinksAPIController extends APIController {
       'title' => $l->title,
       'minRole' => $l->minrole,
     ], $links)));
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/useful-links",
+   *   description="Every useful link in display order, whatever role it is meant for, for managing them. Staff only.",
+   *   tags={"useful links"},
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/SidebarUsefulLink"))),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
+  public function list():void {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+    if (Permission::insufficient('staff'))
+      Response::denied();
+
+    Response::ok(array_map(fn(UsefulLink $l) => [
+      'id' => $l->id,
+      'label' => $l->label,
+      'url' => $l->url,
+      'title' => $l->title,
+      'minRole' => $l->minrole,
+    ], UsefulLink::in_order()));
   }
 }

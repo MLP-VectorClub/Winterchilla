@@ -39,3 +39,24 @@ it('validates the query with 422', function () {
   expect($guest->get('/show', ['types' => ['episode'], 'order' => 'overall', 'size' => 11])['json']['errors'])->toHaveKey('size');
   expect($guest->get('/show', ['types' => ['episode'], 'order' => 'overall', 'page' => 0])['json']['errors'])->toHaveKey('page');
 });
+
+it('looks a show up by season and episode', function () {
+  $guest = ApiClient::guest();
+  $r = $guest->get('/show', ['types' => ['episode'], 'order' => 'series', 'season' => 1, 'episode' => 1]);
+
+  expect($r['status'])->toBe(200)->and(array_column($r['json']['show'], 'id'))->toContain(TestSeederConstants::SHOW_ID);
+  foreach ($r['json']['show'] as $show)
+    expect($show['season'])->toBe(1)->and($show['episode'])->toBe(1);
+  expect($guest->get('/show', ['types' => ['episode'], 'order' => 'series', 'season' => 99])['json']['show'])->toBe([]);
+  expect($guest->get('/show', ['types' => ['episode'], 'order' => 'series', 'season' => 'x'])['json']['errors'])->toHaveKey('season');
+});
+
+it('returns the latest show', function () {
+  $r = ApiClient::guest()->get('/show/latest');
+
+  expect($r['status'])->toBeIn([200, 404]);
+  if ($r['status'] === 200)
+    expect($r['json'])->toHaveKeys(['id', 'type', 'title', 'season', 'episode', 'parts', 'no', 'airs']);
+  else
+    expect($r['json'])->toHaveKey('message');
+});

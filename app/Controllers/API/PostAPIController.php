@@ -114,6 +114,11 @@ class PostAPIController extends APIController {
     Response::ok(['posts' => array_map(fn(Post $p) => self::mapPost($p), $posts)]);
   }
 
+  /** The post as data plus its rendered list item (the latter is a Winterchilla UI detail) */
+  private function postFragments():array {
+    return ['li' => $this->post->getLi(), 'post' => self::mapPost($this->post)];
+  }
+
   static function mapPost(Post $p):array {
     $user = fn(?User $u) => $u === null ? null : ['id' => $u->id, 'name' => $u->name];
     $can_edit = Auth::$signed_in && (
@@ -163,6 +168,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           additionalProperties=false,
    *           @OA\Property(property="broken", type="boolean", description="True if the post's image became unavailable and the user lacks staff permission to see the updated list item"),
+   *           @OA\Property(property="post", ref="#/components/schemas/PostItem", description="The post as data"),
    *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item"),
    *           @OA\Property(property="section", type="string", description="CSS selector for the section the list item belongs in")
    *         )
@@ -241,6 +247,7 @@ class PostAPIController extends APIController {
     $from_profile = isset($_REQUEST['from']) ? $_REQUEST['from'] === 'profile' : false;
     Response::ok([
       'li' => $this->post->getLi($from_profile, !isset($_REQUEST['cache'])),
+      'post' => self::mapPost($this->post),
       'section' => $section,
     ]);
   }
@@ -273,6 +280,7 @@ class PostAPIController extends APIController {
    *     @OA\JsonContent(
    *           type="object",
    *           additionalProperties=false,
+   *           @OA\Property(property="post", ref="#/components/schemas/PostItem", description="The post as data"),
    *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item (when `from` is not 'suggestion')"),
    *           @OA\Property(property="button", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the reserve button (when `from=suggestion`)"),
    *           @OA\Property(property="pendingReservations", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the user's pending reservations (when `from=suggestion`)")
@@ -287,6 +295,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"message"},
    *           @OA\Property(property="message", type="string"),
+   *           @OA\Property(property="post", ref="#/components/schemas/PostItem", description="The post as data"),
    *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item (set if already reserved by the current user, or by someone else and not overdue)")
    *         )
    *   ),
@@ -305,6 +314,7 @@ class PostAPIController extends APIController {
    *     @OA\JsonContent(
    *           type="object",
    *           additionalProperties=false,
+   *           @OA\Property(property="post", ref="#/components/schemas/PostItem", description="The post as data"),
    *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item, for requests"),
    *           @OA\Property(property="pendingReservations", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the user's pending reservations (when `from=profile`)")
    *         )
@@ -351,10 +361,10 @@ class PostAPIController extends APIController {
         }
         else {
           if ($this->is_user_reserver)
-            Response::error(409, "You've already reserved this request", ['li' => $this->post->getLi()]);
+            Response::error(409, "You've already reserved this request", $this->postFragments());
           if (!$this->post->isOverdue())
             Response::error(409, "This request has already been reserved by {$this->post->reserver->name}", [
-              'li' => $this->post->getLi(),
+              ...$this->postFragments(),
               'reservedBy' => ['id' => $this->post->reserver->id, 'name' => $this->post->reserver->name],
             ]);
           $overdue = [
@@ -381,7 +391,7 @@ class PostAPIController extends APIController {
           $response['pendingReservations'] = User::find($suggested ? $this->post->reserved_by : $old_reserver)->getPendingReservationsHTML($suggested
             ? true : $this->is_user_reserver);
         }
-        else $response['li'] = $this->post->getLi();
+        else $response += $this->postFragments();
 
         Response::ok($response);
       break;
@@ -389,7 +399,7 @@ class PostAPIController extends APIController {
         $can_delete = $this->is_user_reserver || Permission::sufficient('staff');
         if ($this->post->is_request){
           if ($this->post->reserved_by === null)
-            Response::ok(['li' => $this->post->getLi()]);
+            Response::ok($this->postFragments());
 
           if (!$can_delete)
             Response::denied();
@@ -404,7 +414,7 @@ class PostAPIController extends APIController {
           if (!$this->post->save())
             Response::dbError(status: 500);
 
-          $response = ['li' => $this->post->getLi()];
+          $response = $this->postFragments();
           if ($from_profile)
             $response['pendingReservations'] = User::find($old_reserver)->getPendingReservationsHTML($this->is_user_reserver);
 
@@ -442,6 +452,7 @@ class PostAPIController extends APIController {
    *           required={"li"},
    *           additionalProperties=false,
    *           @OA\Property(property="message", type="string"),
+   *           @OA\Property(property="post", ref="#/components/schemas/PostItem", description="The post as data"),
    *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item")
    *         )
    *   ),
@@ -483,7 +494,7 @@ class PostAPIController extends APIController {
 
         $response = [
           'message' => 'The image appears to be in the group gallery and as such it is now marked as approved.',
-          'li' => $this->post->getLi()
+          ...$this->postFragments()
         ];
         if ($this->is_user_reserver)
           $response['message'] .= ' '.self::$CONTRIB_THANKS;
@@ -554,7 +565,8 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"id","kind"},
    *           additionalProperties=false,
-   *           @OA\Property(property="id", type="string", description="Base36-encoded ID of the newly created post"),
+   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *           @OA\Property(property="idString", type="string", example="post-12", description="Winterchilla UI detail: the element ID of the post on the page"),
    *           @OA\Property(property="kind", type="string", enum={"request","reservation"})
    *         )
    *   ),
@@ -690,7 +702,7 @@ class PostAPIController extends APIController {
         if (!$post->save())
           Response::dbError(status: 500);
 
-        Response::ok(['id' => $post->getIdString(), 'kind' => $kind], 201);
+        Response::ok(['id' => (int)$post->id, 'idString' => $post->getIdString(), 'kind' => $kind], 201);
       break;
       case 'PUT':
         $this->_checkPostEditPermission();
@@ -906,6 +918,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"li"},
    *           additionalProperties=false,
+   *           @OA\Property(property="post", ref="#/components/schemas/PostItem", description="The post as data"),
    *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item")
    *         )
    *   ),
@@ -946,7 +959,7 @@ class PostAPIController extends APIController {
       'reserved_by' => $this->post->reserved_by,
     ]);
 
-    Response::ok(['li' => $this->post->getLi()]);
+    Response::ok($this->postFragments());
   }
 
   /**
@@ -1088,6 +1101,7 @@ class PostAPIController extends APIController {
    *     @OA\JsonContent(
    *           type="object",
    *           additionalProperties=false,
+   *           @OA\Property(property="post", ref="#/components/schemas/PostItem", description="The post as data"),
    *           @OA\Property(property="li", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the post's list item (if the post was previously broken)"),
    *           @OA\Property(property="preview", type="string", format="uri", description="New preview image URL (if the post was not previously broken)")
    *         )
@@ -1146,7 +1160,7 @@ class PostAPIController extends APIController {
       'newfullsize' => $this->post->fullsize,
     ]);
 
-    Response::ok($old['broken'] ? ['li' => $this->post->getLi()] : ['preview' => $Image->preview]);
+    Response::ok($old['broken'] ? $this->postFragments() : ['preview' => $Image->preview]);
   }
 
   /**
@@ -1206,7 +1220,8 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"id"},
    *           additionalProperties=false,
-   *           @OA\Property(property="id", type="string", description="Base36-encoded ID of the newly created reservation")
+   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *           @OA\Property(property="idString", type="string", example="post-12", description="Winterchilla UI detail: the element ID of the post on the page")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -1247,7 +1262,7 @@ class PostAPIController extends APIController {
     if (!empty($insert['lock']))
       LockedPost::record($reservation->id);
 
-    Response::ok(['message' => 'Reservation added', 'id' => $reservation->getIdString()], 201);
+    Response::ok(['message' => 'Reservation added', 'id' => (int)$reservation->id, 'idString' => $reservation->getIdString()], 201);
   }
 
   /**

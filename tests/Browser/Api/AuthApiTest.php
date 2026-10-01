@@ -73,7 +73,7 @@ it('404s unknown API endpoints with an error body', function () {
 });
 
 it('rejects state-changing requests without a CSRF token with 419', function () {
-  $ch = curl_init(TestSeederConstants::BASE_URL . TestSeederConstants::API_PATH . '/users/signout');
+  $ch = curl_init(ApiClient::baseUrl() . ApiClient::apiPath() . '/users/signout');
   curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_HTTPHEADER => ['Accept: application/json']]);
   $body = curl_exec($ch);
 

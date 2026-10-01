@@ -99,6 +99,8 @@ class ShowAPIController extends APIController {
    *   @OA\Parameter(in="query", name="order", required=true, @OA\Schema(type="string", enum={"series", "overall"})),
    *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
    *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=10, default=8)),
+   *   @OA\Parameter(in="query", name="season", @OA\Schema(type="integer", minimum=0), description="Only shows of this season (looks up e.g. S1E1)"),
+   *   @OA\Parameter(in="query", name="episode", @OA\Schema(type="integer", minimum=0), description="Only shows with this episode number"),
    *   @OA\Response(
    *     response="200",
    *     description="OK",
@@ -136,6 +138,14 @@ class ShowAPIController extends APIController {
     $page = (int)$page;
 
     $conditions = ['type IN (?)', array_values($types)];
+    foreach (['season', 'episode'] as $filter) {
+      if (!isset($_GET[$filter]))
+        continue;
+      if (!is_string($_GET[$filter]) || !ctype_digit($_GET[$filter]))
+        Response::invalid($filter, "The $filter must be a non-negative integer.");
+      $conditions[0] .= " AND $filter = ?";
+      $conditions[] = (int)$_GET[$filter];
+    }
     $total = Show::count(['conditions' => $conditions]);
     $shows = Show::find('all', [
       'conditions' => $conditions,
@@ -145,16 +155,7 @@ class ShowAPIController extends APIController {
     ]);
 
     Response::ok([
-      'show' => array_map(fn(Show $show) => [
-        'id' => $show->id,
-        'type' => $show->type,
-        'title' => $show->title,
-        'season' => $show->season,
-        'episode' => $show->episode,
-        'parts' => $show->parts,
-        'no' => $show->no,
-        'airs' => $show->airs !== null ? gmdate('c', $show->airs->getTimestamp()) : null,
-      ], $shows),
+      'show' => array_map(fn(Show $show) => self::mapShowListItem($show), $shows),
       'pagination' => [
         'currentPage' => $page,
         'totalPages' => max(1, (int)ceil($total / $size)),
@@ -162,6 +163,40 @@ class ShowAPIController extends APIController {
         'itemsPerPage' => $size,
       ],
     ]);
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/show/latest",
+   *   security={},
+   *   description="The most recently aired episode or movie (what the site's front page shows)",
+   *   tags={"shows"},
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ShowListItem")),
+   *   @OA\Response(response="404", description="Nothing has aired yet", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
+  public function latest():void {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $latest = ShowHelper::getLatest();
+    if (empty($latest))
+      Response::error(404, 'Nothing has aired yet');
+
+    Response::ok(self::mapShowListItem($latest));
+  }
+
+  static function mapShowListItem(Show $show):array {
+    return [
+      'id' => $show->id,
+      'type' => $show->type,
+      'title' => $show->title,
+      'season' => $show->season,
+      'episode' => $show->episode,
+      'parts' => $show->parts,
+      'no' => $show->no,
+      'airs' => $show->airs !== null ? gmdate('c', $show->airs->getTimestamp()) : null,
+    ];
   }
 
   /**
@@ -558,7 +593,7 @@ class ShowAPIController extends APIController {
    *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
-   * @OA\Post(
+   * @OA\Put(
    *   path="/show/{id}/appearances",
    *   description="Update the list of color guide appearances linked to this show. Requires staff permissions.",
    *   tags={"shows","appearances","color guide"},

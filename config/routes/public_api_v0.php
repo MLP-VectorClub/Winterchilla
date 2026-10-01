@@ -25,7 +25,7 @@ $api_endpoint = function ($path, array $target, $methods = 'POST|GET|PUT|DELETE'
 };
 $api_endpoint('/appearances', [\App\Controllers\API\AppearancesAPIController::class, 'queryPublic'], 'GET');
 $api_endpoint('/appearances', [\App\Controllers\API\AppearanceAPIController::class, 'api'], 'POST');
-$api_endpoint('/appearances/all', [\App\Controllers\API\AppearancesAPIController::class, 'queryAll']);
+$api_endpoint('/appearances/full', [\App\Controllers\API\AppearancesAPIController::class, 'queryAll']);
 $api_endpoint('/appearances/pinned', [\App\Controllers\API\AppearancesAPIController::class, 'pinned']);
 $api_endpoint('/appearances/autocomplete', [\App\Controllers\API\AppearanceAPIController::class, 'autocomplete']);
 $api_endpoint('/appearances/order', [\App\Controllers\API\ColorGuideAPIController::class, 'reorderFullList']);
@@ -58,6 +58,7 @@ $api_endpoint('/about/members', [\App\Controllers\API\AboutAPIController::class,
 $api_endpoint('/about/upcoming', [\App\Controllers\API\AboutAPIController::class, 'upcoming']);
 $api_endpoint('/admin/logs', [\App\Controllers\API\AdminAPIController::class, 'logList'], 'GET');
 $api_endpoint('/admin/logs/[i:id]', [\App\Controllers\API\AdminAPIController::class, 'logDetail']);
+$api_endpoint('/useful-links', [\App\Controllers\API\UsefulLinksAPIController::class, 'list'], 'GET');
 $api_endpoint('/useful-links', [\App\Controllers\API\AdminAPIController::class, 'usefulLinksApi'], 'POST');
 $api_endpoint('/useful-links/[i:id]', [\App\Controllers\API\AdminAPIController::class, 'usefulLinksApi']);
 $api_endpoint('/useful-links/order', [\App\Controllers\API\AdminAPIController::class, 'reorderUsefulLinks']);
@@ -83,6 +84,7 @@ $api_endpoint('/users/session/status', [\App\Controllers\API\AuthAPIController::
 $api_endpoint('/users/signout', [\App\Controllers\API\AuthAPIController::class, 'signOut']);
 $api_endpoint('/show', [\App\Controllers\API\ShowAPIController::class, 'list'], 'GET');
 $api_endpoint('/show', [\App\Controllers\API\ShowAPIController::class, 'api'], 'POST');
+$api_endpoint('/show/latest', [\App\Controllers\API\ShowAPIController::class, 'latest'], 'GET');
 $api_endpoint('/show/[i:id]', [\App\Controllers\API\ShowAPIController::class, 'api']);
 $api_endpoint('/show/[i:id]/posts', [\App\Controllers\API\ShowAPIController::class, 'postList']);
 $api_endpoint('/show/[i:id]/vote', [\App\Controllers\API\ShowAPIController::class, 'voteApi']);

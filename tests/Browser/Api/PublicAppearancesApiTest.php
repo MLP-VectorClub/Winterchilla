@@ -9,7 +9,7 @@ use Tests\Browser\Helpers\TestSeederConstants;
 $appearanceId = TestSeederConstants::APPEARANCE_ID;
 
 it('lists every appearance of a guide with camelCase keys', function () use ($appearanceId) {
-  $r = ApiClient::guest()->get('/appearances/all', ['guide' => 'pony']);
+  $r = ApiClient::guest()->get('/appearances/full', ['guide' => 'pony']);
 
   expect($r['status'])->toBe(200)
     ->and($r['contentType'])->toStartWith('application/json')
@@ -20,12 +20,12 @@ it('lists every appearance of a guide with camelCase keys', function () use ($ap
   expect($first)->toHaveKeys(['id', 'label', 'createdAt', 'sprite', 'hasCutieMarks'])->not->toHaveKey('created_at');
 
   // Served from the cache the second time, byte for byte
-  expect(ApiClient::guest()->get('/appearances/all', ['guide' => 'pony'])['body'])->toBe($r['body']);
+  expect(ApiClient::guest()->get('/appearances/full', ['guide' => 'pony'])['body'])->toBe($r['body']);
 });
 
-it('validates the guide of /appearances/all with 422', function () {
+it('validates the guide of /appearances/full with 422', function () {
   foreach ([[], ['guide' => 'nonsense']] as $query) {
-    $r = ApiClient::guest()->get('/appearances/all', $query);
+    $r = ApiClient::guest()->get('/appearances/full', $query);
     expect($r['status'])->toBe(422)
       ->and($r['json'])->toHaveKeys(['message', 'errors'])
       ->and($r['json']['errors'])->toHaveKey('guide');
@@ -128,4 +128,15 @@ it('tells the current user whether they can edit the appearance', function () {
   // A personal guide appearance can be edited by its owner
   expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get("/appearances/$personal")['json']['canEdit'])->toBeTrue();
   expect(ApiClient::guest()->get("/appearances/$personal")['json']['canEdit'])->toBeFalse();
+});
+
+it('includes the related appearances and shows of an appearance', function () {
+  $r = ApiClient::guest()->get('/appearances/' . TestSeederConstants::APPEARANCE_ID);
+
+  expect($r['status'])->toBe(200)
+    ->and($r['json'])->toHaveKeys(['relatedAppearances', 'relatedShows'])
+    ->and($r['json']['relatedAppearances'])->toBeArray()
+    ->and($r['json']['relatedShows'])->toBeArray();
+  foreach ($r['json']['relatedShows'] as $show)
+    expect($show)->toHaveKeys(['id', 'type', 'title', 'season', 'episode', 'parts', 'no', 'airs']);
 });

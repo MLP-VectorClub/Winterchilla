@@ -62,3 +62,20 @@ it('validates the preference keys with 422', function () {
   expect($guest->get('/user-prefs/me', ['keys' => ['nope']])['json']['errors'])->toHaveKey('keys');
   expect($guest->get('/user-prefs/me', ['keys' => ['a_pcgmake', 'a_pcgmake']])['json']['errors'])->toHaveKey('keys');
 });
+
+it('lists every useful link for staff only', function () {
+  expect(ApiClient::guest()->get('/useful-links')['status'])->toBe(401);
+  expect(ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get('/useful-links')['status'])->toBe(403);
+
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $id = $admin->post('/useful-links', ['label' => 'Manage list dev', 'url' => '/dev-only', 'title' => '', 'minRole' => 'developer'])['json']['id'] ?? null;
+  try {
+    $r = $admin->get('/useful-links');
+    expect($r['status'])->toBe(200)->and(array_column($r['json'], 'label'))->toContain('Manage list dev');
+    expect($r['json'][0])->toHaveKeys(['id', 'label', 'url', 'title', 'minRole']);
+  }
+  finally {
+    if ($id !== null)
+      $admin->request('DELETE', "/useful-links/$id");
+  }
+});

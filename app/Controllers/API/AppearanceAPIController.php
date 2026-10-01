@@ -413,7 +413,7 @@ class AppearanceAPIController extends APIController {
    *     @OA\Property(property="wipeTags", type="boolean", description="Remove all tags (only for appearances not in a personal guide)"),
    *     @OA\Property(property="wipeNotes", type="boolean", description="Clear the appearance's notes"),
    *     @OA\Property(property="mkpriv", type="boolean", description="Mark the appearance as private"),
-   *     @OA\Property(property="reset_priv_key", type="boolean", description="Regenerate the appearance's private share token")
+   *     @OA\Property(property="resetPrivKey", type="boolean", description="Regenerate the appearance's private share token")
    *   )),
    *   @OA\Response(response="204", description="Cleared"),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -523,13 +523,13 @@ class AppearanceAPIController extends APIController {
     if ($mkpriv)
       $update['private'] = 1;
 
-    $reset_priv_key = (new Input('reset_priv_key', 'bool', [
+    $resetPrivKey = (new Input('resetPrivKey', 'bool', [
       Input::IS_OPTIONAL => true,
     ]))->out();
     /**
      * @see Appearance::$token
      */
-    if ($reset_priv_key)
+    if ($resetPrivKey)
       $update['token'] = Uuid::uuid4();
 
     if (!empty($update))
@@ -840,7 +840,7 @@ class AppearanceAPIController extends APIController {
    *     @OA\JsonContent(type="object", additionalProperties=false,
    *         @OA\Property(property="cms", type="array", @OA\Items(type="object", additionalProperties=true,
    *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="appearance_id", ref="#/components/schemas/OneBasedId"),
+   *           @OA\Property(property="appearanceId", ref="#/components/schemas/OneBasedId"),
    *           @OA\Property(property="facing", type="string", nullable=true),
    *           @OA\Property(property="rotation", type="integer"),
    *           @OA\Property(property="label", type="string", nullable=true),
@@ -896,7 +896,7 @@ class AppearanceAPIController extends APIController {
       case 'GET':
         $cms = Cutiemarks::get($this->appearance);
         foreach ($cms as &$cm)
-          $cm = $cm->to_js_response();
+          $cm = CoreUtils::camelKeys($cm->to_js_response());
         unset($cm);
 
         $processed_cms = Cutiemarks::get($this->appearance);

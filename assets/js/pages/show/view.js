@@ -275,7 +275,7 @@
             $.Dialog.success(false, resp.message);
             $form.closest('.posts').trigger('pls-update', [() => {
               $.Dialog.close();
-              window.location.hash = `#${resp.id}`;
+              window.location.hash = `#${resp.idString}`;
             }]);
           }).fail($.API.fail());
         });
@@ -422,7 +422,7 @@
         })).done(function(resp = {}) {
           $.Dialog.success(false, Kind + ' posted');
 
-          const id = resp.id;
+          const id = resp.idString;
           $(`#${kind}s`).trigger('pls-update', [function() {
             $.Dialog.close();
             $.Dialog.confirm(Kind + ' posted', 'Would you like to view it or make another?', ['View', 'Make another'], function(view) {

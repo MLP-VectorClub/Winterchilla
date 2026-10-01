@@ -1645,12 +1645,41 @@ class CoreUtils {
     return ucfirst(strtolower($method)).implode('', array_map('ucfirst', $segments));
   }
 
+  /**
+   * Operations that exist only for Winterchilla's own UI (they answer with rendered HTML) or for its own infrastructure (its
+   * session handling, the PHP stat cache) or are staff-only experiments there. They stay in the document, marked `x-internal`,
+   * but a re-implementation of the API (Luna) and the front end (Celestia) are not expected to cover them.
+   */
+  public const INTERNAL_OPERATIONS = [
+    'GET /about/upcoming',
+    'GET /cg/full',
+    'GET /event-entries/{entryid}/lazyload',
+    'GET /notifications',
+    'GET /posts/requests/suggestion',
+    'GET /posts/{id}/lazyload',
+    'GET /posts/{id}/reload',
+    'GET /show/{id}/posts',
+    'GET /users/contributions/lazyload/{favme}',
+    'GET /users/{id}/avatar-wrap',
+    'DELETE /users/{id}/contributions/cache',
+    'GET /users/session/status',
+    'DELETE /users/sessions/{id}',
+    'DELETE /admin/stat-cache',
+    // Under testing for staff only; Luna has its own e-mail verification and password flows
+    'POST /users/me/password',
+    'POST /users/{id}/email-changes',
+    'POST /users/email/verify',
+  ];
+
   private static function assignOperationIds(\OpenApi\Annotations\OpenApi $openapi):void {
     foreach ($openapi->paths as $path_item){
       foreach (['get', 'post', 'put', 'delete', 'patch', 'options', 'head'] as $method){
         $operation = $path_item->{$method};
-        if (is_object($operation))
+        if (is_object($operation)) {
           $operation->operationId = self::apiOperationId($method, $path_item->path);
+          if (in_array(strtoupper($method).' '.$path_item->path, self::INTERNAL_OPERATIONS, true))
+            $operation->x = ['internal' => true];
+        }
       }
     }
   }
@@ -1665,6 +1694,7 @@ class CoreUtils {
       PROJPATH.'app/Controllers/UserController.php',
       PROJPATH.'app/Controllers/PersonalGuideController.php',
       PROJPATH.'app/Controllers/AuthController.php',
+      PROJPATH.'app/Controllers/DiscordAuthController.php',
       PROJPATH.'app/Controllers/AboutController.php',
       PROJPATH.'app/Controllers/ShowController.php',
       PROJPATH.'app/Controllers/PostController.php',

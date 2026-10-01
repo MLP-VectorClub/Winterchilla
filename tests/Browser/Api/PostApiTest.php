@@ -177,3 +177,14 @@ it('reports conflicts with plain-text messages and structured details', function
 
   ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', $path);
 });
+
+it('documents what the post creation endpoints read', function () {
+  // The request bodies in the OpenAPI document have to be enough to build the forms
+  $schema = json_decode(file_get_contents(dirname(__DIR__, 3) . '/public/dist/api.json'), true);
+  $body = fn(string $path) => $schema['paths'][$path]['post']['requestBody']['content']['application/json']['schema'];
+
+  expect($body('/posts')['required'])->toEqualCanonicalizing(['kind', 'showId', 'imageUrl'])
+    ->and($body('/posts')['properties'])->toHaveKeys(['kind', 'showId', 'imageUrl', 'label', 'type', 'postAs', 'allowNonmember'])
+    ->and($body('/posts/check-image')['required'])->toBe(['imageUrl'])
+    ->and($body('/posts/reservations')['required'])->toEqualCanonicalizing(['showId', 'deviation']);
+});

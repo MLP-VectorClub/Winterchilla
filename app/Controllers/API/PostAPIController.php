@@ -551,10 +551,13 @@ class PostAPIController extends APIController {
    *     required=true,
    *     @OA\JsonContent(
    *       type="object",
-   *       required={"kind","showId"},
+   *       required={"kind","showId","imageUrl"},
    *       @OA\Property(property="kind", type="string", enum={"request","reservation"}),
    *       @OA\Property(property="showId", type="integer", description="ID of the show entry this post belongs to"),
-   *       @OA\Property(property="postas", type="string", description="Developer-only: post on behalf of another user (by DA username)"),
+   *       @OA\Property(property="imageUrl", type="string", format="uri", description="URL of the image or deviation to post (see POST /posts/check-image for what is accepted)"),
+   *       @OA\Property(property="label", type="string", minLength=3, maxLength=255, description="What the post is about; required for requests, optional for reservations"),
+   *       @OA\Property(property="type", type="string", enum={"chr","obj","bg"}, description="What a request asks for (characters, objects or backgrounds); required for requests, ignored for reservations"),
+   *       @OA\Property(property="postAs", type="string", description="Developer-only: post on behalf of another user (by DeviantArt username)"),
    *       @OA\Property(property="allowNonmember", type="boolean", description="Developer-only: allow posting a reservation on behalf of a non-member")
    *     )
    *   ),
@@ -687,7 +690,7 @@ class PostAPIController extends APIController {
             $post_as = Users::getDA($username, 'name');
 
             if (empty($post_as))
-              Response::invalid('as', 'The user you wanted to post as does not exist');
+              Response::invalid('postAs', 'The user you wanted to post as does not exist');
 
             if ($kind === 'reservation' && Permission::insufficient('member', $post_as->role) && !isset($_POST['allowNonmember']))
               Response::error(409, 'The user you wanted to post as is not a club member, do you want to post as them anyway?', ['canForce' => true]);
@@ -735,7 +738,6 @@ class PostAPIController extends APIController {
    *       type="object",
    *       required={"deviation"},
    *       @OA\Property(property="deviation", type="string", format="uri", description="URL of the finished deviation"),
-   *       @OA\Property(property="allowOverwriteReserver", type="boolean", description="If set, allows the reserver to be changed to the deviation's author even if it differs from the current reserver"),
    *       @OA\Property(property="finishedAt", type="string", format="date-time", description="Developer-only: overrides the finished timestamp")
    *     )
    *   ),
@@ -978,8 +980,8 @@ class PostAPIController extends APIController {
    *     required=true,
    *     @OA\JsonContent(
    *       type="object",
-   *       required={"url"},
-   *       @OA\Property(property="url", type="string", format="uri", description="URL of the image/deviation to check")
+   *       required={"imageUrl"},
+   *       @OA\Property(property="imageUrl", type="string", format="uri", description="URL of the image/deviation to check")
    *     )
    *   ),
    *   @OA\Response(
@@ -1209,8 +1211,7 @@ class PostAPIController extends APIController {
    *       type="object",
    *       required={"showId","deviation"},
    *       @OA\Property(property="showId", type="integer", description="ID of the show entry this reservation belongs to"),
-   *       @OA\Property(property="deviation", type="string", format="uri", description="URL of the finished deviation"),
-   *       @OA\Property(property="allowOverwriteReserver", type="boolean", description="If set, allows the reserver to be changed to the deviation's author even if it differs from the current user")
+   *       @OA\Property(property="deviation", type="string", format="uri", description="URL of the finished deviation")
    *     )
    *   ),
    *   @OA\Response(

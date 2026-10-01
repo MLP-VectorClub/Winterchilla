@@ -105,7 +105,7 @@
           '<span>Reserve as</span>',
           $.mk('input').attr({
             type: 'text',
-            name: 'post_as',
+            name: 'postAs',
             required: true,
             placeholder: 'Username',
           }).patternAttr(usernameRegex),

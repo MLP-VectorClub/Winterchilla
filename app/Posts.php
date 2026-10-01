@@ -328,7 +328,7 @@ class Posts {
   }
 
   public static function validatePostAs() {
-    return Users::validateName('post_as', [
+    return Users::validateName('postAs', [
       Input::ERROR_INVALID => '"Post as" username (@value) is invalid',
     ]);
   }

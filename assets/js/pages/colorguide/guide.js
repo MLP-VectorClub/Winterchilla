@@ -173,7 +173,7 @@
             suggestion: data => {
               return $('<a>').attr('href', data.url).append(
                 `<img src="${data.image}" alt="search suggestion" class="ac-appearance-image">`,
-                $('<div class="ac-appearance-label" />').text(data.label),
+                $('<div class="ac-appearance-label" />').text(data.babelLabel),
               ).prop('outerHTML');
             },
           },

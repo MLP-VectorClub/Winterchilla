@@ -1661,6 +1661,7 @@ class CoreUtils {
     'GET /show/{id}/posts',
     'GET /users/contributions/lazyload/{favme}',
     'GET /users/{id}/avatar-wrap',
+    'GET /tags/autocomplete',
     'DELETE /users/{id}/contributions/cache',
     'GET /users/session/status',
     'DELETE /users/sessions/{id}',

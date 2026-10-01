@@ -1394,15 +1394,19 @@ class AppearanceAPIController extends APIController {
    *   description="Search appearances by label for autocomplete purposes. Returns an empty array if the query or guide is missing.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="q", in="query", required=true, description="Search query", @OA\Schema(ref="#/components/schemas/QueryString")),
-   *   @OA\Parameter(name="guide", in="query", required=true, description="Guide identifier to search within", @OA\Schema(type="string")),
+   *   @OA\Parameter(name="guide", in="query", required=true, description="Guide identifier to search within", @OA\Schema(ref="#/components/schemas/GuideName")),
    *   @OA\Response(
    *     response="200",
    *     description="OK",
-   *     @OA\JsonContent(type="array", maxItems=5, @OA\Items(type="object", additionalProperties=false,
-   *       @OA\Property(property="label", type="string"),
-   *       @OA\Property(property="url", type="string", format="uri"),
-   *       @OA\Property(property="image", type="string", format="uri")
-   *     ))
+   *     @OA\JsonContent(type="array", maxItems=5, @OA\Items(allOf={
+   *       @OA\Schema(ref="#/components/schemas/PreviewAppearance"),
+   *       @OA\Schema(
+   *         type="object",
+   *         @OA\Property(property="babelLabel", type="string", description="Winterchilla UI detail, not part of the contract: the label as the site's 'nutshell names' mode shows it"),
+   *         @OA\Property(property="url", type="string", description="Winterchilla UI detail, not part of the contract: the page path of the appearance"),
+   *         @OA\Property(property="image", type="string", description="Winterchilla UI detail, not part of the contract: URL of the preview image")
+   *       )
+   *     }))
    *   ),
    *   @OA\Response(response="422", description="Invalid guide", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
    * )
@@ -1415,7 +1419,7 @@ class AppearanceAPIController extends APIController {
       CGUtils::autocompleteRespond('[]');
 
     if (!array_key_exists($_GET['guide'], CGUtils::GUIDE_MAP))
-      CoreUtils::badRequest();
+      Response::invalid('guide', 'The selected guide is invalid.');
 
     $pagination = new Pagination('', 5);
     /** @var $appearances Appearance[] */
@@ -1425,8 +1429,8 @@ class AppearanceAPIController extends APIController {
       CGUtils::autocompleteRespond('[]');
 
     CGUtils::autocompleteRespond(array_map(static function (Appearance $a) {
-      return [
-        'label' => $a->getBabelLabel(),
+      return AppearancesAPIController::mapPreviewAppearance($a) + [
+        'babelLabel' => $a->getBabelLabel(),
         'url' => $a->toURL(),
         'image' => $a->getPreviewImage(),
       ];

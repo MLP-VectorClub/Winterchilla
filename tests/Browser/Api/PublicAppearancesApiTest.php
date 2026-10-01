@@ -150,3 +150,32 @@ it('carries the guide, owner and preview colors on every appearance shape', func
   $personal = ApiClient::guest()->get('/appearances/' . TestSeederConstants::PERSONAL_APPEARANCE_ID)['json'];
   expect($personal['guide'])->toBeNull()->and($personal['ownerId'])->toBe(TestSeederConstants::USER_ID);
 });
+
+it('sorts and groups the full list', function () {
+  $guest = ApiClient::guest();
+  $byLabel = $guest->get('/appearances/full', ['guide' => 'pony', 'sort' => 'label']);
+
+  expect($byLabel['status'])->toBe(200)->and($byLabel['json'])->toHaveKeys(['appearances', 'groups']);
+  $labels = array_column($byLabel['json']['appearances'], 'label');
+  $sorted = $labels;
+  usort($sorted, fn($a, $b) => strcasecmp($a, $b));
+  expect(array_map('strtolower', $labels))->toBe(array_map('strtolower', $sorted));
+  foreach ($byLabel['json']['groups'] as $group)
+    expect($group)->toHaveKeys(['name', 'appearanceIds'])->and($group['name'])->toMatch('/^([A-Z]|#)$/');
+
+  expect($guest->get('/appearances/full', ['guide' => 'pony', 'sort' => 'added'])['json']['groups'])->toBe([]);
+
+  $relevance = $guest->get('/appearances/full', ['guide' => 'pony'])['json'];
+  $grouped = array_merge(...array_column($relevance['groups'], 'appearanceIds') ?: [[]]);
+  expect(array_column($relevance['appearances'], 'id'))->toEqualCanonicalizing($grouped);
+
+  expect($guest->get('/appearances/full', ['guide' => 'pony', 'sort' => 'nonsense'])['json']['errors'])->toHaveKey('sort');
+});
+
+it('answers the appearance autocomplete with 422 for an unknown guide and [] without a query', function () {
+  $guest = ApiClient::guest();
+
+  expect($guest->get('/appearances/autocomplete', ['q' => 'twi', 'guide' => 'nope'])['json']['errors'])->toHaveKey('guide');
+  $empty = $guest->get('/appearances/autocomplete', ['guide' => 'pony']);
+  expect($empty['status'])->toBe(200)->and($empty['json'])->toBe([]);
+});

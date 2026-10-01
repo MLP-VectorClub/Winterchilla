@@ -2,6 +2,7 @@
 
 namespace App\Controllers\API;
 
+use App\Appearances;
 use App\Auth;
 use App\CGUtils;
 use App\CoreUtils;
@@ -26,15 +27,22 @@ use function count;
  * @OA\Schema(
  *   schema="SlimAppearanceList",
  *   type="object",
- *   description="An array of less resource intensive appearances under the appearances key",
+ *   description="All appearances of a guide in the requested order, under the appearances key, plus how to group them",
  *   required={
- *     "appearances"
+ *     "appearances",
+ *     "groups"
  *   },
  *   additionalProperties=false,
  *   @OA\Property(
  *     property="appearances",
  *     type="array",
  *     @OA\Items(ref="#/components/schemas/SlimAppearance")
+ *   ),
+ *   @OA\Property(
+ *     property="groups",
+ *     type="array",
+ *     description="Sections of the list: by tag group for `relevance` (the staff-managed order within), by first letter for `label`, none for `added`",
+ *     @OA\Items(type="object", required={"name", "appearanceIds"}, @OA\Property(property="name", type="string"), @OA\Property(property="appearanceIds", type="array", @OA\Items(ref="#/components/schemas/ZeroBasedId")))
  *   )
  * )
  * @OA\Schema(
@@ -507,6 +515,13 @@ class AppearancesAPIController extends APIController {
    *     required=false,
    *     @OA\Schema(ref="#/components/schemas/PreviewsIndicator")
    *   ),
+   *   @OA\Parameter(
+   *     in="query",
+   *     name="sort",
+   *     required=false,
+   *     @OA\Schema(type="string", enum={"relevance", "label", "added"}, default="relevance"),
+   *     description="`relevance` is the staff-managed order grouped by tag, `label` is alphabetical, `added` is newest first"
+   *   ),
    *   @OA\Response(
    *     response="200",
    *     description="OK",
@@ -524,12 +539,26 @@ class AppearancesAPIController extends APIController {
     if (!isset(CGUtils::GUIDE_MAP[$guide_name]))
       Response::invalid('guide', 'The selected guide is invalid.');
 
+    $sort = $_GET['sort'] ?? 'relevance';
+    if (!in_array($sort, ['relevance', 'label', 'added'], true))
+      Response::invalid('sort', 'The sort field must be relevance, label or added.');
+
     $cache_time = 600;
-    $cache_key = CoreUtils::generateCacheKey(2, 'all appearances', $guide_name, $with_previews);
+    $cache_key = CoreUtils::generateCacheKey(4, 'all appearances', $guide_name, $with_previews, $sort);
     $cached_data = RedisHelper::get($cache_key);
     if ($cached_data !== null)
       Response::doneCached($cached_data);
 
+    switch ($sort) {
+      case 'label':
+        DB::$instance->orderBy('label');
+      break;
+      case 'added':
+        DB::$instance->orderBy('created_at', 'DESC');
+      break;
+      default:
+        DB::$instance->orderBy('"order"');
+    }
     /** @var $appearances Appearance[] */
     $appearances = DB::$instance->where('guide', $guide_name)->get(Appearance::$table_name);
 
@@ -538,7 +567,37 @@ class AppearancesAPIController extends APIController {
     }, $appearances);
     Response::okCached([
       'appearances' => $results,
+      'groups' => self::_fullListGroups($guide_name, $sort, $appearances),
     ], $cache_key, $cache_time);
+  }
+
+  /**
+   * @param Appearance[] $appearances Already in the requested order
+   *
+   * @return array<int, array{name: string, appearanceIds: int[]}>
+   */
+  private static function _fullListGroups(string $guide, string $sort, array $appearances):array {
+    switch ($sort) {
+      case 'added':
+        return [];
+      case 'label':
+        $groups = [];
+        foreach ($appearances as $a) {
+          $letter = strtoupper($a->label[0] ?? '#');
+          $groups[preg_match('/^[A-Z]$/', $letter) ? $letter : '#'][] = (int)$a->id;
+        }
+
+        return array_map(fn($name, $ids) => ['name' => (string)$name, 'appearanceIds' => $ids], array_keys($groups), $groups);
+      default:
+        $sorted = Appearances::sort($appearances, $guide);
+        $groups = [];
+        foreach (CGUtils::GROUP_TAG_IDS_ASSOC[$guide] as $tag_id => $name) {
+          if (!empty($sorted[$tag_id]))
+            $groups[] = ['name' => $name, 'appearanceIds' => array_map(fn(Appearance $a) => (int)$a->id, $sorted[$tag_id])];
+        }
+
+        return $groups;
+    }
   }
 
   private static function _resolveAppearance(array $params):Appearance {

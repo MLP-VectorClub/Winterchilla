@@ -26,10 +26,16 @@ use OpenApi\Annotations as OA;
  *   enum={"guest","user","member","assistant","staff","admin","developer"}
  * )
  * @OA\Schema(
+ *   schema="AccountRole",
+ *   type="string",
+ *   description="The role of a user account (`guest` only exists as a permission level for signed-out visitors). A developer is shown under the label of the `dev_role_label` setting on public payloads.",
+ *   enum={"user","member","assistant","staff","admin","developer"}
+ * )
+ * @OA\Schema(
  *   schema="AvatarProvider",
  *   type="string",
- *   description="List of supported avatar providers",
- *   enum={"deviantart"}
+ *   description="Where a user's avatar comes from. Winterchilla only knows DeviantArt avatars; other implementations may also use Discord or Gravatar.",
+ *   enum={"deviantart","discord","gravatar"}
  * )
  * @OA\Schema(
  *   schema="ValueOfUser",
@@ -88,11 +94,12 @@ class UsersAPIController extends APIController {
    *   ),
    *   @OA\Property(
    *     property="role",
-   *     ref="#/components/schemas/UserRole",
+   *     ref="#/components/schemas/AccountRole",
    *   ),
    *   @OA\Property(
    *     property="avatarUrl",
    *     type="string",
+   *     nullable=true,
    *     format="uri",
    *     example="https://a.deviantart.net/avatars/e/x/example.png"
    *   ),

@@ -4,13 +4,11 @@ namespace App\Controllers\API;
 
 use OpenApi\Annotations as OA;
 
+// Shared OpenAPI definitions (info, tags, security scheme and common schemas). They live on a class of their own, not on
+// APIController: swagger-php merges a parent class's schema annotations into every subclass that declares a schema, which used
+// to make `Tag`, `EventEntry`, `ValueOfUser`, … inherit a legacy envelope with a required `status`. Keep prose out of the
+// docblock below: swagger-php would use it as the description of the first annotation.
 /**
- * Shared OpenAPI definitions for the whole API
- *
- * Shared OpenAPI definitions (info, tags, security scheme and common schemas) are declared below. They live on a class of their own
- * (not on APIController): swagger-php merges a parent class's schema annotations into every subclass that declares a
- * schema, which used to make `Tag`, `EventEntry`, `ValueOfUser`, … inherit a legacy envelope with a required `status`.
- *
  * @OA\OpenApi(
  *   @OA\Info(
  *     title="MLP Vector Club API",
@@ -123,24 +121,24 @@ use OpenApi\Annotations as OA;
  * @OA\Schema(
  *   schema="UserPrefs",
  *   type="object",
- *   description="The effective preference values (every key is optional when `keys[]` limits the result). The `0`/`1` flags are on/off; defaults are in brackets in the descriptions below.",
+ *   description="The effective preference values (every key is optional when `keys[]` limits the result). The flags are booleans; defaults are in brackets in the descriptions below.",
  *   additionalProperties=false,
  *   @OA\Property(property="cg_itemsperpage", type="integer", minimum=7, maximum=20, description="Appearances per page in the color guide [7]"),
- *   @OA\Property(property="cg_hidesynon", type="integer", enum={0, 1}),
- *   @OA\Property(property="cg_hideclrinfo", type="integer", enum={0, 1}),
- *   @OA\Property(property="cg_fulllstprev", type="integer", enum={0, 1}),
- *   @OA\Property(property="cg_nutshell", type="integer", enum={0, 1}),
- *   @OA\Property(property="p_hidediscord", type="integer", enum={0, 1}),
- *   @OA\Property(property="p_hidepcg", type="integer", enum={0, 1}),
- *   @OA\Property(property="p_homelastep", type="integer", enum={0, 1}),
- *   @OA\Property(property="ep_noappprev", type="integer", enum={0, 1}),
- *   @OA\Property(property="ep_revstepbtn", type="integer", enum={0, 1}),
- *   @OA\Property(property="a_pcgearn", type="integer", enum={0, 1}),
- *   @OA\Property(property="a_pcgmake", type="integer", enum={0, 1}),
- *   @OA\Property(property="a_pcgsprite", type="integer", enum={0, 1}),
- *   @OA\Property(property="a_postreq", type="integer", enum={0, 1}),
- *   @OA\Property(property="a_postres", type="integer", enum={0, 1}),
- *   @OA\Property(property="a_reserve", type="integer", enum={0, 1}),
+ *   @OA\Property(property="cg_hidesynon", type="boolean"),
+ *   @OA\Property(property="cg_hideclrinfo", type="boolean"),
+ *   @OA\Property(property="cg_fulllstprev", type="boolean"),
+ *   @OA\Property(property="cg_nutshell", type="boolean"),
+ *   @OA\Property(property="p_hidediscord", type="boolean"),
+ *   @OA\Property(property="p_hidepcg", type="boolean"),
+ *   @OA\Property(property="p_homelastep", type="boolean"),
+ *   @OA\Property(property="ep_noappprev", type="boolean"),
+ *   @OA\Property(property="ep_revstepbtn", type="boolean"),
+ *   @OA\Property(property="a_pcgearn", type="boolean"),
+ *   @OA\Property(property="a_pcgmake", type="boolean"),
+ *   @OA\Property(property="a_pcgsprite", type="boolean"),
+ *   @OA\Property(property="a_postreq", type="boolean"),
+ *   @OA\Property(property="a_postres", type="boolean"),
+ *   @OA\Property(property="a_reserve", type="boolean"),
  *   @OA\Property(property="p_vectorapp", type="string", description="The vector app shown next to the user's name, empty for none"),
  *   @OA\Property(property="cg_defaultguide", type="string", nullable=true, enum={"pony", "eqg", null}, description="Preferred color guide [null]"),
  *   @OA\Property(property="pcg_slots", type="integer", nullable=true, description="Personal guide slots granted by staff [null]")

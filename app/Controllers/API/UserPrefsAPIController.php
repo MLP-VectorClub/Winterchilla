@@ -9,6 +9,8 @@ use App\UserPrefs;
 use OpenApi\Annotations as OA;
 
 class UserPrefsAPIController extends APIController {
+  private const FLAGS = ['cg_hidesynon', 'cg_hideclrinfo', 'cg_fulllstprev', 'cg_nutshell', 'p_hidediscord', 'p_hidepcg', 'p_homelastep', 'ep_noappprev', 'ep_revstepbtn', 'a_pcgearn', 'a_pcgmake', 'a_pcgsprite', 'a_postreq', 'a_postres', 'a_reserve'];
+
   /**
    * @OA\Get(
    *   path="/user-prefs/me",
@@ -38,8 +40,11 @@ class UserPrefsAPIController extends APIController {
 
     $user = Auth::$signed_in ? Auth::$user : null;
     $result = [];
-    foreach ($keys as $key)
-      $result[$key] = UserPrefs::get($key, $user);
+    foreach ($keys as $key) {
+      $value = UserPrefs::get($key, $user);
+      // The on/off preferences are stored as 0/1; the API speaks booleans
+      $result[$key] = in_array($key, self::FLAGS, true) ? (bool)$value : $value;
+    }
 
     Response::ok($result);
   }

@@ -58,7 +58,7 @@ class TagAPIController extends APIController {
    *   additionalProperties=false,
    *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
    *   @OA\Property(property="name", type="string"),
-   *   @OA\Property(property="type", type="string", nullable=true, enum={"app", "cat", "gen", "spec", "char", null}),
+   *   @OA\Property(property="type", type="string", nullable=true, enum={"app", "cat", "gen", "spec", "char", "warn", null}),
    *   @OA\Property(property="title", type="string", nullable=true, description="Optional description of the tag"),
    *   @OA\Property(property="uses", type="integer", minimum=0),
    *   @OA\Property(property="synonymOf", nullable=true, type="object", required={"id", "name"}, @OA\Property(property="id", ref="#/components/schemas/OneBasedId"), @OA\Property(property="name", type="string"))

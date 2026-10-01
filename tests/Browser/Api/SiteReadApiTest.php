@@ -79,3 +79,11 @@ it('lists every useful link for staff only', function () {
       $admin->request('DELETE', "/useful-links/$id");
   }
 });
+
+it('sends the on/off preferences as booleans', function () {
+  $r = ApiClient::guest()->get('/user-prefs/me')['json'];
+
+  foreach (['cg_hidesynon', 'cg_fulllstprev', 'p_hidediscord', 'a_pcgmake', 'a_reserve'] as $flag)
+    expect($r[$flag])->toBeBool($flag);
+  expect($r['cg_itemsperpage'])->toBeInt()->and($r['a_pcgmake'])->toBeTrue()->and($r['p_hidediscord'])->toBeFalse();
+});

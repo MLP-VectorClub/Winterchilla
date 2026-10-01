@@ -8,7 +8,7 @@ namespace Tests\Browser\Helpers;
  *
  * The contract tests can be pointed at another implementation of the API (Luna) through the environment:
  *  - CONTRACT_BASE_URL   origin of the server under test (default: Winterchilla's test server)
- *  - CONTRACT_API_PATH   API prefix (default: /api/v0)
+ *  - CONTRACT_API_PATH   API prefix (default: /api/v0; set it to an empty string when the API is served at the root)
  *  - CONTRACT_AUTH       `cookie` (default) or `bearer`; bearer mode sends `Authorization: Bearer <token>` and no CSRF token
  *  - CONTRACT_LOGIN_URL  where loggedInAs() logs in, `{id}` is the seeded user ID (default: /test-login/{id}); in bearer mode the
  *                        endpoint must answer JSON with a `token` key (e.g. a test-only POST /test/login/{id})
@@ -28,7 +28,10 @@ class ApiClient {
   }
 
   public static function apiPath():string {
-    return getenv('CONTRACT_API_PATH') ?: TestSeederConstants::API_PATH;
+    $path = getenv('CONTRACT_API_PATH');
+
+    // An empty value is allowed: an implementation that serves the API at the root has no prefix
+    return $path === false ? TestSeederConstants::API_PATH : $path;
   }
 
   private static function bearer():bool {

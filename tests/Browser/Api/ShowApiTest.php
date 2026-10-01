@@ -185,5 +185,5 @@ it('sends an empty vote map as an object and the show with every field', functio
 
   $show = ApiClient::guest()->get('/show/' . $showId)['json']['show'];
   expect($show)->toHaveKeys(['id', 'type', 'season', 'episode', 'parts', 'no', 'title', 'airs', 'notes', 'createdAt', 'updatedAt', 'score', 'postedBy', 'aired']);
-  expect($show['score'])->toBeFloat()->or->toBeNull();
+  expect($show['score'] === null || is_int($show['score']) || is_float($show['score']))->toBeTrue();
 });

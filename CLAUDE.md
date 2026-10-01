@@ -245,38 +245,46 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
       binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
       survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above
 
-## API contract for the Celestia/Luna reimplementation (done, deployed as `3ec4e41c`, 2026-10-01)
+## API contract for the Celestia/Luna reimplementation (done; production runs `3ec4e41c`, `origin/main` is ahead, see below)
 
 **Purpose:** the `/api/v0` API is the deliverable Celestia (Next.js SSR front end) and Luna (Laravel + Sanctum back end) build against,
 alongside the browser/contract suites as the behavioral spec. Winterchilla keeps rendering with Twig until it is retired — no SSR,
 hydration state or serializer layer for Twig lives here. Nothing in this section is left to do in Winterchilla.
 
 **Artifacts to build against**
-- `public/dist/api.json` — the OpenAPI 3 document (written by `scripts/generate_api_schema.php`, also served by `/docs`), 135 operations with
-  Luna-style operation IDs (`GET /appearances/{id}/color-groups` → `GetAppearancesIdColorGroups`). Celestia's `packages/api-types` generator
-  runs on it unchanged (312 exported types, type-checks). Docblocks live next to each controller (`app/Controllers/API/*`, `DiscordAuthController`);
+- `public/dist/api.json` — the OpenAPI 3 document (written by `scripts/generate_api_schema.php`, also served by `/docs`), 146 method+path
+  operations (17 marked `x-internal`, see below) with Luna-style operation IDs (`GET /appearances/{id}/color-groups` → `GetAppearancesIdColorGroups`). Celestia's `packages/api-types` generator
+  runs on it unchanged. Docblocks live next to each controller (`app/Controllers/API/*`, `DiscordAuthController`); the shared schemas, tags and
+  security scheme live on `ApiSchemas` (not on `APIController`: swagger-php merges a parent class's schemas into every subclass that declares one);
   rendered-HTML response fields (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are marked there as
   *Winterchilla UI details, not part of the contract*.
 - `tests/Browser/Api/*` — HTTP-level contract tests for every endpoint (status codes, body shapes, permissions, validation errors); they run
-  against the test server with seeded data and double as the spec a re-implementation can be run against (`Tests\Browser\Helpers\ApiClient`).
+  against the test server with seeded data and double as the spec a re-implementation can be run against: `Tests\Browser\Helpers\ApiClient`
+  honors `CONTRACT_BASE_URL`, `CONTRACT_API_PATH` (empty = no prefix), `CONTRACT_AUTH=bearer`, `CONTRACT_LOGIN_URL`/`CONTRACT_LOGIN_METHOD`
+  (the bearer login endpoint must answer `{"token": …}`), and `scripts/dump-contract-seed.sh` dumps the seeded data (it resets the shared test DB).
   The browser suites under `tests/Browser/{Admin,User,Guest}` pin the UI behavior.
-- `docs/api-path-alignment.md` — how the old Winterchilla paths map to Luna's resource style, including the deviations ("As built").
+- `docs/api-path-alignment.md` — how the old Winterchilla paths map to Luna's resource style, the deviations ("As built") and the handoff notes
+  for the Celestia/Luna plans (what is `x-internal`, what is deliberately not provided).
 - `config/routes/public_api_v0.php` — the route table (`$api_endpoint($path, $target, $methods)`; several controllers share a path by method).
 
 **Contract format (Luna's, verified from `Luna/app`)**
-- camelCase JSON keys for requests and responses (kept snake_case on purpose: OAuth protocol parameters and the page-level `sort_by`).
+- camelCase JSON keys for requests and responses (kept snake_case on purpose: OAuth protocol parameters, the page-level `sort_by` and the
+  preference keys such as `cg_itemsperpage`). Write bodies may be `application/json` (scalars are strings internally, lists of scalars become
+  comma lists, nested values stay JSON strings; `Controller::readJsonBody`) or form-encoded; the on/off preferences are booleans.
 - No `status` envelope: success is a proper 2xx with the resource as the body (201 on create, 204 for actions without a body), failure a proper
   4xx/5xx: `401` signed out, `403` forbidden, `404`, `409` state conflict, `419` CSRF, `422` validation, `429` throttled, `501` disabled feature,
   `502/503` dependency down. Error bodies are `{message}` and `{message, errors: {field: [..]}}` (one field error per response: `Input` stops at the
   first failure, deliberately — continuing would need null-safe handling in ~100 methods that write between inputs).
 - Lists are paginated `{currentPage, totalPages, totalItems, itemsPerPage}`; read payloads carry the visitor's permissions (`canEdit`, `canManage`,
   `canEnter`, …) so a front end does not re-derive authorization from roles.
-- Auth is described per endpoint as public / signed in / role; Luna maps that onto Sanctum (bearer tokens or stateful cookies). Winterchilla's own
-  sessions, `test-login` and the CSRF cookie (`CSRF_TOKEN` echoed on writes) are *not* part of the contract.
+- Auth is described per endpoint as public / signed in / role (the spec's default `security` is `SessionCookie`, public endpoints say `security={}`);
+  Luna maps that onto Sanctum (bearer tokens or stateful cookies). Sign-in, token issuing and OAuth belong to Luna; Winterchilla's own sessions,
+  `test-login` and the CSRF cookie (`CSRF_TOKEN` echoed on writes) are *not* part of the contract. Public payloads show a developer under the
+  `dev_role_label` setting; `/users/me` shows the raw role.
 - Stay on `/api/v0` (documented as unstable); no `/api/v1`. Celestia proxies its API prefix to the backend, so there is no CORS work.
 
-**What exists** (read endpoints Celestia's fetchers need, as data: `GET /appearances/{id}|pinned|autocomplete|{id}/locate|preview`, `/color-guide`,
-`/color-guide/major-changes`, `/show` + `/show/{id}`, `/posts?showId&kind`, `/tags`, `/events` + `/events/{id}`, `/users`, `/users/{id}`,
+**What exists** (read endpoints Celestia's fetchers need, as data: `GET /appearances/{id}|full|pinned|autocomplete|{id}/locate|preview`, `/color-guide`,
+`/color-guide/major-changes`, `/show` (+ `season`/`episode` filters) + `/show/{id}` + `/show/latest`, `/posts?showId&kind`, `/tags`, `/events` + `/events/{id}`, `/users`, `/users/{id}`,
 `/users/da/{username}`, `/users/{id}/profile|contributions/{type}|personal-guide/{appearances,point-history}`, `/useful-links/sidebar`,
 `/user-prefs/me`, `/notices/current`, `/about/connection|members`, `/config`, and staff-only `/admin/logs`, `/notices`; plus the write API on
 Luna-style paths: appearances, color groups, tags, posts, events/entries, shows, users/sessions/preferences, personal guide, Discord, settings,
@@ -284,10 +292,19 @@ notifications, useful links). `GET /config` returns constants and validation pat
 globals Twig embeds with `export_vars`; **retiring `export_vars`/`datastore.js` on the Winterchilla side is deliberately not done** (it is part of
 the Celestia/Luna split, which has no such globals).
 
+**`x-internal` operations** (`CoreUtils::INTERNAL_OPERATIONS`, enforced by `ApiSchemaTest`): the HTML-only endpoints, Winterchilla's own
+session handling, `DELETE /admin/stat-cache`, the staff-only e-mail/password flows under testing and the staff `GET /tags/autocomplete`. A
+re-implementation does not need them. Response fields that carry rendered HTML are described as "Winterchilla UI detail, not part of the contract".
+
 **Known differences from Luna's own API** (so a re-implementation does not chase them): shows have no `generation` (dropped here), `previewData`
 is the appearance's first four colors, `/about/connection` has no `deviceIdentifier`, `/useful-links/sidebar` returns `[]` for guests like Luna.
 Not covered by automated tests because they need the real network: creating posts with real images, finishing with a deviation, approval success,
 event entry submission (disabled in the app anyway), a successful Discord sync, the e-mail flow past validation.
+
+**Open items for the next deploy** (decide with the user): `origin/main` is ahead of production; deploying runs the Phinx migration
+`20261001000000_restore_show_season_episode_unique_key` (the unique key on `show (season, episode)` was lost when `generation` was dropped).
+The Luna and Celestia plans live in their repos (`Luna/docs/winterchilla-contract-plan.md`, `Celestia/docs/winterchilla-parity-plan.md`);
+their sessions report spec gaps back and the fixes land here.
 
 **Guards in CI** (`.github/workflows/ci.yml`): `tests/ApiSchemaTest.php` (no swagger-php warnings, unique readable operation IDs, no dangling
 `$ref`, no old path prefixes), the "API Types" job (generates the document, converts it with `openapi-typescript@7.13.0` — Celestia's major — and

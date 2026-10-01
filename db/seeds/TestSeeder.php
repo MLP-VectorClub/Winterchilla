@@ -34,7 +34,7 @@ class TestSeeder extends AbstractSeed {
         // Fixed IDs (TestSeederConstants::*_DA_ID) so the fake OAuth provider can sign in as these users
         'id'             => '0f0e0d0c-0b0a-4000-8000-000000009001',
         'name'           => 'TestUser',
-        'avatar_url'     => null,
+        'avatar_url'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
         'user_id'        => 9001,
         'scope'          => 'user',
         'access'         => 'fake-access-token-user',
@@ -45,7 +45,7 @@ class TestSeeder extends AbstractSeed {
       [
         'id'             => '0f0e0d0c-0b0a-4000-8000-000000009002',
         'name'           => 'TestAdmin',
-        'avatar_url'     => null,
+        'avatar_url'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
         'user_id'        => 9002,
         'scope'          => 'user',
         'access'         => 'fake-access-token-admin',
@@ -56,7 +56,7 @@ class TestSeeder extends AbstractSeed {
       [
         'id'             => '0f0e0d0c-0b0a-4000-8000-000000009003',
         'name'           => 'FreshUser',
-        'avatar_url'     => null,
+        'avatar_url'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
         'user_id'        => 9003,
         'scope'          => 'user',
         'access'         => 'fake-access-token-fresh',

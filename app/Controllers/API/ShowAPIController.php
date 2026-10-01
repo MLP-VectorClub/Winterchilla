@@ -366,7 +366,7 @@ class ShowAPIController extends APIController {
           }
 
           $update['parts'] = 1;
-          if (isset($_REQUEST['twoparter'])){
+          if (CoreUtils::requestFlag('twoparter')){
             $next_part = Show::find_by_season_and_episode($update['season'], $update['episode'] + 1);
             if (!empty($next_part))
               Response::error(409, "This episode cannot have two parts because {$next_part->toURL()} already exists.");
@@ -494,9 +494,10 @@ class ShowAPIController extends APIController {
    *     description="OK",
    *     @OA\JsonContent(
    *           type="object",
-   *           required={"newhtml"},
+   *           required={"data"},
    *           additionalProperties=false,
-   *           @OA\Property(property="newhtml", type="string", description="Updated rendered sidebar voting HTML")
+   *           @OA\Property(property="data", type="object", description="Number of votes per rating after this vote, rating to count", additionalProperties=@OA\AdditionalProperties(type="integer")),
+   *           @OA\Property(property="newhtml", type="string", description="Winterchilla UI detail, not part of the contract: updated rendered sidebar voting HTML")
    *         )
    *   ),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
@@ -505,6 +506,17 @@ class ShowAPIController extends APIController {
    *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
+  /** @return object Rating to number of votes (an object, so an empty map serializes as `{}`) */
+  private function voteCounts():object {
+    $rows = DB::$instance->query(
+      "SELECT count(*) as value, vote as label FROM show_votes WHERE show_id = ? GROUP BY vote ORDER BY vote", [$this->show->id]);
+    $counts = [];
+    foreach ($rows as $row)
+      $counts[$row['label']] = (int)$row['value'];
+
+    return (object)$counts;
+  }
+
   public function voteApi($params):void {
     $this->load_show($params);
 
@@ -513,13 +525,7 @@ class ShowAPIController extends APIController {
         if (isset($_REQUEST['html']))
           Response::ok(['html' => ShowHelper::getSidebarVoting($this->show)]);
 
-        $vote_count_query = DB::$instance->query(
-          "SELECT count(*) as value, vote as label FROM show_votes WHERE show_id = ? GROUP BY vote ORDER BY vote", [$this->show->id]);
-        $vote_counts = [];
-        foreach ($vote_count_query as $row)
-          $vote_counts[$row['label']] = $row['value'];
-
-        Response::ok(['data' => (object)$vote_counts]);
+        Response::ok(['data' => $this->voteCounts()]);
       break;
       case 'POST':
         if (!Auth::$signed_in)
@@ -548,7 +554,7 @@ class ShowAPIController extends APIController {
           Response::dbError(status: 500);
 
         $this->show->updateScore();
-        Response::ok(['newhtml' => ShowHelper::getSidebarVoting($this->show)]);
+        Response::ok(['data' => $this->voteCounts(), 'newhtml' => ShowHelper::getSidebarVoting($this->show)]);
       break;
       default:
         CoreUtils::notAllowed();

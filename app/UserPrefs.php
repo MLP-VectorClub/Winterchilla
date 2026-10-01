@@ -160,7 +160,10 @@ class UserPrefs extends GlobalSettings {
       case 'cg_fulllstprev':
       case 'cg_nutshell':
       case 'ep_revstepbtn':
-        $value = $value ? 1 : 0;
+      case 'ep_noappprev':
+      case 'p_hidepcg':
+      case 'p_homelastep':
+        $value = CoreUtils::truthy($value) ? 1 : 0;
       break;
 
       case 'a_pcgearn':
@@ -172,7 +175,7 @@ class UserPrefs extends GlobalSettings {
         if (Permission::insufficient('staff'))
           Response::denied("You cannot change the $name preference");
 
-        $value = $value ? 1 : 0;
+        $value = CoreUtils::truthy($value) ? 1 : 0;
       break;
 
       case 'pcg_slots':

@@ -31,11 +31,12 @@ class ConfigAPIController extends APIController {
    *     description="OK",
    *     @OA\JsonContent(
    *       type="object",
-   *       required={"tagTypes", "roles", "showTypes", "maxUploadSize", "patterns", "wsServerHost", "discordInviteLink"},
+   *       required={"tagTypes", "roles", "showTypes", "vectorApps", "maxUploadSize", "patterns", "wsServerHost", "discordInviteLink"},
    *       additionalProperties=false,
    *       @OA\Property(property="tagTypes", type="object", additionalProperties=@OA\AdditionalProperties(type="string"), description="Tag type key to label"),
    *       @OA\Property(property="roles", type="object", additionalProperties=@OA\AdditionalProperties(type="string"), description="Role key to label"),
    *       @OA\Property(property="showTypes", type="object", additionalProperties=@OA\AdditionalProperties(type="string"), description="Show type key to label"),
+   *       @OA\Property(property="vectorApps", type="object", additionalProperties=@OA\AdditionalProperties(type="string"), description="Choices for the `p_vectorapp` preference, key to label; the empty key means none"),
    *       @OA\Property(property="maxUploadSize", type="string", example="2MB"),
    *       @OA\Property(
    *         property="patterns",
@@ -62,6 +63,7 @@ class ConfigAPIController extends APIController {
       'tagTypes' => Tags::TAG_TYPES,
       'roles' => Permission::ROLES_ASSOC,
       'showTypes' => ShowHelper::VALID_TYPES,
+      'vectorApps' => CoreUtils::VECTOR_APPS,
       'maxUploadSize' => CoreUtils::getMaxUploadSize(),
       'patterns' => [
         'printableAscii' => ['source' => PRINTABLE_ASCII_PATTERN, 'flags' => ''],

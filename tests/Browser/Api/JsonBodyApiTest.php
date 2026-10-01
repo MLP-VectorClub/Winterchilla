@@ -65,3 +65,38 @@ it('reports validation errors for JSON bodies in the same shape', function () {
 
   expect($r['status'])->toBe(422)->and($r['json'])->toHaveKeys(['message', 'errors']);
 });
+
+it('reads JSON booleans as booleans', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $path = '/users/' . TestSeederConstants::ADMIN_ID . '/preferences/cg_hidesynon';
+
+  try {
+    expect($admin->json('PUT', $path, ['value' => false])['json']['value'])->toBe(0);
+    expect($admin->get('/user-prefs/me', ['keys' => ['cg_hidesynon']])['json']['cg_hidesynon'])->toBeFalse();
+    expect($admin->json('PUT', $path, ['value' => true])['json']['value'])->toBe(1);
+    // These used to be stored as sent, so true came back as the string "true"
+    foreach (['p_homelastep', 'p_hidepcg', 'ep_noappprev'] as $flag) {
+      $r = $admin->json('PUT', '/users/' . TestSeederConstants::ADMIN_ID . "/preferences/$flag", ['value' => true]);
+      expect($r['json']['value'])->toBe(1, $flag);
+      $admin->json('PUT', '/users/' . TestSeederConstants::ADMIN_ID . "/preferences/$flag", ['value' => false]);
+    }
+  }
+  finally {
+    $admin->json('PUT', $path, ['value' => true]);
+  }
+});
+
+it('treats a false flag as unset and a true flag as set', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $created = $admin->json('POST', '/appearances', ['guide' => 'pony', 'label' => 'Flag Pony ' . substr(md5(uniqid('', true)), 0, 6), 'private' => false, 'template' => false]);
+  expect($created['status'])->toBe(201);
+  $id = $created['json']['id'];
+
+  try {
+    // A private appearance is hidden from guests; `private: false` must not make it one
+    expect(ApiClient::guest()->get("/appearances/$id")['status'])->toBe(200);
+  }
+  finally {
+    $admin->request('DELETE', "/appearances/$id");
+  }
+});

@@ -190,7 +190,7 @@ class Posts {
         if (empty($author))
           Response::error(502, "Could not fetch local user data for username: $cached_deviation->author");
 
-        if (!isset($_REQUEST['allowOverwriteReserver']) && $reserver_id !== null && $author->user_id !== $reserver_id){
+        if (!CoreUtils::requestFlag('allowOverwriteReserver') && $reserver_id !== null && $author->user_id !== $reserver_id){
           $sameUser = Auth::$user->id === $reserver_id;
           $person = $sameUser ? 'you' : 'the user who reserved this post';
           Response::error(409, "You've linked to an image which was not submitted by $person. If this was intentional, press Continue to proceed with marking the post finished, but note that it will make {$author->name} the new reserver.".($sameUser
@@ -311,7 +311,7 @@ class Posts {
         $User = Users::getDA($reserve_as, 'name');
         if (empty($User))
           Response::invalid('as', 'User to reserve as does not exist');
-        if (!isset($_POST['screwit']) && Permission::insufficient('member', $User->role))
+        if (!CoreUtils::requestFlag('screwit') && Permission::insufficient('member', $User->role))
           Response::error(409, 'The specified user does not have permission to reserve posts, continue anyway?', ['retry' => true]);
 
         $post->reserved_by = $User->id;

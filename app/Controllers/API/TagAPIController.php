@@ -354,7 +354,7 @@ class TagAPIController extends APIController {
         $tid = $this->tag->synonym_of ?? $this->tag->id;
         $Uses = Tagged::by_tag($tid);
         $UseCount = count($Uses);
-        if (!isset($_REQUEST['sanityCheck']) && $UseCount > 0)
+        if (!CoreUtils::requestFlag('sanityCheck') && $UseCount > 0)
           Response::error(409, 'This tag is currently used on '.CoreUtils::makePlural('appearance', $UseCount, PREPEND_NUMBER).'. Deleting will permanently remove the tag from those appearances. Repeat the request with sanitycheck set to confirm.', ['uses' => $UseCount]);
 
         $this->tag->delete();
@@ -537,7 +537,7 @@ class TagAPIController extends APIController {
           Response::noContent();
 
         if ($this->tag->synonym){
-          $keep_tagged = isset($_REQUEST['keepTagged']);
+          $keep_tagged = CoreUtils::requestFlag('keepTagged');
           if ($keep_tagged){
             $target_tagged = Tagged::by_tag($this->tag->synonym->id);
             foreach ($target_tagged as $tg)

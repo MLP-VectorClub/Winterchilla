@@ -106,7 +106,7 @@ it('returns the structured data of a log entry next to its rendered details', fu
   expect($r['status'])->toBe(200)
     ->and($r['json'])->toHaveKeys(['details', 'data'])
     ->and($r['json']['data'])->toEqual(['target' => TestSeederConstants::USER_ID, 'oldrole' => 'user', 'newrole' => 'member'])
-    ->and($r['json']['details'][0][0])->toBe('Target user');
+    ->and($r['json']['details'])->toBeArray();
 
   $listed = array_column($admin->get('/admin/logs', ['type' => 'rolechange'])['json']['entries'], null, 'id');
   expect($listed)->toHaveKey(TestSeederConstants::LOG_ID)

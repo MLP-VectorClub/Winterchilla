@@ -8,7 +8,7 @@ it('returns the constants and validation patterns the front end needs', function
   $r = ApiClient::guest()->get('/config');
 
   expect($r['status'])->toBe(200)
-    ->and($r['json'])->toHaveKeys(['tagTypes', 'roles', 'showTypes', 'maxUploadSize', 'patterns', 'wsServerHost', 'discordInviteLink'])
+    ->and($r['json'])->toHaveKeys(['tagTypes', 'roles', 'showTypes', 'vectorApps', 'maxUploadSize', 'patterns', 'wsServerHost', 'discordInviteLink'])
     ->and($r['json']['tagTypes'])->toHaveKeys(['app', 'cat', 'spec', 'gen', 'char'])
     ->and($r['json']['roles'])->toHaveKey('staff')
     ->and($r['json']['showTypes'])->toHaveKeys(['episode', 'movie'])

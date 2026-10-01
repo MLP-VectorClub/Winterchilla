@@ -163,3 +163,28 @@ it('clears an appearance selectively with 204', function () {
 
   $admin->request('DELETE', '/appearances/' . $created['id']);
 });
+
+it('keeps the guide, notes and privacy of an appearance when an edit leaves them out', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $created = $admin->post('/appearances', ['guide' => 'pony', 'label' => uniqueAppearance(), 'notes' => 'Keep these notes', 'private' => 'false']);
+  expect($created['status'])->toBe(201);
+  $id = $created['json']['id'];
+
+  try {
+    $r = $admin->request('PUT', "/appearances/$id", ['label' => uniqueAppearance()]);
+    expect($r['status'])->toBe(200);
+
+    $after = ApiClient::guest()->get("/appearances/$id");
+    expect($after['status'])->toBe(200)
+      ->and($after['json']['guide'])->toBe('pony')
+      ->and($after['json']['ownerId'])->toBeNull()
+      ->and($after['json']['notes'])->toContain('Keep these notes');
+
+    // An empty `notes` field, on the other hand, clears them
+    $admin->request('PUT', "/appearances/$id", ['label' => uniqueAppearance(), 'notes' => '']);
+    expect(ApiClient::guest()->get("/appearances/$id")['json']['notes'])->toBeNull();
+  }
+  finally {
+    $admin->request('DELETE', "/appearances/$id");
+  }
+});

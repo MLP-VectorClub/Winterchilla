@@ -692,7 +692,7 @@ class PostAPIController extends APIController {
             if (empty($post_as))
               Response::invalid('postAs', 'The user you wanted to post as does not exist');
 
-            if ($kind === 'reservation' && Permission::insufficient('member', $post_as->role) && !isset($_POST['allowNonmember']))
+            if ($kind === 'reservation' && Permission::insufficient('member', $post_as->role) && !CoreUtils::requestFlag('allowNonmember'))
               Response::error(409, 'The user you wanted to post as is not a club member, do you want to post as them anyway?', ['canForce' => true]);
 
             $by_id = $post_as->id;
@@ -738,6 +738,7 @@ class PostAPIController extends APIController {
    *       type="object",
    *       required={"deviation"},
    *       @OA\Property(property="deviation", type="string", format="uri", description="URL of the finished deviation"),
+   *       @OA\Property(property="allowOverwriteReserver", type="boolean", description="Send this when the 409 `retry` response asks for it: lets the reserver change to the deviation's author even though it differs from the current reserver"),
    *       @OA\Property(property="finishedAt", type="string", format="date-time", description="Developer-only: overrides the finished timestamp")
    *     )
    *   ),
@@ -751,7 +752,7 @@ class PostAPIController extends APIController {
    *           type="object",
    *           required={"message"},
    *           @OA\Property(property="message", type="string"),
-   *           @OA\Property(property="retry", type="boolean", description="If true, the request can be retried with allow_overwrite_reserver set")
+   *           @OA\Property(property="retry", type="boolean", description="If true, the request can be retried with allowOverwriteReserver set")
    *         )
    *   ),
    *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
@@ -829,7 +830,7 @@ class PostAPIController extends APIController {
         if (!$this->is_user_reserver && Permission::insufficient('staff'))
           Response::denied();
 
-        if (isset($_REQUEST['unbind'])){
+        if (CoreUtils::requestFlag('unbind')){
           if ($this->post->is_reservation){
             if (!$this->post->delete())
               Response::dbError(status: 500);

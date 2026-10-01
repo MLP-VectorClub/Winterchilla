@@ -177,6 +177,10 @@ class AppearanceAPIController extends APIController {
           ]))->out();
         }
 
+        // An edit that leaves the guide out keeps the appearance where it is (it used to move it out of every guide)
+        if (!$this->creating && $guide === null && $this->appearance->owner_id === null)
+          $guide = $this->appearance->guide;
+
         $this->guide = $guide;
 
         /** @var $data array */
@@ -217,11 +221,15 @@ class AppearanceAPIController extends APIController {
           if ($this->creating || $notes !== $this->appearance->notes_src)
             $data['notes_src'] = $notes;
         }
-        else $data['notes_src'] = null;
+        // Sending `notes` empty clears them; leaving the field out keeps what is there
+        else if ($this->creating || array_key_exists('notes', $_REQUEST))
+          $data['notes_src'] = null;
 
-        $data['private'] = (new Input('private', 'bool', [
+        $private = (new Input('private', 'bool', [
           Input::IS_OPTIONAL => true,
         ]))->out();
+        if ($this->creating || array_key_exists('private', $_REQUEST))
+          $data['private'] = $private;
 
         if ($this->creating){
           if ($this->guide === null){
@@ -234,7 +242,7 @@ class AppearanceAPIController extends APIController {
             $data['order'] = ($biggest_order['order'] ?? 0) + 1;
           }
         }
-        else if ($data['private'] === true){
+        else if (($data['private'] ?? false) === true){
           $data['last_cleared'] = date('c');
         }
 

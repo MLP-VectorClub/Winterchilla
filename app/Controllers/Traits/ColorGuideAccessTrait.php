@@ -21,7 +21,7 @@ trait ColorGuideAccessTrait {
   protected ?Appearance $appearance;
 
   protected function _initAppearancePageState():void {
-    $this->appearance_page = isset($_REQUEST['appearancePage']);
+    $this->appearance_page = CoreUtils::requestFlag('appearancePage');
     if (isset($_REQUEST['ownerId']))
       $this->guide = null;
   }

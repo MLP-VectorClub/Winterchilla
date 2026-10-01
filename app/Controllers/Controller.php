@@ -72,11 +72,11 @@ abstract class Controller {
       if ($value === null)
         continue;
       if (is_bool($value))
-        $result[$key] = $value ? 'true' : 'false';
+        $result[$key] = $value ? '1' : '0';
       else if (is_scalar($value))
         $result[$key] = (string)$value;
       else if (array_is_list($value) && count(array_filter($value, 'is_scalar')) === count($value))
-        $result[$key] = implode(',', array_map(fn($v) => is_bool($v) ? ($v ? 'true' : 'false') : (string)$v, $value));
+        $result[$key] = implode(',', array_map(fn($v) => is_bool($v) ? ($v ? '1' : '0') : (string)$v, $value));
       else $result[$key] = json_encode($value);
     }
 

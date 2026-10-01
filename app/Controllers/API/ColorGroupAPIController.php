@@ -222,7 +222,7 @@ class ColorGroupAPIController extends APIController {
         $this->colorgroup->label = $label;
 
         if ($this->colorgroup->appearance->owner_id === null){
-          $major = isset($_REQUEST['major']);
+          $major = CoreUtils::requestFlag('major');
           if ($major){
             $reason = (new Input('reason', 'string', [
               Input::IN_RANGE => [null, 255],
@@ -349,7 +349,7 @@ class ColorGroupAPIController extends APIController {
         if ($this->colorgroup->appearance->owner_id === null && $major){
           MajorChange::record($this->colorgroup->appearance_id, $reason);
           if ($this->appearance_page){
-            $FullChangesSection = isset($_REQUEST['fullChangesSection']);
+            $FullChangesSection = CoreUtils::requestFlag('fullChangesSection');
             $response['changes'] = CGUtils::getMajorChangesHTML(MajorChange::get($this->colorgroup->appearance_id, null), $FullChangesSection);
             if ($FullChangesSection)
               $response['changes'] = str_replace('@', $response['changes'], CGUtils::CHANGES_SECTION);

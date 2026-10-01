@@ -1232,6 +1232,29 @@ class CoreUtils {
     return $strlen > $len ? self::trim(mb_substr($str, 0, $len - 1)).'…' : $str;
   }
 
+  /**
+   * Reads an on/off value that came from a form (`on`, `1`, `true`) or from JSON (booleans arrive as `1`/`0`).
+   *
+   * @param mixed $value
+   */
+  public static function truthy($value):bool {
+    if (is_string($value))
+      return !in_array(strtolower(trim($value)), ['', '0', 'false', 'off', 'no'], true);
+
+    return (bool)$value;
+  }
+
+  /**
+   * Whether a request flag is set. A flag counts as set when it is sent without a value (`?unbind`, a checked checkbox)
+   * or with a truthy one, and as unset when it is absent or `0`/`false`/`off`.
+   */
+  public static function requestFlag(string $key):bool {
+    if (!isset($_REQUEST[$key]))
+      return false;
+
+    return $_REQUEST[$key] === '' || self::truthy($_REQUEST[$key]);
+  }
+
   public const VECTOR_APPS = [
     '' => "(don't show)",
     'illustrator' => 'Adobe Illustrator',

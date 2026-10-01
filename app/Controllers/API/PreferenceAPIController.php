@@ -110,9 +110,10 @@ class PreferenceAPIController extends APIController {
    *   @OA\RequestBody(
    *     required=true,
    *     description="The new preference value, processed and validated according to the specified preference key",
-   *     @OA\MediaType(
-   *       mediaType="application/x-www-form-urlencoded",
-   *       @OA\Schema(type="object")
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"value"},
+   *       @OA\Property(property="value", description="The new value: a boolean for the on/off preferences (see UserPrefs), an integer for `cg_itemsperpage`, a string for `p_vectorapp` (a key from GET /config `vectorApps`) and `cg_defaultguide`", oneOf={@OA\Schema(type="boolean"), @OA\Schema(type="integer"), @OA\Schema(type="string", nullable=true)})
    *     )
    *   ),
    *   @OA\Response(

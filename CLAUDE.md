@@ -226,7 +226,7 @@ signed-in user — commit a9954636 removed the `DA_AUTHORIZED_APPS_URL` constant
 passing it to the template (which no longer used it). `UserProfileTest` missed it because of the weak
 `assertDontSee('Fatal error')` pattern; it now asserts real page content.
 
-### Stage 7 — Closeout audit (in progress)
+### Stage 7 — Closeout audit (done; the one open box is superseded by the API contract tests)
 
 - [x] Diffed covered routes against `config/routes/pages.php`; the gaps found are covered by
       `tests/Browser/Guest/RemainingRoutesTest.php` (manifest, `/browser`, `/blending`, picker frame,
@@ -245,361 +245,68 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
       binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
       survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above
 
-## API-driven pages migration (done: contract tests, HTTP statuses, promise-based client)
+## API contract for the Celestia/Luna reimplementation (done, deployed as `3ec4e41c`, 2026-10-01)
 
-**Purpose:** preparation for the Celestia/Luna reimplementation of these features. The API is the deliverable:
-it is the contract those projects will build against (alongside the browser suite as the behavioral spec).
-Migrating Winterchilla's own front end onto it is secondary — a way to prove the API is complete — so
-prefer the smallest change that makes each page's data available over JSON, and don't invest in
-client-side rendering of Winterchilla itself beyond what's needed to validate an endpoint.
+**Purpose:** the `/api/v0` API is the deliverable Celestia (Next.js SSR front end) and Luna (Laravel + Sanctum back end) build against,
+alongside the browser/contract suites as the behavioral spec. Winterchilla keeps rendering with Twig until it is retired — no SSR,
+hydration state or serializer layer for Twig lives here. Nothing in this section is left to do in Winterchilla.
 
-**Goal (decided):** move data passing from views to an API — ultimately full API-driven pages (server
-stops embedding data and rendering list/table HTML; the front end fetches JSON and renders), which is
-the shape Celestia/Luna will need. The browser suite above is the regression net: it must stay green
-(or change only where a page's markup legitimately moves) at every step.
+**Artifacts to build against**
+- `public/dist/api.json` — the OpenAPI 3 document (written by `scripts/generate_api_schema.php`, also served by `/docs`), 135 operations with
+  Luna-style operation IDs (`GET /appearances/{id}/color-groups` → `GetAppearancesIdColorGroups`). Celestia's `packages/api-types` generator
+  runs on it unchanged (312 exported types, type-checks). Docblocks live next to each controller (`app/Controllers/API/*`, `DiscordAuthController`);
+  rendered-HTML response fields (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are marked there as
+  *Winterchilla UI details, not part of the contract*.
+- `tests/Browser/Api/*` — HTTP-level contract tests for every endpoint (status codes, body shapes, permissions, validation errors); they run
+  against the test server with seeded data and double as the spec a re-implementation can be run against (`Tests\Browser\Helpers\ApiClient`).
+  The browser suites under `tests/Browser/{Admin,User,Guest}` pin the UI behavior.
+- `docs/api-path-alignment.md` — how the old Winterchilla paths map to Luna's resource style, including the deviations ("As built").
+- `config/routes/public_api_v0.php` — the route table (`$api_endpoint($path, $target, $methods)`; several controllers share a path by method).
 
-### Status (2026-09-30) and what is left
+**Contract format (Luna's, verified from `Luna/app`)**
+- camelCase JSON keys for requests and responses (kept snake_case on purpose: OAuth protocol parameters and the page-level `sort_by`).
+- No `status` envelope: success is a proper 2xx with the resource as the body (201 on create, 204 for actions without a body), failure a proper
+  4xx/5xx: `401` signed out, `403` forbidden, `404`, `409` state conflict, `419` CSRF, `422` validation, `429` throttled, `501` disabled feature,
+  `502/503` dependency down. Error bodies are `{message}` and `{message, errors: {field: [..]}}` (one field error per response: `Input` stops at the
+  first failure, deliberately — continuing would need null-safe handling in ~100 methods that write between inputs).
+- Lists are paginated `{currentPage, totalPages, totalItems, itemsPerPage}`; read payloads carry the visitor's permissions (`canEdit`, `canManage`,
+  `canEnter`, …) so a front end does not re-derive authorization from roles.
+- Auth is described per endpoint as public / signed in / role; Luna maps that onto Sanctum (bearer tokens or stateful cookies). Winterchilla's own
+  sessions, `test-login` and the CSRF cookie (`CSRF_TOKEN` echoed on writes) are *not* part of the contract.
+- Stay on `/api/v0` (documented as unstable); no `/api/v1`. Celestia proxies its API prefix to the backend, so there is no CORS work.
 
-**Done and deployed** (production runs `f635938b`; `24de1b11` is pushed to `origin` but not deployed yet):
-- Contract tests for every API controller (`tests/Browser/Api/`), browser tests for every converted UI flow, CI green.
-- Every API endpoint answers with proper HTTP statuses (401/403/404/409/422/429/501/503, `419` for CSRF) and Luna-style bodies
-  (camelCase, `{message}`, `{message, errors}`, 201/204); no `{status: bool}` envelope left; messages are plain text.
-- The client uses promises (`$.API.get(...).done(...).fail($.API.fail())`); the compatibility shim and the `this.status`
-  checks are gone; all client data requests go through `$.API`.
-- Security holes found on the way and fixed: post edit authorization, the admin API having no staff check.
-- Test infrastructure that makes the flows testable without the network: fake OAuth provider, Redis-seeded deviations with local
-  images, club-gallery marker files (`ClubGallery`), seeded users/posts/entries/personal guides/major changes.
+**What exists** (read endpoints Celestia's fetchers need, as data: `GET /appearances/{id}|pinned|autocomplete|{id}/locate|preview`, `/color-guide`,
+`/color-guide/major-changes`, `/show` + `/show/{id}`, `/posts?showId&kind`, `/tags`, `/events` + `/events/{id}`, `/users`, `/users/{id}`,
+`/users/da/{username}`, `/users/{id}/profile|contributions/{type}|personal-guide/{appearances,point-history}`, `/useful-links/sidebar`,
+`/user-prefs/me`, `/notices/current`, `/about/connection|members`, `/config`, and staff-only `/admin/logs`, `/notices`; plus the write API on
+Luna-style paths: appearances, color groups, tags, posts, events/entries, shows, users/sessions/preferences, personal guide, Discord, settings,
+notifications, useful links). `GET /config` returns constants and validation patterns (`{source, flags}`) — the replacement for the page
+globals Twig embeds with `export_vars`; **retiring `export_vars`/`datastore.js` on the Winterchilla side is deliberately not done** (it is part of
+the Celestia/Luna split, which has no such globals).
 
-**Left** (nothing here is required for the Celestia/Luna contract to be usable today):
-1. **Deploy `24de1b11`** (JSON-for-page 406 fix, 401-before-409 for posts, OpenAPI duplicates).
-2. **Read endpoints as data** (phase 1 above, still open): most page data is still rendered by Twig and embedded via `export_vars`/HTML
-   fragments. Endpoints that return *data* (not HTML) for the list/detail pages — show index, show + posts, guide page, appearance,
-   tag list, users, contributions, events, profile, personal guide, admin lists — don't exist yet; several existing endpoints still
-   return rendered HTML fragments (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …).
-3. **`GET /api/v0/config`** (phase 2): constants, validation patterns, client config — replaces the `export_vars` globals (`datastore.js`).
-4. ~~Write endpoints' request naming~~ — done: request fields are camelCase (`imageUrl`, `showId`, `targetId`, `tagIds`, `sanityCheck`,
-   `addTo`, `appearanceId` (was `ponyid`), `colors`, `cutieMarks` (was `CMData`), `appearancePage`/`fullChangesSection`, `wipe*`, `ownerId`,
-   `newEmail`, …), renamed in place with the client, tests and OpenAPI. Still snake_case on purpose: OAuth protocol parameters and the
-   page-level `sort_by` query parameter (shared with the `/cg/.../full` page URL).
-5. **OpenAPI completeness** (phase 3): the docblocks describe statuses and most bodies, but schemas for the HTML-fragment fields and some
-   request bodies are loose. Operation IDs are readable and unique now (Luna's convention), and the spec generates Celestia's types; the
-   remaining diff against Luna's spec is listed under "Next" below.
-6. Smaller known gaps: sprite upload of a *successful* personal-guide appearance; `Input` still halts at the first validation error (one
-   field error per response); `app/Controllers/...` page routes that answer JSON for `Accept: application/json` are still 406.
+**Known differences from Luna's own API** (so a re-implementation does not chase them): shows have no `generation` (dropped here), `previewData`
+is the appearance's first four colors, `/about/connection` has no `deviceIdentifier`, `/useful-links/sidebar` returns `[]` for guests like Luna.
+Not covered by automated tests because they need the real network: creating posts with real images, finishing with a deviation, approval success,
+event entry submission (disabled in the app anyway), a successful Discord sync, the e-mail flow past validation.
 
-### Next: prepare the endpoints for Celestia's SSR (Winterchilla itself gets no SSR work)
+**Guards in CI** (`.github/workflows/ci.yml`): `tests/ApiSchemaTest.php` (no swagger-php warnings, unique readable operation IDs, no dangling
+`$ref`, no old path prefixes), the "API Types" job (generates the document, converts it with `openapi-typescript@7.13.0` — Celestia's major — and
+type-checks the result), PHPStan, ESLint, unit and browser suites. **Run both `vendor/bin/pest` (unit) and `vendor/bin/pest tests/Browser` locally**
+before pushing; CI's "Browser Tests" job also runs the unit tests.
 
-Winterchilla keeps rendering with Twig until it is retired; **server-side rendering is Celestia's job**, and Celestia already does it. So
-the goal of the remaining API work is that Celestia (Next.js) can build every page from these endpoints, and nothing more — no
-serializer layer for Twig, no hydration state, no in-process rendering path in this repo.
-
-How Celestia consumes the API (read from `Celestia/apps/celestia` and `packages/api-types`):
-- Pages fetch in `getServerSideProps` through typed services/fetchers (`src/fetchers/*`, `ColorGuideService(req)` forwards the incoming
-  request's cookies) and pass the result as `initialData`; the browser then talks to the same API through the Next.js `/api` rewrite.
-- Types come from the **OpenAPI spec**: `packages/api-types` turns a spec (`API_JSON_PATH`) into `Get…Request`/`Get…Result` types named after
-  each **operationId**. So the spec is the real interface: a missing, wrong or hash-named operation is a missing type.
-
-Verified 2026-09-30: Celestia's generator runs on our spec (`public/dist/api.json`, written by `scripts/generate_api_schema.php`) and
-the result type-checks (214 request/result types). It exposed that our operationIds were md5 hashes (swagger-php default), which made every
-type name meaningless — fixed: `CoreUtils::apiOperationId()` assigns Luna's convention (`GET /appearances/{id}/color-groups` →
-`GetAppearancesIdColorGroups`), covered by unit tests that also check uniqueness. To re-check by hand: build `packages/api-types` with
-`API_JSON_PATH=<path to api.json>` (do it in a scratch copy, it overwrites `dist/`).
-
-What is left to prepare, in order:
-1. ~~Close the gap to Luna's public API~~ — done: `GET /appearances/{id}`, `/appearances/pinned`, `/appearances/autocomplete`,
-   `/appearances/{id}/locate`, `/appearances/{id}/preview` (was documented but unrouted), `/color-guide`, `/color-guide/major-changes`,
-   `/show` (paginated list), `/useful-links/sidebar`, `/user-prefs/me`, `/users`, `/users/{id}`, `/users/da/{username}`,
-   `/about/connection` (replaces `/about/server`) and `/about/members` now exist with Luna's shapes and contract tests. Differences:
-   no `generation` on shows (dropped here), `previewData` is built from the appearance's first four colors, `deviceIdentifier` is not
-   sent by `/about/connection`. Also fixed on the way: `CoreUtils::fixPath()` dropped array query parameters (`types[]=a`) in its
-   canonical redirect.
-2. **Read endpoints for everything Celestia does not have yet** — mostly done, as data (no rendered HTML) with Luna-shaped pagination and
-   visitor permission flags: `GET /posts?showId&kind` (requests/reservations of a show; `/show/{id}/posts` stays the HTML twin),
-   `GET /show/{id}` now also carries `aired`, `willAir`, `canEdit` and `relatedAppearances`, `GET /tags` (public list; the staff
-   autocomplete moved to `/tags/autocomplete`), `GET /events` and `GET /events/{id}` (public, with entries; the old staff-only 501 is
-   gone), `GET /users/{id}/profile`, `GET /users/{id}/contributions/{type}`, `GET /users/{id}/personal-guide/point-history` and the
-   staff-only `GET /admin/logs` (plus `data` on `GET /admin/logs/{id}`), `GET /users/{id}/personal-guide/appearances`, and the notices
-   resource (`/notices`, `/notices/current`, replacing the always-404 stub). `GET /appearances/{id}` carries `canEdit`. Nothing is left
-   in this step except what the page scripts embed themselves. The HTML-fragment fields that exist on write endpoints (`li`, `html`,
-   `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are marked in the OpenAPI descriptions as Winterchilla UI details
-   that Luna does not implement.
-3. ~~`GET /api/v0/config`~~ — done (`ConfigAPIController`, `ConfigApiTest`): `tagTypes`, `roles`, `showTypes`, `maxUploadSize`, `patterns`
-   (`printableAscii`, `hexColor`, `username`, `episodeTitle` as `{source, flags}`), `wsServerHost`, `discordInviteLink`; cacheable for 5
-   minutes. Winterchilla's own page scripts still read the `export_vars` globals (phase 4 "prove it" is deliberately not done: fetching
-   config before page scripts run would change their startup order for no benefit to Celestia/Luna).
-4. ~~Permissions in the payload and Luna-shaped pagination~~ — done for every new read endpoint (`canEdit`, `canManage`, `canEnter`, …;
-   pagination `{currentPage, totalPages, totalItems, itemsPerPage}` on every list).
-5. **Path and naming alignment for the write API — decided: yes.** Luna is resource-oriented (`/appearances/{id}`, `/users/{id}`, `/color-guide`);
-   the write API moves to Luna's style, renamed **in place** (Winterchilla's client is the only consumer and deploys with the API, so no aliases; client calls change in the same commit). The full
-   old → canonical mapping, the router change it needs (per-method routes) and the order of work are in
-   `docs/api-path-alignment.md` (path renames are **done** for every controller; "As built" there lists the deviations). Request bodies are renamed to camelCase afterwards, also in place.
-6. **OpenAPI docs and guard** — done except one deliberate gap: `Input` still stops at the first validation error (one field error per
-   response). Collecting all of them would mean continuing after a failed `Input` with a null value in ~100 controller methods that write
-   to the database between inputs, so it is not worth the risk while the Winterchilla UI only ever shows one error at a time. The
-   regression guard is in place: `tests/ApiSchemaTest.php` (no swagger-php warnings, unique readable operation IDs, no dangling `$ref`, no
-   old path prefixes) runs with the unit tests, and the CI job "API Types" generates the document, converts it with
-   `openapi-typescript@7.13.0` (the version `packages/api-types` uses) and type-checks the result. Celestia's own index generator lives in
-   the other repo; it was run by hand against the spec (312 exported types, type-checks). Discord sync/unlink now have docblocks and
-   contract tests (`DiscordApiTest`; a successful sync needs the real Discord API).
-Every new endpoint ships with its contract test (`tests/Browser/Api/`) and docblock in the same commit, like the existing ones.
-
-### Current state (audit)
-
-Data reaches JS in three ways:
-1. **Datastore blobs.** Templates call `export_vars({...})` (`CoreUtils::exportVars`), emitting
-   `<aside class="datastore">` JSON; `assets/js/datastore.js` copies each key onto `window`. ~27 call
-   sites in 17 templates, read as bare globals by 14 page scripts. Regexes are shipped as `/src/flags`
-   strings and revived by `datastore.js`. `layout/_scripts.html.twig` exports for every page.
-2. **Server-rendered HTML fragments** returned by API endpoints (`'html'` in ~10 API responses: post
-   lists, appearance blocks, `lazyload` endpoints) and whole pages rendered by Twig (episode lists,
-   posts, guide, tag lists, logs).
-3. **Data attributes / inline markup** read by scripts (not audited yet).
-
-Existing API: internal `/api/v0/...` (`config/routes/public_api_v0.php`, 75 endpoints,
-`Controllers/API/*`) is already used by the UI for mutations and some reads; it is not yet a complete
-read API for page data. Note the `/api/v0` docs are generated from swagger-php docblocks.
-
-Globals inventory (key → where exported → readers):
-
-| Group | Keys | Source of value | Readers |
-|---|---|---|---|
-| Static constants | `TAG_TYPES_ASSOC`, `ROLES`, `ROLES_ASSOC`, `showTypes`, `PRINTABLE_ASCII_PATTERN`, `HEX_COLOR_PATTERN`, `MAX_SIZE`, `discordInviteLink` | PHP constants/config | colorguide `manage.jsx`/`tag-list.js`, `user/manage.js`, `admin/useful-links.js`, `event/view.js`, `show/index-manage.jsx`, `global.jsx` |
-| Client config | `wsServerHost`, `signedIn` (unused by JS) | env / session | `websocket.js` |
-| Page context: guide | `GUIDE`, `AppearancePage`, `OwnerId` | route params, appearance owner | `colorguide/guide.js`, `full-list.js`, `manage.jsx` |
-| Page context: user | `username`, `userId`, `sameUser` | profile/account/pcg-slots user | `user/{profile,account,pcg-slots,manage}.js`, `manage.jsx` |
-| Page context: show | `showId`, `showType`, `isEpisodePage`, `linkedPostURL` | show model, share link | `show/{view,manage,index-manage}.js(x)` |
-| Validation regexes | `usernameRegex`, `episodeTitleRegex` | `RegExp` PHP objects | `show/manage.jsx`, `show/index-manage.jsx` |
-| Verify flow | `verifyHash`, `verifyAction` | query string | `user/verify.js` |
-
-### Target design
-
-- **Bootstrap/config endpoint** `GET /api/v0/config` (cacheable): all static constants and validation
-  patterns (as `{source, flags}` objects instead of `/x/` strings), plus `wsServerHost` and
-  `discordInviteLink`. Replaces every "static constants" and "client config" global. The layout's
-  only remaining data is the identity of the page itself (route name + route params), e.g. a
-  `data-page`/`data-params` attribute, or nothing if the router lives in JS.
-- **Resource endpoints for page context**: reuse/complete `/user/[id]`, `/show/[id]`, `/cg/appearance/[id]`,
-  `/cg/guide/[guide]` (new), `/users/me` (exists) so scripts derive `username`, `userId`, `sameUser`,
-  `showType`, `OwnerId`, `GUIDE` from the fetched resource plus URL params, not globals.
-- **List endpoints returning data, not HTML** for: show index (episodes/movies), show posts
-  (`/show/[id]/posts` exists — currently HTML), appearances/guide pages, tag list, users list,
-  contributions, events, admin logs/notices/links. One serializer per resource shared by page and API
-  during the transition so they can't drift.
-- **Client rendering**: page scripts (already React/JSX for the manage screens) render from JSON;
-  HTML templates shrink to a shell. Decide whether to keep server-rendered first paint for SEO-relevant
-  pages (guide/appearance/episode pages are public and indexed) — see open questions.
-
-### Phases (revised for the migration-prep purpose)
-
-0. **Contract tests** — HTTP-level tests (no browser) pinning the JSON shape of every endpoint a phase
-   touches. These double as the spec Celestia/Luna can run against their own implementation.
-1. **Read API completeness** — for every page in the coverage plan, an endpoint that returns exactly the
-   data that page renders (episode list, show + posts, guide page, appearance, tag list, users list,
-   contributions, events, profile, personal guide, admin lists), as data not HTML. Backed by shared
-   serializers so the Twig page and the endpoint use the same source.
-2. **Config endpoint** `GET /api/v0/config` for constants, validation patterns (`{source, flags}`) and
-   client config (replaces the static-constant and regex globals).
-3. **Document** the contract: complete the swagger-php annotations so `/docs` describes every endpoint,
-   error shape and auth rule; treat that OpenAPI output as the artifact handed to Celestia/Luna.
-4. **Prove it** — move Winterchilla's page scripts off `window` globals onto these endpoints where cheap
-   (context globals, constants, regexes), then retire `datastore.js`/`export_vars`. Full client-side list
-   rendering only where an endpoint needs validating end to end.
-
-Each phase: add/adjust tests first, keep `vendor/bin/pest tests/Browser` green, update checkboxes here.
-
-### Decisions
-
-- **Versioning:** stay on `/api/v0` for now (already documented as unstable); no `/api/v1`.
-- **Auth:** verified from source — Luna uses **Laravel Sanctum** (`laravel/sanctum` ^2.0; not Passport):
-  `auth:sanctum` routes, plain-text bearer tokens issued by `User::authResponse()` after sign-in, plus
-  stateful-cookie support for its own frontend host. Luna has its own users and DB and re-implements the
-  same resources itself (`/appearances`, `/users`, `/color-guide`, `/about`, `/useful-links`, ...), so
-  Winterchilla's API is the *behavioral spec* Luna implements, not something Luna authenticates against.
-  Contract tests therefore must not depend on Winterchilla's DeviantArt session/`test-login` mechanics as part of
-  the contract; document auth per endpoint as an abstract requirement (public / signed in / role) that
-  Luna maps onto Sanctum.
-- **Browser calls:** Celestia proxies `NEXT_PUBLIC_API_PREFIX/:path*` to the backend via a Next.js
-  rewrite (`Celestia/apps/celestia/next.config.js`), so there is no cross-origin browser traffic and no
-  CORS work is needed.
-- **Writes are in scope:** existing mutation endpoints get the same contract tests and OpenAPI docs as the
-  reads.
-
-### Contract format: Luna's (verified from `Luna/app`)
-
-The contract follows what Luna already does, so Winterchilla's API converges on it rather than the reverse:
-- **camelCase JSON keys** (`response()->camelJson`); pagination is
-  `{currentPage, totalPages, totalItems, itemsPerPage}` (`Core::mapPagination`).
-- **No `status` envelope.** Success is a proper 2xx with the resource as the body; actions with nothing to
-  return are `204 No Content`. Failure is a proper 4xx/5xx.
-- **Error bodies** (`ErrorResponse` / `ValidationErrorResponse` schemas in `Luna/app/Http/Controllers/Controller.php`):
-  `{"message": "..."}` and, for validation, `422 {"message": "...", "errors": {"field": ["msg", ...]}}`.
-  `401` unauthenticated, `403` forbidden, `404` missing, `429` throttled, `503` dependency down (e.g. ElasticSearch).
-  Luna returns an *empty* 404 body in production, so clients must not rely on a 404 message.
-- **OpenAPI 3 via swagger-php annotations** with shared schemas (`ErrorResponse`, `ValidationErrorResponse`,
-  `PageNumber`, `OneBasedId`/`ZeroBasedId`, `IsoStandardDate`, enums for guide names etc.); reuse the same
-  schema names in Winterchilla's docs so the two specs can be diffed.
-
-### Error and status migration (`success: true/false` → HTTP statuses)
-
-Today every API response is `200` with `{status: bool, message?, ...data}` (`App\Response`; 313 call sites:
-256 `fail`, 2 `failApi`, ~31 `dbError`, 26 `success`, 99 `done`), and ~100 JS call sites check `this.status`
-(`$.mkAjaxHandler` only sees 2xx responses). Failures are shipped as HTML in `message` (e.g. the sign-back-in
-button), which is also not contract-friendly.
-
-`docs/api-error-inventory.md` (generated at the start of the migration, now historical — every call it lists has been migrated) lists every call with its function and a *heuristic* suggested status — review per
-call, don't apply blindly. Approach, in order:
-1. `Response::fail`/`failApi`/`dbError` gain an explicit HTTP status (default derived from the empty-message
-   auth case: 401 signed-out / 403 signed-in; otherwise required at the call site during migration).
-   `success` sends 200 (or 204 when there is no body). Bodies drop `status` and use Luna's error shape.
-2. **Client shim first** in `$.API` (`shared-utils.js`): on non-2xx, call the same callbacks with
-   `{status: false, message, errors}`, and add `status: true` on 2xx, so the ~100 existing `!this.status`
-   checks keep working while the server moves. Remove the shim (and the checks) at the end.
-3. Migrate controller by controller, each with contract tests asserting status code + body shape, and the
-   matching browser test still green. Suggested order: read endpoints and small controllers
-   (`Auth`, `Setting`, `About`, `Notification`) → `Show`, `Event`, `User`, `Tag`, `ColorGroup` → `Post`,
-   `Appearance` (largest: 44 and 38 failure sites).
-4. HTML-in-message cases become structured fields (`{message, code}`), with the HTML built client-side.
-5. Key-case migration to camelCase is done per endpoint alongside its contract test (many keys are already
-   camelCase or single words); document any endpoint that has to keep a legacy key.
-
-### Migration progress
-
-Infrastructure (done): `Response::error($status, $message, $extra)`, `Response::ok($data, $status)`,
-`Response::noContent()`, and an optional `status:` argument on `Response::fail()`/`dbError()` (passing it switches
-that call to the new format; calls without it stay legacy until migrated). The `$.API` wrapper in
-`shared-utils.js` is the client shim from step 2. `CoreUtils::notFound/noPerm/notAllowed` JSON branches use the
-new error body. Shared `ErrorResponse`/`ValidationErrorResponse` schemas live in `APIController`'s docblock.
-
-Contract tests live in `tests/Browser/Api/` (they reuse the browser suite's server/DB bootstrap, hence the
-directory) and use `Tests\Browser\Helpers\ApiClient` (cookie jar + CSRF echo, `guest()`/`loggedInAs()`).
-
-- [x] `AuthAPIController` (`/da-auth/status`, `/da-auth/sign-out`) — pilot; `retries_remaining` →
-      `retriesRemaining`, sign-out is 204, errors 403/404/500 with `{message}`. Also fixed the guest
-      `/da-auth/status` path calling `unsetData` on a null session.
-- [x] `SettingAPIController` (`/setting/{key}`) — 401/403/404 (unknown key; used to fatal on an undefined
-      index), 422 with `errors.value` for missing/invalid values. Also fixed: submitting an empty value (the
-      documented way to reset a setting) 500'd on a `string` type error; it now resets and returns the
-      effective value.
-- [x] `AboutAPIController` (`/about/server`, `/about/upcoming`) — plain bodies; 500 `{message}` when git info
-      is unavailable. `/about/upcoming` still returns rendered HTML in `html`.
-- [x] `NotificationAPIController` (`/notif`, `/notif/{id}/mark-read`) — 401 for guests, 404 for unknown
-      notifications (including other users' — ownership is enforced), mark-read is 204. `TestSeeder` seeds
-      three unread `post-approved` notifications (`TestSeederConstants::NOTIFICATION_*`). `/notif` still
-      returns rendered HTML in `list`.
-- [x] `ShowAPIController` (`/show`, `/show/{id}` + `/posts`, `/vote`, `/guide-relations`, `/next`, `/prefill`) —
-      201 `{id, url}` on create, 204 on update, `409` for duplicate season/episode and voting conflicts,
-      `422` field errors, 401/403 via `Response::denied()`, hiatus/none-found as 404. `show` payload is camelCase
-      (`postedBy`). Found and fixed two production 500s along the way: `/show/{id}/posts` (template needed
-      `signed_in`, only the page context provided it) and `/show/{id}/guide-relations` GET (SQL syntax error
-      when no appearance is pinned).
-- [x] `EventAPIController` + `EventEntryAPIController` (`/event/...`, `/event/entry/...`) — event management,
-      finalizing and entry submission are switched off in the app; they now answer 401/403 first and then `501`
-      (previously a 200 `{status: false}`). Entry read/update/delete: 401/403/404, 422 field errors, delete is 204,
-      `prev_src` → `prevSrc` and `entryhtml` → `entryHtml` in responses (request field names are unchanged).
-      `TestSeeder` seeds three entries plus their Redis-cached deviation metadata (otherwise the event page asks the
-      real DeviantArt oEmbed API about made-up IDs). Not covered: a successful PUT (needs the real DeviantArt link
-      check) and the lazyload success body.
-- [x] `UserAPIController` + `/users/me` (`/user/session/{id}`, `/user/{id}/role|email|contrib-cache|avatar-wrap`,
-      `/user/password`, `/user/verify`, `/users/me`) — 401/403/404, 422 field errors (`current_password`,
-      `new_email`, `hash`, `value`), 409 (password must be set first), 429 (confirmation e-mail sent recently), 503
-      (mail not sent). Session delete and role change are 204 (`alreadyIn: true` with 200 when nothing changes).
-      **Success bodies that the UI shows to the user keep a `message`** (password set, confirmation e-mail sent,
-      verified/blocked, cache cleared) — a documented optional field, not the legacy envelope. Password/e-mail/
-      verify are staff-only (`CoreUtils::roleGate`, 403) while the feature is under testing. `CoreUtils::noPerm()`'s
-      JSON branch now goes through `Response::denied()` (401 for guests). Fixed: clearing a contribution cache that
-      doesn't exist crashed on `unlink()`. Not covered: the e-mail flow past validation (needs a real domain with MX
-      records, i.e. the network) and the do-not-send/verification success paths.
-- [x] `TagAPIController` (`/cg/tags`, `/cg/tags/recount-uses`, `/cg/tag/{id}`, `/cg/tag/{id}/synonym`) — staff only
-      (401/403); 404 for missing tags; 422 field errors (`name`, `type`, `target_id`, `tagids`, duplicate name+type
-      is a 422 on `name`); create is 201 with the tag (`tags` HTML when `addto` succeeded, `warning` when it
-      couldn't be added); delete is 204; deleting an in-use tag is `409 {message, uses}` until `sanitycheck` is sent
-      (replaces the old `confirm: true` + HTML); an already-synonym tag is `409` with `synonymOf {id, name}` (replaces
-      `undo: true` + HTML); tag/autocomplete keys are camelCase (`synonymOf`, `synonymTarget`; `tid` is not returned).
-      `tag-list.js`/`manage.jsx` build the dialogs' HTML client-side now. Also fixed: creating/updating a tag
-      without a `type` read an undefined index. The synonym/unsynonym dialogs are covered
-      by `tests/Browser/Admin/TagSynonymTest.php`.
-- [x] `ColorGroupAPIController` (`/cg/colorgroup`, `/cg/colorgroup/{id}`) — 401 for guests, 403 without permission on the
-      appearance (regular users can't touch official-guide groups), 404 for missing groups/appearances, 422 field
-      errors under `ponyid`, `label`, `reason` and `Colors` (the request field keeps its capital `C`; per-color
-      problems are reported on it), create is 201 and update 200 with `{id, cgs, notes|cmList, update|changes}`
-      (rendered HTML fragments), delete 204. GET is camelCase (`appearanceId`, `colors`). Fixed: the group was saved
-      *before* its colors were validated, so a rejected request left an empty/renamed group behind; and the label's
-      invalid-character check was a no-op (`returnError` was passed but the result never used). Personal-guide ownership is
-      covered through the seeded personal appearance (owner and staff may manage its groups). Not covered: the
-      major-change/`reason` flow when *creating* a change (the seed only provides existing changes).
-- [x] `PostAPIController` (`/post/...`) — statuses only (bodies of the UI-oriented endpoints keep their HTML
-      fragments: `li`, `section`, `pendingReservations`, `button`, `suggestion`, `message`): 401 signed out / 403 without
-      the right role or ownership, 404 missing posts, 409 for state conflicts (already reserved — with the current `li`
-      —, must unfinish first, not reserved/finished yet, locked, reservation limit, duplicate image or deviation,
-      `retry: true` / `canForce: true` flags kept for the "continue anyway" dialogs), 422 field errors (`label`, `type`,
-      `show_id`, `image_url`, `deviation`, `as`), create is 201 (`/post`, `/post/reservation`), edit/finish/delete are 204.
-      GET `/post/{id}` is camelCase (`postedAt`, `reservedAt`, `finishedAt`). Fixed **a real authorization hole**:
-      `_checkPostEditPermission()` joined its request and reservation clauses with `&&` (never both true), so it never
-      denied anyone — signed-out visitors could `GET`/`PUT` any post, and a `PUT` with no fields blanked its label. It now
-      requires sign-in and lets the requester edit an unreserved request, the reserver their reservation, and staff
-      anything. Also fixed: `lazyload` on an unfinished post 500'd (now 409). Not covered (need the network): creating
-      posts, setting images, finishing with a deviation, approval success; `reload` on posts without a deviation
-      would mark the seeded posts broken (their images are `example.com` URLs), so the tests only reload the finished one.
-      `TestSeeder` seeds posts 2 (deletable) and 3 (reserved and finished, with cached deviation metadata). Seeded post
-      images point at `http://127.0.0.1:8765/img/blank-pixel.png` (served by the test server) rather than `example.com`, because
-      opening a post page can trigger a network availability check that marks posts broken.
-- [x] `AppearanceAPIController` (`/cg/appearance/...`) and the helpers behind it (`Appearance::checkCreatePermission`,
-      `Image`, `CGUtils` uploads, `Appearances` reindexing) — 401/403/404; 422 field errors (`label`, `guide`, `cgs`,
-      `cutiemarks`, `CMData`, `file`, `image_url`); 409 for state conflicts (pinned appearances can't be deleted,
-      personal guides have no tags/relations/pins, not enough color groups to reorder, no slots left); create is 201
-      (`{id, goto, message}`), delete/selective clear/tag update are 204, pin/unpin keep a `message` body the UI shows;
-      ElasticSearch down is 503 (reindex). `keep_dialog` → `keepDialog`, `newurl` → `newUrl`. Regular users get 403 when
-      creating personal appearances (the `a_pcgmake` preference is off by default) — the success path needs that
-      preference and isn't covered. Not covered: sprite upload, template application, sanitize-svg, cutie mark saving
-      (file/network heavy).
-- [x] The rest of the API controllers: `AppearancesAPIController` (the public `/appearances` API — now `{message}` errors, 422 with
-      `errors.guide`, 503 when ElasticSearch is down, 403 for private appearances, `createdAt`, no `status`/`cachedOn`/
-      `cachedFor`; the cache key was bumped so old cached bodies aren't served), `AdminAPIController`,
-      `PreferenceAPIController` + `UserPrefs`, `PersonalGuideAPIController`, `ColorGuideAPIController`,
-      `DiscordAuthController` sync/unlink (429 when synced too recently, 409 when not linked), `DiscordMember` (409 +
-      `segway`), the `ColorGuideController` search JSON (503 `unavail`, 404 no results), `UserController::contribLazyload`.
-      **`AdminAPIController` had no authorization at all** — its staff check was lost in the API controllers refactor
-      (like `ColorGroupAPIController`'s appearance state), so a *signed-out* visitor could create/edit/delete useful
-      links (shown site-wide) and read log details: verified with an unauthenticated `POST /api/v0/admin/usefullinks`
-      returning `{"status":true}`. It's now staff-only via a constructor check. Also fixed: uploading a non-image
-      as a sprite was a 500.
-- **CSRF failures are now `419`** (was `401`, which now means "not signed in"). `shared-utils.js` maps 419 to the CSRF
-  dialog, and requests made through `$.API` with a callback are marked `apiHandled` so the global status dialogs
-  (`$.ajaxSetup`) don't pile on top of the callback's own error handling.
-- [x] HTML-in-message sweep: API messages are plain text now (no `<a>`, `<b>`, `<p>`, smileys or pre-escaped values). Where a
-      message used to carry a link, the details are structured instead: `existingPost {id, kind, url}` (duplicate image or
-      deviation), `reservedBy {id, name}`, `approved`/`notified` on finish. `Input` and `checkStringValidity` no longer
-      HTML-escape the value they quote. The `$.API` shim escapes `message` when handing it to callers (they put it in dialogs
-      as HTML) and keeps the plain text in `rawMessage`; the global status-code dialogs escape too. For 422 responses the shim
-      builds `message` from **all** `errors` (one per line) instead of the generic "The given data was invalid." — without
-      that the dialogs lost the specific reason (found by `tests/Browser/Admin/ErrorMessageTest.php`; it affected every
-      endpoint migrated since `Input` started answering 422).
-- [x] The `$.API` shim and the `this.status` checks are gone. `$.API.get/post/put/delete(url, data)` now return the jqXHR and
-      callers use `.done(resp => ...)` (the resource itself; `undefined`/`{}` for 204) and `.fail($.API.fail(title))` — or
-      `.fail($.API.failWith(body => ...))` for custom handling (`body.message` is escaped for HTML dialogs, `body.rawMessage`
-      is the plain text, 422 field errors are joined into the message). Both mark the request `apiHandled` so the global
-      `$.ajaxSetup` status dialogs stay quiet. ~100 call sites were converted with an AST codemod (espree) plus ~30 by hand;
-      new UI tests cover the admin useful-links CRUD and casting a vote (`UsefulLinksTest`, `VoteTest`), next to the
-      existing appearance/color group/tag synonym/sign-out flows, plus `PostReservationTest` (reserve and cancel on an episode page)
-      and giving personal guide points, and now also: finish + approval (`PostFinishTest`), broken status and image replacement
-      (`PostEditingTest`), event entry edit/withdraw (`EventTest`), tag edit/delete (`TagEditingTest`), sprite upload/remove and its
-      error dialog (`SpriteTest`), the appearance relations editor (`RelationsTest`) and the cutie mark editor
-      (`CutiemarkEditorTest`). API-level success paths that need images or DeviantArt run against the test server itself: made-up
-      deviations are cached in Redis with local image URLs (`dfin001`..`dfin007`, `d1b2c3d`..), and `CoreUtils::isDeviationInClub()`
-      in TEST_MODE looks for a marker file in `fs/tmp/test-club-gallery/` instead of asking DeviantArt (`Tests\Browser\Helpers\ClubGallery`).
-      Found by these tests: staff couldn't remove an approval (`load_post` locked approved posts before the `unlock` exemption
-      could apply), `URL::makeHttps()` broke local image URLs, sprite upload errors showed the generic 422 text twice and one image
-      size message still contained HTML, and the create-appearance response returned its id as a string. Also covered: the guide relations editor on episode pages and
-      the show relations editor on appearance pages (`GuideRelationsTest`), the personal guide slot/permission checks (`PersonalGuideSlotsTest`, run as the seeded `FreshUser`, which has the defaults every new user gets: the free slot = 10 points, enough for exactly one personal appearance, and permission to create them — the test creates one, then sees "no slots left"), and the tag-list refresh
-      buttons (`TagSynonymTest`). Every conversion listed in this section now has a browser test.
-- [x] The page-level JSON views are API endpoints now, so every client-side data request goes through `$.API`:
-      `GET /cg/full?guide&sort_by` (was `/cg/[guide]/full?ajax`; the page and the API share
-      `ColorGuideController::getFullListData()`) and `GET /user/contrib/lazyload/{favme}` (was a page route on
-      `UserController`). The dead JSON branches of the guide search ("I'm feeling lucky" is a plain redirect) are removed.
-      Fixed on the way: `POST /cg/full/reorder` ignored the `guide` the client sent (it only read a route parameter that
-      doesn't exist), so it re-rendered the list of *every* guide; it now requires `guide` (422 otherwise). Covered by
-      `ColorGuideApiTest` plus UI tests for re-sorting the full list and lazy-loading deviations on a contributions page.
-      Only `jquery.uploadzone.js` still makes its own ajax call (multipart uploads to API endpoints), with its own error handler.
+**Lessons worth keeping**
+- Real bugs the contract work uncovered (all fixed): post edit authorization never denied anyone, the admin API had no staff check, "sign out
+  everywhere" posted to a route that did not exist, `fixPath()` dropped array query parameters, `/appearances/{id}/preview` was documented but
+  unrouted, creating a color group saved it before validating its colors, and several 500s on edge input. Weak assertions (`assertDontSee('Fatal error')`)
+  hid some of them — assert real content.
+- Client side: `$.API.get/post/put/delete(url, data)` return the jqXHR; use `.done(resp => …)` and `.fail($.API.fail(title))` or
+  `.fail($.API.failWith(body => …))` (`body.message` is HTML-escaped for dialogs, `body.rawMessage` is plain text, 422 `errors` are joined into
+  the message). Requests made this way are marked `apiHandled` so the global status dialogs stay quiet.
+- Test seams that avoid the network: the fake OAuth provider (`/test-oauth/...`, TEST_MODE only), Redis-seeded deviations with local image
+  URLs, club-gallery marker files (`ClubGallery`), seeded users (`TestSeederConstants`), and `reset-test-db.sh`. Seeds with explicit IDs must
+  advance their sequences (end of `TestSeeder`). `Pest`'s `toHaveKey($key, $value)` takes a *value* as its second argument, not a message.
+- Other Claude sessions may edit the same tree; production deploys (`git push deploy main` or the GitHub Actions "Deploy" button) need the
+  user's explicit go-ahead. `origin` (GitHub) push is not a deploy.
 
 ## Database cutover to Luna (audit, nothing implemented yet)
 
@@ -711,16 +418,6 @@ Schema differences that remain (prod vs Luna after migrate):
   it showed ~70 such columns — so rehearse against a prod dump, not the dev DB.)
 - Luna quirk unrelated to the import: `Post::getCreatedAtColumn()` reads `requested_by` before it's loaded and emits an
   "Undefined property" warning on every hydrate.
-
-### Why a plain dup + reimport is not enough
-
-- **Files are not in the DB.** Sprites, cutie marks and `cm_source` live in `fs/`; Luna reads them via Spatie media
-  library. `php artisan fs:migrate <fs folder> <uid>` (Luna) does the copy and must be part of the cutover.
-- **Luna-owned data would be lost** if Luna's DB is overwritten: `media` (filled by `fs:migrate`),
-  `personal_access_tokens`, `activity_log` and any users registered natively on Luna. Prod Luna is empty today.
-- **Winterchilla on the new DB:** it uses Phinx (`phinxlog`) and expects its own schema. Extra Luna-only tables are
-  fine, but Luna schema changes to shared tables would break it. Safest plan: keep the Winterchilla-schema DB as the
-  source of truth and make Luna's migrations no-ops against it by pre-seeding Laravel's `migrations` table.
 
 ### Next steps
 

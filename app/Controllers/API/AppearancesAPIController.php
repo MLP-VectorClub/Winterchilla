@@ -624,9 +624,10 @@ class AppearancesAPIController extends APIController {
    *   schema="PreviewAppearance",
    *   type="object",
    *   description="The barest of properties for an appearance, enough to show a small colored preview",
-   *   required={"id", "label", "guide", "previewData"},
+   *   required={"id", "label", "guide", "ownerId", "previewData"},
    *   additionalProperties=false,
    *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *   @OA\Property(property="ownerId", type="integer", nullable=true, description="ID of the user whose personal guide the appearance belongs to; null for the official guides"),
    *   @OA\Property(property="label", type="string"),
    *   @OA\Property(property="guide", type="string", nullable=true, description="The guide the appearance belongs to; null for personal guide appearances"),
    *   @OA\Property(property="previewData", type="array", description="Up to four hex colors (#rrggbb) that represent the appearance", @OA\Items(type="string"))
@@ -640,6 +641,7 @@ class AppearancesAPIController extends APIController {
       'id' => $a->id,
       'label' => $a->label,
       'guide' => $a->guide,
+      'ownerId' => $a->owner_id === null ? null : (int)$a->owner_id,
       'previewData' => array_map(fn(Color $c) => $c->hex, $a->getPreviewColors()),
     ];
   }

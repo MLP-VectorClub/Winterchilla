@@ -94,7 +94,7 @@ it('locates an appearance with preview colors', function () use ($appearanceId) 
   $r = ApiClient::guest()->get("/appearances/$appearanceId/locate");
 
   expect($r['status'])->toBe(200)
-    ->and($r['json'])->toHaveKeys(['id', 'label', 'guide', 'previewData'])
+    ->and($r['json'])->toHaveKeys(['id', 'label', 'guide', 'ownerId', 'previewData'])
     ->and($r['json']['guide'])->toBe('pony')
     ->and($r['json']['previewData'])->toBeArray();
   expect(ApiClient::guest()->get('/appearances/987654/locate')['status'])->toBe(404)
@@ -178,4 +178,10 @@ it('answers the appearance autocomplete with 422 for an unknown guide and [] wit
   expect($guest->get('/appearances/autocomplete', ['q' => 'twi', 'guide' => 'nope'])['json']['errors'])->toHaveKey('guide');
   $empty = $guest->get('/appearances/autocomplete', ['guide' => 'pony']);
   expect($empty['status'])->toBe(200)->and($empty['json'])->toBe([]);
+});
+
+it('locates a personal guide appearance by its owner', function () {
+  $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get('/appearances/' . TestSeederConstants::PERSONAL_APPEARANCE_ID . '/locate');
+
+  expect($r['status'])->toBe(200)->and($r['json']['guide'])->toBeNull()->and($r['json']['ownerId'])->toBe(TestSeederConstants::USER_ID);
 });

@@ -204,6 +204,32 @@ class UsersAPIController extends APIController {
 
   /**
    * @OA\Get(
+   *   path="/users/da-uuid/{uuid}",
+   *   description="Get the public information of a user by their DeviantArt account UUID. Developer role only.",
+   *   tags={"users"},
+   *   @OA\Parameter(in="path", name="uuid", required=true, @OA\Schema(type="string", format="uuid")),
+   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/User")),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="User not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   */
+  function getByDeviantArtUuid(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+    if (Permission::insufficient('developer'))
+      Response::denied();
+
+    $da_user = DeviantartUser::find($params['uuid']);
+    $user = $da_user?->user;
+    if ($user === null)
+      Response::error(404, 'The user could not be found');
+
+    Response::ok(self::mapPublicUser($user));
+  }
+
+  /**
+   * @OA\Get(
    *   path="/users",
    *   description="List the regular users of the site (id, name and role only). Staff only.",
    *   tags={"users"},

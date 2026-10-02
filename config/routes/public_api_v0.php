@@ -36,6 +36,10 @@ $api_endpoint('/appearances/[i:id]/locate', [\App\Controllers\API\AppearancesAPI
 $api_endpoint('/appearances/[i:id]/preview', [\App\Controllers\API\AppearancesAPIController::class, 'preview']);
 $api_endpoint('/appearances/[i:id]/sprite', [\App\Controllers\API\AppearancesAPIController::class, 'sprite'], 'GET');
 $api_endpoint('/appearances/[i:id]/sprite', [\App\Controllers\API\AppearanceAPIController::class, 'spriteApi'], 'POST|PUT|DELETE');
+$api_endpoint('/appearances/[i:id]/tag-changes', [\App\Controllers\API\AppearancesAPIController::class, 'tagChanges'], 'GET');
+$api_endpoint('/appearances/[i:id]/palette', [\App\Controllers\API\AppearancesAPIController::class, 'palette'], 'GET');
+$api_endpoint('/appearances/[i:id]/image', [\App\Controllers\API\AppearancesAPIController::class, 'image'], 'GET');
+$api_endpoint('/appearances/[i:id]/cutie-marks/[i:cutieMarkId]/download', [\App\Controllers\API\AppearancesAPIController::class, 'cutieMarkDownload'], 'GET');
 $api_endpoint('/appearances/[i:id]/color-groups', [\App\Controllers\API\AppearancesAPIController::class, 'getColorGroups']);
 $api_endpoint('/appearances/[i:id]/color-groups/order', [\App\Controllers\API\AppearanceAPIController::class, 'colorGroupsApi']);
 $api_endpoint('/appearances/[i:id]/relations', [\App\Controllers\API\AppearanceAPIController::class, 'relationsApi']);
@@ -48,6 +52,7 @@ $api_endpoint('/appearances/[i:id]/shows', [\App\Controllers\API\AppearanceAPICo
 $api_endpoint('/appearances/[i:id]/pin', [\App\Controllers\API\AppearanceAPIController::class, 'pinApi']);
 $api_endpoint('/users/me', [\App\Controllers\API\UsersAPIController::class, 'me']);
 $api_endpoint('/users', [\App\Controllers\API\UsersAPIController::class, 'list'], 'GET');
+$api_endpoint('/users/da-uuid/[uuid:uuid]', [\App\Controllers\API\UsersAPIController::class, 'getByDeviantArtUuid'], 'GET');
 $api_endpoint('/users/da/[un:username]', [\App\Controllers\API\UsersAPIController::class, 'getByName']);
 $api_endpoint('/users/[i:id]', [\App\Controllers\API\UsersAPIController::class, 'getById'], 'GET');
 $api_endpoint('/users/[i:id]/profile', [\App\Controllers\API\UsersAPIController::class, 'profile'], 'GET');
@@ -56,6 +61,7 @@ $api_endpoint('/config', [\App\Controllers\API\ConfigAPIController::class, 'get'
 $api_endpoint('/about/connection', [\App\Controllers\API\AboutAPIController::class, 'connection']);
 $api_endpoint('/about/members', [\App\Controllers\API\AboutAPIController::class, 'members']);
 $api_endpoint('/about/upcoming', [\App\Controllers\API\AboutAPIController::class, 'upcoming']);
+$api_endpoint('/admin/pcg-appearances', [\App\Controllers\API\AdminAPIController::class, 'pcgAppearanceList'], 'GET');
 $api_endpoint('/admin/logs', [\App\Controllers\API\AdminAPIController::class, 'logList'], 'GET');
 $api_endpoint('/admin/logs/[i:id]', [\App\Controllers\API\AdminAPIController::class, 'logDetail']);
 $api_endpoint('/useful-links', [\App\Controllers\API\UsefulLinksAPIController::class, 'list'], 'GET');
@@ -96,7 +102,7 @@ $api_endpoint('/events', [\App\Controllers\API\EventAPIController::class, 'api']
 $api_endpoint('/events/[i:id]', [\App\Controllers\API\EventAPIController::class, 'api']);
 $api_endpoint('/events/[i:id]/finalize', [\App\Controllers\API\EventAPIController::class, 'finalize']);
 $api_endpoint('/events/[i:id]/entries/check', [\App\Controllers\API\EventAPIController::class, 'checkEntries']);
-$api_endpoint('/events/[i:id]/entries', [\App\Controllers\API\EventEntryAPIController::class, 'api']);
+$api_endpoint('/events/[i:id]/entries', [\App\Controllers\API\EventEntryAPIController::class, 'api'], 'POST');
 $api_endpoint('/event-entries/[i:entryid]', [\App\Controllers\API\EventEntryAPIController::class, 'api']);
 $api_endpoint('/event-entries/[i:entryid]/lazyload', [\App\Controllers\API\EventEntryAPIController::class, 'lazyload']);
 $api_endpoint('/notifications', [\App\Controllers\API\NotificationAPIController::class, 'get']);

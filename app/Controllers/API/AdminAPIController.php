@@ -7,6 +7,7 @@ use App\CoreUtils;
 use App\DB;
 use App\Input;
 use App\Logs;
+use App\Models\Appearance;
 use App\Models\Log;
 use App\Models\UsefulLink;
 use App\Permission;
@@ -107,6 +108,62 @@ class AdminAPIController extends APIController {
         'createdAt' => gmdate('c', $l->created_at->getTimestamp()),
         'hasDetails' => $l->data !== null,
       ], $entries),
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
+    ]);
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/admin/pcg-appearances",
+   *   description="List every personal color guide appearance of every user, newest first. Staff only.",
+   *   tags={"admin", "personal color guide"},
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=100, default=10)),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"appearances", "pagination"},
+   *       @OA\Property(property="appearances", type="array", @OA\Items(allOf={
+   *         @OA\Schema(ref="#/components/schemas/PreviewAppearance"),
+   *         @OA\Schema(type="object", required={"private", "createdAt"}, @OA\Property(property="private", type="boolean"), @OA\Property(property="createdAt", type="string", format="date-time"))
+   *       })),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
+   *     )
+   *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   */
+  public function pcgAppearanceList() {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $size = $_GET['size'] ?? 10;
+    if (!is_numeric($size) || $size < 1 || $size > 100)
+      Response::invalid('size', 'The size must be between 1 and 100.');
+    $size = (int)$size;
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+    $page = (int)$page;
+
+    $where = ['conditions' => 'owner_id IS NOT NULL'];
+    $total = Appearance::count($where);
+    $appearances = Appearance::find('all', $where + ['order' => 'created_at desc, id desc', 'limit' => $size, 'offset' => ($page - 1) * $size]);
+
+    Response::ok([
+      'appearances' => array_map(fn(Appearance $a) => AppearancesAPIController::mapPreviewAppearance($a) + [
+        'private' => (bool)$a->private,
+        'createdAt' => gmdate('c', $a->created_at->getTimestamp()),
+      ], $appearances),
       'pagination' => [
         'currentPage' => $page,
         'totalPages' => max(1, (int)ceil($total / $size)),

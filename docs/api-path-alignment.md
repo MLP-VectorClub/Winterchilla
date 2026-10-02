@@ -164,11 +164,12 @@ from what Luna implements.
   `season`/`episode` filters on `GET /show`, a `post` (`PostItem`) next to `li` in the post write responses, int `id` (+ `idString`) from
   `POST /posts` and `/posts/reservations`, camelCase cutie mark and event docs, `resetPrivKey`, `POST`→`PUT` fixed in the docs of
   `/show/{id}/appearances`.
-- **Not provided, on purpose:** a login sessions list (Luna's `/users/tokens`), profile by DeviantArt UUID (`/u/{uuid}` is a developer-only
-  tool), appearance palette exports (PNG/GPL/JSON are generated files; compose them from `colorGroups`), data endpoints for the admin
-  PCG appearance list, tag changes and the browser-recognition page (staff/dev tools that are not being ported), and the cutie mark source
-  download (`?source`). Luna asked about all of these on 2026-10-02; Celestia confirmed it uses none (palettes are composed from `colorGroups`,
-  images come from the existing sprite/preview/cutie mark URLs), so they stay out of the spec. If staff ever need one, add it then.
+- **Not provided, on purpose:** a login sessions list (Luna's `/users/tokens`) and a data endpoint for the browser-recognition page (`/about/browser`).
+  The goal is a full reimplementation, so features Celestia does not render yet are in the contract anyway: appearance palettes
+  (`GET /appearances/{id}/palette?format=json|gpl`) and images (`GET /appearances/{id}/image?type=palette|sprite|preview|facing&format=png|svg`),
+  the cutie mark download (`GET /appearances/{id}/cutie-marks/{cutieMarkId}/download`, `?source` is staff only), the staff list of personal guide
+  appearances (`GET /admin/pcg-appearances`), tag change history (`GET /appearances/{id}/tag-changes`, staff only; the old page was an unfinished stub, this
+  returns the real data) and the profile by DeviantArt UUID (`GET /users/da-uuid/{uuid}`, developer only).
 - **Running the contract tests against another server:** see `tests/Browser/Helpers/ApiClient.php` (`CONTRACT_BASE_URL`, `CONTRACT_AUTH=bearer`,
   `CONTRACT_LOGIN_URL`, …) and `scripts/dump-contract-seed.sh` (the seeded data as INSERTs; the cutie mark file and the Redis-cached
   deviations are not in the dump, so the tests that need them will fail on another server until it provides equivalents; Luna should write its

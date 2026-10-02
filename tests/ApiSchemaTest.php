@@ -103,7 +103,7 @@ it('keeps every operation attached to its method (a docblock inserted between an
   $operations = 0;
   foreach ($paths as $methods)
     $operations += count(array_intersect_key($methods, array_flip(['get', 'post', 'put', 'patch', 'delete'])));
-  expect($operations)->toBeGreaterThanOrEqual(146);
+  expect($operations)->toBeGreaterThanOrEqual(149);
 });
 
 it('only lists properties that exist in a schema\'s required list', function () {

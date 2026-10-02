@@ -15,6 +15,7 @@ use App\Models\Cutiemark;
 use App\Models\PinnedAppearance;
 use App\Models\Show;
 use App\Models\Tag;
+use App\Models\TagChange;
 use App\Pagination;
 use App\Permission;
 use App\RedisHelper;
@@ -753,6 +754,212 @@ class AppearancesAPIController extends APIController {
     ]);
   }
 
+  /**
+   * @OA\Get(
+   *   path="/appearances/{id}/tag-changes",
+   *   description="The history of tags being added to and removed from an appearance, newest first. Staff only; personal guide appearances have no history.",
+   *   tags={"color guide", "appearances", "tags"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
+   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=100, default=25)),
+   *   @OA\Response(
+   *     response="200",
+   *     description="OK",
+   *     @OA\JsonContent(
+   *       type="object",
+   *       required={"changes", "pagination"},
+   *       @OA\Property(property="changes", type="array", @OA\Items(
+   *         type="object",
+   *         required={"id", "tagId", "tagName", "added", "user", "createdAt"},
+   *         additionalProperties=false,
+   *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
+   *         @OA\Property(property="tagId", type="integer", description="The tag may have been deleted since, in which case it no longer resolves"),
+   *         @OA\Property(property="tagName", type="string", nullable=true, description="The tag's name at the time of the change; missing on very old entries"),
+   *         @OA\Property(property="added", type="boolean", description="True when the tag was added, false when it was removed"),
+   *         @OA\Property(property="user", nullable=true, ref="#/components/schemas/PostUser", description="Who made the change; null when the user no longer exists"),
+   *         @OA\Property(property="createdAt", type="string", format="date-time")
+   *       )),
+   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
+   *     )
+   *   ),
+   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found, or it belongs to a personal guide", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   * @param array $params
+   */
+  function tagChanges(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+    if (Permission::insufficient('staff'))
+      Response::denied();
+
+    $appearance = self::_resolveAppearance($params);
+    if ($appearance->owner_id !== null)
+      CoreUtils::notFound();
+
+    [$page, $size] = self::_pageParams(25);
+
+    $where = ['conditions' => ['appearance_id = ?', $appearance->id]];
+    $total = TagChange::count($where);
+    $changes = TagChange::find('all', $where + ['order' => 'created_at desc, id desc', 'limit' => $size, 'offset' => ($page - 1) * $size]);
+
+    Response::ok([
+      'changes' => array_map(fn(TagChange $c) => [
+        'id' => $c->id,
+        'tagId' => (int)$c->tag_id,
+        'tagName' => $c->tag_name,
+        'added' => (bool)$c->added,
+        'user' => $c->user === null ? null : ['id' => $c->user->id, 'name' => $c->user->name],
+        'createdAt' => gmdate('c', $c->created_at->getTimestamp()),
+      ], $changes),
+      'pagination' => [
+        'currentPage' => $page,
+        'totalPages' => max(1, (int)ceil($total / $size)),
+        'totalItems' => $total,
+        'itemsPerPage' => $size,
+      ],
+    ]);
+  }
+
+  /** @return int[] [page, size] */
+  private static function _pageParams(int $defaultSize):array {
+    $size = $_GET['size'] ?? $defaultSize;
+    if (!is_numeric($size) || $size < 1 || $size > 100)
+      Response::invalid('size', 'The size must be between 1 and 100.');
+    $page = $_GET['page'] ?? 1;
+    if (!is_numeric($page) || $page < 1)
+      Response::invalid('page', 'The page must be at least 1.');
+
+    return [(int)$page, (int)$size];
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/appearances/{id}/palette",
+   *   security={},
+   *   description="Download the appearance's colors as a palette file: `json` is a nested swatch map (appearance, color group, color label to hex; the Illustrator swatch import format) and `gpl` is a GIMP/Inkscape palette. Both are served as attachments. Front ends may also build them from `GET /appearances/{id}/color-groups`.",
+   *   tags={"color guide", "appearances"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="query", name="format", required=true, @OA\Schema(type="string", enum={"json", "gpl"})),
+   *   @OA\Response(response="200", description="The palette file, as an attachment named after the appearance", @OA\MediaType(mediaType="application/octet-stream", @OA\Schema(type="string", format="binary"))),
+   *   @OA\Response(response="403", description="The appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Invalid format", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   * @param array $params
+   */
+  function palette(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $appearance = self::_resolveAppearance($params);
+    self::_handlePrivateAppearanceCheck($appearance);
+
+    $format = $_GET['format'] ?? null;
+    if ($format === 'json')
+      CGUtils::getSwatchesAI($appearance);
+    if ($format === 'gpl')
+      CGUtils::getSwatchesInkscape($appearance);
+
+    Response::invalid('format', 'The format must be json or gpl.');
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/appearances/{id}/image",
+   *   security={},
+   *   description="A rendered image of the appearance. Combinations: `palette` as `png` (the colors listed next to the sprite), `sprite` as `png` (the uploaded sprite) or `svg` (traced from it), `preview` as `svg` (the four-color preview) and `facing` as `svg` (the body-orientation graphic, colored with the appearance's colors; pick the side with `facing`). Everything else is a 422, a missing sprite a 404. The server may answer with a redirect to a cache-busted URL of the same image.",
+   *   tags={"color guide", "appearances"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="query", name="type", required=true, @OA\Schema(type="string", enum={"palette", "sprite", "preview", "facing"})),
+   *   @OA\Parameter(in="query", name="format", required=true, @OA\Schema(type="string", enum={"png", "svg"})),
+   *   @OA\Parameter(in="query", name="facing", @OA\Schema(type="string", enum={"left", "right"}, default="left"), description="Only for `type=facing`"),
+   *   @OA\Response(response="200", description="The image", @OA\MediaType(mediaType="image/png", @OA\Schema(type="string", format="binary")), @OA\MediaType(mediaType="image/svg+xml", @OA\Schema(ref="#/components/schemas/SVGFile"))),
+   *   @OA\Response(response="403", description="The appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance not found, or it has no sprite", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="422", description="Unsupported type and format combination", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
+   * )
+   * @param array $params
+   */
+  function image(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $appearance = self::_resolveAppearance($params);
+    self::_handlePrivateAppearanceCheck($appearance);
+
+    $type = $_GET['type'] ?? null;
+    $format = $_GET['format'] ?? null;
+    if (!in_array($type, ['palette', 'sprite', 'preview', 'facing'], true))
+      Response::invalid('type', 'The type must be palette, sprite, preview or facing.');
+    if (!in_array($format, ['png', 'svg'], true))
+      Response::invalid('format', 'The format must be png or svg.');
+
+    $self = $_SERVER['REQUEST_URI'];
+    switch ("$type.$format"){
+      case 'palette.png':
+        CGUtils::renderAppearancePNG('', $appearance, $self);
+      case 'sprite.png':
+        if (!$appearance->hasSprite())
+          CoreUtils::notFound();
+        HTTP::tempRedirect($appearance->getSpriteURL());
+      case 'sprite.svg':
+        CGUtils::renderSpriteSVG('', $appearance, $self);
+      case 'preview.svg':
+        CGUtils::renderPreviewSVG($appearance, true, $self);
+      case 'facing.svg':
+        CGUtils::renderCMFacingSVG($appearance, $self);
+    }
+
+    Response::invalid('format', "A $type image is not available as $format.");
+  }
+
+  /**
+   * @OA\Get(
+   *   path="/appearances/{id}/cutie-marks/{cutieMarkId}/download",
+   *   security={},
+   *   description="Download a cutie mark as an SVG attachment: the sanitized, rendered file by default, or the original upload with `source` (staff only).",
+   *   tags={"color guide", "appearances"},
+   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="path", name="cutieMarkId", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
+   *   @OA\Parameter(in="query", name="source", @OA\Schema(type="boolean", default=false), description="Download the original uploaded file instead of the rendered one. Staff only"),
+   *   @OA\Response(response="200", description="The cutie mark file", @OA\MediaType(mediaType="application/octet-stream", @OA\Schema(type="string", format="binary"))),
+   *   @OA\Response(response="401", description="`source` was requested but nobody is signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="403", description="`source` was requested without the staff role, or the appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="404", description="Appearance or cutie mark not found, or the cutie mark belongs to another appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   * )
+   * @param array $params
+   */
+  function cutieMarkDownload(array $params) {
+    if ($this->action !== 'GET')
+      CoreUtils::notAllowed();
+
+    $appearance = self::_resolveAppearance($params);
+    self::_handlePrivateAppearanceCheck($appearance);
+
+    $cutiemark = Cutiemark::find((int)$params['cutieMarkId']);
+    if (empty($cutiemark) || (int)$cutiemark->appearance_id !== $appearance->id || $appearance->hidden())
+      Response::error(404, 'The cutie mark could not be found');
+
+    $source = CoreUtils::truthy($_GET['source'] ?? false);
+    if ($source && Permission::insufficient('staff'))
+      Response::denied();
+
+    $file = $source ? $cutiemark->getSourceFilePath() : $cutiemark->getRenderedFilePath();
+    if (!$source && !file_exists($file))
+      CGUtils::renderCMSVG($cutiemark, false);
+    if (!file_exists($file))
+      Response::error(404, 'The cutie mark has no file');
+
+    $filename = $cutiemark->label === null
+      ? CoreUtils::posess($appearance->label).' Cutie Mark'
+      : $appearance->label.' - '.$cutiemark->label;
+
+    CoreUtils::downloadFile($file, $filename.($source ? ' (source)' : '').'.svg');
+  }
+
   static function mapCutieMark(Cutiemark $cm):array {
     $result = [
       'id' => $cm->id,
@@ -925,6 +1132,6 @@ class AppearancesAPIController extends APIController {
 
     self::_handlePrivateAppearanceCheck($appearance);
 
-    CGUtils::renderPreviewSVG($appearance);
+    CGUtils::renderPreviewSVG($appearance, true, $_SERVER['REQUEST_URI']);
   }
 }

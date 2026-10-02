@@ -252,8 +252,8 @@ alongside the browser/contract suites as the behavioral spec. Winterchilla keeps
 hydration state or serializer layer for Twig lives here. Nothing in this section is left to do in Winterchilla.
 
 **Artifacts to build against**
-- `public/dist/api.json` — the OpenAPI 3 document (written by `scripts/generate_api_schema.php`, also served by `/docs`), 146 method+path
-  operations (17 marked `x-internal`, see below) with Luna-style operation IDs (`GET /appearances/{id}/color-groups` → `GetAppearancesIdColorGroups`). Celestia's `packages/api-types` generator
+- `public/dist/api.json` — the OpenAPI 3 document (written by `scripts/generate_api_schema.php`, also served by `/docs`), 149 method+path
+  operations (19 marked `x-internal`, see below) with Luna-style operation IDs (`GET /appearances/{id}/color-groups` → `GetAppearancesIdColorGroups`). Celestia's `packages/api-types` generator
   runs on it unchanged. Docblocks live next to each controller (`app/Controllers/API/*`, `DiscordAuthController`); the shared schemas, tags and
   security scheme live on `ApiSchemas` (not on `APIController`: swagger-php merges a parent class's schemas into every subclass that declares one);
   rendered-HTML response fields (`li`, `html`, `cgs`, `section`, `render`, `list`, `suggestion`, `entryHtml`, …) are marked there as
@@ -315,10 +315,14 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
   `fav.me`/`sta.sh`, Imgur, Derpibooru, Lightshot/prntscr via `ImageProvider`; hosts outside that list are rejected with 422 `imageUrl`) and
   which post operations Celestia actually calls (not yet answered by Celestia).
 - **Not done on purpose:** `Input` reports one validation error at a time; Winterchilla's own page scripts still read the `export_vars`
-  globals; no data endpoints for the admin PCG appearance list, tag changes, the browser-recognition page, profile by DeviantArt UUID or
-  appearance PNG/GPL exports; a successful Discord sync and the network-dependent post flows have no automated test (they need the real
+  globals; no data endpoint for the browser-recognition page; a successful Discord sync and the network-dependent post flows have no automated test (they need the real
   providers).
-- **Not deployed yet** (on `origin/main` after `d7c56f37`): the cap of 2 cutie marks, the seeded-file cleanup, the null-`facing` docs. Also pending: delete the user's
+- **Not deployed yet** (on `origin/main` after `d7c56f37`): the cap of 2 cutie marks, the seeded-file cleanup, the null-`facing` docs, and six new read endpoints
+  for the pages Luna listed as gaps (the goal is a *full* reimplementation, so features Celestia does not render yet are still in the contract): `GET /appearances/{id}/palette?format=json|gpl`,
+  `GET /appearances/{id}/image?type&format`, `GET /appearances/{id}/cutie-marks/{cutieMarkId}/download[?source]`, `GET /appearances/{id}/tag-changes` (staff; the old page was an
+  unfinished stub that 404ed, this one returns the data), `GET /admin/pcg-appearances` (staff), `GET /users/da-uuid/{uuid}` (developer). Tests: `tests/Browser/Api/ExportsApiTest.php`; the seed gained
+  a developer (user 9007) and test-created appearances now start at ID 900101 so they never pick up the dev site's stale sprite files in the shared `fs/`. `/events/{id}/entries` is POST-only
+  now (its GET/PUT/DELETE never worked: no entry ID). Also pending: delete the user's
   private smoke-test appearance 680 ("Test", cutie mark 254, null `facing` = symmetrical) on prod via the site as an admin, so its files go with it.
 - **Cutie marks:** at most 2 per appearance (was an unexplained cap of 4 from 2017; prod has at most 2). The test run removes the files the seeder writes for
   cutie marks 900001/900002 when it ends, so they don't show up as orphans in a prod-copy file migration.

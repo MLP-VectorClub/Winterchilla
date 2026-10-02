@@ -398,9 +398,9 @@ class CGUtils {
    * @throws Exception
    * @noinspection AdditionOperationOnArraysInspection
    */
-  public static function renderAppearancePNG($CGPath, Appearance $Appearance):void {
+  public static function renderAppearancePNG($CGPath, Appearance $Appearance, ?string $fileRelPath = null):void {
     $output_path = $Appearance->getPaletteFilePath();
-    $file_relative_path = "$CGPath/v/{$Appearance->id}p.png";
+    $file_relative_path = $fileRelPath ?? "$CGPath/v/{$Appearance->id}p.png";
     CoreUtils::fixPath($file_relative_path);
     if (file_exists($output_path))
       Image::outputPNG(null, $output_path, $file_relative_path);
@@ -563,13 +563,13 @@ class CGUtils {
   public const CMDIR_SVG_PATH = FSPATH.'cg_render/appearance/#/cmdir-@.svg';
 
   // Generate appearance facing image (CM background)
-  public static function renderCMFacingSVG(Appearance $appearance):void {
+  public static function renderCMFacingSVG(Appearance $appearance, ?string $fileRelPath = null):void {
     $facing = $_GET['facing'] ?? 'left';
     if (!in_array($facing, Cutiemarks::VALID_FACING_VALUES, true))
       Response::invalid('facing', 'Invalid facing value specified!');
 
     $output_path = str_replace(['#', '@'], [$appearance->id, $facing], self::CMDIR_SVG_PATH);
-    $file_rel_path = $appearance->getFacingSVGURL($facing, false);
+    $file_rel_path = $fileRelPath ?? $appearance->getFacingSVGURL($facing, false);
     if (file_exists($output_path))
       Image::outputSVG(null, $output_path, $file_rel_path);
 
@@ -734,7 +734,7 @@ class CGUtils {
     Image::outputPNGAPI($png, $output_path);
   }
 
-  public static function renderSpriteSVG($CGPath, Appearance $appearance):void {
+  public static function renderSpriteSVG($CGPath, Appearance $appearance, ?string $fileRelPath = null):void {
     $appearance_id = $appearance->id;
     $pcg = $appearance->owner_id !== null;
     $map = self::getSpriteImageMap($appearance_id, $pcg);
@@ -742,7 +742,7 @@ class CGUtils {
       CoreUtils::notFound();
 
     $output_path = FSPATH."cg_render/appearance/{$appearance_id}/sprite.svg";
-    $file_rel_path = "$CGPath/v/{$appearance_id}s.svg";
+    $file_rel_path = $fileRelPath ?? "$CGPath/v/{$appearance_id}s.svg";
     if (file_exists($output_path))
       Image::outputSVG(null, $output_path, $file_rel_path);
 
@@ -775,10 +775,10 @@ class CGUtils {
 
   public const PREVIEW_SVG_PATH = FSPATH.'appearance_previews/#.svg';
 
-  public static function renderPreviewSVG(Appearance $Appearance, bool $output = true):void {
+  public static function renderPreviewSVG(Appearance $Appearance, bool $output = true, ?string $fileRelPath = null):void {
     $preview_colors = self::colorsToHexes($Appearance->getPreviewColors());
     $output_path = str_replace('#', self::hexesToFilename($preview_colors), self::PREVIEW_SVG_PATH);
-    $file_rel_path = "/img/appearance_previews/{$Appearance->id}.svg";
+    $file_rel_path = $fileRelPath ?? "/img/appearance_previews/{$Appearance->id}.svg";
     if (file_exists($output_path)) {
       if (!$output)
         return;

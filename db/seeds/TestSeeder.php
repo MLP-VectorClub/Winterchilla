@@ -20,6 +20,8 @@ class TestSeeder extends AbstractSeed {
       ['id' => 9004, 'name' => 'DiscordSynced', 'role' => 'user', 'created_at' => date('c'), 'updated_at' => date('c')],
       ['id' => 9005, 'name' => 'DiscordLinked', 'role' => 'user', 'created_at' => date('c'), 'updated_at' => date('c')],
       ['id' => 9006, 'name' => 'DiscordUnlinked', 'role' => 'user', 'created_at' => date('c'), 'updated_at' => date('c')],
+      // The one developer, for the developer-only endpoints
+      ['id' => 9007, 'name' => 'TestDeveloper', 'role' => 'developer', 'created_at' => date('c'), 'updated_at' => date('c')],
     ])->save();
 
     $this->table('discord_members')->insert([
@@ -50,6 +52,17 @@ class TestSeeder extends AbstractSeed {
         'scope'          => 'user',
         'access'         => 'fake-access-token-admin',
         'refresh'        => 'fake-refresh-token-admin',
+        'access_expires' => date('c', strtotime('+10 years')),
+        'created_at'     => date('c'),
+      ],
+      [
+        'id'             => '0f0e0d0c-0b0a-4000-8000-000000009007',
+        'name'           => 'TestDeveloper',
+        'avatar_url'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+        'user_id'        => 9007,
+        'scope'          => 'user',
+        'access'         => 'fake-access-token-developer',
+        'refresh'        => 'fake-refresh-token-developer',
         'access_expires' => date('c', strtotime('+10 years')),
         'created_at'     => date('c'),
       ],
@@ -296,6 +309,6 @@ class TestSeeder extends AbstractSeed {
 
     // Rows with explicit IDs don't advance their sequences, so the next row created by the app would collide
     foreach (['appearances', 'color_groups', 'cutiemarks', 'show', 'posts', 'notifications', 'events', 'event_entries', 'logs'] as $table)
-      $this->execute("SELECT setval(pg_get_serial_sequence('$table', 'id'), GREATEST((SELECT MAX(id) FROM $table), 1))");
+      $this->execute("SELECT setval(pg_get_serial_sequence('$table', 'id'), GREATEST((SELECT MAX(id) FROM $table), ".($table === 'appearances' ? 900100 : 1)."))");
   }
 }

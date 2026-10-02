@@ -317,7 +317,7 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
 - **Not done on purpose:** `Input` reports one validation error at a time; Winterchilla's own page scripts still read the `export_vars`
   globals; no data endpoint for the browser-recognition page; a successful Discord sync and the network-dependent post flows have no automated test (they need the real
   providers).
-- **Pending on prod:** delete the user's private smoke-test appearance 680 ("Test", cutie mark 254, null `facing` = symmetrical) via the site as an admin, so its files go with it.
+- **Prod cleanup done:** the user's smoke-test appearance 680 (cutie mark 254) was deleted through the site, and its files went with it (verified 2026-10-02).
   The six gap-page endpoints (palette, image, cutie mark download, tag changes, staff PCG list, `users/da-uuid`) and `/events/{id}/entries` being POST-only shipped in `9f47f1d7`; test-created
   appearances start at ID 900101 so they never pick up the dev site's stale sprite files in the shared `fs/`; the seed has a developer (user 9007).
 - **Palette PNG sprite fix (deployed in `368625c4`):** `renderAppearancePNG` looked for the sprite at `<id>.png<id>.png`, so it was never drawn next to the colors. Fixed; the cached

@@ -67,3 +67,16 @@ it('allows at most two cutie marks per appearance', function () use ($svg) {
   expect($admin->request('PUT', $path, ['cutieMarks' => json_encode([$mark, $mark])])['status'])->toBe(200);
   expect($admin->request('PUT', $path, ['cutieMarks' => '[]'])['status'])->toBe(200);
 });
+
+it('treats a cutie mark without a facing as symmetrical (null)', function () use ($svg) {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $id = scratchPony($admin);
+  $path = "/appearances/$id/cutie-marks";
+
+  $r = $admin->request('PUT', $path, ['cutieMarks' => json_encode([['svgdata' => $svg, 'attribution' => 'none', 'rotation' => 0]])]);
+  expect($r['status'])->toBe(200);
+  $cms = $admin->get($path)['json']['cms'];
+  expect($cms)->toHaveCount(1)->and($cms[0])->toHaveKey('facing')->and($cms[0]['facing'])->toBeNull();
+
+  expect($admin->request('PUT', $path, ['cutieMarks' => '[]'])['status'])->toBe(200);
+});

@@ -1,0 +1,18 @@
+# Scheduled jobs for git-deploy-toolkit: installed as /etc/cron.d/git-deploy-winterchilla on each deploy and run by
+# cron. They used to be three lines in root's crontab on the server, where nothing in the repo recorded them. See
+# deploy.conf for the rest of the deploy setup.
+#
+# Two of these are the retention mechanism behind the privacy policy (templates/about/privacy.html.twig):
+# IP addresses are removed from Application Log entries after 3 months (clear_old_logged_ips.php, which also
+# deletes failed authentication attempts older than that), and e-mail verification entries older than 24 hours are
+# deleted (clear_old_email_confirmations.php). If the policy's numbers change, they change in those scripts.
+#
+# Run as www-data, like the web app, so nothing they write ends up root-owned. The scripts log to the app's own
+# error log when there is no terminal; anything else they print (a PHP fatal, say) goes to the same file instead
+# of being mailed away, which MAILTO="" would otherwise do.
+MAILTO=""
+PATH=/usr/local/bin:/usr/bin:/bin
+
+10 0 * * *   www-data php -f @WORKTREE@/scripts/clear_old_logged_ips.php >> @WORKTREE@/logs/error.log 2>&1
+20 0 * * *   www-data php -f @WORKTREE@/scripts/clear_old_email_confirmations.php >> @WORKTREE@/logs/error.log 2>&1
+0 */12 * * * www-data php -f @WORKTREE@/scripts/export_color_guide.php >> @WORKTREE@/logs/error.log 2>&1

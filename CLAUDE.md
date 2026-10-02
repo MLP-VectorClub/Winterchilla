@@ -245,7 +245,7 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
       binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
       survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above
 
-## API contract for the Celestia/Luna reimplementation (built; production runs `f8724347`, `origin/main` is ahead, see "Open items")
+## API contract for the Celestia/Luna reimplementation (built; production runs `d7c56f37`)
 
 **Purpose:** the `/api/v0` API is the deliverable Celestia (Next.js SSR front end) and Luna (Laravel + Sanctum back end) build against,
 alongside the browser/contract suites as the behavioral spec. Winterchilla keeps rendering with Twig until it is retired — no SSR,
@@ -305,10 +305,9 @@ Not covered by automated tests because they need the real network: creating post
 event entry submission (disabled in the app anyway), a successful Discord sync, the e-mail flow past validation.
 
 **Open items (what is left)**
-- **Deploy:** production runs `f8724347`; `origin/main` (`14079113`) is ahead. Deploying needs the user's go-ahead and runs two Phinx data
-  migrations on production: `20261001010000_clear_invalid_default_guide_prefs` (deletes the 2 `cg_defaultguide = 'pl'` rows; the
-  `20261001000000` show unique key already shipped in `f8724347`). The new commits also contain behavior changes worth a signed-in smoke test
-  after deploying: JSON-bodies/false handling, `postAs` (was `post_as`), appearance edits keeping `guide`/`notes`/`private` when omitted.
+- **Deployed:** production runs `d7c56f37` (2026-10-02, deployed by the user; migration `20261001010000_clear_invalid_default_guide_prefs` ran). Public
+  smoke checks pass; a signed-in smoke test is still worth doing for the behavior changes: JSON-bodies/false handling, `postAs` (was `post_as`),
+  appearance edits keeping `guide`/`notes`/`private` when omitted.
 - **Luna and Celestia are building from this contract** in their own repos/sessions (`Luna/docs/winterchilla-contract-plan.md`,
   `Celestia/docs/winterchilla-parity-plan.md`). They report spec/runtime mismatches back; fixes land here, and the seeded API for them is
   `scripts/serve-seeded-api.sh [port] [database]` (own port + database, never port 8765 / `winterchilla_test`). Luna's progress was 91 of 127

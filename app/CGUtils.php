@@ -427,7 +427,7 @@ class CGUtils {
     $column_right_margin = 20;
 
     // Detect if sprite exists and adjust image size & define starting positions
-    $sprite_path = $Appearance->getSpriteFilePath()."{$Appearance->id}.png";
+    $sprite_path = $Appearance->getSpriteFilePath();
     $sprite_exists = file_exists($sprite_path);
     if ($sprite_exists){
       /** @var $sprite_size int[]|false */

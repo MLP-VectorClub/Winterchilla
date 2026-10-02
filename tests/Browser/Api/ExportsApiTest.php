@@ -140,3 +140,30 @@ it('looks a user up by DeviantArt UUID for developers only', function () {
   expect($developer->get('/users/da-uuid/' . TestSeederConstants::DEVELOPER_DA_ID)['json']['name'])->toBe('TestDeveloper');
   expect($developer->get('/users/da-uuid/00000000-0000-4000-8000-000000000000')['status'])->toBe(404);
 });
+
+it('draws the sprite next to the colors on the palette image', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $sprite = dirname(__DIR__, 3) . '/public/img/sprite_template/body_female.png';
+  $created = $admin->post('/appearances', ['guide' => 'pony', 'label' => substr('Palette Pony ' . substr(md5(uniqid('', true)), 0, 8), 0, 70)]);
+  expect($created['status'])->toBe(201);
+  $id = $created['json']['id'];
+  $path = "/appearances/$id/image";
+  $query = ['type' => 'palette', 'format' => 'png'];
+
+  $size = function () use ($admin, $path, $query) {
+    $r = $admin->get($path, $query);
+    expect($r['status'])->toBe(200);
+    $info = getimagesizefromstring($r['body']);
+    expect($info)->not->toBeFalse();
+
+    return [$info[0], $info[1]];
+  };
+
+  [$widthWithout, $heightWithout] = $size();
+  expect($admin->upload("/appearances/$id/sprite", 'sprite', $sprite)['status'])->toBeIn([200, 201]);
+  // The sprite is 300x300, so it makes the image at least that tall and wider by its width
+  [$width, $height] = $size();
+  expect($width)->toBeGreaterThanOrEqual($widthWithout + 300)->and($height)->toBeGreaterThanOrEqual(300);
+
+  $admin->request('DELETE', "/appearances/$id");
+});

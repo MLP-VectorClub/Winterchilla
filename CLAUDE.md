@@ -320,6 +320,8 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
 - **Pending on prod:** delete the user's private smoke-test appearance 680 ("Test", cutie mark 254, null `facing` = symmetrical) via the site as an admin, so its files go with it.
   The six gap-page endpoints (palette, image, cutie mark download, tag changes, staff PCG list, `users/da-uuid`) and `/events/{id}/entries` being POST-only shipped in `9f47f1d7`; test-created
   appearances start at ID 900101 so they never pick up the dev site's stale sprite files in the shared `fs/`; the seed has a developer (user 9007).
+- **Palette PNG sprite fix (not deployed):** `renderAppearancePNG` looked for the sprite at `<id>.png<id>.png`, so it was never drawn next to the colors. Fixed; after deploying,
+  the cached `fs/cg_render/appearance/*/palette.png` files of appearances that have a sprite must be deleted on prod so they regenerate (they only change when cleared).
 - **Cutie marks:** at most 2 per appearance (was an unexplained cap of 4 from 2017; prod has at most 2). The test run removes the files the seeder writes for
   cutie marks 900001/900002 when it ends, so they don't show up as orphans in a prod-copy file migration.
 - **Tests that assert Winterchilla UI details** were loosened where Luna could not satisfy them (appearance create `goto`/`message`, color

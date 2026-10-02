@@ -81,7 +81,7 @@ class HTTP {
     $cookies = [];
     if (!empty($http_response_header))
       foreach ($http_response_header as $header){
-        if (!preg_match('/^([^:]+): (.*)$/', $header, $parts) || $parts[1] !== 'Set-Cookie')
+        if (!preg_match('/^([^:]+): (.*)$/', $header, $parts) || strcasecmp($parts[1], 'Set-Cookie') !== 0)
           continue;
 
         preg_match('/\s*([^=]+=[^;]+)(?:;|$)/', $parts[2], $cookie);
@@ -91,7 +91,15 @@ class HTTP {
 
     $request = self::legitimateRequest($url, $cookies, $referrer, skipBody: true, allowRedirects: true, followRedirects: false);
 
-    return preg_match('/Location:\s+([^\r\n]+)/', $request['responseHeaders'], $_match) ? CoreUtils::trim($_match[1]) : null;
+    return self::locationFromHeaders($request['responseHeaders']);
+  }
+
+  /**
+   * Reads the Location header out of a raw response header block. Header names are case-insensitive and
+   * DeviantArt's servers answer HTTP/1.1 with a lowercase `location:` these days, so match it that way.
+   */
+  public static function locationFromHeaders(string $headers):?string {
+    return preg_match('/^location:\s+([^\r\n]+)/im', $headers, $_match) ? CoreUtils::trim($_match[1]) : null;
   }
 
   public const STATUS_CODES = [

@@ -121,7 +121,7 @@ it('lists an appearance\'s cutie marks and validates cutie mark updates', functi
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
 
   $r = $admin->get("/appearances/$appearanceId/cutie-marks");
-  expect($r['status'])->toBe(200)->and($r['json'])->toHaveKeys(['cms', 'preview']);
+  expect($r['status'])->toBe(200)->and($r['json'])->toHaveKeys(['cms']);
 
   $r = $admin->request('PUT', "/appearances/$appearanceId/cutie-marks");
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('cutieMarks');

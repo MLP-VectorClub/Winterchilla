@@ -38,7 +38,7 @@ use function count;
  *   description="Represents a color group belonging to an appearance",
  *   required={
  *     "id",
- *     "appearance_id",
+ *     "appearanceId",
  *     "order",
  *     "label"
  *   },

@@ -105,3 +105,12 @@ it('keeps every operation attached to its method (a docblock inserted between an
     $operations += count(array_intersect_key($methods, array_flip(['get', 'post', 'put', 'patch', 'delete'])));
   expect($operations)->toBeGreaterThanOrEqual(146);
 });
+
+it('only lists properties that exist in a schema\'s required list', function () {
+  foreach (generatedApiSchema()['components']['schemas'] as $name => $schema) {
+    if (isset($schema['allOf']) || empty($schema['required']))
+      continue;
+    foreach ($schema['required'] as $property)
+      expect(array_key_exists($property, $schema['properties'] ?? []))->toBeTrue("$name requires missing property $property");
+  }
+});

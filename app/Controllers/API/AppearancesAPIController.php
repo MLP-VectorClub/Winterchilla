@@ -377,6 +377,7 @@ class AppearancesAPIController extends APIController {
    *   @OA\Property(
    *     property="hex",
    *     type="string",
+   *     nullable=true,
    *     format="#RRGGBB",
    *     description="The color value in uppercase hexadecimal form, including a # prefix",
    *     example="#6181B6"

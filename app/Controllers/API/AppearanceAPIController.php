@@ -856,7 +856,7 @@ class AppearanceAPIController extends APIController {
    *           @OA\Property(property="label", type="string", nullable=true),
    *           @OA\Property(property="deviation", type="string", format="uri", description="Present if the cutie mark is attributed to a deviation"),
    *           @OA\Property(property="username", type="string", description="Present if the cutie mark is attributed to a contributor"),
-   *           @OA\Property(property="rendered", type="string", format="uri", description="URL of the rendered cutie mark image")
+   *           @OA\Property(property="rendered", type="string", format="uri", nullable=true, description="URL of the rendered cutie mark image, null when the mark has no SVG file")
    *         )),
    *         @OA\Property(property="preview", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML preview of the cutie marks")
    *       )

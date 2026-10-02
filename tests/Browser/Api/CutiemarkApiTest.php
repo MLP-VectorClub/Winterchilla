@@ -53,3 +53,17 @@ it('rejects a cutie mark with an invalid rotation or attribution', function () u
 
   $admin->request('DELETE', "/appearances/$id");
 });
+
+it('allows at most two cutie marks per appearance', function () use ($svg) {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $id = scratchPony($admin);
+  $path = "/appearances/$id/cutie-marks";
+  $mark = ['svgdata' => $svg, 'facing' => 'left', 'attribution' => 'none', 'rotation' => 0];
+
+  $r = $admin->request('PUT', $path, ['cutieMarks' => json_encode([$mark, $mark, $mark])]);
+  expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('cutiemarks');
+  expect($admin->get($path)['json']['cms'])->toBe([]);
+
+  expect($admin->request('PUT', $path, ['cutieMarks' => json_encode([$mark, $mark])])['status'])->toBe(200);
+  expect($admin->request('PUT', $path, ['cutieMarks' => '[]'])['status'])->toBe(200);
+});

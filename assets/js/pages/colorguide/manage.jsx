@@ -826,7 +826,7 @@
 
         this.$CMList.append(this.createCutiemarkDataLi());
 
-        this.$AddNewButton[this.$CMList.children().length >= 4 ? 'disable' : 'enable']();
+        this.$AddNewButton[this.$CMList.children().length >= 2 ? 'disable' : 'enable']();
       });
       this.$DeleteButton = $.mk('button').attr('class', 'red typcn typcn-trash').text('Delete all').on('click', e => {
         e.preventDefault();

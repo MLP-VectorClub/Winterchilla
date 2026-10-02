@@ -867,12 +867,12 @@ class AppearanceAPIController extends APIController {
    * )
    * @OA\Put(
    *   path="/appearances/{id}/cutie-marks",
-   *   description="Replace the cutie marks of an appearance (up to 4). The user must have permission to manage the appearance.",
+   *   description="Replace the cutie marks of an appearance (up to 2). The user must have permission to manage the appearance.",
    *   tags={"appearances"},
    *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
    *   @OA\RequestBody(required=true, @OA\JsonContent(
    *     required={"cutieMarks"},
-   *     @OA\Property(property="cutieMarks", type="array", description="List of cutie mark definitions, max 4 items", @OA\Items(type="object",
+   *     @OA\Property(property="cutieMarks", type="array", description="List of cutie mark definitions, max 2 items", maxItems=2, @OA\Items(type="object",
    *       required={"attribution", "rotation"},
    *       @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of an existing cutie mark to update; omit to create a new one"),
    *       @OA\Property(property="svgdata", ref="#/components/schemas/SVGFile", description="Required when creating a new cutie mark, max 1MB"),
@@ -926,8 +926,8 @@ class AppearanceAPIController extends APIController {
             Input::ERROR_INVALID => 'Cutie mark data (@value) is invalid',
           ],
         ]))->out();
-        if (count($data) > 4)
-          Response::invalid('cutiemarks', 'Appearances can only have a maximum of 4 cutie marks.');
+        if (count($data) > 2)
+          Response::invalid('cutiemarks', 'Appearances can only have a maximum of 2 cutie marks.');
         /** @var $new_cms Cutiemark[] */
         $new_cms = [];
         $new_svgs = [];

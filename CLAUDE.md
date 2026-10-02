@@ -318,6 +318,8 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
   globals; no data endpoints for the admin PCG appearance list, tag changes, the browser-recognition page, profile by DeviantArt UUID or
   appearance PNG/GPL exports; a successful Discord sync and the network-dependent post flows have no automated test (they need the real
   providers).
+- **Cutie marks:** at most 2 per appearance (was an unexplained cap of 4 from 2017; prod has at most 2). The test run removes the files the seeder writes for
+  cutie marks 900001/900002 when it ends, so they don't show up as orphans in a prod-copy file migration.
 - **Tests that assert Winterchilla UI details** were loosened where Luna could not satisfy them (appearance create `goto`/`message`, color
   group `cgs`, show `url`/`upcoming`/`newhtml`/`html`/`section`, log `details`, default-sprite fallback). A few tests still cover `x-internal`
   operations (tag autocomplete, `GET /notifications`, `stat-cache`, sessions, password/e-mail, avatar-wrap, lazyload/reload/suggestion,

@@ -95,5 +95,21 @@ class ServerManager {
       proc_close(self::$procHandle);
       self::$procHandle = null;
     }
+    self::removeSeededFiles();
+  }
+
+  /**
+   * The seeder writes cutie mark files for its fixed IDs (900000+, deliberately outside the real range because
+   * fs/ is shared with the dev site). They have no row in any other database, so they would show up as orphans
+   * when rehearsing a file migration against a prod copy; remove them when the run ends.
+   */
+  private static function removeSeededFiles(): void {
+    $fs = dirname(__DIR__, 3).'/fs/';
+    foreach (['cm_source', 'cm_tokenized', 'cg_render/cutiemark'] as $folder) {
+      foreach (glob($fs.$folder.'/9?????.svg') ?: [] as $file) {
+        if ((int)basename($file, '.svg') >= 900000)
+          @unlink($file);
+      }
+    }
   }
 }

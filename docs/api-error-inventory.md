@@ -75,7 +75,7 @@ Totals (non-success): 400: 75, 401: 2, 401/403: 41, 403: 18, 404: 24, 409: 34, 4
 | 704 | spriteApi | fail | `'You are not allowed to upload sprite images on your own PCG appearances'` | 403 |
 | 713 | spriteApi | fail | `'No sprite file found'` | 400 |
 | 782 | relationsApi | fail | `'Relations are unavailable for appearances in personal guides'` | 503 |
-| 944 | cutiemarkApi | fail | `'Appearances can only have a maximum of 4 cutie marks.'` | 422 |
+| 944 | cutiemarkApi | fail | `'Appearances can only have a maximum of 2 cutie marks.'` | 422 |
 | 954 | cutiemarkApi | fail | `"The cutie mark you're trying to update (#{$item['id']}) does not exist"` | 404 |
 | 964 | cutiemarkApi | fail | `'SVG data is missing'` | 422 |
 | 966 | cutiemarkApi | fail | `'SVG data exceeds the maximum size of 1 MB'` | 400 |

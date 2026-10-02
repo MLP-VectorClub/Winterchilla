@@ -245,7 +245,7 @@ passing it to the template (which no longer used it). `UserProfileTest` missed i
       binding tool — was deleted in 2018 (b713ef1f) when Discord linking moved to OAuth, but the route
       survived. `AdminTest`'s "discord page" test only passed because of the weak assertion above
 
-## API contract for the Celestia/Luna reimplementation (built; production runs `d7c56f37`)
+## API contract for the Celestia/Luna reimplementation (built; production runs `9f47f1d7`)
 
 **Purpose:** the `/api/v0` API is the deliverable Celestia (Next.js SSR front end) and Luna (Laravel + Sanctum back end) build against,
 alongside the browser/contract suites as the behavioral spec. Winterchilla keeps rendering with Twig until it is retired — no SSR,
@@ -305,7 +305,7 @@ Not covered by automated tests because they need the real network: creating post
 event entry submission (disabled in the app anyway), a successful Discord sync, the e-mail flow past validation.
 
 **Open items (what is left)**
-- **Deployed:** production runs `d7c56f37` (2026-10-02, deployed by the user; migration `20261001010000_clear_invalid_default_guide_prefs` ran). Public
+- **Deployed:** production runs `9f47f1d7` (2026-10-02, deployed by the user; migration `20261001010000_clear_invalid_default_guide_prefs` ran). Public
   smoke checks pass; a signed-in smoke test is still worth doing for the behavior changes: JSON-bodies/false handling, `postAs` (was `post_as`),
   appearance edits keeping `guide`/`notes`/`private` when omitted.
 - **Luna and Celestia are building from this contract** in their own repos/sessions (`Luna/docs/winterchilla-contract-plan.md`,
@@ -317,13 +317,9 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
 - **Not done on purpose:** `Input` reports one validation error at a time; Winterchilla's own page scripts still read the `export_vars`
   globals; no data endpoint for the browser-recognition page; a successful Discord sync and the network-dependent post flows have no automated test (they need the real
   providers).
-- **Not deployed yet** (on `origin/main` after `d7c56f37`): the cap of 2 cutie marks, the seeded-file cleanup, the null-`facing` docs, and six new read endpoints
-  for the pages Luna listed as gaps (the goal is a *full* reimplementation, so features Celestia does not render yet are still in the contract): `GET /appearances/{id}/palette?format=json|gpl`,
-  `GET /appearances/{id}/image?type&format`, `GET /appearances/{id}/cutie-marks/{cutieMarkId}/download[?source]`, `GET /appearances/{id}/tag-changes` (staff; the old page was an
-  unfinished stub that 404ed, this one returns the data), `GET /admin/pcg-appearances` (staff), `GET /users/da-uuid/{uuid}` (developer). Tests: `tests/Browser/Api/ExportsApiTest.php`; the seed gained
-  a developer (user 9007) and test-created appearances now start at ID 900101 so they never pick up the dev site's stale sprite files in the shared `fs/`. `/events/{id}/entries` is POST-only
-  now (its GET/PUT/DELETE never worked: no entry ID). Also pending: delete the user's
-  private smoke-test appearance 680 ("Test", cutie mark 254, null `facing` = symmetrical) on prod via the site as an admin, so its files go with it.
+- **Pending on prod:** delete the user's private smoke-test appearance 680 ("Test", cutie mark 254, null `facing` = symmetrical) via the site as an admin, so its files go with it.
+  The six gap-page endpoints (palette, image, cutie mark download, tag changes, staff PCG list, `users/da-uuid`) and `/events/{id}/entries` being POST-only shipped in `9f47f1d7`; test-created
+  appearances start at ID 900101 so they never pick up the dev site's stale sprite files in the shared `fs/`; the seed has a developer (user 9007).
 - **Cutie marks:** at most 2 per appearance (was an unexplained cap of 4 from 2017; prod has at most 2). The test run removes the files the seeder writes for
   cutie marks 900001/900002 when it ends, so they don't show up as orphans in a prod-copy file migration.
 - **Tests that assert Winterchilla UI details** were loosened where Luna could not satisfy them (appearance create `goto`/`message`, color

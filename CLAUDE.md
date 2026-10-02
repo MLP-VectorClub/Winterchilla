@@ -321,7 +321,7 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
   The six gap-page endpoints (palette, image, cutie mark download, tag changes, staff PCG list, `users/da-uuid`) and `/events/{id}/entries` being POST-only shipped in `9f47f1d7`; test-created
   appearances start at ID 900101 so they never pick up the dev site's stale sprite files in the shared `fs/`; the seed has a developer (user 9007).
 - **Palette PNG sprite fix (deployed in `368625c4`):** `renderAppearancePNG` looked for the sprite at `<id>.png<id>.png`, so it was never drawn next to the colors. Fixed; the cached
-  `fs/cg_render/appearance/*/palette.png` files of appearances that have a sprite still show the old image until deleted on prod (they regenerate on the next request).
+  palette PNGs of the 126 appearances with a sprite were deleted on prod on 2026-10-02 so they regenerate with the sprite (checked on appearance 10).
 - **Cutie marks:** at most 2 per appearance (was an unexplained cap of 4 from 2017; prod has at most 2). The test run removes the files the seeder writes for
   cutie marks 900001/900002 when it ends, so they don't show up as orphans in a prod-copy file migration.
 - **Tests that assert Winterchilla UI details** were loosened where Luna could not satisfy them (appearance create `goto`/`message`, color

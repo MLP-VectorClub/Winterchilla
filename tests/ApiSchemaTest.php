@@ -94,3 +94,14 @@ it('marks the UI-only and Winterchilla-specific operations as x-internal', funct
   foreach (['GET /about/upcoming', 'GET /cg/full', 'GET /posts/{id}/lazyload', 'GET /show/{id}/posts'] as $pure_ui)
     expect($internal)->toContain($pure_ui);
 });
+
+it('keeps every operation attached to its method (a docblock inserted between an @OA block and its method drops it silently)', function () {
+  $paths = generatedApiSchema()['paths'];
+
+  expect($paths['/show/{id}/vote'])->toHaveKeys(['get', 'post']);
+
+  $operations = 0;
+  foreach ($paths as $methods)
+    $operations += count(array_intersect_key($methods, array_flip(['get', 'post', 'put', 'patch', 'delete'])));
+  expect($operations)->toBeGreaterThanOrEqual(146);
+});

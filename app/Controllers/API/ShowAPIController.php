@@ -451,6 +451,17 @@ class ShowAPIController extends APIController {
     }
   }
 
+  /** @return object Rating to number of votes (an object, so an empty map serializes as `{}`) */
+  private function voteCounts():object {
+    $rows = DB::$instance->query(
+      "SELECT count(*) as value, vote as label FROM show_votes WHERE show_id = ? GROUP BY vote ORDER BY vote", [$this->show->id]);
+    $counts = [];
+    foreach ($rows as $row)
+      $counts[$row['label']] = (int)$row['value'];
+
+    return (object)$counts;
+  }
+
   /**
    * @OA\Get(
    *   path="/show/{id}/vote",
@@ -506,17 +517,6 @@ class ShowAPIController extends APIController {
    *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
-  /** @return object Rating to number of votes (an object, so an empty map serializes as `{}`) */
-  private function voteCounts():object {
-    $rows = DB::$instance->query(
-      "SELECT count(*) as value, vote as label FROM show_votes WHERE show_id = ? GROUP BY vote ORDER BY vote", [$this->show->id]);
-    $counts = [];
-    foreach ($rows as $row)
-      $counts[$row['label']] = (int)$row['value'];
-
-    return (object)$counts;
-  }
-
   public function voteApi($params):void {
     $this->load_show($params);
 

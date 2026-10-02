@@ -166,7 +166,9 @@ from what Luna implements.
   `/show/{id}/appearances`.
 - **Not provided, on purpose:** a login sessions list (Luna's `/users/tokens`), profile by DeviantArt UUID (`/u/{uuid}` is a developer-only
   tool), appearance palette exports (PNG/GPL/JSON are generated files; compose them from `colorGroups`), data endpoints for the admin
-  PCG appearance list, tag changes and the browser-recognition page (staff/dev tools that are not being ported).
+  PCG appearance list, tag changes and the browser-recognition page (staff/dev tools that are not being ported), and the cutie mark source
+  download (`?source`). Luna asked about all of these on 2026-10-02; Celestia confirmed it uses none (palettes are composed from `colorGroups`,
+  images come from the existing sprite/preview/cutie mark URLs), so they stay out of the spec. If staff ever need one, add it then.
 - **Running the contract tests against another server:** see `tests/Browser/Helpers/ApiClient.php` (`CONTRACT_BASE_URL`, `CONTRACT_AUTH=bearer`,
   `CONTRACT_LOGIN_URL`, …) and `scripts/dump-contract-seed.sh` (the seeded data as INSERTs; the cutie mark file and the Redis-cached
   deviations are not in the dump, so the tests that need them will fail on another server until it provides equivalents; Luna should write its

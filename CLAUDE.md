@@ -318,6 +318,8 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
   globals; no data endpoints for the admin PCG appearance list, tag changes, the browser-recognition page, profile by DeviantArt UUID or
   appearance PNG/GPL exports; a successful Discord sync and the network-dependent post flows have no automated test (they need the real
   providers).
+- **Not deployed yet** (on `origin/main` after `d7c56f37`): the cap of 2 cutie marks, the seeded-file cleanup, the null-`facing` docs. Also pending: delete the user's
+  private smoke-test appearance 680 ("Test", cutie mark 254, null `facing` = symmetrical) on prod via the site as an admin, so its files go with it.
 - **Cutie marks:** at most 2 per appearance (was an unexplained cap of 4 from 2017; prod has at most 2). The test run removes the files the seeder writes for
   cutie marks 900001/900002 when it ends, so they don't show up as orphans in a prod-copy file migration.
 - **Tests that assert Winterchilla UI details** were loosened where Luna could not satisfy them (appearance create `goto`/`message`, color

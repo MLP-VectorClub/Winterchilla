@@ -126,6 +126,7 @@ if (\App\CoreUtils::env('TEST_MODE')) {
   $page_route('/test-oauth/[deviantart|discord:provider]/decide', [\App\Controllers\TestOAuthController::class, 'decide']);
   $router->map('POST', '/test-oauth/[deviantart:provider]/oauth2/token', [\App\Controllers\TestOAuthController::class, 'token']);
   $router->map('POST', '/test-oauth/[discord:provider]/api/oauth2/token', [\App\Controllers\TestOAuthController::class, 'token']);
+  $router->map('POST', '/test-coverage/js', [\App\Controllers\TestCoverageController::class, 'scriptHits']);
   $page_route('/test-oauth/deviantart/api/v1/oauth2/user/whoami', [\App\Controllers\TestOAuthController::class, 'deviantartWhoami']);
   $router->map('POST', '/test-oauth/discord/api/oauth2/token/revoke', [\App\Controllers\TestOAuthController::class, 'discordRevoke']);
   $page_route('/test-oauth/discord/api/users/@me', [\App\Controllers\TestOAuthController::class, 'discordMe']);

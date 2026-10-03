@@ -10,6 +10,15 @@
     <include>
       <directory>app</directory>
     </include>
+    <exclude>
+      <!-- Talks to the real DeviantArt; not worth measuring -->
+      <file>app/DeviantArt.php</file>
+      <!-- Test infrastructure: the fake OAuth provider, test-only routes and the coverage collector -->
+      <directory>app/Testing</directory>
+      <file>app/Controllers/TestController.php</file>
+      <file>app/Controllers/TestOAuthController.php</file>
+      <file>app/Controllers/TestCoverageController.php</file>
+    </exclude>
   </source>
   <php>
     <server name="SERVER_NAME" value="mlpvector.lc"/>

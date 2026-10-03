@@ -334,12 +334,16 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
 type-checks the result), PHPStan, ESLint, unit and browser suites. **Run both `vendor/bin/pest` (unit) and `vendor/bin/pest tests/Browser` locally**
 before pushing; CI's "Browser Tests" job also runs the unit tests.
 
-**Code coverage** (`scripts/coverage.sh`, CI job "Code Coverage"): line coverage of `app/` from the unit tests *and* from everything the browser/contract tests make
-the test server run, merged into `build/coverage/html/index.html` + `clover.xml` + a text summary (`--unit-only` skips the browser run). It needs PCOV; there is no distro package
-for PHP 8.5 here, so build it (`git clone https://github.com/krakjoe/pcov && phpize && ./configure --enable-pcov && make`) and put `pcov.so` at `~/.local/lib/php/pcov.so` or set
-`PCOV_SO`. How the server side works: with `COVERAGE_DIR` set, `ServerManager` starts `php -S` with `tests/Browser/Helpers/coverage_prepend.php`, which records each request's
-lines into one file per worker; `scripts/coverage-report.php` merges those with `build/coverage/unit.cov`. At the first full run: 68.1% of lines in `app/` (7226/10619); weakest are
-`Logs.php` (9%), `DeviantArt.php` (24%, needs the network), `CGUtils.php`, `CoreUtils.php`. Only server-side PHP is measured — the page scripts in `assets/js` are not.
+**Code coverage** (`scripts/coverage.sh`, CI job "Code Coverage"): two reports, from the unit tests plus the browser/contract tests (`--unit-only` skips the browser run).
+- *PHP (`app/`)* → `build/coverage/html/index.html`, `clover.xml`, text summary. Server side: with `COVERAGE_DIR` set `ServerManager` starts `php -S` with
+  `tests/Browser/Helpers/coverage_prepend.php`, which records each request's lines per worker; `scripts/coverage-report.php` merges them with `build/coverage/unit.cov`.
+  Needs PCOV; there is no distro package for PHP 8.5 here, so build it (`git clone https://github.com/krakjoe/pcov && phpize && ./configure --enable-pcov && make`)
+  and put `pcov.so` at `~/.local/lib/php/pcov.so` or set `PCOV_SO`. Excluded (phpunit.xml `<source>`): `DeviantArt.php` (real network) and the test infrastructure
+  (`app/Testing`, `Test*Controller`). First full run: 69.1% of lines (6990/10110); weakest `Logs.php`, `CGUtils.php`, `CoreUtils.php`, `Appearances.php`, `Users.php`.
+- *Page scripts (`assets/js`, not `lib/`)* → `build/coverage/js-html/index.html`, `js-lcov.info`. `COVERAGE=1 pnpm build` instruments every script with istanbul
+  (`build.mjs`) and prepends `assets/coverage-reporter.js`, which posts the hit counts (on a 1 s timer and on pagehide) to the TEST_MODE-only `/test-coverage/js`
+  (`TestCoverageController`, writes `COVERAGE_JS_DIR/<page load>.json`); `scripts/coverage-js-report.mjs` sums them over `build/coverage/js-initial.json`, so scripts no test
+  page loads count as 0%. `coverage.sh` rebuilds `public/js` normally when it ends. First full run: 21.0% of statements (1279/6085) over 76 page loads.
 
 **Lessons worth keeping**
 - Real bugs the contract work uncovered (all fixed): post edit authorization never denied anyone, the admin API had no staff check, "sign out

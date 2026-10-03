@@ -387,9 +387,14 @@ jobs:
         if: always()
         run: |
           {
-            echo '## Code coverage (app/)'
+            echo '## Code coverage'
+            echo 'PHP (app/):'
             echo '```'
             grep -E '^ *(Classes|Methods|Lines):' build-coverage.txt | head -3 || true
+            echo '```'
+            echo 'Page scripts (assets/js):'
+            echo '```'
+            sed -n '/Coverage summary/,/=====$/p' build-coverage.txt | grep -E '^(Statements|Branches|Functions|Lines)' || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -401,6 +406,8 @@ jobs:
           path: |
             build/coverage/html/
             build/coverage/clover.xml
+            build/coverage/js-html/
+            build/coverage/js-lcov.info
           if-no-files-found: ignore
 
       - name: Upload screenshots on failure

@@ -10,6 +10,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// COVERAGE=1 builds the page scripts instrumented (istanbul) for scripts/coverage.sh: the instrumented scripts report which
+// statements ran back to the test server, see assets/coverage-reporter.js and scripts/coverage-js-report.mjs.
+const isCoverage = process.env.COVERAGE === '1';
+const coverageInitial = {};
+const coverageExcluded = file => file.includes('assets/js/lib/');
+
 const isWatch = process.argv.includes('--watch');
 const lockfilePath = process.env.NPM_BUILD_LOCK_FILE_PATH;
 
@@ -34,19 +40,44 @@ function toOutputPath(srcFile, srcDir, outDir, suffix) {
   return path.join(outDir, dir, name + suffix);
 }
 
+async function instrument(source, file) {
+  const { createInstrumenter } = await import('istanbul-lib-instrument');
+  const absolute = path.resolve(file);
+  // Instrument the original (JSX) source so the report points at the real lines; esbuild turns the result into plain JS afterwards
+  const instrumenter = createInstrumenter({
+    esModules: false,
+    parserPlugins: ['jsx'],
+    coverageVariable: '__coverage__',
+    coverageGlobalScope: 'window',
+    coverageGlobalScopeFunc: false,
+    produceSourceMap: false,
+  });
+  const code = instrumenter.instrumentSync(source, absolute);
+  coverageInitial[absolute] = instrumenter.lastFileCoverage();
+  return code;
+}
+
 async function buildJS(file) {
-  const source = fs.readFileSync(file, 'utf-8');
+  let source = fs.readFileSync(file, 'utf-8');
+  if (isCoverage && !coverageExcluded(file)) {
+    try {
+      source = await instrument(source, file);
+    } catch (e) {
+      console.warn(`[js] Not instrumenting ${file}: ${e.message}`);
+    }
+  }
   const result = await esbuild.transform(source, {
     loader: 'jsx',
     target: 'es2019',
-    minify: true,
+    minify: !isCoverage,
     sourcemap: true,
     sourcefile: file,
   });
   const out = toOutputPath(file, 'assets/js', 'public/js', '.min.js');
   const mapFilename = path.basename(out) + '.map';
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, result.code + `\n//# sourceMappingURL=${mapFilename}`);
+  const reporter = isCoverage && !coverageExcluded(file) ? fs.readFileSync('assets/coverage-reporter.js', 'utf-8') + '\n' : '';
+  fs.writeFileSync(out, reporter + result.code + `\n//# sourceMappingURL=${mapFilename}`);
   fs.writeFileSync(out + '.map', result.map);
 }
 
@@ -63,7 +94,12 @@ async function buildSCSS(file) {
 async function buildAllJS() {
   const files = await glob('assets/js/**/*.{js,jsx}');
   await Promise.all(files.map(buildJS));
-  console.log(`[js] Built ${files.length} files`);
+  console.log(`[js] Built ${files.length} files${isCoverage ? ' (instrumented for coverage)' : ''}`);
+  if (isCoverage) {
+    // The zero-count coverage of every instrumented file: files no test page ever loads still count as uncovered
+    fs.mkdirSync('build/coverage', { recursive: true });
+    fs.writeFileSync('build/coverage/js-initial.json', JSON.stringify(coverageInitial));
+  }
 }
 
 async function buildAllSCSS() {

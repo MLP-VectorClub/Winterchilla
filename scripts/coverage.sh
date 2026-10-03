@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Full code coverage of app/: the unit tests plus everything the browser and contract tests make the test server run, merged into
-# one report (build/coverage/html/index.html, build/coverage/clover.xml, summary on stdout).
+# Full code coverage: PHP (app/) from the unit tests plus everything the browser and contract tests make the test server run, merged into
+# one report (build/coverage/html/index.html, build/coverage/clover.xml), and the page scripts (assets/js) as measured in the browser by
+# those same tests (build/coverage/js-html/index.html, build/coverage/js-lcov.info). Summaries on stdout.
 #
 #   scripts/coverage.sh                 # unit + browser/contract tests
 #   scripts/coverage.sh --unit-only     # skip the (slow) browser/contract tests
@@ -31,9 +32,19 @@ echo "== Unit tests"
 php "${PHP_FLAGS[@]}" vendor/bin/pest --coverage-php build/coverage/unit.cov
 
 if [ "${1:-}" != "--unit-only" ]; then
-  echo "== Browser and contract tests (server-side coverage)"
-  COVERAGE_DIR="$PWD/build/coverage/http" vendor/bin/pest tests/Browser
+  echo "== Instrumented page scripts"
+  # public/js is rebuilt normally afterwards, whatever happens to the run
+  trap 'pnpm run build >/dev/null' EXIT
+  COVERAGE=1 pnpm run build
+
+  echo "== Browser and contract tests (server-side and in-browser coverage)"
+  COVERAGE_DIR="$PWD/build/coverage/http" COVERAGE_JS_DIR="$PWD/build/coverage/js-hits" vendor/bin/pest tests/Browser
 fi
 
-echo "== Report"
+echo "== Report: PHP"
 php "${PHP_FLAGS[@]}" scripts/coverage-report.php
+
+if [ "${1:-}" != "--unit-only" ]; then
+  echo "== Report: page scripts"
+  node scripts/coverage-js-report.mjs
+fi

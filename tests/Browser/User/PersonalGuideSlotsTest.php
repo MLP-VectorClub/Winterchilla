@@ -3,7 +3,7 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 $userId = TestSeederConstants::FRESH_USER_ID;
 
 // Every user starts with the free slot (10 points, which is what one personal appearance costs) and may create
@@ -18,7 +18,7 @@ it('gives a new user one personal guide appearance and then reports no slots lef
   $label = 'Fresh Pony ' . substr(md5(uniqid('', true)), 0, 5);
 
   try {
-    $page = visit($base . '/test-login/' . $userId)
+    $page = visit(TestSeederConstants::loginUrl($userId))
       ->navigate($base . "/users/$userId/cg")
       ->assertNoJavaScriptErrors()
       // The free slot lets the editor open, and saving takes the user to the new appearance's page
@@ -45,7 +45,7 @@ it('gives a new user one personal guide appearance and then reports no slots lef
 it('says when personal guide appearances are switched off for a user', function () use ($base, $userId) {
   pcgMake(false);
   try {
-    visit($base . '/test-login/' . $userId)
+    visit(TestSeederConstants::loginUrl($userId))
       ->navigate($base . "/users/$userId/cg")
       ->click('#new-appearance-btn')
       ->assertSee('not allowed to create personal color guide appearances');

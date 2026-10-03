@@ -2,7 +2,7 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('shows the profile page of the seeded regular user', function () use ($base) {
   visit($base . '/users/' . TestSeederConstants::USER_ID)
@@ -17,7 +17,7 @@ it('shows the profile page of the seeded admin user', function () use ($base) {
 });
 
 it('shows own account settings when logged in', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::USER_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/users/' . TestSeederConstants::USER_ID . '/account')
     ->assertNoJavaScriptErrors()
     // A fatal renders a bare 500 without the words "Fatal error", so assert real page content
@@ -35,7 +35,7 @@ it('lists club members for guests and all users for staff', function () use ($ba
     ->assertNoJavaScriptErrors()
     ->assertSee('Club Members');
 
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/users')
     ->assertNoJavaScriptErrors()
     ->assertSee('TestUser')
@@ -46,7 +46,7 @@ it('hides /u/[uuid] from guests and non-developers', function () use ($base) {
   visit($base . '/u/' . TestSeederConstants::USER_DA_ID)
     ->assertSee('404');
 
-  visit($base . '/test-login/' . TestSeederConstants::USER_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/u/' . TestSeederConstants::USER_DA_ID)
     ->assertSee('404');
 });
@@ -68,12 +68,12 @@ it('only shows the requests contributions tab to its owner and staff', function 
 
   visit($url)->assertSee('404');
 
-  visit($base . '/test-login/' . TestSeederConstants::USER_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($url)
     ->assertNoJavaScriptErrors()
     ->assertSee('Requests posted by');
 
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($url)
     ->assertNoJavaScriptErrors()
     ->assertSee('Requests posted by');

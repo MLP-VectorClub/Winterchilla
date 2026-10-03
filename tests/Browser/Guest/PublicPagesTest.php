@@ -2,7 +2,7 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('redirects the homepage to a meaningful page for guests', function () use ($base) {
   visit($base . '/')

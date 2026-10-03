@@ -2,12 +2,12 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('adds, edits and deletes a useful link through the admin page', function () use ($base) {
   $label = 'UI Link ' . substr(md5(uniqid('', true)), 0, 5);
 
-  $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/admin/usefullinks')
     ->assertNoJavaScriptErrors()
     ->click('#add-link')

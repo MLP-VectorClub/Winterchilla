@@ -2,7 +2,7 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('shows the episode list page', function () use ($base) {
   visit($base . '/show')
@@ -17,7 +17,7 @@ it('shows the seeded episode page', function () use ($base) {
 });
 
 it('shows the seeded episode page to a logged-in user', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::USER_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
     ->assertNoJavaScriptErrors()
     ->assertSee('Friendship is Magic, Part 1');
@@ -61,7 +61,7 @@ it('404s for a show entry that does not exist', function () use ($base) {
 });
 
 it('shows show-entry admin controls on /show for staff', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/show')
     ->assertNoJavaScriptErrors()
     ->assertPresent('#add-show')

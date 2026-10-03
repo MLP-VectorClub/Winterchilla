@@ -2,13 +2,13 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base         = TestSeederConstants::BASE_URL;
+$base         = TestSeederConstants::baseUrl();
 $appearanceId = TestSeederConstants::APPEARANCE_ID;
 $uniqueLabel  = 'E2E Test ' . substr(uniqid(), -6);
 
 it('full appearance lifecycle: create, tag, edit, delete', function () use ($base, $uniqueLabel) {
   // Create
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony')
     ->assertNoJavaScriptErrors()
     ->click('[data-testid="create-appearance-btn"]')
@@ -30,7 +30,7 @@ it('full appearance lifecycle: create, tag, edit, delete', function () use ($bas
 });
 
 it('full color group lifecycle: create, edit, delete', function () use ($base, $appearanceId) {
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
     ->assertNoJavaScriptErrors()
     // Create color group
@@ -53,7 +53,7 @@ it('full color group lifecycle: create, edit, delete', function () use ($base, $
 });
 
 it('admin can open the sprite upload dialog', function () use ($base, $appearanceId) {
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
     ->assertNoJavaScriptErrors()
     ->rightClick('[data-testid="sprite-wrap"]')

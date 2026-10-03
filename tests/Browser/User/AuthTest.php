@@ -2,16 +2,16 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('creates a session via test-login and shows signed-in state', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::USER_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/cg/pony')
     ->assertDontSee('Sign in');
 });
 
 it('can sign out after logging in', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::USER_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/cg/pony')
     ->click('[data-testid="auth-signout"]')
     ->click('[data-testid="dialog-btn-confirm"]')

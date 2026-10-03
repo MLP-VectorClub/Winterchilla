@@ -3,7 +3,7 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('makes a tag a synonym of another and removes the synonym again from the tag list', function () use ($base) {
   $suffix = substr(md5(uniqid('', true)), 0, 6);
@@ -16,7 +16,7 @@ it('makes a tag a synonym of another and removes the synonym again from the tag 
   $target = $api->post('/tags', ['name' => $targetName, 'type' => 'app'])['json'];
 
   try {
-    $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+    $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
       ->assertSee($sourceName)
@@ -51,7 +51,7 @@ it('recounts tag uses from the refresh buttons of the tag list', function () use
   $tag = $api->post('/tags', ['name' => $name, 'type' => 'app', 'addTo' => TestSeederConstants::APPEARANCE_ID])['json'];
 
   try {
-    $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+    $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
       // One tag: its own refresh button updates the count in place

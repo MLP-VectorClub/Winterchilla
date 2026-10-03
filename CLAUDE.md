@@ -334,6 +334,12 @@ event entry submission (disabled in the app anyway), a successful Discord sync, 
 type-checks the result), PHPStan, ESLint, unit and browser suites. **Run both `vendor/bin/pest` (unit) and `vendor/bin/pest tests/Browser` locally**
 before pushing; CI's "Browser Tests" job also runs the unit tests.
 
+**UI tests against another implementation** (goal: the browser UI tests also pass on Celestia backed by Luna): `UI_BASE_URL=<origin> vendor/bin/pest tests/Browser/Admin tests/Browser/User tests/Browser/Guest --exclude-group=winterchilla-only`.
+No local server or DB reset happens then; the target needs the data of `scripts/dump-contract-seed.sh` and a GET sign-in route matching `UI_LOGIN_PATH` (default `/test-login/{id}`; Luna has
+`GET /test/session-login/{id}`, Celestia rewrites to it with `E2E_TEST_LOGIN=1`). `winterchilla-only` marks what cannot apply (the dialog test page, the fake OAuth flows, the browser
+recognition page, `/components`, `/docs`, diagnose pages). Locally Celestia runs on :3100 and Luna's contract server on :8766 (`Luna/scripts/serve-contract.sh`). The tests assert on Winterchilla's
+DOM (visible text, ids such as `#episodes`, 141 `data-testid` attributes); whether Celestia adopts those or the tests are translated is an open decision.
+
 **Code coverage** (`scripts/coverage.sh`, CI job "Code Coverage"): two reports, from the unit tests plus the browser/contract tests (`--unit-only` skips the browser run).
 - *PHP (`app/`)* → `build/coverage/html/index.html`, `clover.xml`, text summary. Server side: with `COVERAGE_DIR` set `ServerManager` starts `php -S` with
   `tests/Browser/Helpers/coverage_prepend.php`, which records each request's lines per worker; `scripts/coverage-report.php` merges them with `build/coverage/unit.cov`.

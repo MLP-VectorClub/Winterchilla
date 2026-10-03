@@ -2,7 +2,7 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base    = TestSeederConstants::BASE_URL;
+$base    = TestSeederConstants::baseUrl();
 $userId  = TestSeederConstants::USER_ID;
 $adminId = TestSeederConstants::ADMIN_ID;
 
@@ -14,7 +14,7 @@ it('shows a guest the personal color guide list', function () use ($base, $userI
 });
 
 it('shows the owner their own personal color guide list', function () use ($base, $userId) {
-  visit($base . '/test-login/' . $userId)
+  visit(TestSeederConstants::loginUrl($userId))
     ->navigate($base . '/users/' . $userId . '/cg')
     ->assertNoJavaScriptErrors()
     ->assertSee('Personal Color Guide')
@@ -22,7 +22,7 @@ it('shows the owner their own personal color guide list', function () use ($base
 });
 
 it('shows the owner their own point history page', function () use ($base, $userId) {
-  visit($base . '/test-login/' . $userId)
+  visit(TestSeederConstants::loginUrl($userId))
     ->navigate($base . '/users/' . $userId . '/cg/point-history')
     ->assertNoJavaScriptErrors()
     ->assertSee('Point History')
@@ -30,7 +30,7 @@ it('shows the owner their own point history page', function () use ($base, $user
 });
 
 it('shows the owner their own slot history page', function () use ($base, $userId) {
-  visit($base . '/test-login/' . $userId)
+  visit(TestSeederConstants::loginUrl($userId))
     ->navigate($base . '/users/' . $userId . '/cg/slot-history')
     ->assertNoJavaScriptErrors()
     ->assertSee('Point History')
@@ -38,7 +38,7 @@ it('shows the owner their own slot history page', function () use ($base, $userI
 });
 
 it('lets staff view another user\'s point history', function () use ($base, $userId, $adminId) {
-  visit($base . '/test-login/' . $adminId)
+  visit(TestSeederConstants::loginUrl($adminId))
     ->navigate($base . '/users/' . $userId . '/cg/point-history')
     ->assertNoJavaScriptErrors()
     ->assertSee('Point History')
@@ -69,12 +69,12 @@ it('hides the private personal appearance page from guests unless they have its 
 });
 
 it('shows the owner and staff the private personal appearance too', function () use ($base, $userId, $adminId) {
-  visit($base . '/test-login/' . $userId)
+  visit(TestSeederConstants::loginUrl($userId))
     ->navigate($base . '/users/' . $userId . '/cg')
     ->assertSee('Personal Test Pony')
     ->assertSee('Private Test Pony');
 
-  visit($base . '/test-login/' . $adminId)
+  visit(TestSeederConstants::loginUrl($adminId))
     ->navigate($base . '/users/' . $userId . '/cg')
     ->assertSee('Private Test Pony');
 });
@@ -88,21 +88,21 @@ it('shows a personal appearance page with its color group', function () use ($ba
 });
 
 it('shows the point history with the seeded grant to the owner', function () use ($base, $userId) {
-  visit($base . '/test-login/' . $userId)
+  visit(TestSeederConstants::loginUrl($userId))
     ->navigate($base . '/users/' . $userId . '/cg/point-history')
     ->assertNoJavaScriptErrors()
     ->assertSee('Seeded contract test grant');
 });
 
 it('lets the owner open their private personal appearance page', function () use ($base, $userId) {
-  visit($base . '/test-login/' . $userId)
+  visit(TestSeederConstants::loginUrl($userId))
     ->navigate($base . '/users/' . $userId . '/cg/v/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID . '-Private-Test-Pony')
     ->assertNoJavaScriptErrors()
     ->assertSee('Private Test Pony');
 });
 
 it('lets staff give personal guide points from a user\'s profile', function () use ($base, $userId, $adminId) {
-  visit($base . '/test-login/' . $adminId)
+  visit(TestSeederConstants::loginUrl($adminId))
     ->navigate($base . '/users/' . $userId)
     ->assertNoJavaScriptErrors()
     ->click('#give-pcg-points')

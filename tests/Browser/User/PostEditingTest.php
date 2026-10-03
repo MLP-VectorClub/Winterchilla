@@ -2,12 +2,12 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('clears the broken status of a post from its edit dialog', function () use ($base) {
   $post = '#post-' . TestSeederConstants::BROKEN_UI_POST_ID;
 
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
     ->assertNoJavaScriptErrors()
     ->assertPresent("$post .broken-note")
@@ -20,7 +20,7 @@ it('clears the broken status of a post from its edit dialog', function () use ($
 it('replaces the image of a post from its edit dialog', function () use ($base) {
   $post = '#post-' . TestSeederConstants::POST_ID;
 
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
     ->click("$post .edit")
     ->click('#dialog-update-image')

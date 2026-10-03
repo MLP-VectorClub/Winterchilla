@@ -2,7 +2,7 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 $appearanceId = TestSeederConstants::APPEARANCE_ID;
 
 function fetch(string $url, ?string &$contentType = null):array {
@@ -24,7 +24,7 @@ it('shows the browser recognition page at its short URL', function () use ($base
   visit($base . '/browser')
     ->assertPathIs('/about/browser')
     ->assertSee('Browser recognition test page');
-});
+})->group('winterchilla-only');
 
 it('shows the guide-less blending tool', function () use ($base) {
   visit($base . '/blending')
@@ -51,7 +51,7 @@ it('lists events on a paginated URL', function () use ($base) {
 });
 
 it('shows the global logs on a paginated URL to staff', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/logs/1')
     ->assertNoJavaScriptErrors()
     ->assertSee('Global logs');
@@ -59,10 +59,10 @@ it('shows the global logs on a paginated URL to staff', function () use ($base) 
 
 it('denies the WebSocket diagnostics page to non-developers', function () use ($base) {
   visit($base . '/admin/wsdiag')->assertSee('403');
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/admin/wsdiag')
     ->assertSee('403');
-});
+})->group('winterchilla-only');
 
 it('exports an appearance in its file formats', function () use ($base, $appearanceId) {
   $prefix = $base . '/cg/pony/v/' . $appearanceId;
@@ -93,7 +93,7 @@ it('restricts the diagnostic pages to developers', function () use ($base) {
     expect($code)->toBe(403);
   }
 
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/diagnose/ex/runtime')
     ->assertSee('403');
-});
+})->group('winterchilla-only');

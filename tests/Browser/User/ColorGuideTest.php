@@ -2,7 +2,7 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base         = TestSeederConstants::BASE_URL;
+$base         = TestSeederConstants::baseUrl();
 $appearanceId = TestSeederConstants::APPEARANCE_ID;
 $cutiemarkId  = TestSeederConstants::CUTIEMARK_ID;
 
@@ -110,7 +110,7 @@ it('lets a user paste an image from the clipboard in the color picker', function
 });
 
 it('shows admin controls on appearance page when logged in as admin', function () use ($base, $appearanceId) {
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
     ->assertNoJavaScriptErrors()
     ->assertSee('Twilight Sparkle')
@@ -118,7 +118,7 @@ it('shows admin controls on appearance page when logged in as admin', function (
 });
 
 it('shows the new appearance button on guide page for admins', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony')
     ->assertNoJavaScriptErrors()
     ->assertSee('Friendship is Magic Color Guide');

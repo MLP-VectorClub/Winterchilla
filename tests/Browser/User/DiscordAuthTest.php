@@ -1,5 +1,8 @@
 <?php
 
+// Winterchilla's own fake OAuth provider / dialog test page: not applicable to another implementation (see TestSeederConstants::external())
+uses()->group('winterchilla-only');
+
 use Tests\Browser\Helpers\TestSeederConstants;
 
 /*
@@ -10,10 +13,10 @@ use Tests\Browser\Helpers\TestSeederConstants;
  * then both seeded users end up linked.
  */
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 function beginDiscordConnect(string $base, int $user_id) {
-  return visit($base . '/test-login/' . $user_id)
+  return visit(TestSeederConstants::loginUrl($user_id))
     ->navigate($base . '/discord-connect/begin')
     ->assertSee('Fake discord')
     ->assertSeeIn('[data-testid="oauth-scope"]', 'identify guilds');
@@ -33,7 +36,7 @@ it('leaves the account unlinked when the user denies access', function () use ($
 });
 
 it('ignores a callback whose state does not match the session', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/discord-connect/end?code=some-code&state=not-the-session-state')
     ->assertPathIs('/users/' . TestSeederConstants::ADMIN_ID . '/account')
     ->assertSeeIn('#discord-connect', 'Link your account');
@@ -65,7 +68,7 @@ it('links a Discord account that is a server member', function () use ($base) {
 });
 
 it('skips straight back to the account page when already linked', function () use ($base) {
-  visit($base . '/test-login/' . TestSeederConstants::USER_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/discord-connect/begin')
     ->assertPathIs('/users/' . TestSeederConstants::USER_ID . '/account')
     ->assertDontSee('Fake discord')

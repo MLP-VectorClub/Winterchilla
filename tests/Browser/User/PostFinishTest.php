@@ -4,13 +4,13 @@ use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\ClubGallery;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('reserves, finishes and approves a request from the episode page', function () use ($base) {
   $post = '#post-' . TestSeederConstants::POST_ID;
 
   try {
-    $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+    $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
       ->assertNoJavaScriptErrors()
       ->click("$post .reserve-request")

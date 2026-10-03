@@ -3,11 +3,13 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\AuthHelper;
 use Tests\Browser\Helpers\ServerManager;
+use Tests\Browser\Helpers\TestSeederConstants;
 
 uses(AuthHelper::class)
   ->beforeAll(function () {
-    // Contract tests pointed at another implementation of the API (see ApiClient) need none of Winterchilla's own server
-    if (ApiClient::external())
+    // Tests pointed at another implementation (CONTRACT_BASE_URL, see ApiClient, or UI_BASE_URL, see TestSeederConstants) need none of
+    // Winterchilla's own server
+    if (ApiClient::external() || TestSeederConstants::external())
       return;
 
     $root = dirname(__DIR__, 2);
@@ -20,7 +22,7 @@ uses(AuthHelper::class)
     ServerManager::start();
   })
   ->afterAll(function () {
-    if (ApiClient::external())
+    if (ApiClient::external() || TestSeederConstants::external())
       return;
     ServerManager::stop();
   })

@@ -3,11 +3,11 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('links an appearance to a show in the guide relations editor of an episode page', function () use ($base) {
   try {
-    visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
       ->assertNoJavaScriptErrors()
       ->assertMissing('section.appearances')
@@ -28,7 +28,7 @@ it('links a show to an appearance in the show relations editor of an appearance 
   $id = TestSeederConstants::APPEARANCE_ID;
 
   try {
-    visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id . '-Twilight-Sparkle')
       ->assertNoJavaScriptErrors()
       ->assertMissing('#related-shows p a')

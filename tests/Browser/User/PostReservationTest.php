@@ -2,12 +2,12 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('reserves a request and cancels the reservation from the episode page', function () use ($base) {
   $post = '#post-' . TestSeederConstants::POST_ID;
 
-  visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
     ->assertNoJavaScriptErrors()
     ->assertSee('Seeded Test Request')

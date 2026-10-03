@@ -3,7 +3,7 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('links two appearances to each other in the relations editor', function () use ($base) {
   $suffix = substr(md5(uniqid('', true)), 0, 5);
@@ -12,7 +12,7 @@ it('links two appearances to each other in the relations editor', function () us
   $b = $api->post('/appearances', ['guide' => 'pony', 'label' => "Relation Pony B $suffix"])['json']['id'];
 
   try {
-    visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $a)
       ->assertNoJavaScriptErrors()
       ->click('section.related .edit-appearance-relations')

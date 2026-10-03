@@ -3,7 +3,7 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 $appearance = $base . '/cg/pony/v/' . TestSeederConstants::APPEARANCE_ID . '-Twilight-Sparkle';
 
 it('edits and deletes a tag from the appearance page context menu', function () use ($base, $appearance) {
@@ -14,7 +14,7 @@ it('edits and deletes a tag from the appearance page context menu', function () 
   $tag = $api->post('/tags', ['name' => $name, 'type' => 'app', 'addTo' => TestSeederConstants::APPEARANCE_ID])['json'];
 
   try {
-    $page = visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+    $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($appearance)
       ->assertNoJavaScriptErrors()
       ->assertSee($name)

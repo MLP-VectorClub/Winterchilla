@@ -2,7 +2,7 @@
 
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('redirects /eqg/[id] to the movie page', function () use ($base) {
   visit($base . '/eqg/' . TestSeederConstants::MOVIE_ID)
@@ -35,22 +35,22 @@ it('shows the browser recognition page', function () use ($base) {
   visit($base . '/about/browser')
     ->assertNoJavaScriptErrors()
     ->assertSee('Browser recognition test page');
-});
+})->group('winterchilla-only');
 
 it('hides the browser recognition page of a session from non-developers', function () use ($base) {
   visit($base . '/about/browser/1')->assertSee('403');
-});
+})->group('winterchilla-only');
 
 it('shows the components page', function () use ($base) {
   visit($base . '/components')
     ->assertNoJavaScriptErrors()
     ->assertSee('Components');
-});
+})->group('winterchilla-only');
 
 it('serves the API docs page', function () use ($base) {
   visit($base . '/docs')
     ->assertSee('API');
-});
+})->group('winterchilla-only');
 
 it('serves the muffin rating image as an SVG', function () use ($base) {
   $ch = curl_init($base . '/muffin-rating?w=42');

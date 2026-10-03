@@ -1,8 +1,11 @@
 <?php
 
+// Winterchilla's own fake OAuth provider / dialog test page: not applicable to another implementation (see TestSeederConstants::external())
+uses()->group('winterchilla-only');
+
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 $page = $base . '/test-dialog';
 
 // ── Basic dialog types ────────────────────────────────────────────────────

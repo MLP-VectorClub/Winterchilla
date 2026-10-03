@@ -1,5 +1,8 @@
 <?php
 
+// Winterchilla's own fake OAuth provider / dialog test page: not applicable to another implementation (see TestSeederConstants::external())
+uses()->group('winterchilla-only');
+
 use Tests\Browser\Helpers\TestSeederConstants;
 
 /*
@@ -14,7 +17,7 @@ use Tests\Browser\Helpers\TestSeederConstants;
  * this IP blocked from signing in.
  */
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 function beginDeviantArtSignIn(string $base, string $return = '/cg') {
   return visit($base . '/da-auth/begin?return=' . rawurlencode($return))

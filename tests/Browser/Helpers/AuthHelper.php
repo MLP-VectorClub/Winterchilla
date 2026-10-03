@@ -4,8 +4,8 @@ namespace Tests\Browser\Helpers;
 
 trait AuthHelper {
   protected function loginAs(int $userId, string $path = '/'): mixed {
-    return visit(TestSeederConstants::BASE_URL . '/test-login/' . $userId)
-      ->navigate(TestSeederConstants::BASE_URL . $path);
+    return visit(TestSeederConstants::loginUrl($userId))
+      ->navigate(TestSeederConstants::baseUrl() . $path);
   }
 
   protected function loginAsAdmin(string $path = '/'): mixed {

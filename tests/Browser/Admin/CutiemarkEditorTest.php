@@ -3,7 +3,7 @@
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
-$base = TestSeederConstants::BASE_URL;
+$base = TestSeederConstants::baseUrl();
 
 it('renames a cutie mark in the cutie mark editor', function () use ($base) {
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
@@ -13,7 +13,7 @@ it('renames a cutie mark in the cutie mark editor', function () use ($base) {
   ]])]);
 
   try {
-    visit($base . '/test-login/' . TestSeederConstants::ADMIN_ID)
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id)
       ->assertNoJavaScriptErrors()
       ->assertSee('Before Editing')

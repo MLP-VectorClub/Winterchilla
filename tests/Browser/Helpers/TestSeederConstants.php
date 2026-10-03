@@ -3,7 +3,25 @@
 namespace Tests\Browser\Helpers;
 
 class TestSeederConstants {
+  /** Where Winterchilla's own test server listens (see ServerManager) */
   public const BASE_URL = 'http://127.0.0.1:8765';
+
+  /**
+   * The UI tests can be pointed at another implementation of the site (Celestia, backed by Luna) with UI_BASE_URL. It then needs the data of
+   * scripts/dump-contract-seed.sh behind it and a sign-in route matching UI_LOGIN_PATH (default `/test-login/{id}`): a GET that signs the
+   * user in and redirects. Winterchilla's own server and database are not started or reset in that case.
+   */
+  public static function external():bool {
+    return (getenv('UI_BASE_URL') ?: '') !== '';
+  }
+
+  public static function baseUrl():string {
+    return rtrim(self::external() ? getenv('UI_BASE_URL') : self::BASE_URL, '/');
+  }
+
+  public static function loginUrl(int $userId):string {
+    return self::baseUrl() . str_replace('{id}', (string)$userId, getenv('UI_LOGIN_PATH') ?: '/test-login/{id}');
+  }
   public const USER_ID = 9001;
   public const ADMIN_ID = 9002;
   // A regular user with no personal appearances, points or preferences: it has the defaults new users get

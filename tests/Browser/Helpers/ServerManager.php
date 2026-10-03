@@ -26,7 +26,16 @@ class ServerManager {
     // (Symfony Dotenv never overwrites variables that are already set)
     // opcache.revalidate_freq=0: a CLI opcache (if enabled) would otherwise keep serving stale code for
     // a while after an edit, so a re-run right after changing app code could test the old version
-    $args = ['-d', 'variables_order=EGPCS', '-d', 'opcache.revalidate_freq=0', '-S', $host, '-t', $docRoot];
+    $args = ['-d', 'variables_order=EGPCS', '-d', 'opcache.revalidate_freq=0'];
+    $coverageDir = getenv('COVERAGE_DIR');
+    if ($coverageDir !== false && $coverageDir !== '') {
+      // scripts/coverage.sh: measure the code the requests run (PCOV, merged with the unit test coverage afterwards)
+      $root = dirname(__DIR__, 3);
+      if (!extension_loaded('pcov'))
+        $args = [...$args, '-d', 'extension='.(getenv('PCOV_SO') ?: ($_SERVER['HOME'] ?? '').'/.local/lib/php/pcov.so')];
+      $args = [...$args, '-d', 'pcov.enabled=1', '-d', "pcov.directory=$root/app", '-d', 'auto_prepend_file='.__DIR__.'/coverage_prepend.php'];
+    }
+    $args = [...$args, '-S', $host, '-t', $docRoot];
     $env  = array_merge(getenv(), [
       // Test-only routes (test-login, the fake OAuth provider) and the test database, regardless of .env —
       // so a local dev site can keep TEST_MODE off in .env and talk to the real DeviantArt/Discord

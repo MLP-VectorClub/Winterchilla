@@ -23,3 +23,5 @@ conf.php
 /vendor
 .phpunit*.cache
 /tests/Browser/Screenshots
+/build
+/build-coverage.txt

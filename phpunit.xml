@@ -6,6 +6,11 @@
       <exclude>tests/Browser</exclude>
     </testsuite>
   </testsuites>
+  <source>
+    <include>
+      <directory>app</directory>
+    </include>
+  </source>
   <php>
     <server name="SERVER_NAME" value="mlpvector.lc"/>
     <server name="REQUEST_METHOD" value="GET"/>

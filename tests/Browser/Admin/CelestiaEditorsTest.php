@@ -49,7 +49,7 @@ it('links two appearances to each other in the related appearances dialog', func
       ->navigate($base . '/cg/pony/v/' . $a)
       ->assertNoJavaScriptErrors()
       ->click('button:text-is("Related")')
-      ->click(".list-group-item button:has-text(\"Relation Pony B $suffix\")")
+      ->click("button.list-group-item:has-text(\"Relation Pony B $suffix\")")
       ->click('[data-testid="dialog-btn-save"]')
       ->assertSee("Relation Pony B $suffix");
 
@@ -71,7 +71,7 @@ it('links a show to an appearance in the shows dialog and finds the appearance o
       ->navigate($base . '/cg/pony/v/' . $id)
       ->assertNoJavaScriptErrors()
       ->click('button:text-is("Shows")')
-      ->click('.list-group-item button:has-text("Friendship is Magic, Part 1")')
+      ->click('button.list-group-item:has-text("Friendship is Magic, Part 1")')
       ->click('[data-testid="dialog-btn-save"]')
       ->assertSee('Friendship is Magic, Part 1')
       ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
@@ -123,7 +123,7 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
       ->fill('#synonym-target', (string)$target['id'])
       ->click('[data-testid="dialog-btn-make-synonym"]')
       ->assertSeeIn($row, 'synonym of')
-      ->click("$row button:text-is(\"Unlink\")")
+      ->click("$row button:text-is(\"Unlink synonym\")")
       ->click('[data-testid="dialog-btn-confirm"]')
       ->assertDontSeeIn($row, 'synonym of');
   }

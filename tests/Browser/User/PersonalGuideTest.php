@@ -1,5 +1,6 @@
 <?php
 
+use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
 $base    = TestSeederConstants::baseUrl();
@@ -112,3 +113,20 @@ it('lets staff give personal guide points from a user\'s profile', function () u
     ->click('[data-testid="dialog-btn-confirm"]')
     ->assertSee("You've successfully given 15 points to TestUser");
 })->group('winterchilla-only');
+
+
+it('lets staff give personal guide points from a user\'s profile (inline form)', function () use ($base, $userId, $adminId) {
+  $admin = ApiClient::loggedInAs($adminId);
+  $before = $admin->get("/users/$userId/personal-guide/point-history", ['size' => 100])['json']['pagination']['totalItems'];
+
+  visit(TestSeederConstants::loginUrl($adminId))
+    ->navigate($base . '/users/' . $userId)
+    ->assertNoJavaScriptErrors()
+    ->fill('#staff-points', '15')
+    ->click('button:text-is("Apply")')
+    ->assertSee('points updated');
+
+  $entries = $admin->get("/users/$userId/personal-guide/point-history", ['size' => 100])['json'];
+  expect($entries['pagination']['totalItems'])->toBe($before + 1)
+    ->and($entries['entries'][0]['amount'])->toBe(15);
+})->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');

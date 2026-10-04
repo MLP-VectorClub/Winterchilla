@@ -37,7 +37,7 @@ it('gives a new user one personal guide appearance and then reports no slots lef
   finally {
     // Delete the appearance again (found through the API); the slot comes back
     $owner = ApiClient::loggedInAs($userId);
-    foreach ($owner->get("/users/$userId/personal-guide/appearances", ['size' => 100])['json']['appearances'] ?? [] as $appearance) {
+    foreach ($owner->get("/users/$userId/personal-guide/appearances", ['size' => 50])['json']['appearances'] ?? [] as $appearance) {
       if (($appearance['label'] ?? null) === $label)
         $owner->request('DELETE', '/appearances/' . $appearance['id']);
     }
@@ -83,7 +83,7 @@ it('gives a new user one personal guide appearance and then explains why the nex
   }
   finally {
     $owner = ApiClient::loggedInAs($userId);
-    foreach ($owner->get("/users/$userId/personal-guide/appearances", ['size' => 100])['json']['appearances'] ?? [] as $appearance) {
+    foreach ($owner->get("/users/$userId/personal-guide/appearances", ['size' => 50])['json']['appearances'] ?? [] as $appearance) {
       if (str_starts_with($appearance['label'] ?? '', $label))
         $owner->request('DELETE', '/appearances/' . $appearance['id']);
     }

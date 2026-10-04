@@ -117,7 +117,7 @@ it('lets staff give personal guide points from a user\'s profile', function () u
 
 it('lets staff give personal guide points from a user\'s profile (inline form)', function () use ($base, $userId, $adminId) {
   $admin = ApiClient::loggedInAs($adminId);
-  $before = $admin->get("/users/$userId/personal-guide/point-history", ['size' => 100])['json']['pagination']['totalItems'];
+  $before = $admin->get("/users/$userId/personal-guide/point-history", [])['json']['pagination']['totalItems'];
 
   visit(TestSeederConstants::loginUrl($adminId))
     ->navigate($base . '/users/' . $userId)
@@ -126,7 +126,7 @@ it('lets staff give personal guide points from a user\'s profile (inline form)',
     ->click('button:text-is("Apply")')
     ->assertSee('points updated');
 
-  $entries = $admin->get("/users/$userId/personal-guide/point-history", ['size' => 100])['json'];
+  $entries = $admin->get("/users/$userId/personal-guide/point-history")['json'];
   expect($entries['pagination']['totalItems'])->toBe($before + 1)
     ->and($entries['entries'][0]['amount'])->toBe(15);
 })->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');

@@ -28,7 +28,7 @@
     "cogpowered/finediff": "0.3.*",
     "doctrine/annotations": "^2.0",
     "doctrine/inflector": "^2.0",
-    "elasticsearch/elasticsearch": "^8.19",
+    "elasticsearch/elasticsearch": "^9.5",
     "enshrined/svg-sanitize": "^1.0",
     "erusev/parsedown": "^1.7",
     "ezyang/htmlpurifier": "^4.8",

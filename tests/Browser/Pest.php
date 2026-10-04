@@ -2,6 +2,7 @@
 
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\AuthHelper;
+use Tests\Browser\Helpers\Fixtures;
 use Tests\Browser\Helpers\ServerManager;
 use Tests\Browser\Helpers\TestSeederConstants;
 
@@ -9,8 +10,10 @@ uses(AuthHelper::class)
   ->beforeAll(function () {
     // Tests pointed at another implementation (CONTRACT_BASE_URL, see ApiClient, or UI_BASE_URL, see TestSeederConstants) need none of
     // Winterchilla's own server
-    if (ApiClient::external() || TestSeederConstants::external())
+    if (ApiClient::external() || TestSeederConstants::external()) {
+      Fixtures::seedExternalDeviations();
       return;
+    }
 
     $root = dirname(__DIR__, 2);
     $resetScript = $root . '/scripts/reset-test-db.sh';

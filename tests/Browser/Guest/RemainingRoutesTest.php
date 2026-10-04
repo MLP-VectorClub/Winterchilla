@@ -77,8 +77,8 @@ it('exports an appearance in its file formats', function () use ($base, $appeara
   $ch = curl_init($prefix . 'p.svg');
   curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true]);
   curl_exec($ch);
-  expect(curl_getinfo($ch, CURLINFO_HTTP_CODE))->toBe(302)
-    ->and(curl_getinfo($ch, CURLINFO_REDIRECT_URL))->toContain('.svg');
+  // Winterchilla redirects to the cache-busted image URL; Celestia proxies the image from the API
+  expect(curl_getinfo($ch, CURLINFO_HTTP_CODE))->toBeIn([200, 302]);
 
   [$code, $body] = fetch($prefix . 'f.svg', $type);
   expect($code)->toBe(200)->and($type)->toStartWith('image/svg+xml');

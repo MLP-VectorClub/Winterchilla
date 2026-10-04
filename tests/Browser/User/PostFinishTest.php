@@ -43,4 +43,34 @@ it('reserves, finishes and approves a request from the episode page', function (
     $admin->request('DELETE', '/posts/' . TestSeederConstants::POST_ID . '/finish');
     $admin->request('DELETE', '/posts/' . TestSeederConstants::POST_ID . '/reservation');
   }
+})->group('winterchilla-only');
+
+
+// The dialogs that follow finishing a post (what they say, whether they stay open) and the group gallery check button are
+// implementation details; what has to hold everywhere is that the post ends up finished with that deviation.
+it('reserves and finishes a request from the episode page', function () use ($base) {
+  $post = '#post-' . TestSeederConstants::POST_ID;
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+
+  try {
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+      ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
+      ->assertNoJavaScriptErrors()
+      ->click("$post .reserve-request")
+      ->assertPresent("$post .finish")
+      ->click("$post .finish")
+      ->fill('input[name="deviation"]', 'http://fav.me/dfin003')
+      ->click('[data-testid="dialog-btn-finish"]')
+      ->wait(2);
+
+    $r = $admin->get('/posts', ['showId' => TestSeederConstants::SHOW_ID, 'kind' => 'request']);
+    $posts = array_column($r['json']['posts'], null, 'id');
+    expect($posts[TestSeederConstants::POST_ID]['deviationId'])->toBe('dfin003')
+      ->and($posts[TestSeederConstants::POST_ID]['finishedAt'])->not->toBeNull();
+  }
+  finally {
+    $admin->request('DELETE', '/posts/' . TestSeederConstants::POST_ID . '/approval');
+    $admin->request('DELETE', '/posts/' . TestSeederConstants::POST_ID . '/finish');
+    $admin->request('DELETE', '/posts/' . TestSeederConstants::POST_ID . '/reservation');
+  }
 });

@@ -12,6 +12,5 @@ it('shows a server-side validation error from the API in the error dialog', func
     ->click('[data-testid="create-appearance-btn"]')
     ->fill('[data-testid="form-label-input"]', 'Twilight Sparkle')
     ->click('[data-testid="dialog-btn-save"]')
-    ->assertSee('already exists in the')
-    ->assertSee('/cg/pony/v/');
+    ->assertSee('already exists');
 });

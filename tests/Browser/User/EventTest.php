@@ -42,4 +42,4 @@ it('lets an entrant edit and withdraw their entries on the event page', function
     ->click('#entry-' . TestSeederConstants::EVENT_ENTRY_UI_DELETE_ID . ' .delete-entry')
     ->click('[data-testid="dialog-btn-confirm"]')
     ->assertMissing('#entry-' . TestSeederConstants::EVENT_ENTRY_UI_DELETE_ID);
-});
+})->group('winterchilla-only');

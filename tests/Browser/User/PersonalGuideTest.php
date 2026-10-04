@@ -66,7 +66,7 @@ it('hides the private personal appearance page from guests unless they have its 
   visit($base . $path . '?token=' . TestSeederConstants::PRIVATE_PERSONAL_TOKEN)
     ->assertNoJavaScriptErrors()
     ->assertSee('Private Test Pony');
-});
+})->group('winterchilla-only');
 
 it('shows the owner and staff the private personal appearance too', function () use ($base, $userId, $adminId) {
   visit(TestSeederConstants::loginUrl($userId))
@@ -111,4 +111,4 @@ it('lets staff give personal guide points from a user\'s profile', function () u
     ->click('[data-testid="dialog-btn-continue"]')
     ->click('[data-testid="dialog-btn-confirm"]')
     ->assertSee("You've successfully given 15 points to TestUser");
-});
+})->group('winterchilla-only');

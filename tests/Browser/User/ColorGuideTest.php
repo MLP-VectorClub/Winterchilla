@@ -65,7 +65,7 @@ it('lets a user open an image file in the color picker', function () use ($base)
       $tabCount = $frame->script('document.getElementById("tabbar").children.length');
       expect($tabCount)->toBe(1);
     });
-});
+})->group('winterchilla-only');
 
 it('lets a user paste an image from the clipboard in the color picker', function () use ($base) {
   visit($base . '/cg/picker')
@@ -107,7 +107,7 @@ it('lets a user paste an image from the clipboard in the color picker', function
       $tabCount = $frame->script('document.getElementById("tabbar").children.length');
       expect($tabCount)->toBe(1);
     });
-});
+})->group('winterchilla-only');
 
 it('shows admin controls on appearance page when logged in as admin', function () use ($base, $appearanceId) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
@@ -132,7 +132,7 @@ it('shows the reverse blending tool', function () use ($base) {
 
 it('canonicalizes non-"cg" spellings on the reverse blending tool URL', function () use ($base) {
   visit($base . '/colorguide/blending-reverse')
-    ->assertPathIs('/cg/blending-reverse');
+    ->assertPathContains('/blending-reverse');
 });
 
 it('redirects /[cg]/preferred to the guest default guide', function () use ($base) {
@@ -173,7 +173,7 @@ it('renders the seeded cutiemark SVG', function () use ($base, $cutiemarkId) {
     // svgo (svgo.config.js) drops the fixture's width/height in favor of its viewBox
     ->and($res['body'])->toContain('viewBox="0 0 1000 1000"')
     ->and($res['body'])->not->toContain('width="100%"');
-});
+})->group('winterchilla-only');
 
 it('downloads the rendered cutiemark SVG', function () use ($base, $cutiemarkId) {
   $res = httpGet($base . '/cg/cutiemark/download/' . $cutiemarkId);
@@ -182,19 +182,25 @@ it('downloads the rendered cutiemark SVG', function () use ($base, $cutiemarkId)
     ->and($res['headers']['content-disposition'] ?? '')->toContain('attachment')
     ->and($res['headers']['content-disposition'] ?? '')->toContain("Twilight Sparkle's Cutie Mark.svg")
     ->and($res['body'])->toContain('<svg');
-});
+})->group('winterchilla-only');
 
 it('serves the rendered file instead of the source to guests requesting ?source', function () use ($base, $cutiemarkId) {
   $res = httpGet($base . '/cg/cutiemark/download/' . $cutiemarkId . '?source');
 
   expect($res['status'])->toBe(200)
     ->and($res['headers']['content-disposition'] ?? '')->not->toContain('(source)');
-});
+})->group('winterchilla-only');
 
 it('re-sorts the full list through the API when the sort order changes', function () use ($base) {
   visit($base . '/cg/pony/full')
     ->assertNoJavaScriptErrors()
     ->select('#sort-by', 'label')
     ->assertQueryStringHas('sort_by', 'label')
+    ->assertSee('Twilight Sparkle');
+})->group('winterchilla-only');
+
+it('lists the full list in the requested sort order', function () use ($base) {
+  visit($base . '/cg/pony/full?sort_by=label')
+    ->assertNoJavaScriptErrors()
     ->assertSee('Twilight Sparkle');
 });

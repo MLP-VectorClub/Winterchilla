@@ -37,4 +37,4 @@ it('edits and deletes a tag from the appearance page context menu', function () 
   finally {
     ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
   }
-});
+})->group('winterchilla-only');

@@ -1,5 +1,6 @@
 <?php
 
+use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
 $base = TestSeederConstants::baseUrl();
@@ -18,6 +19,7 @@ it('clears the broken status of a post from its edit dialog', function () use ($
 });
 
 it('replaces the image of a post from its edit dialog', function () use ($base) {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $post = '#post-' . TestSeederConstants::POST_ID;
 
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
@@ -26,5 +28,10 @@ it('replaces the image of a post from its edit dialog', function () use ($base) 
     ->click('#dialog-update-image')
     ->fill('#img-update-form input[name="imageUrl"]', 'http://fav.me/dfin007')
     ->click('[data-testid="dialog-btn-update"]')
-    ->assertSee('Image has been updated');
+    ->wait(2);
+
+  // What the dialog says afterwards differs between implementations; the post must show the new image
+  $r = $admin->get('/posts', ['showId' => TestSeederConstants::SHOW_ID, 'kind' => 'request']);
+  $posts = array_column($r['json']['posts'], null, 'id');
+  expect($posts[TestSeederConstants::POST_ID]['previewUrl'])->toContain('dfin007');
 });

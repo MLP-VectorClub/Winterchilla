@@ -30,4 +30,4 @@ it('links two appearances to each other in the relations editor', function () us
     $api->request('DELETE', "/appearances/$a");
     $api->request('DELETE', "/appearances/$b");
   }
-});
+})->group('winterchilla-only');

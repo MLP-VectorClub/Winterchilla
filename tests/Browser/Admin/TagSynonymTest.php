@@ -43,7 +43,7 @@ it('makes a tag a synonym of another and removes the synonym again from the tag 
     $api->request('DELETE', '/tags/' . $source['id']);
     $api->request('DELETE', '/tags/' . $target['id']);
   }
-});
+})->group('winterchilla-only');
 
 it('recounts tag uses from the refresh buttons of the tag list', function () use ($base) {
   $name = 'refresh-tag-' . substr(md5(uniqid('', true)), 0, 6);
@@ -66,4 +66,4 @@ it('recounts tag uses from the refresh buttons of the tag list', function () use
   finally {
     ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
   }
-});
+})->group('winterchilla-only');

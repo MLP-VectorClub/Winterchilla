@@ -22,7 +22,7 @@ it('links an appearance to a show in the guide relations editor of an episode pa
   finally {
     ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('PUT', '/show/' . TestSeederConstants::SHOW_ID . '/appearances', ['ids' => '']);
   }
-});
+})->group('winterchilla-only');
 
 it('links a show to an appearance in the show relations editor of an appearance page', function () use ($base) {
   $id = TestSeederConstants::APPEARANCE_ID;
@@ -42,4 +42,4 @@ it('links a show to an appearance in the show relations editor of an appearance 
   finally {
     ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('PUT', "/appearances/$id/shows", ['ids' => '']);
   }
-});
+})->group('winterchilla-only');

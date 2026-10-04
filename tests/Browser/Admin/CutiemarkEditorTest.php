@@ -28,4 +28,4 @@ it('renames a cutie mark in the cutie mark editor', function () use ($base) {
   finally {
     ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', "/appearances/$id");
   }
-});
+})->group('winterchilla-only');

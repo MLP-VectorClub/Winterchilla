@@ -73,12 +73,12 @@ it('exports an appearance in its file formats', function () use ($base, $appeara
   [$code, $body] = fetch($prefix . '.gpl', $type);
   expect($code)->toBe(200)->and($body)->toContain('GIMP Palette');
 
-  // The preview SVG canonicalizes to its static /img/ URL, which the test server doesn't serve
+  // The preview SVG redirects to a cache-busted URL of the image (Winterchilla: its static /img/ file, which the test server doesn't serve)
   $ch = curl_init($prefix . 'p.svg');
   curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true]);
   curl_exec($ch);
   expect(curl_getinfo($ch, CURLINFO_HTTP_CODE))->toBe(302)
-    ->and(curl_getinfo($ch, CURLINFO_REDIRECT_URL))->toContain('/img/appearance_previews/' . $appearanceId . '.svg');
+    ->and(curl_getinfo($ch, CURLINFO_REDIRECT_URL))->toContain('.svg');
 
   [$code, $body] = fetch($prefix . 'f.svg', $type);
   expect($code)->toBe(200)->and($type)->toStartWith('image/svg+xml');

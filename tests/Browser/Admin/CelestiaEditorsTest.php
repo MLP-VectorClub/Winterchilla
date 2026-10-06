@@ -48,7 +48,7 @@ it('links two appearances to each other in the related appearances dialog', func
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $a)
       ->assertNoJavaScriptErrors()
-      ->click('button:text-is("Related")')
+      ->click('button.edit-appearance-relations')
       ->click("button.list-group-item:has-text(\"Relation Pony B $suffix\")")
       ->click('[data-testid="dialog-btn-save"]')
       ->assertSee("Relation Pony B $suffix");
@@ -70,7 +70,7 @@ it('links a show to an appearance in the shows dialog and finds the appearance o
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id)
       ->assertNoJavaScriptErrors()
-      ->click('button:text-is("Shows")')
+      ->click('button.edit-show-relations')
       ->click('button.list-group-item:has-text("Friendship is Magic, Part 1")')
       ->click('[data-testid="dialog-btn-save"]')
       ->assertSee('Friendship is Magic, Part 1')
@@ -85,19 +85,19 @@ it('links a show to an appearance in the shows dialog and finds the appearance o
 it('edits and deletes a tag from the tag list', function () use ($base) {
   $name = 'ui-tag-' . substr(md5(uniqid('', true)), 0, 6);
   $tag = adminApi()->post('/tags', ['name' => $name, 'type' => 'app', 'addTo' => TestSeederConstants::APPEARANCE_ID])['json'];
-  $row = "li:has-text(\"$name\")";
+  $row = "tr:has-text(\"$name\")";
 
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
       ->assertSee($name)
-      ->click("$row button:text-is(\"Edit\")")
+      ->click("$row button[title=\"Edit\"]")
       ->fill('#tag-name', $name . '-ed')
       ->click('[data-testid="dialog-btn-save"]')
       ->assertSee($name . '-ed')
       // A tag that is in use asks once before it is deleted
-      ->click("li:has-text(\"$name-ed\") button:text-is(\"Delete\")")
+      ->click("tr:has-text(\"$name-ed\") button[title=\"Delete\"]")
       ->click('[data-testid="dialog-btn-confirm"]')
       ->assertDontSee($name . '-ed');
   }
@@ -112,18 +112,18 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
   $api = adminApi();
   $source = $api->post('/tags', ['name' => $sourceName, 'type' => 'app'])['json'];
   $target = $api->post('/tags', ['name' => "syn-target-$suffix", 'type' => 'app'])['json'];
-  $row = "li:has-text(\"$sourceName\")";
+  $row = "tr:has-text(\"$sourceName\")";
 
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
       ->assertSee($sourceName)
-      ->click("$row button:text-is(\"Make synonym\")")
+      ->click("$row button[title=\"Make synonym\"]")
       ->fill('#synonym-target', (string)$target['id'])
       ->click('[data-testid="dialog-btn-make-synonym"]')
       ->assertSeeIn($row, 'synonym of')
-      ->click("$row button:text-is(\"Unlink synonym\")")
+      ->click("$row button[title=\"Unlink synonym\"]")
       ->click('[data-testid="dialog-btn-confirm"]')
       ->assertDontSeeIn($row, 'synonym of');
   }
@@ -137,14 +137,15 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
 it('recounts the uses of a tag from the tag list', function () use ($base) {
   $name = 'refresh-tag-' . substr(md5(uniqid('', true)), 0, 6);
   $tag = adminApi()->post('/tags', ['name' => $name, 'type' => 'app', 'addTo' => TestSeederConstants::APPEARANCE_ID])['json'];
-  $row = "li:has-text(\"$name\")";
+  $row = "tr:has-text(\"$name\")";
 
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
-      ->click("$row button:text-is(\"Recount\")")
-      ->assertSeeIn($row, '1 use');
+      ->click("$row button[title=\"Recount\"]")
+      // The uses column of the tag table
+      ->assertSeeIn("$row td.uses", '1');
   }
   finally {
     adminApi()->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);

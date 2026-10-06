@@ -6,8 +6,12 @@ use Tests\Browser\Helpers\TestSeederConstants;
 $base = TestSeederConstants::baseUrl();
 // A valid 300x300 PNG that is part of the site's sprite template generator
 $sprite = dirname(__DIR__, 3) . '/public/img/sprite_template/body_female.png';
+// Winterchilla opens the sprite's actions with a right click, Celestia has a "⋯" button for it
+$openSpriteMenu = fn($page) => TestSeederConstants::external()
+  ? $page->click('[aria-label="Sprite actions"]')
+  : $page->rightClick('[data-testid="sprite-wrap"]');
 
-it('uploads and removes a sprite image on an appearance page', function () use ($base, $sprite) {
+it('uploads and removes a sprite image on an appearance page', function () use ($base, $sprite, $openSpriteMenu) {
   $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
   $id = $api->post('/appearances', ['guide' => 'pony', 'label' => 'Sprite UI Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
 
@@ -20,9 +24,8 @@ it('uploads and removes a sprite image on an appearance page', function () use (
       ->attach('[data-testid="sprite-wrap"] input[type="file"]', $sprite)
       ->assertMissing('.upload-wrap.nosprite');
 
-    $page
-      ->rightClick('[data-testid="sprite-wrap"]')
-      ->click('a:text-is("Remove sprite image")')
+    $openSpriteMenu($page)
+      ->click('Remove sprite image')
       ->click('[data-testid="dialog-btn-confirm"]')
       ->assertPresent('.upload-wrap.nosprite');
   }

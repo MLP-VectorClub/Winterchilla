@@ -53,10 +53,11 @@ it('full color group lifecycle: create, edit, delete', function () use ($base, $
 });
 
 it('admin can open the sprite upload dialog', function () use ($base, $appearanceId) {
-  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+  $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
-    ->assertNoJavaScriptErrors()
-    ->rightClick('[data-testid="sprite-wrap"]')
+    ->assertNoJavaScriptErrors();
+  // Winterchilla opens the sprite's actions with a right click, Celestia has a "⋯" button for it
+  (TestSeederConstants::external() ? $page->click('[aria-label="Sprite actions"]') : $page->rightClick('[data-testid="sprite-wrap"]'))
     ->assertSee('Upload new sprite')
     ->click('Upload new sprite')
     ->assertSee('Upload sprite image');

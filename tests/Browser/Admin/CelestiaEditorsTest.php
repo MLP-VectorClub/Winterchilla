@@ -151,3 +151,99 @@ it('recounts the uses of a tag from the tag list', function () use ($base) {
     adminApi()->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
   }
 })->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('suggests tags while typing in the tag editor', function () use ($base) {
+  $name = 'zzsuggest-' . substr(md5(uniqid('', true)), 0, 6);
+  $tag = adminApi()->post('/tags', ['name' => $name, 'type' => 'app'])['json'];
+  $id = TestSeederConstants::APPEARANCE_ID;
+
+  try {
+    $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+      ->navigate($base . '/cg/pony/v/' . $id)
+      ->assertNoJavaScriptErrors()
+      ->click('button:text-is("Edit tags")')
+      // The field holds the appearance's tags, the tag being typed is the text between the commas around the caret
+      ->fill('textarea[id^="tags-"]', substr($name, 0, 9))
+      ->assertSee($name)
+      ->click("[role=listbox] button:has-text(\"$name\")");
+    $page->assertValue('textarea[id^="tags-"]', $name . ', ');
+  }
+  finally {
+    adminApi()->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
+  }
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('finds the synonym target of a tag by its name', function () use ($base) {
+  $suffix = substr(md5(uniqid('', true)), 0, 6);
+  $api = adminApi();
+  $source = $api->post('/tags', ['name' => "zzsyn-from-$suffix", 'type' => 'app'])['json'];
+  $target = $api->post('/tags', ['name' => "zzsyn-to-$suffix", 'type' => 'app'])['json'];
+  $row = "tr:has-text(\"zzsyn-from-$suffix\")";
+
+  try {
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+      ->navigate($base . '/cg/pony/tags')
+      ->assertNoJavaScriptErrors()
+      ->click("$row button[title=\"Make synonym\"]")
+      ->type('#synonym-target', "zzsyn-to-$suffix")
+      ->click("[role=listbox] button:has-text(\"zzsyn-to-$suffix\")")
+      ->click('[data-testid="dialog-btn-make-synonym"]')
+      ->assertSeeIn($row, 'synonym of');
+  }
+  finally {
+    $api = adminApi();
+    $api->request('DELETE', '/tags/' . $source['id']);
+    $api->request('DELETE', '/tags/' . $target['id']);
+  }
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('selectively wipes the notes of an appearance', function () use ($base) {
+  $api = adminApi();
+  $suffix = substr(md5(uniqid('', true)), 0, 5);
+  $id = $api->post('/appearances', ['guide' => 'pony', 'label' => "Wipe Pony $suffix", 'notes' => 'Notes to wipe'])['json']['id'];
+
+  try {
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+      ->navigate($base . '/cg/pony/v/' . $id)
+      ->assertNoJavaScriptErrors()
+      ->assertSee('Notes to wipe')
+      ->click('button:text-is("Edit metadata")')
+      ->click('button.selective-wipe')
+      ->click('#wipe-' . $id . '-wipeNotes')
+      ->click('[data-testid="dialog-btn-wipe"]')
+      ->click('[data-testid="dialog-btn-confirm"]')
+      ->assertDontSee('Notes to wipe');
+  }
+  finally {
+    adminApi()->request('DELETE', "/appearances/$id");
+  }
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('lists the shows that air soon in the sidebar', function () use ($base) {
+  $r = adminApi()->post('/show', ['type' => 'movie', 'title' => 'Sidebar Upcoming Movie', 'airs' => gmdate('Y-m-d H:i', time() + 3 * 86400)]);
+  expect(in_array($r['status'], [200, 201], true))->toBeTrue();
+  $id = $r['json']['id'] ?? $r['json']['show']['id'] ?? null;
+
+  try {
+    visit($base . '/cg')
+      ->assertNoJavaScriptErrors()
+      ->assertSee('Happening soon')
+      ->assertSee('Sidebar Upcoming Movie');
+  }
+  finally {
+    if ($id !== null)
+      adminApi()->request('DELETE', "/show/$id");
+  }
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('publishes the color guide as a file other tools can read', function () use ($base) {
+  $ch = curl_init($base . '/dist/mlpvc-colorguide.json');
+  curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true]);
+  $body = curl_exec($ch);
+  $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  expect($status)->toBe(200);
+  $json = json_decode((string)$body, true);
+  expect($json)->toHaveKeys(['Appearances', 'Tags']);
+
+  visit($base . '/cg')->assertSee('JSON Export');
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');

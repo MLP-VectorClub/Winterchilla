@@ -42,7 +42,7 @@ it('gives a new user one personal guide appearance and then reports no slots lef
         $owner->request('DELETE', '/appearances/' . $appearance['id']);
     }
   }
-})->group('winterchilla-only');
+});
 
 it('says when personal guide appearances are switched off for a user', function () use ($base, $userId) {
   pcgMake(false);
@@ -55,52 +55,4 @@ it('says when personal guide appearances are switched off for a user', function 
   finally {
     pcgMake(true);
   }
-})->group('winterchilla-only');
-
-
-// Celestia's versions: the create dialog has to be filled and saved before the API's answer (no slots, switched off) is shown in it.
-$notCelestia = fn() => !TestSeederConstants::external();
-
-it('gives a new user one personal guide appearance and then explains why the next one is refused', function () use ($base, $userId) {
-  $label = 'Fresh Pony ' . substr(md5(uniqid('', true)), 0, 5);
-
-  try {
-    $page = visit(TestSeederConstants::loginUrl($userId))
-      ->navigate($base . "/users/$userId/cg")
-      ->assertNoJavaScriptErrors()
-      ->click('#new-appearance-btn')
-      ->fill('[data-testid="form-label-input"]', $label)
-      ->click('[data-testid="dialog-btn-save"]')
-      ->assertPathContains('/cg/v/')
-      ->assertSee($label);
-
-    $page
-      ->navigate($base . "/users/$userId/cg")
-      ->click('#new-appearance-btn')
-      ->fill('[data-testid="form-label-input"]', $label . ' Two')
-      ->click('[data-testid="dialog-btn-save"]')
-      ->assertSee('enough slots');
-  }
-  finally {
-    $owner = ApiClient::loggedInAs($userId);
-    foreach ($owner->get("/users/$userId/personal-guide/appearances", ['size' => 50])['json']['appearances'] ?? [] as $appearance) {
-      if (str_starts_with($appearance['label'] ?? '', $label))
-        $owner->request('DELETE', '/appearances/' . $appearance['id']);
-    }
-  }
-})->skip($notCelestia, 'Celestia only')->group('celestia-only');
-
-it('explains when personal guide appearances are switched off for a user (create dialog)', function () use ($base, $userId) {
-  pcgMake(false);
-  try {
-    visit(TestSeederConstants::loginUrl($userId))
-      ->navigate($base . "/users/$userId/cg")
-      ->click('#new-appearance-btn')
-      ->fill('[data-testid="form-label-input"]', 'Switched Off Pony')
-      ->click('[data-testid="dialog-btn-save"]')
-      ->assertSee('not allowed to create');
-  }
-  finally {
-    pcgMake(true);
-  }
-})->skip($notCelestia, 'Celestia only')->group('celestia-only');
+});

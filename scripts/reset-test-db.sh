@@ -8,12 +8,19 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
+# A TEST_DB_NAME given in the environment wins over the one in .env (the suite passes it on, so it can run against another database)
+ENV_TEST_DB_NAME="${TEST_DB_NAME:-}"
+# TEST_SCHEMA=luna builds the tables with Luna's migrations (../Luna, or LUNA_DIR) instead of phinx, to check Winterchilla against the schema both
+# applications are meant to share
+TEST_SCHEMA="${TEST_SCHEMA:-winterchilla}"
+LUNA_DIR="${LUNA_DIR:-$PWD/../Luna}"
+
 # Load .env without exporting (just to read variables)
 set -a
 source .env
 set +a
 
-DB="${TEST_DB_NAME:-winterchilla_test}"
+DB="${ENV_TEST_DB_NAME:-${TEST_DB_NAME:-winterchilla_test}}"
 HOST="${DB_HOST:-localhost}"
 USER="${DB_USER:-winterchilla}"
 export PGPASSWORD="${DB_PASS}"
@@ -25,7 +32,11 @@ $PSQL -d postgres -c "DROP DATABASE IF EXISTS \"$DB\";"
 $PSQL -d postgres -c "CREATE DATABASE \"$DB\";"
 $PSQL -d "$DB" -f setup/create_extensions.pg.sql
 
-DB_NAME="$DB" vendor/bin/phinx migrate
+if [ "$TEST_SCHEMA" = "luna" ]; then
+  (cd "$LUNA_DIR" && DB_DATABASE="$DB" APP_CONFIG_CACHE="$(mktemp -u)" php artisan migrate --force | tail -1)
+else
+  DB_NAME="$DB" vendor/bin/phinx migrate
+fi
 DB_NAME="$DB" vendor/bin/phinx seed:run
 
 # Reset sequences so new rows don't collide with explicitly-seeded IDs. Appearances created by tests start at 900101: their

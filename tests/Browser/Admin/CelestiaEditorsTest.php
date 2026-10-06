@@ -143,7 +143,7 @@ it('recounts the uses of a tag from the tag list', function () use ($base) {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
-      ->click("$row button[title=\"Recount\"]")
+      ->click("$row button[title=\"Refresh use count\"]")
       // The uses column of the tag table
       ->assertSeeIn("$row td.uses", '1');
   }

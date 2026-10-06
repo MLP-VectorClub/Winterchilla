@@ -182,7 +182,8 @@ class PostAPIController extends APIController {
 
     $this->load_post($params, 'view');
 
-    if ($this->post->deviation_id === null){
+    // Read-only mode: the images are not checked, because a post whose image went missing would be marked broken (and merged / logged) right here
+    if (!CoreUtils::readOnly() && $this->post->deviation_id === null){
       $original_fullsize = $this->post->fullsize;
       $original_preview = $this->post->preview;
       $response_code = null;

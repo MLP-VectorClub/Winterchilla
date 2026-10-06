@@ -252,21 +252,47 @@ class User extends NSModel implements Linkable {
    */
   public function getPCGAvailablePoints(bool $throw = true):int {
     $slotcount = UserPrefs::get('pcg_slots', $this, true);
-    if ($slotcount === null)
-      $this->recalculatePCGSlotHistroy();
-
-    $slotcount = (int)UserPrefs::get('pcg_slots', $this, true);
+    if ($slotcount === null){
+      // Read-only mode: work the count out without storing the history or the preference
+      if (CoreUtils::readOnly())
+        $slotcount = $this->calculatePCGSlotPoints();
+      else {
+        $this->recalculatePCGSlotHistroy();
+        $slotcount = UserPrefs::get('pcg_slots', $this, true);
+      }
+    }
+    $slotcount = (int)$slotcount;
     if ($throw && $slotcount === 0)
       throw new NoPCGSlotsException();
 
     return $slotcount;
   }
 
+  /**
+   * What recalculatePCGSlotHistroy would store, without storing anything: the free slot, a point for every approved request of somebody else,
+   * minus a slot for every appearance of the personal guide and the manual grants
+   */
+  public function calculatePCGSlotPoints():int {
+    $points = PCGSlotHistory::DEFAULT_CHANGE['free'];
+    DB::$instance->where('requested_by', $this->id, '!=');
+    $points += count($this->getApprovedFinishedRequestContributions(false) ?: []) * PCGSlotHistory::DEFAULT_CHANGE['post'];
+    $points -= count($this->pcg_appearances) * PCGSlotHistory::DEFAULT_CHANGE['appearance'];
+    foreach (PCGPointGrant::find('all', ['conditions' => ['receiver_id' => $this->id]]) as $grant)
+      $points += $grant->amount;
+
+    return $points;
+  }
+
   public function syncPCGSlotCount() {
+    if (CoreUtils::readOnly())
+      return;
     UserPrefs::set('pcg_slots', PCGSlotHistory::sum($this->id), $this);
   }
 
   public function recalculatePCGSlotHistroy() {
+    if (CoreUtils::readOnly())
+      return;
+
     # Wipe old entries
     DB::$instance->where('user_id', $this->id)->delete(PCGSlotHistory::$table_name);
 

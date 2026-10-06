@@ -31,7 +31,8 @@ class AboutController extends Controller {
     if (!empty($browser['browser_name']))
       $browser['browser_class'] = CoreUtils::browserNameToClass($browser['browser_name']);
 
-    if ($session !== null){
+    // Read-only mode: the recognized browser of a session is not stored
+    if ($session !== null && !CoreUtils::readOnly()){
       $session->platform = $browser['platform'] ?? 'Unknown';
       $session->browser_name = $browser['browser_name'];
       $session->browser_ver = $browser['browser_ver'];

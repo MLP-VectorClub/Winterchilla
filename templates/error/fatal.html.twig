@@ -11,6 +11,8 @@
   {% set title = 'Configuration problem' %}
 {% elseif err_cause == 'maintenance' %}
   {% set title = 'Website Maintenance' %}
+{% elseif err_cause == 'readonly' %}
+  {% set title = 'Read-only' %}
 {% endif %}
 {% if title is defined %}
   {% set og = { title: title } %}
@@ -35,6 +37,10 @@
       <p>Started {{ time_tag(env('MAINTENANCE_START')) }}</p>
       <div class='notice info align-center'>
         <p><span class="typcn typcn-info-large"></span> The developer is currently performing some actions that require the site to be temporarily offline. We'll be back up and running as soon as possible, thank you for your understanding.</p>
+      </div>
+    {% elseif err_cause == 'readonly' %}
+      <div class='notice info align-center'>
+        <p><span class="typcn typcn-info-large"></span> This site is read-only now, signing in and changing things are not possible anymore.{% if env('READ_ONLY_URL') %} Please use <a href='{{ env('READ_ONLY_URL') }}'>{{ env('READ_ONLY_URL') }}</a> instead.{% endif %}</p>
       </div>
     {% endif %}
   </div>

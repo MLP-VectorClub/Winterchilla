@@ -97,6 +97,11 @@ class ApiClient {
     return $this->raw('GET', $path, accept: 'text/html')['body'];
   }
 
+  /** Like page(), with the status code too (and where a redirect ended up isn't followed) */
+  public function pageResponse(string $path):array {
+    return $this->raw('GET', $path, accept: 'text/html');
+  }
+
   /**
    * POSTs a multipart form with one uploaded file, e.g. a sprite image.
    */

@@ -1610,6 +1610,14 @@ class CoreUtils {
     return false;
   }
 
+  /**
+   * Read-only mode (`READ_ONLY=true`): the site only shows what the database holds. The database connection is switched to read-only, everything
+   * that would change something answers 503 and code that writes while a page is being viewed (sessions, caches, logs) has to skip it
+   */
+  public static function readOnly():bool {
+    return self::env('READ_ONLY') === true;
+  }
+
   public static function env(string $variable) {
     $value = $_ENV[$variable] ?? null;
     switch ($value){

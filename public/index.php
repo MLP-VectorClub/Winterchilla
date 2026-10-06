@@ -21,5 +21,18 @@ require CONFPATH.'routes/index.php';
 $match = $router->match($safe_uri);
 if (!isset($match['target']))
   CoreUtils::notFound();
+
+// Read-only mode: nothing that changes data is accepted (the test-only routes of the browser tests are the exception). Signing in writes a session
+// and, for a new member, an account, so the return addresses of the sign in providers are refused too
+if (CoreUtils::readOnly() && !str_starts_with($safe_uri, '/test-')){
+  $sign_in_return = preg_match('~^/(da-auth/end|discord-connect/end)(\?|$)~', $safe_uri) === 1;
+  if ($sign_in_return || !in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD', 'OPTIONS'], true)){
+    header('Retry-After: 3600');
+    if (CoreUtils::isJSONExpected())
+      \App\Response::error(503, 'This site is read-only now, nothing can be changed here anymore.', ['readOnly' => true]);
+    fatal_error('readonly');
+  }
+}
+
 RouteHelper::processHandler($match['target'], $match['params']);
 

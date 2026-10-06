@@ -1,4 +1,10 @@
 {# @var site_notices \App\Models\Notice[] #}
+{% if env('READ_ONLY') %}
+  <div class='notice warn align-center' id='read-only-notice'>
+    <span class='typcn typcn-lock-closed'></span> This site is read-only now, you can still look around but nothing can be changed.
+    {% if env('READ_ONLY_URL') %}Please use <a href='{{ env('READ_ONLY_URL') }}'>{{ env('READ_ONLY_URL') }}</a> instead.{% endif %}
+  </div>
+{% endif %}
 {% if site_notices is defined and site_notices is not empty %}
   {% for notice in site_notices %}
     <div class='notice {{ notice.type }}'>{{ notice.message }}</div>

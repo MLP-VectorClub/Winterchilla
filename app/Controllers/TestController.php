@@ -29,6 +29,10 @@ class TestController extends Controller {
     if ($user === null)
       HTTP::statusCode(404, AND_DIE);
 
+    // Test-only: signing in needs a session row even while the site is read-only
+    if (CoreUtils::readOnly())
+      \ActiveRecord\Connection::instance()->connection->exec('SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE');
+
     Session::delete_all(['conditions' => [
       "user_id = ? AND browser_name = 'Playwright-Test'",
       $user->id,

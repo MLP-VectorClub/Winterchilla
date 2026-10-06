@@ -145,6 +145,10 @@ class Session extends NSModel {
   }
 
   public function registerVisit() {
+    // Read-only mode: nothing is written while a page is viewed
+    if (CoreUtils::readOnly())
+      return;
+
     if (CoreUtils::tsDiff($this->last_visit) > Time::IN_SECONDS['minute']){
       $this->last_visit = date('c');
       $this->detectBrowser();
@@ -153,7 +157,7 @@ class Session extends NSModel {
   }
 
   public function refreshAccessToken() {
-    if ($this->updating === true)
+    if (CoreUtils::readOnly() || $this->updating === true)
       return;
 
     $this->updating = true;

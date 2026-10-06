@@ -71,6 +71,10 @@ class Users {
    * @throws Exception
    */
   public static function fetchDA(string $username):?DeviantartUser {
+    // Read-only mode: nobody can be added from a DeviantArt lookup
+    if (CoreUtils::readOnly())
+      return null;
+
     $via_previous_name = PreviousUsername::find_by_username($username);
     if (!empty($via_previous_name)){
       return $via_previous_name->user;

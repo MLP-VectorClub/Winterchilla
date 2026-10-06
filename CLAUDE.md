@@ -2,6 +2,15 @@
 
 PHP web app (MLP Vector Club) using DeviantArt OAuth2, Redis caching, ElasticSearch for the color guide.
 
+## Read-only mode (for the time after the move to Luna's database)
+
+`READ_ONLY=true` in `.env` (or the environment) turns the site into a viewer: it keeps showing what the database holds and refuses everything that would change it.
+- The database session is switched to read-only (`config/init/db_class.php`), so a write that slips through fails with SQLSTATE 25006 instead of changing data the other application also uses. For real protection give the site a database role that can only read: `DB_READ_USER` / `DB_READ_PASS` are used instead of `DB_USER` / `DB_PASS` when `READ_ONLY` is on (`CREATE ROLE winterchilla_ro LOGIN PASSWORD '…'; GRANT CONNECT ON DATABASE <db> TO winterchilla_ro; GRANT USAGE ON SCHEMA public TO winterchilla_ro; GRANT SELECT ON ALL TABLES IN SCHEMA public TO winterchilla_ro; GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO winterchilla_ro;`).
+- `public/index.php` answers every request that is not GET / HEAD / OPTIONS with 503 (`{"message", "readOnly": true}` for the API, a notice page otherwise), and the return addresses of the DeviantArt and Discord sign in (`/da-auth/end`, `/discord-connect/end`), which write a session or an account. The `/test-*` routes of the browser tests are the exception.
+- Code that writes while a page is viewed has to skip it with `CoreUtils::readOnly()`: `Session::registerVisit` / `refreshAccessToken`, the personal guide slot history (`User::recalculatePCGSlotHistroy`, `syncPCGSlotCount`; `getPCGAvailablePoints` works the number out in memory), `PostAPIController::reload` (would mark posts broken), `Users::fetchDA` (would add users), the browser recognition page. A new write on a GET route needs the same guard; `tests/Browser/ReadOnly` crawls the pages as guest, user and admin and fails when one answers 5xx.
+- `READ_ONLY_URL` (optional) is the address of the new site, shown in the notice at the top of every page and on the sign in refusal page.
+- Test: `scripts/ui-test-readonly.sh`. The normal suites are unaffected (the read-only tests skip themselves without `READ_ONLY=true`).
+
 ## UI test coverage plan (Celestia/Luna migration prep)
 
 **Goal:** 100% browser (e2e) test coverage of user-facing routes/functionality in this repo, built up

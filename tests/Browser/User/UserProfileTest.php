@@ -6,20 +6,20 @@ $base = TestSeederConstants::baseUrl();
 
 it('shows the profile page of the seeded regular user', function () use ($base) {
   visit($base . '/users/' . TestSeederConstants::USER_ID)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('TestUser');
 });
 
 it('shows the profile page of the seeded admin user', function () use ($base) {
   visit($base . '/users/' . TestSeederConstants::ADMIN_ID)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('TestAdmin');
 });
 
 it('shows own account settings when logged in', function () use ($base) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/users/' . TestSeederConstants::USER_ID . '/account')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     // A fatal renders a bare 500 without the words "Fatal error", so assert real page content
     ->assertSee('Account Settings')
     ->assertSee('DeviantArt Account');
@@ -32,12 +32,12 @@ it('shows 403 to guests on account settings', function () use ($base) {
 
 it('lists club members for guests and all users for staff', function () use ($base) {
   visit($base . '/users')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Club Members');
 
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/users')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('TestUser')
     ->assertSee('TestAdmin');
 });
@@ -53,7 +53,7 @@ it('hides /u/[uuid] from guests and non-developers', function () use ($base) {
 
 it('shows a contributions tab', function () use ($base) {
   visit($base . '/users/' . TestSeederConstants::USER_ID . '/contrib/cms-provided')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Cutie Mark vectors provided by')
     ->assertSee('TestUser');
 });
@@ -70,18 +70,18 @@ it('only shows the requests contributions tab to its owner and staff', function 
 
   visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($url)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Requests posted by');
 
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($url)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Requests posted by');
 });
 
 it('renders the email verification page', function () use ($base) {
   visit($base . '/users/verify?hash=abc123')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Verify E-mail Address');
 
   visit($base . '/users/verify?hash=abc123&action=block')
@@ -101,7 +101,7 @@ it('redirects a legacy @username URL to the user ID URL', function () use ($base
 it('lazy-loads deviation previews on a contributions page through the API', function () use ($base) {
   // The seeded finished post's deviation is cached, so its preview link comes back from the API
   visit($base . '/users/' . TestSeederConstants::ADMIN_ID . '/contrib/finished-posts')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     // The promise placeholder is replaced once the API has answered (a failure would show an error dialog instead)
     ->assertMissing('.deviation-promise')
     ->assertDontSee('Cannot load deviation');

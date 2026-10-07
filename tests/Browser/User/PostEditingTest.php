@@ -10,7 +10,7 @@ it('clears the broken status of a post from its edit dialog', function () use ($
 
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertPresent("$post .broken-note")
     ->click("$post .edit")
     ->click('#dialog-clear-broken-status')

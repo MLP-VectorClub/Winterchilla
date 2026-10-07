@@ -8,7 +8,7 @@ it('lets a signed-in user rate an aired episode from its page', function () use 
   // The admin hasn't voted on the seeded episode (the API tests vote as the regular user)
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('#voting .rate')
     ->click('#star-rating .rate label:nth-child(4)')
     ->click('[data-testid="dialog-btn-rate"]')

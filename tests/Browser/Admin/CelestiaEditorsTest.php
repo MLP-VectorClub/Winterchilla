@@ -25,7 +25,7 @@ it('renames a cutie mark in the cutie marks dialog', function () use ($base) {
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertSee('Before Editing')
       ->click('button:text-is("Cutie marks")')
       ->fill('input[id$="-label"]', 'After Editing')
@@ -47,7 +47,7 @@ it('links two appearances to each other in the related appearances dialog', func
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $a)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->click('button.edit-appearance-relations')
       ->click("button.list-group-item:has-text(\"Relation Pony B $suffix\")")
       ->click('[data-testid="dialog-btn-save"]')
@@ -69,7 +69,7 @@ it('links a show to an appearance in the shows dialog and finds the appearance o
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->click('button.edit-show-relations')
       ->click('button.list-group-item:has-text("Friendship is Magic, Part 1")')
       ->click('[data-testid="dialog-btn-save"]')
@@ -90,7 +90,7 @@ it('edits and deletes a tag from the tag list', function () use ($base) {
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertSee($name)
       ->click("$row button[aria-label=\"Edit\"]")
       ->fill('#tag-name', $name . '-ed')
@@ -117,7 +117,7 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertSee($sourceName)
       ->click("$row button[aria-label=\"Make synonym\"]")
       ->fill('#synonym-target', (string)$target['id'])
@@ -142,7 +142,7 @@ it('recounts the uses of a tag from the tag list', function () use ($base) {
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->click("$row button[aria-label=\"Refresh use count\"]")
       // The uses column of the tag table
       ->assertSeeIn("$row td.uses", '1');
@@ -160,7 +160,7 @@ it('suggests tags while typing in the tag editor', function () use ($base) {
   try {
     $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->click('button:text-is("Edit tags")')
       // The field holds the appearance's tags, the tag being typed is the text between the commas around the caret
       ->fill('textarea[id^="tags-"]', substr($name, 0, 9))
@@ -183,7 +183,7 @@ it('finds the synonym target of a tag by its name', function () use ($base) {
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->click("$row button[aria-label=\"Make synonym\"]")
       ->type('#synonym-target', "zzsyn-to-$suffix")
       ->click("[role=listbox] button:has-text(\"zzsyn-to-$suffix\")")
@@ -205,7 +205,7 @@ it('selectively wipes the notes of an appearance', function () use ($base) {
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertSee('Notes to wipe')
       ->click('button:text-is("Edit metadata")')
       ->click('button.selective-wipe')
@@ -226,7 +226,7 @@ it('lists the shows that air soon in the sidebar', function () use ($base) {
 
   try {
     visit($base . '/cg')
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertSee('Happening soon')
       ->assertSee('Sidebar Upcoming Movie');
   }

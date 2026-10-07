@@ -32,14 +32,14 @@ function httpGet(string $url): array {
 
 it('shows the seeded appearance detail page', function () use ($base, $appearanceId) {
   visit($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Twilight Sparkle')
     ->assertSee('Twilight Sparkle');
 });
 
 it('shows the pony color guide change list', function () use ($base) {
   visit($base . '/cg/pony/changes')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Major Friendship is Magic Color Changes')
     ->assertSee('Seeded newest major change')
     ->assertSee('Seeded older major change');
@@ -47,7 +47,7 @@ it('shows the pony color guide change list', function () use ($base) {
 
 it('shows the color picker tool', function () use ($base) {
   visit($base . '/cg/picker')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertTitleContains('Color Picker');
 });
 
@@ -55,12 +55,12 @@ it('lets a user open an image file in the color picker', function () use ($base)
   $fixture = realpath(__DIR__ . '/../fixtures/picker-sample.png');
 
   visit($base . '/cg/picker')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->wait(1)
     ->withinFrame('#picker-frame', function ($frame) use ($fixture) {
       $frame->attach('.fileinput', $fixture)
         ->wait(1)
-        ->assertNoJavaScriptErrors();
+        ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '');
 
       $tabCount = $frame->script('document.getElementById("tabbar").children.length');
       expect($tabCount)->toBe(1);
@@ -69,13 +69,13 @@ it('lets a user open an image file in the color picker', function () use ($base)
 
 it('lets a user paste an image from the clipboard in the color picker', function () use ($base) {
   visit($base . '/cg/picker')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->wait(1)
     ->withinFrame('#picker-frame', function ($frame) {
       $frame->click('File')
         ->click('#paste-image')
         ->wait(1)
-        ->assertNoJavaScriptErrors();
+        ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '');
 
       // Simulate an OS clipboard paste of an image, the same way the
       // browser dispatches a "paste" ClipboardEvent on Ctrl+V.
@@ -102,7 +102,7 @@ it('lets a user paste an image from the clipboard in the color picker', function
       expect($result)->toBeTrue();
 
       $frame->wait(1)
-        ->assertNoJavaScriptErrors();
+        ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '');
 
       $tabCount = $frame->script('document.getElementById("tabbar").children.length');
       expect($tabCount)->toBe(1);
@@ -112,7 +112,7 @@ it('lets a user paste an image from the clipboard in the color picker', function
 it('shows admin controls on appearance page when logged in as admin', function () use ($base, $appearanceId) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Twilight Sparkle')
     ->assertSee('Twilight Sparkle');
 });
@@ -120,13 +120,13 @@ it('shows admin controls on appearance page when logged in as admin', function (
 it('shows the new appearance button on guide page for admins', function () use ($base) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Friendship is Magic Color Guide');
 });
 
 it('shows the reverse blending tool', function () use ($base) {
   visit($base . '/cg/blending-reverse')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Blending Reverser');
 });
 
@@ -157,7 +157,7 @@ it('404s downloading a cutiemark that does not exist', function () use ($base) {
 
 it('lists the seeded cutiemark on the appearance page', function () use ($base, $appearanceId, $cutiemarkId) {
   visit($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Cutie Mark')
     ->assertPresent('#cm' . $cutiemarkId)
     ->assertSeeIn('#cm' . $cutiemarkId, 'Facing Left');
@@ -193,7 +193,7 @@ it('serves the rendered file instead of the source to guests requesting ?source'
 
 it('re-sorts the full list through the API when the sort order changes', function () use ($base) {
   visit($base . '/cg/pony/full')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->select('#sort-by', 'label')
     ->assertQueryStringHas('sort_by', 'label')
     ->assertSee('Twilight Sparkle');
@@ -201,6 +201,6 @@ it('re-sorts the full list through the API when the sort order changes', functio
 
 it('lists the full list in the requested sort order', function () use ($base) {
   visit($base . '/cg/pony/full?sort_by=label')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Twilight Sparkle');
 });

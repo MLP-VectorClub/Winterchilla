@@ -7,13 +7,13 @@ $eventId = TestSeederConstants::EVENT_ID;
 
 it('shows the events list page', function () use ($base) {
   visit($base . '/events')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Events Archive');
 });
 
 it('shows the seeded event detail page', function () use ($base, $eventId) {
   visit($base . '/event/' . $eventId)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Test Coloring Event')
     ->assertSee('Seeded Entry');
 });
@@ -21,7 +21,7 @@ it('shows the seeded event detail page', function () use ($base, $eventId) {
 it('shows event detail for a logged-in user', function () use ($base, $eventId) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/event/' . $eventId)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Test Coloring Event')
     ->assertSee('Test Coloring Event');
 });
@@ -29,7 +29,7 @@ it('shows event detail for a logged-in user', function () use ($base, $eventId) 
 it('lets an entrant edit and withdraw their entries on the event page', function () use ($base, $eventId) {
   $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/event/' . $eventId)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     // Edit: the form is filled from the API, saving swaps in the list item it returns
     ->click('#entry-' . TestSeederConstants::EVENT_ENTRY_ID . ' .edit-entry')
     ->assertValue('input[name="title"]', 'Seeded Entry')

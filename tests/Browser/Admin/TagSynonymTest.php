@@ -18,7 +18,7 @@ it('makes a tag a synonym of another and removes the synonym again from the tag 
   try {
     $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertSee($sourceName)
       // Make the source tag a synonym of the target
       ->click("tr:has-text(\"$sourceName\") button.synon")
@@ -53,7 +53,7 @@ it('recounts tag uses from the refresh buttons of the tag list', function () use
   try {
     $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       // One tag: its own refresh button updates the count in place
       ->click("tr:has-text(\"$name\") button.refresh")
       ->assertSeeIn("tr:has-text(\"$name\") td.uses", '1');

@@ -6,20 +6,20 @@ $base = TestSeederConstants::baseUrl();
 
 it('shows the episode list page', function () use ($base) {
   visit($base . '/show')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('TV Episodes');
 });
 
 it('shows the seeded episode page', function () use ($base) {
   visit($base . '/episode/' . TestSeederConstants::SHOW_ID)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Friendship is Magic, Part 1');
 });
 
 it('shows the seeded episode page to a logged-in user', function () use ($base) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::USER_ID))
     ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Friendship is Magic, Part 1');
 });
 
@@ -30,7 +30,7 @@ it('redirects /episode/latest to a real episode', function () use ($base) {
 
 it('lists the seeded episode and movie in their own tables on /show', function () use ($base) {
   visit($base . '/show')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSeeIn('#episodes', 'Friendship is Magic, Part 1')
     ->assertSeeIn('#movies', 'Equestria Girls')
     ->assertDontSeeIn('#movies', 'Friendship is Magic, Part 1');
@@ -45,7 +45,7 @@ it('redirects /movies to /show', function () use ($base) {
 it('shows the seeded movie page at its canonical URL', function () use ($base) {
   visit($base . '/movie/' . TestSeederConstants::MOVIE_ID)
     ->assertPathIs('/movie/' . TestSeederConstants::MOVIE_ID . '-Equestria-Girls')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Equestria Girls')
     ->assertSee('Equestria Girls');
 });
@@ -63,7 +63,7 @@ it('404s for a show entry that does not exist', function () use ($base) {
 it('shows show-entry admin controls on /show for staff', function () use ($base) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/show')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertPresent('#add-show')
     ->assertPresent('#movies .edit-show')
     ->assertPresent('#movies .delete-show');

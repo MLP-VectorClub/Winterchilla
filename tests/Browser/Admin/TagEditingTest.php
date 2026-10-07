@@ -16,7 +16,7 @@ it('edits and deletes a tag from the appearance page context menu', function () 
   try {
     $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($appearance)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertSee($name)
       ->rightClick(".tag.id-{$tag['id']}")
       ->click('a:text-is("Edit tag")')

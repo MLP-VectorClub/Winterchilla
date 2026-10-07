@@ -18,7 +18,7 @@ it('uploads and removes a sprite image on an appearance page', function () use (
   try {
     $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertPresent('.upload-wrap.nosprite')
       // The uploader is a hidden file input inside the sprite wrapper
       ->attach('[data-testid="sprite-wrap"] input[type="file"]', $sprite)

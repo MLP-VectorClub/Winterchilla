@@ -28,13 +28,13 @@ it('shows the browser recognition page at its short URL', function () use ($base
 
 it('shows the guide-less blending tool', function () use ($base) {
   visit($base . '/blending')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Blending');
 });
 
 it('shows the color picker frame', function () use ($base) {
   visit($base . '/cg/picker/frame')
-    ->assertNoJavaScriptErrors();
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '');
   [$code] = fetch($base . '/cg/picker/frame');
   expect($code)->toBe(200);
 });
@@ -46,14 +46,14 @@ it('lists episodes and movies on paginated URLs', function () use ($base) {
 
 it('lists events on a paginated URL', function () use ($base) {
   visit($base . '/events/1')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Events Archive');
 });
 
 it('shows the global logs on a paginated URL to staff', function () use ($base) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/logs/1')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Global logs');
 });
 

@@ -15,7 +15,7 @@ it('renames a cutie mark in the cutie mark editor', function () use ($base) {
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertSee('Before Editing')
       ->click('[data-testid="edit-appearance-btn"]')
       ->click('.cg-cm-editor')

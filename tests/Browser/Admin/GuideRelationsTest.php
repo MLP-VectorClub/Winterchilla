@@ -9,7 +9,7 @@ it('links an appearance to a show in the guide relations editor of an episode pa
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertMissing('section.appearances')
       ->click('#cg-relations')
       ->select('#guide-relation-editor .split-select:last-child select', (string)TestSeederConstants::APPEARANCE_ID)
@@ -30,7 +30,7 @@ it('links a show to an appearance in the show relations editor of an appearance 
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $id . '-Twilight-Sparkle')
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->assertMissing('#related-shows p a')
       ->click('.edit-show-relations')
       ->select('#show-relation-editor .split-select:last-child select', (string)TestSeederConstants::SHOW_ID)

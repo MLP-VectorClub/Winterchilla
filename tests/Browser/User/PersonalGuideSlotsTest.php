@@ -20,7 +20,7 @@ it('gives a new user one personal guide appearance and then reports no slots lef
   try {
     $page = visit(TestSeederConstants::loginUrl($userId))
       ->navigate($base . "/users/$userId/cg")
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       // The free slot lets the editor open, and saving takes the user to the new appearance's page
       ->click('#new-appearance-btn')
       ->fill('[data-testid="form-label-input"]', $label)

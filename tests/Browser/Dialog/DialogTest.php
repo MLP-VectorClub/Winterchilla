@@ -12,7 +12,7 @@ $page = $base . '/test-dialog';
 
 it('fail dialog opens with correct content and close button', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-fail"]')
     ->assertSee('Error Title')
     ->assertSee('Error message content')
@@ -23,7 +23,7 @@ it('fail dialog opens with correct content and close button', function () use ($
 
 it('success dialog opens with close button', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-success"]')
     ->assertSee('Success Title')
     ->assertSee('Success message')
@@ -32,7 +32,7 @@ it('success dialog opens with close button', function () use ($page) {
 
 it('wait dialog appends ellipsis to content', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-wait"]')
     ->assertSee('Please hold…')
     ->assertScript('$.Dialog._open.type === "wait"');
@@ -40,7 +40,7 @@ it('wait dialog appends ellipsis to content', function () use ($page) {
 
 it('request dialog has submit and cancel buttons', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->assertVisible('[data-testid="dialog-btn-cancel"]')
@@ -49,7 +49,7 @@ it('request dialog has submit and cancel buttons', function () use ($page) {
 
 it('request dialog callback receives the form element', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->assertScript('window.__lastRequestForm !== undefined')
@@ -59,7 +59,7 @@ it('request dialog callback receives the form element', function () use ($page) 
 
 it('confirm dialog has confirm and cancel buttons', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-confirm"]')
     ->assertSee('Confirm Title')
     ->assertSee('Are you sure?')
@@ -69,7 +69,7 @@ it('confirm dialog has confirm and cancel buttons', function () use ($page) {
 
 it('confirm dialog calls handler with true when confirmed', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-confirm"]')
     ->assertVisible('[data-testid="dialog-btn-confirm"]')
     ->click('[data-testid="dialog-btn-confirm"]')
@@ -78,7 +78,7 @@ it('confirm dialog calls handler with true when confirmed', function () use ($pa
 
 it('confirm dialog calls handler with false when cancelled', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-confirm"]')
     ->assertVisible('[data-testid="dialog-btn-cancel"]')
     ->click('[data-testid="dialog-btn-cancel"]')
@@ -87,7 +87,7 @@ it('confirm dialog calls handler with false when cancelled', function () use ($p
 
 it('info dialog opens with close button', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-info"]')
     ->assertSee('Info Title')
     ->assertSee('Info message')
@@ -98,7 +98,7 @@ it('info dialog opens with close button', function () use ($page) {
 
 it('isOpen returns true while open and false after close', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertScript('$.Dialog.isOpen() === false')
     ->click('[data-testid="trigger-info"]')
     ->assertVisible('[data-testid="dialog-btn-close"]')
@@ -109,7 +109,7 @@ it('isOpen returns true while open and false after close', function () use ($pag
 
 it('_open reflects dialog type and is undefined when closed', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertScript('$.Dialog._open === undefined')
     ->click('[data-testid="trigger-fail"]')
     ->assertVisible('[data-testid="dialog-btn-close"]')
@@ -120,7 +120,7 @@ it('_open reflects dialog type and is undefined when closed', function () use ($
 
 it('dialog overlay is removed from DOM after close', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-info"]')
     ->assertVisible('#dialogOverlay')
     ->click('[data-testid="dialog-btn-close"]')
@@ -129,7 +129,7 @@ it('dialog overlay is removed from DOM after close', function () use ($page) {
 
 it('body gets dialog-open class when open and loses it on close', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-info"]')
     ->assertVisible('[data-testid="dialog-btn-close"]')
     ->assertScript('document.body.classList.contains("dialog-open")')
@@ -141,7 +141,7 @@ it('body gets dialog-open class when open and loses it on close', function () us
 
 it('inline fail notice appears inside open request dialog', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request-for-inline"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->click('[data-testid="dialog-trigger-inline-fail"]')
@@ -152,7 +152,7 @@ it('inline fail notice appears inside open request dialog', function () use ($pa
 
 it('inline wait notice appears inside open request dialog', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request-for-inline"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->click('[data-testid="dialog-trigger-inline-wait"]')
@@ -162,7 +162,7 @@ it('inline wait notice appears inside open request dialog', function () use ($pa
 
 it('inline wait notice disables dialog buttons', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request-for-inline"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->click('[data-testid="dialog-trigger-inline-wait"]')
@@ -172,7 +172,7 @@ it('inline wait notice disables dialog buttons', function () use ($page) {
 
 it('clearNotice hides the inline notice', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request-for-inline"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->click('[data-testid="dialog-trigger-inline-fail"]')
@@ -184,7 +184,7 @@ it('clearNotice hides the inline notice', function () use ($page) {
 
 it('clearNotice re-enables buttons after clearing a wait notice', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request-for-inline"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->click('[data-testid="dialog-trigger-inline-wait"]')
@@ -198,7 +198,7 @@ it('clearNotice re-enables buttons after clearing a wait notice', function () us
 
 it('colored dialog applies color class to content area', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-confirm"]')
     ->assertVisible('[data-testid="dialog-btn-confirm"]')
     ->assertScript('document.querySelector("#dialogContent > div").classList.contains("orange")');
@@ -206,7 +206,7 @@ it('colored dialog applies color class to content area', function () use ($page)
 
 it('inline notice is placed inside content div not as a direct child of dialogContent', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request-for-inline"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->click('[data-testid="dialog-trigger-inline-fail"]')
@@ -217,7 +217,7 @@ it('inline notice is placed inside content div not as a direct child of dialogCo
 
 it('inline fail with title updates the dialog header', function () use ($page) {
   visit($page)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="trigger-request-for-inline"]')
     ->assertVisible('[data-testid="dialog-btn-submit"]')
     ->click('[data-testid="dialog-trigger-inline-fail-titled"]')

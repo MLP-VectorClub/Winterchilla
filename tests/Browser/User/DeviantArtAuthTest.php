@@ -30,7 +30,7 @@ it('signs in a new DeviantArt user and creates their account', function () use (
     ->fill('[data-testid="oauth-da-username"]', 'OAuthNewUser')
     ->click('[data-testid="oauth-approve"]')
     ->assertPathIs('/cg')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSeeIn('.logged-in .user-name', 'OAuthNewUser')
     ->navigate($base . '/users')
     ->assertSee('OAuthNewUser');

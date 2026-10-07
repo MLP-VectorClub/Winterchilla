@@ -6,7 +6,7 @@ $base = TestSeederConstants::baseUrl();
 
 it('redirects /eqg/[id] to the movie page', function () use ($base) {
   visit($base . '/eqg/' . TestSeederConstants::MOVIE_ID)
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertPathBeginsWith('/movie/' . TestSeederConstants::MOVIE_ID)
     ->assertSee('Equestria Girls');
 });
@@ -21,7 +21,7 @@ it('redirects /eqg/[name] to the movie slug URL', function () use ($base) {
 
 it('redirects a post share link to the post on its show page', function () use ($base) {
   visit($base . '/s/' . base_convert((string)TestSeederConstants::POST_ID, 10, 36))
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Seeded Test Request');
 });
 
@@ -33,7 +33,7 @@ it('404s on unknown or malformed share links', function () use ($base) {
 
 it('shows the browser recognition page', function () use ($base) {
   visit($base . '/about/browser')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Browser recognition test page');
 })->group('winterchilla-only');
 
@@ -43,7 +43,7 @@ it('hides the browser recognition page of a session from non-developers', functi
 
 it('shows the components page', function () use ($base) {
   visit($base . '/components')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Components');
 })->group('winterchilla-only');
 

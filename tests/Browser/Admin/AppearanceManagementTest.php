@@ -10,7 +10,7 @@ it('full appearance lifecycle: create, tag, edit, delete', function () use ($bas
   // Create
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('[data-testid="create-appearance-btn"]')
     ->fill('[data-testid="form-label-input"]', $uniqueLabel)
     ->click('[data-testid="dialog-btn-save"]')
@@ -32,7 +32,7 @@ it('full appearance lifecycle: create, tag, edit, delete', function () use ($bas
 it('full color group lifecycle: create, edit, delete', function () use ($base, $appearanceId) {
   visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     // Create color group
     ->click('[data-testid="create-colorgroup-btn"]')
     ->fill('[data-testid="form-label-input"]', 'Test Color Group')
@@ -55,7 +55,7 @@ it('full color group lifecycle: create, edit, delete', function () use ($base, $
 it('admin can open the sprite upload dialog', function () use ($base, $appearanceId) {
   $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle')
-    ->assertNoJavaScriptErrors();
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '');
   // Winterchilla opens the sprite's actions with a right click, Celestia has a "⋯" button for it
   (TestSeederConstants::external() ? $page->click('[aria-label="Sprite actions"]') : $page->rightClick('[data-testid="sprite-wrap"]'))
     ->assertSee('Upload new sprite')

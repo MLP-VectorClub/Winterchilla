@@ -1,5 +1,9 @@
 <?php
 
+// What Celestia's test build (TestConsoleCapture) recorded of console.error / console.warn calls, unhandled rejections included: a missing translation, a
+// hydration mismatch... Empty on Winterchilla, which does not have the recorder. Chained after assertNoJavaScriptErrors() so a page that logs problems fails
+const APP_CONSOLE_ERRORS_JS = "(window.__appConsoleErrors || []).join(' | ')";
+
 use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\AuthHelper;
 use Tests\Browser\Helpers\Fixtures;

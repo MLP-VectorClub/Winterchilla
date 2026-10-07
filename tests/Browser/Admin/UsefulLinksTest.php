@@ -9,7 +9,7 @@ it('adds, edits and deletes a useful link through the admin page', function () u
 
   $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
     ->navigate($base . '/admin/usefullinks')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->click('#add-link')
     ->fill('input[name="label"]', $label)
     ->fill('input[name="url"]', '/about')

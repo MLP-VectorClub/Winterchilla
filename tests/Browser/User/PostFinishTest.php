@@ -12,7 +12,7 @@ it('reserves, finishes and approves a request from the episode page', function (
   try {
     $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->click("$post .reserve-request")
       ->assertPresent("$post .finish")
       // Mark it finished with a deviation the test setup knows about
@@ -55,7 +55,7 @@ it('reserves and finishes a request from the episode page', function () use ($ba
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/episode/' . TestSeederConstants::SHOW_ID)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->click("$post .reserve-request")
       ->assertPresent("$post .finish")
       ->click("$post .finish")

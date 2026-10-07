@@ -14,7 +14,7 @@ it('links two appearances to each other in the relations editor', function () us
   try {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/v/' . $a)
-      ->assertNoJavaScriptErrors()
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
       ->click('section.related .edit-appearance-relations')
       ->select('#guide-relation-editor .split-select:last-child select', (string)$b)
       ->click('#guide-relation-editor button[title="Link selected"]')

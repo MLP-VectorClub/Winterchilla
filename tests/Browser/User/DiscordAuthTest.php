@@ -48,7 +48,7 @@ it('links a Discord account that has not joined the server', function () use ($b
     ->fill('[data-testid="oauth-discord-username"]', 'admin_on_discord')
     ->click('[data-testid="oauth-approve"]')
     ->assertPathIs('/users/' . TestSeederConstants::ADMIN_ID . '/account')
-    ->assertNoJavaScriptErrors()
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSeeIn('#discord-connect', 'is linked to')
     ->assertSeeIn('#discord-connect', 'admin_on_discord')
     ->assertSeeIn('#discord-connect', "haven't joined our")

@@ -1520,7 +1520,16 @@ class CoreUtils {
   public static function logError(string $message, int $severity = Logger::ERROR) {
     global $logger;
 
-    /** @var $logger Logger */
+    /** @var $logger Logger|null */
+    if ($logger === null){
+      // Standalone scripts (cron jobs under scripts/) load config/init/minimal.php, which never sets up the logger.
+      // Without this they died with a fatal error at their first log call: clear_old_logged_ips.php never reached
+      // the part that deletes failed auth attempts, and export_color_guide.php crashed after writing its export.
+      // Stderr is where cron's redirect (deploy.cron) collects it.
+      error_log('['.Logger::getLevelName($severity).'] '.$message);
+      return;
+    }
+
     $logger->log($severity, $message);
   }
 

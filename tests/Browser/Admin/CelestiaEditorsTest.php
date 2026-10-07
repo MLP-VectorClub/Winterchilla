@@ -92,12 +92,12 @@ it('edits and deletes a tag from the tag list', function () use ($base) {
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
       ->assertSee($name)
-      ->click("$row button[title=\"Edit\"]")
+      ->click("$row button[aria-label=\"Edit\"]")
       ->fill('#tag-name', $name . '-ed')
       ->click('[data-testid="dialog-btn-save"]')
       ->assertSee($name . '-ed')
       // A tag that is in use asks once before it is deleted
-      ->click("tr:has-text(\"$name-ed\") button[title=\"Delete\"]")
+      ->click("tr:has-text(\"$name-ed\") button[aria-label=\"Delete\"]")
       ->click('[data-testid="dialog-btn-confirm"]')
       ->assertDontSee($name . '-ed');
   }
@@ -119,11 +119,11 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
       ->assertSee($sourceName)
-      ->click("$row button[title=\"Make synonym\"]")
+      ->click("$row button[aria-label=\"Make synonym\"]")
       ->fill('#synonym-target', (string)$target['id'])
       ->click('[data-testid="dialog-btn-make-synonym"]')
       ->assertSeeIn($row, 'synonym of')
-      ->click("$row button[title=\"Unlink synonym\"]")
+      ->click("$row button[aria-label=\"Unlink synonym\"]")
       ->click('[data-testid="dialog-btn-confirm"]')
       ->assertDontSeeIn($row, 'synonym of');
   }
@@ -143,7 +143,7 @@ it('recounts the uses of a tag from the tag list', function () use ($base) {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
-      ->click("$row button[title=\"Refresh use count\"]")
+      ->click("$row button[aria-label=\"Refresh use count\"]")
       // The uses column of the tag table
       ->assertSeeIn("$row td.uses", '1');
   }
@@ -184,7 +184,7 @@ it('finds the synonym target of a tag by its name', function () use ($base) {
     visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
       ->navigate($base . '/cg/pony/tags')
       ->assertNoJavaScriptErrors()
-      ->click("$row button[title=\"Make synonym\"]")
+      ->click("$row button[aria-label=\"Make synonym\"]")
       ->type('#synonym-target', "zzsyn-to-$suffix")
       ->click("[role=listbox] button:has-text(\"zzsyn-to-$suffix\")")
       ->click('[data-testid="dialog-btn-make-synonym"]')

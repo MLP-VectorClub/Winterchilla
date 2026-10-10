@@ -136,3 +136,19 @@ it('opens the files of a private personal appearance for a guest with its share 
   };
   expect($status($url))->toBe(200)->and($status(str_replace("&token=$token", '', $url)))->toBe(403);
 })->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');
+
+it('gives the owner a share link that opens a private personal appearance for anybody', function () use ($base, $userId) {
+  $id = TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID;
+  $owner = visit(TestSeederConstants::loginUrl($userId))
+    ->navigate($base . "/users/$userId/cg/v/$id-Private-Test-Pony")
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->click('button:has-text("Share")')
+    ->assertSee('This appearance is private, but by using this link you can give anyone access to the colors');
+  $link = trim((string)$owner->script("document.querySelector('.modal-body .input-group-text').textContent"));
+  expect($link)->toContain('token=' . TestSeederConstants::PRIVATE_PERSONAL_TOKEN);
+
+  // A visitor who is not signed in follows the link as it is, through the short address that leads to the page
+  visit($link)
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->assertSee('Private Test Pony');
+})->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');

@@ -67,7 +67,7 @@ it('hides the private personal appearance page from guests unless they have its 
   visit($base . $path . '?token=' . TestSeederConstants::PRIVATE_PERSONAL_TOKEN)
     ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Private Test Pony');
-})->group('winterchilla-only');
+});
 
 it('shows the owner and staff the private personal appearance too', function () use ($base, $userId, $adminId) {
   visit(TestSeederConstants::loginUrl($userId))

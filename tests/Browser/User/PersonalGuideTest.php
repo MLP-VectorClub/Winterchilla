@@ -114,3 +114,25 @@ it('lets staff give personal guide points from a user\'s profile', function () u
     ->assertSee("You've successfully given 15 points to TestUser");
 });
 
+
+// Celestia hands the share token of a private appearance on to the files of its page, the old site built different addresses for them
+it('opens the files of a private personal appearance for a guest with its share token', function () use ($base, $userId) {
+  $id = TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID;
+  $token = TestSeederConstants::PRIVATE_PERSONAL_TOKEN;
+  $page = visit($base . "/users/$userId/cg/v/$id-Private-Test-Pony?token=$token")
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->assertSee('Private Test Pony');
+
+  // The "View as PNG" button keeps the token, and what it points to opens with it and not without
+  $href = $page->script("document.querySelector('a[href*=\"/image?type=palette\"]').getAttribute('href')");
+  expect($href)->toContain("token=$token");
+  $url = $base . $href;
+  $status = function (string $address): int {
+    $ch = curl_init($address);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true]);
+    curl_exec($ch);
+
+    return (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  };
+  expect($status($url))->toBe(200)->and($status(str_replace("&token=$token", '', $url)))->toBe(403);
+})->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');

@@ -152,3 +152,44 @@ it('gives the owner a share link that opens a private personal appearance for an
     ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Private Test Pony');
 })->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');
+
+it('lets the owner replace the share link of a private appearance, which ends the old one', function () use ($base) {
+  $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $suffix = substr(md5(uniqid('', true)), 0, 6);
+  $id = $api->post('/appearances', ['guide' => 'pony', 'label' => "Share Probe $suffix", 'private' => true])['json']['id'];
+  $status = function (string $address): int {
+    $ch = curl_init($address);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true]);
+    curl_exec($ch);
+
+    return (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  };
+  $link = fn($page) => trim((string)$page->script("document.querySelector('.modal-body .input-group-text').textContent"));
+
+  try {
+    $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+      ->navigate($base . "/cg/pony/v/$id")
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+      ->click('button:has-text("Share")');
+    $before = $link($page);
+    preg_match('/token=([^&]+)/', $before, $m);
+    $oldToken = $m[1] ?? '';
+    expect($oldToken)->not->toBe('');
+    expect($status($base . "/api/appearances/$id/palette?format=gpl&token=$oldToken"))->toBe(200);
+
+    // Asking for a new link has to be confirmed, cancelling changes nothing
+    $page->click('[data-testid="new-share-link"]')
+      ->assertSee('The link above will stop working')
+      ->click('[data-testid="new-share-link-confirm"]')
+      ->assertSee('There is a new link');
+
+    $after = $link($page);
+    expect($after)->not->toBe($before)->and($after)->toContain('token=');
+    expect($status($base . "/api/appearances/$id/palette?format=gpl&token=$oldToken"))->toBe(403);
+    preg_match('/token=([^&]+)/', $after, $m);
+    expect($status($base . "/api/appearances/$id/palette?format=gpl&token=" . ($m[1] ?? 'none')))->toBe(200);
+  }
+  finally {
+    $api->request('DELETE', "/appearances/$id");
+  }
+})->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');

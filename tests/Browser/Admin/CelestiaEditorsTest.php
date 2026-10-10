@@ -152,24 +152,48 @@ it('recounts the uses of a tag from the tag list', function () use ($base) {
   }
 })->skip($notCelestia, 'Celestia only')->group('celestia-only');
 
-it('suggests tags while typing in the tag editor', function () use ($base) {
-  $name = 'zzsuggest-' . substr(md5(uniqid('', true)), 0, 6);
-  $tag = adminApi()->post('/tags', ['name' => $name, 'type' => 'app'])['json'];
-  $id = TestSeederConstants::APPEARANCE_ID;
+it('edits the tags of an appearance in place, with suggestions while typing', function () use ($base) {
+  $suffix = substr(md5(uniqid('', true)), 0, 6);
+  $name = "zzsuggest-$suffix";
+  $typed = "zztyped-$suffix";
+  $api = adminApi();
+  $tag = $api->post('/tags', ['name' => $name, 'type' => 'app', 'addTo' => TestSeederConstants::APPEARANCE_ID])['json'];
+  $other = $api->post('/appearances', ['guide' => 'pony', 'label' => "Tag Editor Pony $suffix"])['json']['id'];
+  $input = '[data-testid="tag-editor"] input';
 
   try {
+    // The tag is suggested with how often it is used, picking it adds it as a chip next to what is typed with Enter
     $page = visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
-      ->navigate($base . '/cg/pony/v/' . $id)
+      ->navigate($base . '/cg/pony/v/' . $other)
       ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
-      ->click('button:text-is("Edit tags")')
-      // The field holds the appearance's tags, the tag being typed is the text between the commas around the caret
-      ->fill('textarea[id^="tags-"]', substr($name, 0, 9))
-      ->assertSee($name)
-      ->click("[role=listbox] button:has-text(\"$name\")");
-    $page->assertValue('textarea[id^="tags-"]', $name . ', ');
+      ->click('[data-testid="edit-tags-btn"]')
+      ->assertPresent('[data-testid="tag-editor"]')
+      ->type($input, substr($name, 0, 9))
+      ->assertSeeIn('[role=listbox]', $name)
+      ->click("[role=listbox] button:has-text(\"$name\")")
+      ->type($input, $typed)
+      ->keys($input, 'Enter')
+      ->assertSeeIn('[data-testid="tag-editor"] .tag-editor', $name)
+      ->assertSeeIn('[data-testid="tag-editor"] .tag-editor', $typed);
+
+    // Plain text shows the same tags, saving keeps them
+    $page->click('[data-testid="tag-editor-mode"]')
+      ->assertValue('[data-testid="tag-editor"] textarea', "$name, $typed")
+      ->click('[data-testid="tag-editor-save"]')
+      ->assertMissing('[data-testid="tag-editor"]')
+      ->assertSee($typed);
+
+    $saved = $api->get("/appearances/$other/tags")['json']['tags'];
+    expect($saved)->toContain($name)->and($saved)->toContain($typed);
   }
   finally {
-    adminApi()->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
+    $api = adminApi();
+    $api->request('DELETE', "/appearances/$other");
+    $api->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
+    foreach ($api->get('/tags', ['size' => 50])['json']['tags'] ?? [] as $t) {
+      if ($t['name'] === $typed)
+        $api->request('DELETE', '/tags/' . $t['id'], ['sanityCheck' => 1]);
+    }
   }
 })->skip($notCelestia, 'Celestia only')->group('celestia-only');
 

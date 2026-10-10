@@ -36,7 +36,7 @@ class TestSeeder extends AbstractSeed {
         // Fixed IDs (TestSeederConstants::*_DA_ID) so the fake OAuth provider can sign in as these users
         'id'             => '0f0e0d0c-0b0a-4000-8000-000000009001',
         'name'           => 'TestUser',
-        'avatar_url'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+        'avatar_url'     => '/img/blank-pixel.png',
         'user_id'        => 9001,
         'scope'          => 'user',
         'access'         => 'fake-access-token-user',
@@ -47,7 +47,7 @@ class TestSeeder extends AbstractSeed {
       [
         'id'             => '0f0e0d0c-0b0a-4000-8000-000000009002',
         'name'           => 'TestAdmin',
-        'avatar_url'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+        'avatar_url'     => '/img/blank-pixel.png',
         'user_id'        => 9002,
         'scope'          => 'user',
         'access'         => 'fake-access-token-admin',
@@ -58,7 +58,7 @@ class TestSeeder extends AbstractSeed {
       [
         'id'             => '0f0e0d0c-0b0a-4000-8000-000000009007',
         'name'           => 'TestDeveloper',
-        'avatar_url'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+        'avatar_url'     => '/img/blank-pixel.png',
         'user_id'        => 9007,
         'scope'          => 'user',
         'access'         => 'fake-access-token-developer',
@@ -69,7 +69,7 @@ class TestSeeder extends AbstractSeed {
       [
         'id'             => '0f0e0d0c-0b0a-4000-8000-000000009003',
         'name'           => 'FreshUser',
-        'avatar_url'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+        'avatar_url'     => '/img/blank-pixel.png',
         'user_id'        => 9003,
         'scope'          => 'user',
         'access'         => 'fake-access-token-fresh',
@@ -109,8 +109,8 @@ class TestSeeder extends AbstractSeed {
     $this->table('posts')->insert([[
       'id'           => 1,
       'type'         => 'chr',
-      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
-      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'preview'      => '/img/blank-pixel.png',
+      'fullsize'     => '/img/blank-pixel.png',
       'label'        => 'Seeded Test Request',
       'requested_at' => date('c'),
       'show_id'      => 1,
@@ -119,8 +119,8 @@ class TestSeeder extends AbstractSeed {
       // Requests for the API tests: 2 is deleted by its owner, 3 is already reserved (so its owner can't delete it)
       'id'           => 2,
       'type'         => 'chr',
-      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
-      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'preview'      => '/img/blank-pixel.png',
+      'fullsize'     => '/img/blank-pixel.png',
       'label'        => 'Deletable Test Request',
       'requested_at' => date('c'),
       'show_id'      => 1,
@@ -128,8 +128,8 @@ class TestSeeder extends AbstractSeed {
     ], [
       'id'           => 3,
       'type'         => 'obj',
-      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
-      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'preview'      => '/img/blank-pixel.png',
+      'fullsize'     => '/img/blank-pixel.png',
       'label'        => 'Reserved Test Request',
       'requested_at' => date('c'),
       'reserved_at'  => date('c'),
@@ -142,8 +142,8 @@ class TestSeeder extends AbstractSeed {
       // A broken request with usable images, for the unbreak test
       'id'           => 4,
       'type'         => 'bg',
-      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
-      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'preview'      => '/img/blank-pixel.png',
+      'fullsize'     => '/img/blank-pixel.png',
       'label'        => 'Broken Test Request',
       'requested_at' => date('c'),
       'show_id'      => 1,
@@ -153,8 +153,8 @@ class TestSeeder extends AbstractSeed {
       // Like 4, but cleared through the UI test
       'id'           => 5,
       'type'         => 'obj',
-      'preview'      => 'http://127.0.0.1:8765/img/blank-pixel.png',
-      'fullsize'     => 'http://127.0.0.1:8765/img/blank-pixel.png',
+      'preview'      => '/img/blank-pixel.png',
+      'fullsize'     => '/img/blank-pixel.png',
       'label'        => 'Broken UI Request',
       'requested_at' => date('c'),
       'show_id'      => 1,
@@ -296,8 +296,8 @@ class TestSeeder extends AbstractSeed {
         'author' => in_array($sub_id, ['dfin002', 'dfin003'], true) ? 'TestAdmin' : 'TestUser',
         // Made-up deviations point at an image the test server serves, so nothing has to leave the machine; the
         // query string keeps the URLs unique (posts refuse an image that another post already uses)
-        'preview' => "http://127.0.0.1:8765/img/blank-pixel.png?d=$sub_id",
-        'fullsize' => "http://127.0.0.1:8765/img/blank-pixel.png?d=$sub_id",
+        'preview' => "/img/blank-pixel.png?d=$sub_id",
+        'fullsize' => "/img/blank-pixel.png?d=$sub_id",
         'type' => 'png',
       ]);
 

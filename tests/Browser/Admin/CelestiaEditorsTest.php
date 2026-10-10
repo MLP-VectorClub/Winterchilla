@@ -247,3 +247,12 @@ it('publishes the color guide as a file other tools can read', function () use (
 
   visit($base . '/cg')->assertSee('JSON Export');
 })->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('re-sorts the full list from the sort menu', function () use ($base) {
+  visit($base . '/cg/pony/full')
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->click('button:has-text("by relevance")')
+    ->click('.dropdown-item:has-text("alphabetically")')
+    ->assertQueryStringHas('sort_by', 'label')
+    ->assertSee('Twilight Sparkle');
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');

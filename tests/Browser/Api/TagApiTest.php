@@ -81,7 +81,7 @@ it('lists tags and autocompletes by name', function () {
     ->and($r['json'][0]['name'])->toBe($name);
 
   $admin->request('DELETE', '/tags/' . $tag['id']);
-});
+})->group('winterchilla-only');
 
 it('confirms before deleting a tag that is in use', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
@@ -93,7 +93,7 @@ it('confirms before deleting a tag that is in use', function () {
 
   $r = $admin->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);
   expect($r['status'])->toBe(204);
-});
+})->group('winterchilla-only');
 
 it('warns instead of failing when a new tag cannot be added to the requested appearance', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
@@ -144,7 +144,7 @@ it('makes a tag a synonym of another and removes the synonym again', function ()
 
   $admin->request('DELETE', '/tags/' . $source['id']);
   $admin->request('DELETE', '/tags/' . $target['id']);
-});
+})->group('winterchilla-only');
 
 it('reports validation messages as plain text, not HTML', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);

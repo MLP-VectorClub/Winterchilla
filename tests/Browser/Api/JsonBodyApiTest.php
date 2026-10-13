@@ -84,7 +84,7 @@ it('reads JSON booleans as booleans', function () {
   finally {
     $admin->json('PUT', $path, ['value' => true]);
   }
-});
+})->group('winterchilla-only');
 
 it('treats a false flag as unset and a true flag as set', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);

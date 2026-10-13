@@ -30,7 +30,7 @@ it('GET /users/{id}/avatar-wrap returns rendered HTML and 404s for missing users
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('html');
 
   expect(ApiClient::guest()->get('/user/987654/avatar-wrap')['status'])->toBe(404);
-});
+})->group('winterchilla-only');
 
 it('DELETE /users/sessions/{id} needs a session, ownership and an existing session', function () use ($userId, $adminId) {
   expect(ApiClient::guest()->request('DELETE', '/users/sessions/1')['status'])->toBe(401);
@@ -44,7 +44,7 @@ it('DELETE /users/sessions/{id} needs a session, ownership and an existing sessi
   expect($m)->not->toBeEmpty();
   $adminSession = $m[1];
   expect($user->request('DELETE', '/users/sessions/' . $adminSession)['status'])->toBe(403);
-});
+})->group('winterchilla-only');
 
 it('DELETE /users/sessions/{id} removes the user\'s own session with 204', function () use ($userId) {
   $user = ApiClient::loggedInAs($userId);
@@ -54,7 +54,7 @@ it('DELETE /users/sessions/{id} removes the user\'s own session with 204', funct
   $r = $user->request('DELETE', '/users/sessions/' . $m[1]);
   expect($r['status'])->toBe(204)->and($r['body'])->toBe('');
   expect($user->get('/users/me')['status'])->toBe(401);
-});
+})->group('winterchilla-only');
 
 it('PUT /users/{id}/role requires staff and validates the target and value', function () use ($userId, $adminId) {
   expect(ApiClient::guest()->request('PUT', '/users/' . $userId . '/role', ['value' => 'member'])['status'])->toBe(401);
@@ -87,7 +87,7 @@ it('DELETE /users/{id}/contributions/cache requires staff and an existing user',
 
   $r = $admin->request('DELETE', '/users/' . $userId . '/contributions/cache');
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKeys(['message', 'html'])->not->toHaveKey('status');
-});
+})->group('winterchilla-only');
 
 it('POST /users/email/verify is staff-only and validates the hash', function () use ($userId, $adminId) {
   expect(ApiClient::loggedInAs($userId)->post('/users/email/verify', ['hash' => str_repeat('a', 128), 'action' => 'verify'])['status'])->toBe(403);

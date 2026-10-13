@@ -19,13 +19,13 @@ it('lists the current user\'s unread notifications as HTML', function () {
     ->and($r['json'])->toHaveKey('list')
     ->and($r['json'])->not->toHaveKey('status')
     ->and($r['json']['list'])->toContain('data-id=\'' . TestSeederConstants::NOTIFICATION_ID . '\'');
-});
+})->group('winterchilla-only');
 
 it('does not list other users\' notifications', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get('/notifications');
 
   expect($r['json']['list'])->not->toContain('data-id=\'' . TestSeederConstants::ADMIN_NOTIFICATION_ID . '\'');
-});
+})->group('winterchilla-only');
 
 it('marks a notification as read with 204 and stops listing it', function () {
   $client = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
@@ -36,7 +36,7 @@ it('marks a notification as read with 204 and stops listing it', function () {
   expect($r['status'])->toBe(204)->and($r['body'])->toBe('');
 
   expect($client->get('/notifications')['json']['list'])->not->toContain('data-id=\'' . $id . '\'');
-});
+})->group('winterchilla-only');
 
 it('404s when marking another user\'s notification as read', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)

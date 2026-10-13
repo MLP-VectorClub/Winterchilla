@@ -103,7 +103,7 @@ it('GET /show/{id}/posts returns a rendered section and validates the section', 
   expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('section');
 
   expect($guest->get('/show/987654/posts', ['section' => 'requests'])['status'])->toBe(404);
-});
+})->group('winterchilla-only');
 
 it('GET /show/{id}/vote returns the vote counts', function () use ($showId) {
   $r = ApiClient::guest()->get('/show/' . $showId . '/vote');

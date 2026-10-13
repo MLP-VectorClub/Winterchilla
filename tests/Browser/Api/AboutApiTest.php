@@ -29,11 +29,11 @@ it('GET /about/upcoming returns rendered HTML', function () {
     ->and($r['json'])->toHaveKey('html')
     ->and($r['json']['html'])->toBeString()
     ->and($r['json'])->not->toHaveKey('status');
-});
+})->group('winterchilla-only');
 
 it('rejects non-GET methods with 405', function () {
   $client = ApiClient::guest();
 
   expect($client->post('/about/connection')['status'])->toBe(405)
     ->and($client->post('/about/upcoming')['status'])->toBe(405);
-});
+})->group('winterchilla-only');

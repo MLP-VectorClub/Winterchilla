@@ -117,7 +117,7 @@ it('lists pinned appearances of a guide', function () {
 it('answers 404 and 403 for the preview of a missing or private appearance', function () {
   expect(ApiClient::guest()->get('/appearances/987654/preview')['status'])->toBe(404)
     ->and(ApiClient::guest()->get('/appearances/' . TestSeederConstants::PRIVATE_PERSONAL_APPEARANCE_ID . '/preview')['status'])->toBe(403);
-});
+})->group('winterchilla-only');
 
 it('tells the current user whether they can edit the appearance', function () {
   $official = TestSeederConstants::APPEARANCE_ID;

@@ -23,4 +23,4 @@ it('removes the cutie mark files along with a deleted appearance', function () {
 
   foreach ($files as $file)
     expect(file_exists($file))->toBeFalse("$file should be removed with the appearance");
-});
+})->group('winterchilla-only');

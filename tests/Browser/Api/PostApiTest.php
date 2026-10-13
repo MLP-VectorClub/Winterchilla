@@ -82,7 +82,7 @@ it('locates posts for the share/link redirect flow', function () use ($postId) {
 
   $r = $guest->get("/posts/$postId/location", ['showId' => TestSeederConstants::MOVIE_ID]);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('castle')->and($r['json']['castle'])->toHaveKeys(['name', 'url']);
-});
+})->group('winterchilla-only');
 
 it('returns the rendered image of a finished post and 409s for unfinished ones', function () use ($postId) {
   $r = ApiClient::guest()->get('/posts/' . TestSeederConstants::RESERVED_POST_ID . '/lazyload');
@@ -91,7 +91,7 @@ it('returns the rendered image of a finished post and 409s for unfinished ones',
 
   $r = ApiClient::guest()->get("/posts/$postId/lazyload");
   expect($r['status'])->toBe(409)->and($r['json'])->toHaveKey('message');
-});
+})->group('winterchilla-only');
 
 it('reloads the list item of a finished post', function () {
   // Posts without a deviation get their image URLs checked over the network (and marked broken when they 404),
@@ -99,7 +99,7 @@ it('reloads the list item of a finished post', function () {
   $r = ApiClient::guest()->get('/posts/' . TestSeederConstants::RESERVED_POST_ID . '/reload');
 
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKeys(['li', 'section'])->not->toHaveKey('status');
-});
+})->group('winterchilla-only');
 
 it('suggests an unreserved request to signed-in users', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->get('/posts/requests/suggestion');
@@ -109,7 +109,7 @@ it('suggests an unreserved request to signed-in users', function () {
     expect($r['json'])->toHaveKey('suggestion');
   else
     expect($r['json'])->toHaveKey('message');
-});
+})->group('winterchilla-only');
 
 it('rejects an unusable image URL when checking images', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::USER_ID)->post('/posts/check-image');
@@ -135,13 +135,13 @@ it('reserves, re-reserves and unreserves a request', function () use ($postId) {
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('li');
   // Already unreserved is a no-op success
   expect($admin->request('DELETE', $path)['status'])->toBe(200);
-});
+})->group('winterchilla-only');
 
 it('conflicts when finishing an unreserved post', function () use ($postId) {
   $r = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('PUT', "/posts/$postId/finish", ['deviation' => 'http://fav.me/dabcdef1']);
 
   expect($r['status'])->toBe(409)->and($r['json'])->toHaveKey('message');
-});
+})->group('winterchilla-only');
 
 it('deletes a request as its owner but not once it has been reserved', function () {
   $user = ApiClient::loggedInAs(TestSeederConstants::USER_ID);
@@ -176,7 +176,7 @@ it('reports conflicts with plain-text messages and structured details', function
   expect($r['status'])->toBe(409)->and($r['json']['message'])->not->toContain('<');
 
   ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', $path);
-});
+})->group('winterchilla-only');
 
 it('documents what the post creation endpoints read', function () {
   // The request bodies in the OpenAPI document have to be enough to build the forms

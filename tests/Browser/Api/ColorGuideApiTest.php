@@ -19,14 +19,14 @@ it('returns the rendered full list of a guide in the requested order', function 
 
   // An unknown order falls back to relevance
   expect($guest->get('/cg/full', ['guide' => 'pony', 'sort_by' => 'nonsense'])['json']['stateUrl'])->toBe('/cg/pony/full');
-});
+})->group('winterchilla-only');
 
 it('validates the guide of the full list with 422', function () {
   foreach ([[], ['guide' => 'nonsense']] as $query) {
     $r = ApiClient::guest()->get('/cg/full', $query);
     expect($r['status'])->toBe(422)->and($r['json']['errors'])->toHaveKey('guide');
   }
-});
+})->group('winterchilla-only');
 
 it('reorders a guide\'s full list for staff and answers with that guide\'s list only', function () {
   $guest = ApiClient::guest();
@@ -43,7 +43,7 @@ it('reorders a guide\'s full list for staff and answers with that guide\'s list 
   // The guide is honoured: the eqg list doesn't contain the pony guide's appearances
   $r = $admin->request('PUT', '/appearances/order', ['guide' => 'eqg', 'list' => '1', 'ordering' => 'relevance']);
   expect($r['status'])->toBe(200)->and($r['json']['html'])->not->toContain('Twilight Sparkle');
-});
+})->group('winterchilla-only');
 
 it('returns the preview link of a cached deviation for the contributions page', function () {
   $r = ApiClient::guest()->get('/users/contributions/lazyload/dfin001');
@@ -51,4 +51,4 @@ it('returns the preview link of a cached deviation for the contributions page', 
   expect($r['status'])->toBe(200)
     ->and($r['json'])->toHaveKey('html')->not->toHaveKey('status')
     ->and($r['json']['html'])->toContain('Finished Test Vector');
-});
+})->group('winterchilla-only');

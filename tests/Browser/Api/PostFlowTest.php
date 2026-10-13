@@ -61,7 +61,7 @@ it('unbreaks a post whose images are available again', function () {
 
   $r = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->post($path);
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('li')->not->toHaveKey('status');
-});
+})->group('winterchilla-only');
 
 it('finishes, approves and unfinishes a reserved request', function () use ($postId) {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
@@ -103,4 +103,4 @@ it('finishes, approves and unfinishes a reserved request', function () use ($pos
 
   expect($admin->request('DELETE', $finish)['status'])->toBe(204);
   expect($admin->request('DELETE', $reservation)['status'])->toBe(200);
-});
+})->group('winterchilla-only');

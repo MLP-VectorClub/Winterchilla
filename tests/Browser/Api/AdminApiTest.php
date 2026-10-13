@@ -16,7 +16,7 @@ it('requires staff for every admin endpoint', function () {
     expect($guest->request($method, $path)['status'])->toBe(401, "$method $path as guest")
       ->and($user->request($method, $path)['status'])->toBe(403, "$method $path as user");
   }
-});
+})->group('winterchilla-only');
 
 it('manages useful links: create, read, update, delete and reorder', function () {
   $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
@@ -67,7 +67,7 @@ it('404s for missing log entries and links', function () {
 
 it('clears the PHP stat cache with 204', function () {
   expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/admin/stat-cache')['status'])->toBe(204);
-});
+})->group('winterchilla-only');
 
 it('lists log entries for staff only, with filters and Luna-shaped pagination', function () {
   expect(ApiClient::guest()->get('/admin/logs')['status'])->toBe(401);

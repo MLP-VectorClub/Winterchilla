@@ -1,5 +1,6 @@
 <?php
 
+use Tests\Browser\Helpers\ApiClient;
 use Tests\Browser\Helpers\TestSeederConstants;
 
 $base         = TestSeederConstants::baseUrl();
@@ -205,3 +206,36 @@ it('lists the full list in the requested sort order', function () use ($base) {
     ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
     ->assertSee('Twilight Sparkle');
 });
+
+it('lists the major changes of an appearance, and only staff see who made them', function () use ($base, $appearanceId) {
+  $path = $base . '/cg/pony/v/' . $appearanceId . '-Twilight-Sparkle';
+
+  visit($path)
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->assertSee('List of major changes')
+    ->assertSee('Seeded newest major change')
+    ->assertSee('Seeded older major change')
+    ->assertDontSee('by TestAdmin');
+
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+    ->navigate($path)
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->assertSee('by TestAdmin');
+});
+
+it('says what an appearance does not have to staff', function () use ($base) {
+  $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $id = $api->post('/appearances', ['guide' => 'pony', 'label' => 'Empty Pony ' . substr(md5(uniqid('', true)), 0, 5)])['json']['id'];
+
+  try {
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+      ->navigate($base . '/cg/pony/v/' . $id)
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+      ->assertSee('This appearance has no tags')
+      ->assertSee('There are no color groups for this appearance')
+      ->assertSee('This appearance has no relations to any show entries');
+  }
+  finally {
+    $api->request('DELETE', "/appearances/$id");
+  }
+})->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');

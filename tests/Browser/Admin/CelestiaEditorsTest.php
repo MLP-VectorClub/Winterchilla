@@ -301,3 +301,30 @@ JS;
     ->navigate($base . '/cg/pony')
     ->assertScript($oneSize, '16px/38');
 })->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('lays the guide list and the show table out for a phone like the old site', function () use ($base) {
+  // An entry of the guide list is stacked: its sprite box is above its name, not next to it
+  $stacked = <<<'JS'
+(() => {
+  const box = document.querySelector('[class*="spriteBox"]');
+  const name = document.querySelector('[class*="appearanceName"]');
+  if (!box || !name) return 'missing';
+  return name.getBoundingClientRect().top >= box.getBoundingClientRect().bottom - 1 ? 'stacked' : 'side by side';
+})()
+JS;
+  // The episode id of the show table is a bold line of text on a phone, the big numbers are for the wide table
+  $idSize = "getComputedStyle(document.querySelector('[class*=\"mobileIdentifier\"]')).fontSize";
+
+  visit($base . '/cg/pony')
+    ->resize(390, 844)
+    ->navigate($base . '/cg/pony')
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->assertScript($stacked, 'stacked')
+    ->navigate($base . '/show')
+    ->assertScript($idSize, '16px');
+
+  visit($base . '/cg/pony')
+    ->resize(1280, 900)
+    ->navigate($base . '/cg/pony')
+    ->assertScript($stacked, 'side by side');
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');

@@ -61,7 +61,8 @@ it('recounts tag uses from the refresh buttons of the tag list', function () use
     // And the one in the header, for every tag on the page, which reports the outcome
     $page
       ->click('thead .refresh-all')
-      ->assertSee('use count was updated');
+      // One tag, or several when the seed has tags with a stale count ("3 tags' use counts were updated")
+      ->assertSee('updated');
   }
   finally {
     ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->request('DELETE', '/tags/' . $tag['id'], ['sanityCheck' => 1]);

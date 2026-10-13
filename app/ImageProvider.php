@@ -103,7 +103,7 @@ class ImageProvider {
     if (empty($ctype)){
       if (empty($url))
         throw new RuntimeException("Resource URL ($url) is empty, please try again.");
-      $headers = get_headers($url, 1);
+      $headers = get_headers(CoreUtils::resolveOwnUrl($url), 1);
       $ctype = $headers['Content-Type'] ?? $headers['content-type'];
     }
     if (empty(self::$_allowedMimeTypes[$ctype]))

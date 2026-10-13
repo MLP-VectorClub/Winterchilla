@@ -123,6 +123,17 @@ New file: `tests/Browser/User/PersonalGuideTest.php`. Covers guest/owner/staff a
 the list and point-history pages (owner-or-staff guard on point-history, open-by-default on list per
 `User::canVisitorSeePCG()`).
 
+**The seed holds every state the UI shows** (`TestSeeder::seedEveryState`, IDs in `TestSeederConstants`): a club member (9008) and an
+assistant (9009); official appearances with colors, notes, tags, a related appearance, a pin and an EQG character; tags of every type,
+an alias and a tag with a stale use count; reservations in every state (recent, overdue, unrequested, awaiting approval, approved);
+an episode with votes and linked appearances (`VOTED_SHOW_ID`) and one that has not aired (`UPCOMING_SHOW_ID`, the sidebar's "happening
+soon"); a notice, useful links and a second session of the regular user. Tests count on some things being absent, keep it that way: appearance 1
+has no color groups, shows or tags beyond its own, season 1 has only episode 1 (the show tests create season 1 episodes), and the
+`GET /show/next` hiatus test moves the upcoming episode into the past and back. `tests/Browser/User/SeededStatesTest.php` fails when the seed
+loses a state, and `Celestia/scripts/ui-audit/icons.mjs` and `capture.mjs` (`SEED=1`) look at them on both sites. After changing the seed, refresh
+Luna's copy (`scripts/dump-contract-seed.sh > ../Luna/tests/fixtures/contract-seed.sql`; Luna's loader also turns the seeded session into a
+`luna_sessions` row). Deviations the seed caches in Redis point at `/img/blank-pixel.png`, a file of the site (`CoreUtils::resolveOwnUrl`).
+
 `TestSeeder` also seeds the regular user's personal guide (a public appearance with a color group and a private one
 with a fixed `?token=`, plus a manual point grant from the admin) and two major changes on the official appearance,
 so the personal guide list/appearance/point-history pages and the changes list have real content

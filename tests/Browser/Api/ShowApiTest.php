@@ -161,12 +161,32 @@ it('manages appearance relations for staff only', function () use ($showId) {
   expect($admin->get('/show/987654/appearances')['status'])->toBe(404);
 });
 
-it('GET /show/next reports a hiatus with 404 when nothing is upcoming', function () {
+it('GET /show/next returns the upcoming episode', function () {
   $r = ApiClient::guest()->get('/show/next');
 
-  expect($r['status'])->toBe(404)
-    ->and($r['json'])->toHaveKeys(['message', 'hiatus'])
-    ->and($r['json']['hiatus'])->toBeTrue();
+  expect($r['status'])->toBe(200)->and(json_encode($r['json']))->toContain('Lesson Zero');
+});
+
+it('GET /show/next reports a hiatus with 404 when nothing is upcoming', function () {
+  // The seed has an episode that has not aired yet; it is moved into the past for this test and back afterwards
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $episode = ['season' => 2, 'episode' => 2, 'title' => 'Lesson Zero'];
+  $id = TestSeederConstants::UPCOMING_SHOW_ID;
+  $upcoming = $admin->get('/show/' . $id)['json'];
+  $airs = $upcoming['show']['airs'] ?? $upcoming['airs'] ?? null;
+  expect($airs)->not->toBeNull();
+
+  try {
+    expect($admin->request('PUT', '/show/' . $id, $episode + ['airs' => '2012-01-01 00:00'])['status'])->toBeIn([200, 204]);
+    $r = ApiClient::guest()->get('/show/next');
+
+    expect($r['status'])->toBe(404)
+      ->and($r['json'])->toHaveKeys(['message', 'hiatus'])
+      ->and($r['json']['hiatus'])->toBeTrue();
+  }
+  finally {
+    $admin->request('PUT', '/show/' . $id, $episode + ['airs' => date('Y-m-d H:i', strtotime($airs))]);
+  }
 });
 
 it('GET /show/prefill suggests the next episode for staff', function () {

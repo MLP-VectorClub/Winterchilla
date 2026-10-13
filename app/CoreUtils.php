@@ -1287,7 +1287,13 @@ class CoreUtils {
    *
    * @return bool
    */
+  /** An address without a host (the seeded test deviations use one) is a file of this site */
+  public static function resolveOwnUrl(string $url):string {
+    return str_starts_with($url, '/') && !str_starts_with($url, '//') ? ABSPATH.ltrim($url, '/') : $url;
+  }
+
   public static function isURLAvailable(string $url, array $only_fails = [], &$response_code = null):bool {
+    $url = self::resolveOwnUrl($url);
     $ch = curl_init();
     curl_setopt_array($ch, [
       CURLOPT_URL => $url,

@@ -70,5 +70,22 @@ class TestSeederConstants {
   public const EVENT_ENTRY_DELETE_ID = 3;
   // Belongs to USER_ID and is withdrawn through the UI test
   public const EVENT_ENTRY_UI_DELETE_ID = 4;
+  // A club member and an assistant; the member holds the reservations below
+  public const MEMBER_ID = 9008;
+  public const ASSISTANT_ID = 9009;
+  // Reservations on SHOW_ID by MEMBER_ID: a recent one, an overdue one (anyone who can reserve may take it over), one nobody requested, one
+  // finished and waiting for approval, and an approved one
+  public const RECENT_RESERVATION_ID = 6;
+  public const OVERDUE_RESERVATION_ID = 7;
+  public const UNREQUESTED_RESERVATION_ID = 8;
+  public const AWAITING_APPROVAL_POST_ID = 9;
+  public const APPROVED_POST_ID = 10;
+  // An episode that aired and has votes, and one that has not aired yet
+  public const VOTED_SHOW_ID = 3;
+  public const UPCOMING_SHOW_ID = 4;
+  // Tags: 1 has an alias (10), 11 has a stale use count
+  public const TAG_ID = 1;
+  public const ALIAS_TAG_ID = 10;
+  public const STALE_TAG_ID = 11;
   public const API_PATH = '/api/v0';
 }

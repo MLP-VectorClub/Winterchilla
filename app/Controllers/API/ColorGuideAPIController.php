@@ -234,7 +234,7 @@ class ColorGuideAPIController extends APIController {
    *   description="Trigger a full reindex of the color guide search index. Developer permission required.",
    *   tags={"color guide"},
    *   @OA\Response(response="200", description="Re-index completed", @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))),
-   *   @OA\Response(response="503", description="The ElasticSearch server is unreachable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+   *   @OA\Response(response="503", description="The OpenSearch server is unreachable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
    *   @OA\Response(response="403", description="Insufficient permission (developer required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )

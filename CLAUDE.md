@@ -1,6 +1,6 @@
 # Winterchilla
 
-PHP web app (MLP Vector Club) using DeviantArt OAuth2, Redis caching, ElasticSearch for the color guide.
+PHP web app (MLP Vector Club) using DeviantArt OAuth2, Redis caching, OpenSearch for the color guide.
 
 ## Read-only mode (for the time after the move to Luna's database)
 
@@ -43,7 +43,7 @@ tests (the browser suite is skipped unless the args mention `tests/Browser`).
 
 If you ever see **every single test** in the suite (including pre-existing, untouched ones) fail with
 `Timeout 5000ms exceeded` at a near-identical duration, and no screenshot gets attached to the failure
-(Playwright never even reaches a renderable page) — **do not** chase ElasticSearch, Redis, leftover
+(Playwright never even reaches a renderable page) — **do not** chase OpenSearch, Redis, leftover
 processes, system load, or WSL/Playwright browser-launch speed first. Those were all investigated at
 length in a past session and ruled out. Instead check first: is `tests/Browser/Helpers/ServerManager`'s
 PHP built-in test server actually running (`ss -ltn | grep 8765`, or just `curl 127.0.0.1:8765` from a
@@ -441,7 +441,7 @@ Pulled `fs/cm_source`, `fs/sprites`, `fs/sprites_pcg` (5.5 MB; the rest of `fs/`
 serves the imported data: `/users/{id}`, `/users/da/{name}`, `/about/members`, `/appearances/{id}` (+ `/color-groups`,
 `/full`, `/pinned`), `/color-guide` (418 pony incl. Universal Colors + 21 eqg, matches prod),
 `/color-guide/major-changes`, `/show?types[]=..&order=overall|series` (153 episodes+movies+specials, matches prod).
-Sprites redirect to the CDN vhost and resolve (`200 image/png`). Not usable locally: anything backed by ElasticSearch
+Sprites redirect to the CDN vhost and resolve (`200 image/png`). Not usable locally: anything backed by OpenSearch
 (`/appearances`, `/appearances/autocomplete` fail with "No alive nodes"). `/useful-links/sidebar` is `[]` for guests by
 design. Luna's `/show` payload still has a `generation` field (always `null` on imported data).
 
@@ -453,7 +453,7 @@ identical status codes and byte-identical bodies apart from the CSP nonce. Cavea
 fragments could hide differences.
 
 **Still not verified:** logged-in flows (DeviantArt sign-in, Sanctum tokens, Luna auth), write endpoints on either app,
-ElasticSearch-backed search on Luna, Luna's response shapes vs Winterchilla's `/api/v0` (different contracts), and a
+OpenSearch-backed search on Luna, Luna's response shapes vs Winterchilla's `/api/v0` (different contracts), and a
 full repeat of import + `fs:migrate` into prod's real (empty, migrated) `luna` DB.
 
 ### Why a plain dup + reimport is not enough

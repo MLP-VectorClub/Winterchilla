@@ -33,7 +33,7 @@ it('validates the guide of /appearances/full with 422', function () {
   }
 });
 
-it('searches a guide, or reports that ElasticSearch is unreachable', function () {
+it('searches a guide, or reports that OpenSearch is unreachable', function () {
   $r = ApiClient::guest()->get('/appearances', ['guide' => 'pony']);
 
   expect($r['status'])->toBeIn([200, 503])->and($r['json'])->not->toHaveKey('status');

@@ -6,7 +6,7 @@
   });
 
   $('.cg-reindex').on('click', function() {
-    $.Dialog.confirm('Re-index all appearances', 'Wipe and rebuild ElasticSearch index?', function(sure) {
+    $.Dialog.confirm('Re-index all appearances', 'Wipe and rebuild OpenSearch index?', function(sure) {
       if (!sure) return;
 
       $.Dialog.wait(false);

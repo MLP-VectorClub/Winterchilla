@@ -15,10 +15,6 @@ use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 use DOMDocument;
 use DOMElement;
-use Elastic\Elasticsearch\Client;
-use Elastic\Elasticsearch\ClientBuilder;
-use Elastic\Elasticsearch\Exception\ClientResponseException;
-use Elastic\Elasticsearch\Exception\ServerResponseException;
 use enshrined\svgSanitize\data\AllowedAttributes;
 use enshrined\svgSanitize\data\AttributeInterface;
 use enshrined\svgSanitize\data\TagInterface;
@@ -29,6 +25,10 @@ use HTMLPurifier_Config;
 use HTMLPurifier_TagTransform_Simple;
 use Monolog\Logger;
 use OpenApi\Generator;
+use OpenSearch\Client;
+use OpenSearch\ClientBuilder;
+use OpenSearch\Common\Exceptions\TransportException;
+use OpenSearch\Exception\HttpExceptionInterface;
 use Parsedown;
 use RuntimeException;
 use TypeError;
@@ -1340,40 +1340,50 @@ class CoreUtils {
   }
 
   public static function elasticClient():Client {
-    /** @var $elastiClient Client */
-    static $elastiClient;
-    if ($elastiClient !== null)
-      return $elastiClient;
+    /** @var $elasticClient Client */
+    static $elasticClient;
+    if ($elasticClient !== null)
+      return $elasticClient;
 
+    $env = static fn(string $name) => self::env("OPENSEARCH_$name") ?: self::env("ELASTIC_$name");
     $builder = ClientBuilder::create()
-      ->setHosts([self::env('ELASTIC_HOST') ?: 'http://127.0.0.1:9200'])
-      ->setHttpClientOptions([
-        'timeout' => (float) (self::env('ELASTIC_TIMEOUT') ?: 15),
-        'connect_timeout' => (float) (self::env('ELASTIC_CONNECT_TIMEOUT') ?: 5),
-      ]);
+      ->setHosts([$env('HOST') ?: 'http://127.0.0.1:9200'])
+      ->setConnectionParams(['client' => [
+        'timeout' => (float) ($env('TIMEOUT') ?: 15),
+        'connect_timeout' => (float) ($env('CONNECT_TIMEOUT') ?: 5),
+      ]]);
 
-    // Elasticsearch 8 has security enabled by default
-    if (self::env('ELASTIC_API_KEY'))
-      $builder->setApiKey(self::env('ELASTIC_API_KEY'));
-    else if (self::env('ELASTIC_USERNAME'))
-      $builder->setBasicAuthentication(self::env('ELASTIC_USERNAME'), (string) self::env('ELASTIC_PASSWORD'));
-    if (self::env('ELASTIC_CA_BUNDLE'))
-      $builder->setCABundle(self::env('ELASTIC_CA_BUNDLE'));
+    if ($env('USERNAME'))
+      $builder->setBasicAuthentication($env('USERNAME'), (string) $env('PASSWORD'));
+    if ($env('CA_BUNDLE'))
+      $builder->setSSLVerification($env('CA_BUNDLE'));
 
-    $elastiClient = $builder->build();
+    $elasticClient = $builder->build();
 
-    return $elastiClient;
+    return $elasticClient;
   }
 
   /**
-   * Decodes the JSON error body of a failed ElasticSearch request (the exceptions only expose a plain PSR-7 response)
+   * Decodes the JSON error body of a failed OpenSearch request (the client puts it in the exception message)
    */
-  public static function elasticErrorBody(ClientResponseException|ServerResponseException $e):array {
-    $body = $e->getResponse()->getBody();
-    $body->rewind();
-    $decoded = json_decode($body->getContents(), true);
+  public static function elasticErrorBody(\Throwable $e):array {
+    $decoded = json_decode($e->getMessage(), true);
 
     return is_array($decoded) ? $decoded : [];
+  }
+
+  /**
+   * The HTTP status of a failed OpenSearch request, null for exceptions that did not come with a response
+   */
+  public static function elasticErrorStatus(\Throwable $e):?int {
+    return $e instanceof HttpExceptionInterface ? $e->getStatusCode() : null;
+  }
+
+  /**
+   * Whether an OpenSearch exception means the server could not be reached or failed itself
+   */
+  public static function elasticIsDown(\Throwable $e):bool {
+    return $e instanceof TransportException || (self::elasticErrorStatus($e) ?? 0) >= 500;
   }
 
   public static function isJSONExpected():bool {

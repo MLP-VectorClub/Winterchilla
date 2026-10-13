@@ -35,7 +35,7 @@ PHP-rendered classic web app powering the MLP Vector Club's website since 2015.
    [Elephant.io](https://github.com/wisembly/elephant.io),
    [MLPVC-WS](https://github.com/ponydevs/MLPVC-WS),
    [FineDiff](https://github.com/cogpowered/FineDiff),
-   [elasticsearch-php](https://github.com/elastic/elasticsearch-php),
+   [opensearch-php](https://github.com/opensearch-project/opensearch-php),
    [AltoRouter](https://github.com/dannyvankooten/AltoRouter),
    [Parsedown](https://github.com/erusev/parsedown),
    [IPTools](https://github.com/S1lentium/IPTools),

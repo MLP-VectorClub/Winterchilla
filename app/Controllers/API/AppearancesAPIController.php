@@ -465,7 +465,7 @@ class AppearancesAPIController extends APIController {
    *     @OA\JsonContent(ref="#/components/schemas/AppearanceList")
    *   ),
    *   @OA\Response(response="422", description="Invalid guide name", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
-   *   @OA\Response(response="503", description="The ElasticSearch server is unreachable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+   *   @OA\Response(response="503", description="The OpenSearch server is unreachable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
    * )
    */
   function queryPublic() {
@@ -474,7 +474,7 @@ class AppearancesAPIController extends APIController {
 
     $elastic_avail = CGUtils::isElasticAvailable();
     if (!$elastic_avail)
-      Response::error(503, 'The ElasticSearch server is unreachable');
+      Response::error(503, 'The OpenSearch server is unreachable');
     if (isset($_GET['size']) && is_numeric($_GET['size']))
       $appearances_per_page = CoreUtils::rangeLimit((int)$_GET['size'], 7, 20);
     else $appearances_per_page = 7;

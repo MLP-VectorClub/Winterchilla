@@ -374,7 +374,7 @@ Totals (non-success): 400: 75, 401: 2, 401/403: 41, 403: 18, 404: 24, 409: 34, 4
 
 | Line | Function | Kind | Message | Suggested |
 |---|---|---|---|---|
-| 197 | guide | fail | `'The ElasticSearch server is currently down and search is not available` | 503 |
+| 197 | guide | fail | `'The OpenSearch server is currently down and search is not available` | 503 |
 | 210 | guide | fail | `'Your search returned no results.'` | 404 |
 
 ## app/Controllers/DiscordAuthController.php

@@ -5,8 +5,7 @@ namespace App;
 use App\Models\Appearance;
 use App\Models\Notification;
 use App\Models\PinnedAppearance;
-use Elastic\Elasticsearch\Exception\ClientResponseException as ElasticClientResponseException;
-use Elastic\Transport\Exception\NoNodeAvailableException as ElasticNoNodesAvailableException;
+use OpenSearch\Common\Exceptions\OpenSearchException;
 use function count;
 use function is_int;
 use function is_string;
@@ -127,15 +126,15 @@ class Appearances {
     try {
       $elastic_client->indices()->delete(CGUtils::ELASTIC_BASE);
     }
-    catch (ElasticClientResponseException $e){
+    catch (OpenSearchException $e){
+      if (CoreUtils::elasticIsDown($e))
+        Response::error(503, 'Re-index failed, the OpenSearch server is down!');
+
       $message = CoreUtils::elasticErrorBody($e);
 
       // Eat exception if the index we're re-creating does not exist yet
-      if ($e->getCode() !== 404 || ($message['error']['type'] ?? null) !== 'index_not_found_exception' || ($message['error']['index'] ?? null) !== CGUtils::ELASTIC_BASE['index'])
+      if (CoreUtils::elasticErrorStatus($e) !== 404 || ($message['error']['type'] ?? null) !== 'index_not_found_exception' || ($message['error']['index'] ?? null) !== CGUtils::ELASTIC_BASE['index'])
         throw $e;
-    }
-    catch (ElasticNoNodesAvailableException $e){
-      Response::error(503, 'Re-index failed, ElasticSearch server is down!');
     }
     $params = array_merge(CGUtils::ELASTIC_BASE, [
       'body' => [
@@ -185,13 +184,12 @@ class Appearances {
     try {
       $elastic_client->indices()->create($params);
     }
-    catch (ElasticClientResponseException $e){
-      if ($e->getCode() !== 400)
+    catch (OpenSearchException $e){
+      if (CoreUtils::elasticIsDown($e))
+        Response::error(503, 'Re-index failed, the OpenSearch server is down!');
+      if (CoreUtils::elasticErrorStatus($e) !== 400)
         throw $e;
       Response::error(500, 'Failed to create index', ['details' => CoreUtils::elasticErrorBody($e)]);
-    }
-    catch (ElasticNoNodesAvailableException $e){
-      Response::error(503, 'Re-index failed, ElasticSearch server is down!');
     }
 
     $pinned_appearances = array_map(static fn(PinnedAppearance $a) => $a->appearance_id, PinnedAppearance::all());
@@ -211,12 +209,12 @@ class Appearances {
       $params['body'][] = $a->getElasticBody();
 
       if ($i % 100 === 0){
-        self::handleBulkError($elastic_client->bulk($params)->asArray());
+        self::handleBulkError($elastic_client->bulk($params));
         $params = ['body' => []];
       }
     }
     if (!empty($params['body'])){
-      self::handleBulkError($elastic_client->bulk($params)->asArray());
+      self::handleBulkError($elastic_client->bulk($params));
     }
 
     Response::ok(['message' => 'Re-index completed']);

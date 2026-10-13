@@ -18,10 +18,7 @@ use App\Time;
 use App\Twig;
 use App\UserPrefs;
 use App\Users;
-use Elastic\Elasticsearch\Exception\ClientResponseException as ElasticClientResponseException;
-use Elastic\Elasticsearch\Exception\ServerResponseException as ElasticServerErrorResponseException;
-use Elastic\Transport\Exception\NoNodeAvailableException;
-use Elastic\Transport\Exception\NoNodeAvailableException as ElasticNoNodesAvailableException;
+use OpenSearch\Common\Exceptions\OpenSearchException;
 use Exception;
 use League\Uri\Components\Query;
 use League\Uri\Modifier;
@@ -550,7 +547,7 @@ class Appearance extends NSModel implements Linkable {
   }
 
   /**
-   * Re-index the appearance in ElasticSearch
+   * Re-index the appearance in OpenSearch
    */
   public function reindex() {
     // We don't want to index pcg appearances
@@ -573,11 +570,12 @@ class Appearance extends NSModel implements Linkable {
     try {
       CoreUtils::elasticClient()->update($this->toElasticArray(false, true));
     }
-    catch (ElasticNoNodesAvailableException | ElasticServerErrorResponseException $e){
-      CoreUtils::logError("ElasticSearch server was down when server attempted to index appearance {$this->id}");
-    }
-    catch (ElasticClientResponseException $e){
-      if ($e->getCode() !== 404)
+    catch (OpenSearchException $e){
+      if (CoreUtils::elasticIsDown($e)){
+        CoreUtils::logError("OpenSearch server was down when server attempted to index appearance {$this->id}");
+        return;
+      }
+      if (CoreUtils::elasticErrorStatus($e) !== 404)
         throw $e;
       CoreUtils::elasticClient()->update($this->toElasticArray(false));
     }
@@ -591,7 +589,7 @@ class Appearance extends NSModel implements Linkable {
 
   public function getElasticBody() {
     if ($this->owner_id !== null)
-      throw new RuntimeException('Attempt to get ElasticSearch body for private appearance');
+      throw new RuntimeException('Attempt to get OpenSearch body for private appearance');
 
     $tags = Tags::getFor($this->id, null, true, true);
     $tag_names = [];
@@ -856,15 +854,16 @@ class Appearance extends NSModel implements Linkable {
       try {
         CoreUtils::elasticClient()->delete($this->toElasticArray(true));
       }
-      catch (ElasticClientResponseException $e){
+      catch (OpenSearchException $e){
+        if (CoreUtils::elasticIsDown($e)){
+          CoreUtils::logError("OpenSearch server was down when server attempted to remove appearance {$this->id}");
+          return;
+        }
         $message = CoreUtils::elasticErrorBody($e);
 
         // Eat error if appearance was not indexed
-        if ($e->getCode() !== 404 || (($message['found'] ?? null) !== false && ($message['result'] ?? null) !== 'not_found'))
+        if (CoreUtils::elasticErrorStatus($e) !== 404 || (($message['found'] ?? null) !== false && ($message['result'] ?? null) !== 'not_found'))
           throw $e;
-      }
-      catch (NoNodeAvailableException $e){
-        CoreUtils::logError("ElasticSearch server was down when server attempted to remove appearance {$this->id}");
       }
     }
   }

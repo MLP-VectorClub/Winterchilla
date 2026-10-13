@@ -14,7 +14,7 @@ use App\Models\User;
 use App\Pagination;
 use App\Permission;
 use App\Posts;
-use Elastic\Transport\Exception\NoNodeAvailableException as NoNodesAvailableException;
+use OpenSearch\Common\Exceptions\OpenSearchException;
 use IPTools\IP;
 use League\Uri\Components\Query;
 use League\Uri\Modifier;
@@ -35,8 +35,8 @@ class AdminController extends Controller {
       try {
         $client = CoreUtils::elasticClient();
         $client->ping();
-        $indices = $client->cat()->indices(['format' => 'json'])->asArray();
-        $nodes = $client->cat()->nodes(['format' => 'json'])->asArray();
+        $indices = $client->cat()->indices(['format' => 'json']);
+        $nodes = $client->cat()->nodes(['format' => 'json']);
 
         $usedIndexes = ['appearances'];
         $index_list = '';
@@ -63,7 +63,9 @@ class AdminController extends Controller {
         }
         $elastic_down = false;
       }
-      catch (NoNodesAvailableException $e){
+      catch (OpenSearchException $e){
+        if (!CoreUtils::elasticIsDown($e))
+          throw $e;
         $elastic_down = true;
       }
     }

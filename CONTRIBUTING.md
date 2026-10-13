@@ -24,7 +24,7 @@ The site is known to work with the following set of software, assuming correct c
 | Web Server        | nginx 1.13+                                   |
 | Database Server   | PostgreSQL 10+                                |
 | Asset Compilation | Node.js 8.0+                                  |
-| Search Server     | ElasticSearch 8                               |
+| Search Server     | OpenSearch 3                                  |
 | Runtime & Dependencies | Composer (latest)<br>PHP 7.3+            |
 | Source Control    | Git<br><small>(the site shows the commit data in the footer, so the binary should be runnable by the application)</small> |
 | SSL Certificate   | Self-signed<br><small>(required to use the site through HTTPS while developing)</small> |
@@ -125,14 +125,14 @@ $ wtf db migrate
 
 You can use `wtf db` To see all Phinx-related commands.
 
-### ElasticSearch
+### OpenSearch
 
 Once the application is fully configured, visit the Color Guide and use the "Re-index" button to set up the index(es) used by the application.
 
-The app targets ElasticSearch 8 (`elasticsearch/elasticsearch` ^8.19). Security is on by default in 8.x, so either set `ELASTIC_API_KEY` (or `ELASTIC_USERNAME`/`ELASTIC_PASSWORD`) and `ELASTIC_CA_BUNDLE` in your `.env`, or run a local dev node with security off:
+The app targets OpenSearch (`opensearch-project/opensearch-php`, the maintained fork of the Elasticsearch 7.10 client, which is what OpenSearch forked from; the Elasticsearch 8 client refuses to talk to it). With the security plugin on, set `OPENSEARCH_USERNAME`/`OPENSEARCH_PASSWORD` (and `OPENSEARCH_CA_BUNDLE` for a self-signed certificate) in your `.env`, or run a local dev node with it off:
 
 ```
-$ docker run -d --name es8 -p 127.0.0.1:9200:9200 -e discovery.type=single-node -e xpack.security.enabled=false docker.elastic.co/elasticsearch/elasticsearch:8.19.0
+$ docker run -d --name opensearch -p 127.0.0.1:9200:9200 -e discovery.type=single-node -e DISABLE_SECURITY_PLUGIN=true -e DISABLE_INSTALL_DEMO_CONFIG=true opensearchproject/opensearch:3
 ```
 
 ## Code style

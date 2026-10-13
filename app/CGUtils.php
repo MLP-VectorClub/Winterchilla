@@ -11,8 +11,7 @@ use App\Models\PCGSlotHistory;
 use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
-use Elastic\Elasticsearch\Exception\ClientResponseException;
-use Elastic\Elasticsearch\Exception\ServerResponseException;
+use OpenSearch\Common\Exceptions\OpenSearchException;
 use Exception;
 use Generator;
 use RuntimeException;
@@ -1029,7 +1028,7 @@ class CGUtils {
   ];
 
   /**
-   * Performs an ElasticSearch search operation
+   * Performs an OpenSearch search operation
    *
    * @param array      $body
    * @param Pagination $Pagination
@@ -1041,7 +1040,7 @@ class CGUtils {
       'body' => $body,
     ]);
 
-    return CoreUtils::elasticClient()->search($params)->asArray();
+    return CoreUtils::elasticClient()->search($params);
   }
 
   /**
@@ -1228,7 +1227,7 @@ class CGUtils {
     if (CoreUtils::env('TEST_MODE'))
       return false;
     try {
-      $elastic_avail = CoreUtils::elasticClient()->ping()->asBool();
+      $elastic_avail = CoreUtils::elasticClient()->ping();
     }
     catch (\Throwable $e){
       return false;
@@ -1244,8 +1243,7 @@ class CGUtils {
    * @param string|null $title
    *
    * @return array
-   * @throws ClientResponseException
-   * @throws ServerResponseException
+   * @throws OpenSearchException
    */
   public static function searchGuide(Pagination $pagination, string $guide, bool $searching = true, ?string &$title = null):array {
     $in_order = true;
@@ -1275,8 +1273,8 @@ class CGUtils {
     try {
       $search = self::searchElastic($search, $pagination);
     }
-    catch (ClientResponseException | ServerResponseException $e){
-      if ($e instanceof ClientResponseException && $e->getCode() === 404){
+    catch (OpenSearchException $e){
+      if (CoreUtils::elasticErrorStatus($e) === 404){
         $search = [];
       }
       else {

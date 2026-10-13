@@ -280,3 +280,24 @@ it('re-sorts the full list from the sort menu', function () use ($base) {
     ->assertQueryStringHas('sort_by', 'label')
     ->assertSee('Twilight Sparkle');
 })->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('shows the buttons of a row in one size, even when one of them asks for a small one', function () use ($base) {
+  $oneSize = <<<'JS'
+(() => {
+  const sizes = [...document.querySelectorAll('[class*="ButtonCollection"]:not([class*="compact"]) > .btn')]
+    .filter((b) => b.offsetWidth)
+    .map((b) => getComputedStyle(b).fontSize + '/' + Math.round(b.getBoundingClientRect().height));
+  return [...new Set(sizes)].join(',');
+})()
+JS;
+
+  // The appearance page has a small Share button between regular ones, the tags page a small "New tag" button
+  visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+    ->navigate($base . '/cg/pony/v/' . TestSeederConstants::APPEARANCE_ID)
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->assertScript($oneSize, '16px/38')
+    ->navigate($base . '/cg/pony/tags')
+    ->assertScript($oneSize, '16px/38')
+    ->navigate($base . '/cg/pony')
+    ->assertScript($oneSize, '16px/38');
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');

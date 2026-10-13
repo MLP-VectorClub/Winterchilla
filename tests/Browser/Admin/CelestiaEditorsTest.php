@@ -328,3 +328,29 @@ JS;
     ->navigate($base . '/cg/pony')
     ->assertScript($stacked, 'side by side');
 })->skip($notCelestia, 'Celestia only')->group('celestia-only');
+
+it('shows the sprite of an appearance in the search suggestions, and the color squares when there is none', function () use ($base) {
+  // Luna does not index appearances while it runs for tests, so this uses the seeded one, which the search index knows
+  $api = adminApi();
+  $id = TestSeederConstants::APPEARANCE_ID;
+  $sprite = dirname(__DIR__, 3) . '/public/img/sprite_template/body_female.png';
+  $suggestion = '[role=option] [data-testid="ac-result-sprite"]';
+
+  try {
+    visit($base . '/cg/pony')
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+      ->type('input[name="q"]', 'Twilight')
+      ->assertSeeIn('[role=option]', 'Twilight Sparkle')
+      ->assertMissing($suggestion);
+
+    expect($api->upload("/appearances/$id/sprite", 'sprite', $sprite)['status'])->toBeIn([200, 201, 204]);
+
+    visit($base . '/cg/pony')
+      ->type('input[name="q"]', 'Twilight')
+      ->assertSeeIn('[role=option]', 'Twilight Sparkle')
+      ->assertPresent($suggestion);
+  }
+  finally {
+    $api->request('DELETE', "/appearances/$id/sprite");
+  }
+})->skip($notCelestia, 'Celestia only')->group('celestia-only');

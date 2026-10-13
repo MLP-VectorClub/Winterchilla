@@ -239,3 +239,33 @@ it('says what an appearance does not have to staff', function () use ($base) {
     $api->request('DELETE', "/appearances/$id");
   }
 })->skip(fn() => !TestSeederConstants::external(), 'Celestia only')->group('celestia-only');
+
+it('shows synonym tags in the guide list to staff only and lists the other names of a character on the full list', function () use ($base, $appearanceId) {
+  $api = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+  $suffix = substr(md5(uniqid('', true)), 0, 5);
+  $main = $api->post('/tags', ['name' => "zzaka$suffix", 'type' => 'char'])['json'];
+  $alias = $api->post('/tags', ['name' => "zzalias$suffix", 'type' => 'char'])['json'];
+
+  try {
+    expect($api->json('PUT', '/tags/' . $alias['id'] . '/synonym', ['targetId' => $main['id']])['status'])->toBeIn([200, 204]);
+    expect($api->json('PUT', "/appearances/$appearanceId/tags", ['tags' => $main['name'], 'origTags' => ''])['status'])->toBeIn([200, 204]);
+
+    // Staff see the synonym next to the tag in the list, everybody else only the tag
+    visit(TestSeederConstants::loginUrl(TestSeederConstants::ADMIN_ID))
+      ->navigate($base . '/cg/pony')
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+      ->assertSee($alias['name']);
+    visit($base . '/cg/pony')->assertDontSee($alias['name'])->assertSee($main['name']);
+
+    // The full list names the other names of the character for everybody, after AKA
+    visit($base . '/cg/pony/full')
+      ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+      ->assertSee('AKA')
+      ->assertSee($alias['name']);
+  }
+  finally {
+    $api->json('PUT', "/appearances/$appearanceId/tags", ['tags' => '', 'origTags' => $main['name']]);
+    $api->request('DELETE', '/tags/' . $alias['id'], ['sanityCheck' => 1]);
+    $api->request('DELETE', '/tags/' . $main['id'], ['sanityCheck' => 1]);
+  }
+});

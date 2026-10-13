@@ -72,3 +72,13 @@ it('shows the sign in button for guests', function () use ($base) {
   visit($base . '/cg/pony')
     ->assertSee('Sign in');
 });
+
+it('puts the HTTP status in the title and the heading of the pages that deny or do not find', function () use ($base) {
+  visit($base . '/admin')
+    ->assertSee('403')
+    ->assertScript('document.title', '403 - MLP Vector Club');
+
+  visit($base . '/no-such-page-here')
+    ->assertSee('404')
+    ->assertScript('document.title', '404 - MLP Vector Club');
+});

@@ -17,7 +17,11 @@ export CONTRACT_LOGIN_METHOD="${CONTRACT_LOGIN_METHOD:-POST}"
 if [ "${UI_RESET:-1}" != "0" ]; then
   ROOT="$PWD"
   LUNA_DIR="${LUNA_DIR:-$ROOT/../Luna}"
-  [ -f build/contract-seed.sql ] || scripts/dump-contract-seed.sh > build/contract-seed.sql
+  # The seed holds dates relative to when it was dumped (the event ends a week later, ...), so an old dump makes date dependent tests fail
+  if [ ! -f build/contract-seed.sql ] || [ -n "$(find build/contract-seed.sql -mtime +2 2>/dev/null)" ]; then
+    echo "== Dumping a fresh contract seed" >&2
+    scripts/dump-contract-seed.sh > build/contract-seed.sql.new && mv build/contract-seed.sql.new build/contract-seed.sql
+  fi
   echo "== Reloading the contract seed into Luna's luna_contract database"
   (cd "$LUNA_DIR" && scripts/load-contract-seed.sh "$ROOT/build/contract-seed.sql" >/dev/null)
 fi

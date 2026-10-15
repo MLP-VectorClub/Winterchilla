@@ -46,6 +46,16 @@ class ApiClient {
     @unlink($this->jar);
   }
 
+  /** @var array<string, string> Cookies sent on top of the jar's, e.g. a session of another application */
+  private array $extraCookies = [];
+
+  /** The same client, with a cookie it did not get from the site itself */
+  public function withCookie(string $name, string $value):self {
+    $this->extraCookies[$name] = $value;
+
+    return $this;
+  }
+
   public static function guest():self {
     return new self();
   }
@@ -137,6 +147,8 @@ class ApiClient {
     }
     elseif (!empty($params))
       $url .= '?' . http_build_query($params);
+    if ($this->extraCookies !== [])
+      $opts[CURLOPT_COOKIE] = implode('; ', array_map(fn($name, $value) => $name . '=' . $value, array_keys($this->extraCookies), $this->extraCookies));
     $opts[CURLOPT_URL] = $url;
     curl_setopt_array($ch, $opts);
     $body = curl_exec($ch);

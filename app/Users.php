@@ -167,6 +167,20 @@ class Users {
     if (Auth::$signed_in)
       return;
 
+    // Read-only mode: whoever is signed in on the new site is signed in here too, as far as looking around goes
+    if (CoreUtils::readOnly()){
+      $luna_user = LunaSession::user();
+      if ($luna_user !== null){
+        Auth::$user = $luna_user;
+        // Nothing of it is saved (and no cookie is set): it only stands for the visit
+        Auth::$session = new Session();
+        Auth::$session->user_id = $luna_user->id;
+        Auth::$signed_in = true;
+
+        return;
+      }
+    }
+
     if (!Cookie::exists('access')){
       Auth::$session = Session::newGuestSession();
 

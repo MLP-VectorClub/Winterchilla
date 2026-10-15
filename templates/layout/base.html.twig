@@ -44,7 +44,10 @@
         {% include 'layout/_sidebar_useful_links.html.twig' %}
         <div class="button-block">
           {% if signed_in %}
-            <button id="signout" data-testid="auth-signout" class="typcn typcn-arrow-back large">Sign out</button>
+            {# Signing out changes the session, which is not possible here: that happens on the new site #}
+            {% if not env('READ_ONLY') %}
+              <button id="signout" data-testid="auth-signout" class="typcn typcn-arrow-back large">Sign out</button>
+            {% endif %}
           {% elseif not env('READ_ONLY') %}
             <button class="typcn btn-da da-login large" id="signin">Sign in</button>
           {% endif %}

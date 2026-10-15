@@ -301,7 +301,8 @@ class CoreUtils {
     // Variables
     $scope = $options['import'] ?? [];
     $fatal_error_page = isset($scope['fatal_error_page']);
-    $scope['ws_server_host'] = self::env('TEST_MODE') ? null : self::env('WS_SERVER_HOST');
+    $scope['ws_server_host'] = self::wsServerHost();
+    $scope['read_only'] = self::readOnly();
     $minimal = !empty($options['minimal']);
 
     // Add auth data
@@ -1641,6 +1642,14 @@ class CoreUtils {
    */
   public static function readOnly():bool {
     return self::env('READ_ONLY') === true;
+  }
+
+  /**
+   * The websocket server only pushes live updates, which a read-only site has no use for: no host means the client neither loads the socket.io
+   * library nor tries to connect
+   */
+  public static function wsServerHost():?string {
+    return self::env('TEST_MODE') || self::readOnly() ? null : self::env('WS_SERVER_HOST');
   }
 
   public static function env(string $variable) {

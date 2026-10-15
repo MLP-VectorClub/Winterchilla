@@ -71,7 +71,7 @@ class ConfigAPIController extends APIController {
         'username' => Regexes::$username->toJs(),
         'episodeTitle' => Regexes::$ep_title->toJs(),
       ],
-      'wsServerHost' => CoreUtils::env('TEST_MODE') ? null : CoreUtils::env('WS_SERVER_HOST'),
+      'wsServerHost' => CoreUtils::wsServerHost(),
       'discordInviteLink' => DISCORD_INVITE_LINK,
     ]);
   }

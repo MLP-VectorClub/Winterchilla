@@ -62,6 +62,8 @@ class LibHelper {
       $libs = array_unique(array_merge($libs, $options['libs']));
     }
     foreach ($libs as $lib){
+      if ($lib === 'socket-io' && CoreUtils::readOnly())
+        continue;
       [$js, $css] = self::get($lib);
       if ($js){
         /** @noinspection PhpTemplateMissingInspection */

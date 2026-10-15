@@ -87,7 +87,9 @@ class Session extends NSModel {
     $cookie = self::generateCookie();
     $session->token = CoreUtils::sha256($cookie);
     $session->detectBrowser();
-    self::setCookie($cookie);
+    // Read-only mode saves no sessions, so the cookie would only be a token that is not one the next time (which the limit on those counts)
+    if (!CoreUtils::readOnly())
+      self::setCookie($cookie);
 
     return $session;
   }

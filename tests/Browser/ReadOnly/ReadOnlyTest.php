@@ -106,3 +106,26 @@ it('shows a visitor signed in on the new site as signed in', function () {
   }
 })->skip($skip, 'Needs READ_ONLY=true')->group('read-only');
 
+/** Made up tokens are counted against the address and, past the limit (5 in scripts/ui-test-readonly.sh), refused until the window is over */
+it('stops an address that keeps presenting tokens that are not real', function () {
+  $dotenv = (new \Symfony\Component\Dotenv\Dotenv())->parse((string)file_get_contents(dirname(__DIR__, 3) . '/.env'));
+  $redis = new Redis();
+  $redis->connect($dotenv['REDIS_HOST'] ?? '127.0.0.1', (int)($dotenv['REDIS_PORT'] ?? 6379));
+  $forget = fn() => array_map(fn($key) => $redis->del($key), $redis->keys('invalid-tokens:*'));
+  $forget();
+
+  try {
+    $statuses = [];
+    for ($i = 0; $i < 8; $i++)
+      $statuses[] = ApiClient::guest()->withCookie('test_session', 'made-up-' . $i)->pageResponse('/cg')['status'];
+    expect($statuses)->toBe([200, 200, 200, 200, 200, 429, 429, 429]);
+
+    // Only requests that carry a token are held up
+    expect(ApiClient::guest()->pageResponse('/cg')['status'])->toBe(200);
+    // And the made up token of the old kind (the `access` cookie of this site) counts the same
+    expect(ApiClient::guest()->withCookie('access', str_repeat('a', 64))->pageResponse('/cg')['status'])->toBe(429);
+  } finally {
+    $forget();
+  }
+})->skip($skip, 'Needs READ_ONLY=true')->group('read-only');
+

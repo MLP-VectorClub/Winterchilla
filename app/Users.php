@@ -187,10 +187,20 @@ class Users {
       return;
     }
     if (Cookie::exists('access')){
+      // A visitor who keeps presenting tokens that are not ours is held up before anything is looked up
+      $address = $_SERVER['REMOTE_ADDR'] ?? '';
+      InvalidTokenLimiter::guard($address);
       Auth::$session = Session::find_by_token(CoreUtils::sha256(Cookie::get('access')));
       if (Auth::$session !== null)
         Auth::$user = Auth::$session->user;
-      else Auth::$session = Session::newGuestSession();
+      else {
+        // The guest session replaces the cookie, so a stale one is counted once and not on every request
+        InvalidTokenLimiter::recordInvalid($address);
+        // Read-only mode hands out no new cookie, so the stale one has to go or it would be counted on every request
+        if (CoreUtils::readOnly())
+          Cookie::delete('access', Cookie::HTTP_ONLY);
+        Auth::$session = Session::newGuestSession();
+      }
 
       if (Auth::$user === null)
         Auth::$session->last_visit = date('c');

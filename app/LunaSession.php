@@ -65,9 +65,15 @@ class LunaSession {
     if (empty($cookie_name) || empty($app_key) || empty($_COOKIE[$cookie_name]))
       return null;
 
+    $address = $_SERVER['REMOTE_ADDR'] ?? '';
+    InvalidTokenLimiter::guard($address);
     $id = self::sessionIdFromCookie((string)$_COOKIE[$cookie_name], $cookie_name, $app_key);
-    if ($id === null)
+    if ($id === null){
+      // Not a cookie of Luna's (it would not have got past the MAC): somebody is making them up
+      InvalidTokenLimiter::recordInvalid($address);
+
       return null;
+    }
 
     try {
       $values = [$id];

@@ -31,7 +31,7 @@ class ConfigAPIController extends APIController {
    *     description="OK",
    *     @OA\JsonContent(
    *       type="object",
-   *       required={"tagTypes", "roles", "showTypes", "vectorApps", "maxUploadSize", "patterns", "wsServerHost", "discordInviteLink"},
+   *       required={"tagTypes", "roles", "showTypes", "vectorApps", "maxUploadSize", "patterns", "wsServerHost", "discordInviteLink", "readOnly"},
    *       additionalProperties=false,
    *       @OA\Property(property="tagTypes", type="object", additionalProperties=@OA\AdditionalProperties(type="string"), description="Tag type key to label"),
    *       @OA\Property(property="roles", type="object", additionalProperties=@OA\AdditionalProperties(type="string"), description="Role key to label"),
@@ -49,7 +49,8 @@ class ConfigAPIController extends APIController {
    *         @OA\Property(property="episodeTitle", ref="#/components/schemas/RegexPattern")
    *       ),
    *       @OA\Property(property="wsServerHost", type="string", nullable=true),
-   *       @OA\Property(property="discordInviteLink", type="string")
+   *       @OA\Property(property="discordInviteLink", type="string"),
+   *       @OA\Property(property="readOnly", type="boolean")
    *     )
    *   )
    * )
@@ -73,6 +74,7 @@ class ConfigAPIController extends APIController {
       ],
       'wsServerHost' => CoreUtils::wsServerHost(),
       'discordInviteLink' => DISCORD_INVITE_LINK,
+      'readOnly' => CoreUtils::readOnly(),
     ]);
   }
 }

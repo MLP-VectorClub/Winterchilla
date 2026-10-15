@@ -32,6 +32,8 @@ function fatal_error(string $cause, ?Throwable $e = null) {
     'err_cause' => $cause,
     'breadcrumbs' => $bc,
     'default_js' => true,
+    'ws_server_host' => CoreUtils::wsServerHost(),
+    'read_only' => CoreUtils::readOnly(),
     'css' => CoreUtils::DEFAULT_CSS,
     'js' => CoreUtils::DEFAULT_JS,
   ];

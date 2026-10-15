@@ -37,6 +37,11 @@ it('shows the read-only notice', function () {
   expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->page('/admin'))->toContain('id=\'read-only-notice\'');
 })->skip($skip, 'Needs READ_ONLY=true')->group('read-only');
 
+it('offers no way to sign in', function () {
+  $page = ApiClient::guest()->page('/cg');
+  expect($page)->not->toContain('id="signin"')->and($page)->not->toContain('da-login');
+})->skip($skip, 'Needs READ_ONLY=true')->group('read-only');
+
 it('reloads a post without checking its images or marking it broken', function () {
   $r = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->get('/posts/' . TestSeederConstants::POST_ID . '/reload');
   expect($r['status'])->toBe(200)->and($r['json'])->toHaveKey('post');
@@ -52,7 +57,7 @@ it('refuses every change with a 503 that says why', function () {
 
 it('does not start a DeviantArt or Discord sign in that would write', function () {
   $guest = ApiClient::guest();
-  foreach (['/da-auth/end?code=x&state=y', '/discord-connect/end?code=x&state=y'] as $path) {
+  foreach (['/da-auth/begin', '/da-auth/end?code=x&state=y', '/discord-connect/begin', '/discord-connect/end?code=x&state=y'] as $path) {
     $r = $guest->pageResponse($path);
     expect($r['status'])->toBe(503, $path);
   }

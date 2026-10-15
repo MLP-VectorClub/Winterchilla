@@ -23,9 +23,9 @@ if (!isset($match['target']))
   CoreUtils::notFound();
 
 // Read-only mode: nothing that changes data is accepted (the test-only routes of the browser tests are the exception). Signing in writes a session
-// and, for a new member, an account, so the return addresses of the sign in providers are refused too
+// and, for a new member, an account, so the start and the return addresses of the sign in providers are refused too
 if (CoreUtils::readOnly() && !str_starts_with($safe_uri, '/test-')){
-  $sign_in_return = preg_match('~^/(da-auth/end|discord-connect/end)(\?|$)~', $safe_uri) === 1;
+  $sign_in_return = preg_match('~^/(da-auth|discord-connect)/(begin|end)(\?|$)~', $safe_uri) === 1;
   if ($sign_in_return || !in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD', 'OPTIONS'], true)){
     header('Retry-After: 3600');
     if (CoreUtils::isJSONExpected())

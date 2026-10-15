@@ -56,7 +56,7 @@ class Response {
       self::error($status, $message, is_array($data) ? $data : []);
 
     if (empty($message)){
-      $message = Auth::$signed_in ? 'Insufficient permissions.'
+      $message = Auth::$signed_in || CoreUtils::readOnly() ? 'Insufficient permissions.'
         : '<p>You are not signed in (or your session expired).</p><p class="align-center"><button class="typcn green btn-da da-login" id="turbo-sign-in" data-url="/da-auth/begin">Sign back in</button></p>';
     }
 

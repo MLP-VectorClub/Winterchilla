@@ -47,9 +47,12 @@ it('shows the components page', function () use ($base) {
     ->assertSee('Components');
 })->group('winterchilla-only');
 
-it('serves the API docs page', function () use ($base) {
-  visit($base . '/docs')
-    ->assertSee('API');
+it('sends the API docs page to the one of the new API', function () use ($base) {
+  $ch = curl_init($base . '/docs');
+  curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false]);
+  curl_exec($ch);
+  expect(curl_getinfo($ch, CURLINFO_HTTP_CODE))->toBe(301)
+    ->and(curl_getinfo($ch, CURLINFO_REDIRECT_URL))->toBe('https://api.mlpvector.club/');
 })->group('winterchilla-only');
 
 it('serves the muffin rating image as an SVG', function () use ($base) {

@@ -208,7 +208,7 @@ the minified output (width/height dropped, viewBox kept) so this can't silently 
       `/s/req|res/[id]` success path isn't covered (no `legacy_post_mappings` seed row)
 - [x] `/about/browser/[session]?` (AboutController) — page loads; session variant 403s for non-developers
 - [x] `/components` (ComponentsController) — loads (noindex page, still reachable)
-- [x] `/docs` (DocsController) — loads
+- [x] `/docs` (DocsController) — permanent redirect to the new API's docs, https://api.mlpvector.club/
 - [x] `/muffin-rating` (MuffinRatingController) — returns `image/svg+xml` with the requested width
 
 ### Stage 6 — OAuth edges (done)

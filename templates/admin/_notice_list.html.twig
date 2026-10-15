@@ -7,7 +7,9 @@
     <li class="notice-item">
       <span class="text">{{ notice.message }}</span>
       &ndash;
-      <span class="time">Hidden {{ time_tag(notice.hide_after) }}</span>
+      {% if notice.show_after is not null %}<span class="time">Shown {{ time_tag(notice.show_after) }},</span>{% endif %}
+      <span class="time">hidden {{ time_tag(notice.hide_after) }}</span>
+      <span class="site">({{ notice.site }})</span>
       <span class="actions">
 		<button class="red typcn typcn-trash delete" title="Delete" disabled></button>
 		<button class="blue typcn typcn-pencil edit" title="Edit" disabled></button>

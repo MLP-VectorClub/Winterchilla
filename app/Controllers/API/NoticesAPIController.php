@@ -21,7 +21,9 @@ class NoticesAPIController extends APIController {
    *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
    *   @OA\Property(property="type", type="string", enum={"info", "success", "fail", "warn", "caution"}),
    *   @OA\Property(property="messageHtml", type="string", description="Sanitized HTML of the message"),
+   *   @OA\Property(property="showAfter", type="string", format="date-time", nullable=true, description="The notice is not shown before this time, null shows it at once"),
    *   @OA\Property(property="hideAfter", type="string", format="date-time"),
+   *   @OA\Property(property="site", type="string", enum={"all", "celestia", "winterchilla"}, description="The site that shows the notice"),
    *   @OA\Property(property="postedBy", type="integer", nullable=true),
    *   @OA\Property(property="createdAt", type="string", format="date-time")
    * )
@@ -30,8 +32,10 @@ class NoticesAPIController extends APIController {
     return [
       'id' => (int)$n->id,
       'type' => $n->type,
-      'messageHtml' => $n->getMessage(),
+      'messageHtml' => $n->getMessage(false),
+      'showAfter' => $n->show_after === null ? null : gmdate('c', $n->show_after->getTimestamp()),
       'hideAfter' => gmdate('c', $n->hide_after->getTimestamp()),
+      'site' => $n->site,
       'postedBy' => $n->posted_by,
       'createdAt' => gmdate('c', $n->created_at->getTimestamp()),
     ];
@@ -208,6 +212,19 @@ class NoticesAPIController extends APIController {
             Input::ERROR_RANGE => 'Hide after date cannot be in the past',
           ],
         ]))->out();
+        $show_after = (new Input('showAfter', 'timestamp', [
+          Input::IS_OPTIONAL => true,
+          Input::CUSTOM_ERROR_MESSAGES => [Input::ERROR_INVALID => 'Show after date is invalid'],
+        ]))->out();
+        if ($show_after !== null && $show_after >= $hide_after)
+          Response::invalid('showAfter', 'Show after date must be before the hide after date');
+        $site = (new Input('site', function ($value) {
+          if (!in_array($value, Notice::VALID_SITES, true))
+            return Input::ERROR_INVALID;
+        }, [
+          Input::IS_OPTIONAL => true,
+          Input::CUSTOM_ERROR_MESSAGES => [Input::ERROR_INVALID => 'Site (@value) is invalid'],
+        ]))->out() ?? 'all';
         $type = (new Input('type', function ($value) {
           if (!isset(Notice::VALID_TYPES[$value]))
             return Input::ERROR_INVALID;
@@ -218,8 +235,12 @@ class NoticesAPIController extends APIController {
           ],
         ]))->out();
 
-        $notice->message_html = CoreUtils::sanitizeHtml($message_html);
+        // Links stay. The purifier drops an address with braces in it, so the placeholder is swapped for something it accepts while it works
+        $token = 'zzpathplaceholderzz';
+        $notice->message_html = str_replace($token, '{path}', CoreUtils::sanitizeHtml(str_replace('{path}', $token, $message_html), ['a'], ['a.href']));
+        $notice->show_after = $show_after === null ? null : date('c', $show_after);
         $notice->hide_after = date('c', $hide_after);
+        $notice->site = $site;
         $notice->type = $type;
         $notice->save();
         // Timestamps are set by the database, so read the row back

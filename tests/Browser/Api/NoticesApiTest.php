@@ -24,7 +24,7 @@ it('creates, reads, updates, lists and deletes a notice', function () {
 
   $created = $admin->post('/notices', noticeBody());
   expect($created['status'])->toBe(201)
-    ->and($created['json'])->toHaveKeys(['id', 'type', 'messageHtml', 'hideAfter', 'postedBy', 'createdAt'])
+    ->and($created['json'])->toHaveKeys(['id', 'type', 'messageHtml', 'showAfter', 'hideAfter', 'site', 'postedBy', 'createdAt'])
     ->and($created['json']['postedBy'])->toBe(TestSeederConstants::ADMIN_ID)
     ->and($created['json'])->not->toHaveKey('status');
   $id = $created['json']['id'];
@@ -63,4 +63,37 @@ it('validates notices with 422 and field errors', function () {
   expect($admin->post('/notices', noticeBody(['type' => 'nope']))['json']['errors'])->toHaveKey('type');
   expect($admin->post('/notices', noticeBody(['messageHtml' => str_repeat('a', 501)]))['json']['errors'])->toHaveKey('messageHtml');
   expect($admin->get('/notices', ['size' => 500])['json']['errors'])->toHaveKey('size');
+});
+
+it('schedules a notice for one site and keeps links with a path placeholder', function () {
+  $admin = ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID);
+
+  $created = $admin->post('/notices', noticeBody([
+    'messageHtml' => 'Moved: <a href="https://mlpvector.club{path}" onclick="x()">here</a>',
+    'showAfter' => gmdate('c', strtotime('+1 day')),
+    'hideAfter' => gmdate('c', strtotime('+30 days')),
+    'site' => 'winterchilla',
+  ]));
+  expect($created['status'])->toBe(201)
+    ->and($created['json']['site'])->toBe('winterchilla')
+    ->and($created['json']['showAfter'])->not->toBeNull()
+    ->and($created['json']['messageHtml'])->toBe('Moved: <a href="https://mlpvector.club{path}">here</a>');
+  $id = $created['json']['id'];
+
+  try {
+    // Not started yet, so nobody sees it
+    expect(array_column(ApiClient::guest()->get('/notices/current')['json'], 'id'))->not->toContain($id);
+
+    $plain = $admin->post('/notices', noticeBody());
+    expect($plain['json']['showAfter'])->toBeNull()->and($plain['json']['site'])->toBe('all');
+    $admin->request('DELETE', "/notices/{$plain['json']['id']}");
+
+    $bad = $admin->post('/notices', noticeBody(['site' => 'elsewhere']));
+    expect($bad['status'])->toBe(422);
+    $late = $admin->post('/notices', noticeBody(['showAfter' => gmdate('c', strtotime('+5 days'))]));
+    expect($late['status'])->toBe(422);
+  }
+  finally {
+    $admin->request('DELETE', "/notices/$id");
+  }
 });

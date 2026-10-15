@@ -11,6 +11,7 @@ use App\DB;
 use App\Exceptions\NoPCGSlotsException;
 use App\GlobalSettings;
 use App\Logs;
+use App\LunaSession;
 use App\NavBreadcrumb;
 use App\Pagination;
 use App\Permission;
@@ -61,6 +62,14 @@ class User extends NSModel implements Linkable {
     ['discord_member'],
     ['deviantart_user'],
   ];
+
+  /**
+   * Luna stores the addresses encrypted (see App\LunaSession::emailFromStored): this is the plain one, `null` where it cannot be read. Lookups by address
+   * (`find_by_email` and the likes) cannot work on what the table holds any more, they belong to the part of the site that changes data, which is gone
+   */
+  public function get_email():?string {
+    return LunaSession::emailFromStored($this->read_attribute('email'));
+  }
 
   public function get_role_label() {
     return Permission::ROLES_ASSOC[$this->role] ?? 'Curious Pony';

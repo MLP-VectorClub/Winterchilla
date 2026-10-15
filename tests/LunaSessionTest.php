@@ -45,4 +45,24 @@ class LunaSessionTest extends TestCase {
     self::assertFalse(LunaSession::isAlive($now - 43200 * 60 - 1, 43200, $now));
     self::assertFalse(LunaSession::isAlive($now - 121 * 60, 120, $now));
   }
+
+  /** Made by Luna's own encrypter, `encryptString('ponyfan@example.com')` with the same key as above (an address is not prefixed like a cookie) */
+  private const ENCRYPTED_EMAIL = 'eyJpdiI6Ik5zc0N0RXBDaU1HNk9yNm56Y3JjUnc9PSIsInZhbHVlIjoiMWVXWGpCVmpDY0swRW9PejFWVjdlbWNaRFczOXBMcHhCR2FEYjcyUjRHOD0iLCJtYWMiOiI4ZmYxYTJmZGY5M2Q0YzhlMDc5MGI1ZTIwNzZiNDU2MGQwMzZlNGFkODhmNjNkZTI1Mjg0NTQ3ZTU1YmMxMmNlIiwidGFnIjoiIn0=';
+
+  public function testDecryptsAnAddressTheWayLunaStoresIt():void {
+    self::assertSame('ponyfan@example.com', LunaSession::decryptPayload(self::ENCRYPTED_EMAIL, self::KEY));
+    self::assertNull(LunaSession::decryptPayload(self::ENCRYPTED_EMAIL, 'base64:'.base64_encode(str_repeat('x', 32))));
+  }
+
+  public function testReadsPlainAndEncryptedAddressesFromTheTable():void {
+    $_ENV['LUNA_APP_KEY'] = self::KEY;
+    self::assertSame('plain@example.com', LunaSession::emailFromStored('plain@example.com'));
+    self::assertSame('ponyfan@example.com', LunaSession::emailFromStored(self::ENCRYPTED_EMAIL));
+    self::assertNull(LunaSession::emailFromStored(null));
+    self::assertNull(LunaSession::emailFromStored(''));
+    unset($_ENV['LUNA_APP_KEY']);
+    // Without the key an encrypted address is none, and never the ciphertext
+    self::assertNull(LunaSession::emailFromStored(self::ENCRYPTED_EMAIL));
+    self::assertSame('plain@example.com', LunaSession::emailFromStored('plain@example.com'));
+  }
 }

@@ -16,33 +16,42 @@ class LunaSession {
   /** Minutes a session lasts without a request, Luna's `SESSION_LIFETIME` */
   private const DEFAULT_LIFETIME = 43200;
 
-  /**
-   * The session id inside a Laravel session cookie, `null` for anything that is not one made with this key (a wrong key, another cookie name, a
-   * damaged cookie)
-   */
-  public static function sessionIdFromCookie(string $cookie, string $cookie_name, string $app_key):?string {
+  /** Laravel's own encrypted payload (`base64(json{iv, value, mac})`, AES-256-CBC) decrypted, `null` for anything that is not one made with this key */
+  public static function decryptPayload(string $payload, string $app_key):?string {
     if (str_starts_with($app_key, 'base64:'))
       $app_key = base64_decode(substr($app_key, 7), true);
     if (!is_string($app_key) || strlen($app_key) !== 32)
       return null;
 
-    $payload = json_decode(base64_decode($cookie, true) ?: '', true);
-    if (!is_array($payload))
+    $data = json_decode(base64_decode($payload, true) ?: '', true);
+    if (!is_array($data))
       return null;
     foreach (['iv', 'value', 'mac'] as $part){
-      if (!isset($payload[$part]) || !is_string($payload[$part]))
+      if (!isset($data[$part]) || !is_string($data[$part]))
         return null;
     }
 
     // The same check Laravel's encrypter makes before it decrypts anything
-    if (!hash_equals(hash_hmac('sha256', $payload['iv'].$payload['value'], $app_key), $payload['mac']))
+    if (!hash_equals(hash_hmac('sha256', $data['iv'].$data['value'], $app_key), $data['mac']))
       return null;
-    $iv = base64_decode($payload['iv'], true);
+    $iv = base64_decode($data['iv'], true);
     if ($iv === false)
       return null;
-    $decrypted = openssl_decrypt($payload['value'], 'aes-256-cbc', $app_key, 0, $iv);
-    if ($decrypted === false)
+    $decrypted = openssl_decrypt($data['value'], 'aes-256-cbc', $app_key, 0, $iv);
+
+    return $decrypted === false ? null : $decrypted;
+  }
+
+  /**
+   * The session id inside a Laravel session cookie, `null` for anything that is not one made with this key (a wrong key, another cookie name, a
+   * damaged cookie)
+   */
+  public static function sessionIdFromCookie(string $cookie, string $cookie_name, string $app_key):?string {
+    $decrypted = self::decryptPayload($cookie, $app_key);
+    if ($decrypted === null)
       return null;
+    if (str_starts_with($app_key, 'base64:'))
+      $app_key = (string)base64_decode(substr($app_key, 7), true);
 
     // Laravel puts a prefix made from the cookie's name in front of the value, so a cookie cannot be passed off as another one
     $prefix = hash_hmac('sha1', $cookie_name.'v2', $app_key).'|';
@@ -51,6 +60,23 @@ class LunaSession {
     $id = substr($decrypted, strlen($prefix));
 
     return preg_match('/^[A-Za-z0-9]{40}$/', $id) === 1 ? $id : null;
+  }
+
+  /**
+   * An e-mail address as the table holds it: Luna encrypts them with its app key, the old site wrote plain ones. A stored value that is encrypted and
+   * cannot be decrypted here (no `LUNA_APP_KEY`) is no address, never the ciphertext
+   */
+  public static function emailFromStored(?string $stored):?string {
+    if ($stored === null || $stored === '')
+      return null;
+    if (preg_match('/^[A-Za-z0-9+\/]+=*$/', $stored) !== 1)
+      return $stored;
+    $payload = json_decode(base64_decode($stored, true) ?: '', true);
+    if (!is_array($payload) || !isset($payload['iv'], $payload['value'], $payload['mac']))
+      return $stored;
+    $app_key = CoreUtils::env('LUNA_APP_KEY');
+
+    return empty($app_key) ? null : self::decryptPayload($stored, $app_key);
   }
 
   /** Whether a session that was last used at this time (a Unix timestamp) is still alive */

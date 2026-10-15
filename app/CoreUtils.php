@@ -1656,11 +1656,11 @@ class CoreUtils {
   }
 
   /**
-   * The websocket server only pushes live updates, which a read-only site has no use for: no host means the client neither loads the socket.io
-   * library nor tries to connect
+   * The websocket server still pushes live updates while the site is read-only (notifications and the like come from the other site), no host
+   * means the client neither loads the socket.io library nor tries to connect
    */
   public static function wsServerHost():?string {
-    return self::env('TEST_MODE') || self::readOnly() ? null : self::env('WS_SERVER_HOST');
+    return self::env('TEST_MODE') ? null : self::env('WS_SERVER_HOST');
   }
 
   public static function env(string $variable) {

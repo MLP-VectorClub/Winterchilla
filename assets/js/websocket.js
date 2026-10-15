@@ -4,8 +4,6 @@
   const scriptEl = document.querySelector('script[src*="socket.io"][src$=".js"]');
 
   function setupDegradedMode() {
-    // No host is given on purpose while the site is read-only, nothing is down then
-    if (window.readOnly) return;
     console.log('%c[WS] Server down!', 'color:red');
     const $sb = $('#sidebar');
     if ($sb.length) {

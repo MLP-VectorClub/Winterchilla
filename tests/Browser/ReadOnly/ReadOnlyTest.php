@@ -37,6 +37,11 @@ it('shows the read-only notice', function () {
   expect(ApiClient::loggedInAs(TestSeederConstants::ADMIN_ID)->page('/admin'))->toContain('id=\'read-only-notice\'');
 })->skip($skip, 'Needs READ_ONLY=true')->group('read-only');
 
+it('points to the same page of the new site', function () {
+  $page = ApiClient::guest()->page('/about?q=a');
+  expect($page)->toContain("<a href='https://new.example/about?q=a'>new.example/about?q=a</a>");
+})->skip($skip, 'Needs READ_ONLY=true')->group('read-only');
+
 it('offers no way to sign in', function () {
   $page = ApiClient::guest()->page('/cg');
   expect($page)->not->toContain('id="signin"')->and($page)->not->toContain('da-login');

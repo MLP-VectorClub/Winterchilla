@@ -1645,6 +1645,17 @@ class CoreUtils {
   }
 
   /**
+   * Where the new site has the page being viewed (`READ_ONLY_URL` plus the path and query of the request), null when no address is given
+   */
+  public static function readOnlyUrl():?string {
+    $base = self::env('READ_ONLY_URL');
+    if (!is_string($base) || $base === '')
+      return null;
+
+    return rtrim($base, '/').Notice::currentPath();
+  }
+
+  /**
    * The websocket server only pushes live updates, which a read-only site has no use for: no host means the client neither loads the socket.io
    * library nor tries to connect
    */

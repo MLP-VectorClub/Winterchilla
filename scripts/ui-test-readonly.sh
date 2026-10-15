@@ -3,5 +3,5 @@
 # viewed). Extra arguments go to pest.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export READ_ONLY=true
+export READ_ONLY=true READ_ONLY_URL=https://new.example
 exec vendor/bin/pest tests/Browser/ReadOnly "$@"

@@ -18,6 +18,7 @@ class Twig {
 
   public static function init(LoaderInterface $loader, array $options = []):void {
     self::$env = new Environment($loader, $options);
+    self::$env->addFunction(new TwigFunction('read_only_url', '\App\CoreUtils::readOnlyUrl'));
     self::$env->addFunction(new TwigFunction('permission', '\App\Permission::sufficient'));
     self::$env->addFunction(new TwigFunction('export_vars', '\App\CoreUtils::exportVars'));
     self::$env->addFunction(new TwigFunction('user_pref', '\App\UserPrefs::get'));

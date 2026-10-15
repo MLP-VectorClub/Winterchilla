@@ -40,7 +40,7 @@
       </div>
     {% elseif err_cause == 'readonly' %}
       <div class='notice info align-center'>
-        <p><span class="typcn typcn-info-large"></span> This site is read-only now, signing in and changing things are not possible anymore.{% if env('READ_ONLY_URL') %} Please use <a href='{{ env('READ_ONLY_URL') }}'>{{ env('READ_ONLY_URL') }}</a> instead.{% endif %}</p>
+        <p><span class="typcn typcn-info-large"></span> This site is read-only now, signing in and changing things are not possible anymore.{% if read_only_url() %} To make changes, please visit the new site: <a href='{{ read_only_url() }}'>{{ read_only_url()|replace({'https://': '', 'http://': ''}) }}</a>.{% endif %}</p>
       </div>
     {% endif %}
   </div>

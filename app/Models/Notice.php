@@ -58,7 +58,7 @@ class Notice extends NSModel {
   }
 
   /** The path and query of the current request, the same address the other site has the page at */
-  private static function currentPath(): string {
+  public static function currentPath(): string {
     $uri = $_SERVER['REQUEST_URI'] ?? '/';
 
     return str_starts_with($uri, '/') && !str_starts_with($uri, '//') ? $uri : '/';

@@ -18,7 +18,6 @@ use App\Regexes;
 use App\Response;
 use App\ShowHelper;
 use DateInterval;
-use OpenApi\Annotations as OA;
 
 class ShowAPIController extends APIController {
   /** @var Show */
@@ -30,27 +29,6 @@ class ShowAPIController extends APIController {
       CoreUtils::notFound();
   }
 
-  /**
-   * @OA\Get(
-   *   path="/show/{id}/posts",
-   *   description="Get the rendered HTML for the requests or reservations section of a show's page",
-   *   tags={"shows","posts"},
-   *   security={},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(name="section", in="query", required=true, @OA\Schema(type="string", enum={"requests","reservations"})),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"render"},
-   *           additionalProperties=false,
-   *           @OA\Property(property="render", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the requested section")
-   *         )
-   *   ),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function postList($params):void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -75,45 +53,6 @@ class ShowAPIController extends APIController {
     Response::ok(['render' => $rendered]);
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="ShowListItem",
-   *   type="object",
-   *   required={"id", "type", "title", "season", "episode", "parts", "no", "airs"},
-   *   additionalProperties=false,
-   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *   @OA\Property(property="type", type="string", enum={"episode", "movie", "short", "special"}),
-   *   @OA\Property(property="title", type="string"),
-   *   @OA\Property(property="season", type="integer", nullable=true),
-   *   @OA\Property(property="episode", type="integer", nullable=true),
-   *   @OA\Property(property="parts", type="integer", nullable=true),
-   *   @OA\Property(property="no", type="integer", nullable=true, description="Overall number of the show"),
-   *   @OA\Property(property="airs", type="string", format="date-time", nullable=true)
-   * )
-   * @OA\Get(
-   *   path="/show",
-   *   security={},
-   *   description="Get a page of shows (episodes, movies and specials)",
-   *   tags={"shows"},
-   *   @OA\Parameter(in="query", name="types[]", required=true, @OA\Schema(type="array", minItems=1, @OA\Items(type="string", enum={"episode", "movie", "short", "special"}))),
-   *   @OA\Parameter(in="query", name="order", required=true, @OA\Schema(type="string", enum={"series", "overall"})),
-   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
-   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=10, default=8)),
-   *   @OA\Parameter(in="query", name="season", @OA\Schema(type="integer", minimum=0), description="Only shows of this season (looks up e.g. S1E1)"),
-   *   @OA\Parameter(in="query", name="episode", @OA\Schema(type="integer", minimum=0), description="Only shows with this episode number"),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"show", "pagination"},
-   *       @OA\Property(property="show", type="array", @OA\Items(ref="#/components/schemas/ShowListItem")),
-   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
-   *     )
-   *   ),
-   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function list():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -165,16 +104,6 @@ class ShowAPIController extends APIController {
     ]);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/show/latest",
-   *   security={},
-   *   description="The most recently aired episode or movie (what the site's front page shows)",
-   *   tags={"shows"},
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/ShowListItem")),
-   *   @OA\Response(response="404", description="Nothing has aired yet", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function latest():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -199,119 +128,6 @@ class ShowAPIController extends APIController {
     ];
   }
 
-  /**
-   * @OA\Get(
-   *   path="/show/{id}",
-   *   description="Get information about a single show entry",
-   *   tags={"shows"},
-   *   security={},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"show"},
-   *           additionalProperties=false,
-   *           @OA\Property(
-   *             property="show",
-   *             allOf={
-   *               @OA\Schema(ref="#/components/schemas/Show"),
-   *               @OA\Schema(
-   *                 type="object",
-   *                 required={"aired", "willAir", "canEdit", "relatedAppearances"},
-   *                 @OA\Property(property="aired", type="boolean", description="Whether the show has already aired"),
-   *                 @OA\Property(property="willAir", type="string", format="date-time", description="When the show will have aired (air time plus its running time)"),
-   *                 @OA\Property(property="canEdit", type="boolean", description="Whether the current user may edit or delete the show"),
-   *                 @OA\Property(property="relatedAppearances", type="array", description="Color guide entries linked to this show", @OA\Items(ref="#/components/schemas/PreviewAppearance"))
-   *               )
-   *             }
-   *           )
-   *         )
-   *   ),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Post(
-   *   path="/show",
-   *   description="Create a new show entry (episode or movie/special). Requires staff permissions.",
-   *   tags={"shows"},
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"type","title","airs"},
-   *       @OA\Property(property="type", type="string", description="One of the valid show types (e.g. episode, movie, short, special)"),
-   *       @OA\Property(property="season", type="integer", description="Required if type is episode"),
-   *       @OA\Property(property="episode", type="integer", description="Required if type is episode"),
-   *       @OA\Property(property="twoparter", type="boolean", description="If set, marks the episode as the first part of a two-part episode"),
-   *       @OA\Property(property="no", type="integer", description="Overall number"),
-   *       @OA\Property(property="title", type="string", minLength=5, maxLength=100),
-   *       @OA\Property(property="airs", type="string", description="Air date & time, parsed as a timestamp"),
-   *       @OA\Property(property="notes", type="string", maxLength=1000, nullable=true)
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="201",
-   *     description="Created",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"id","url"},
-   *           additionalProperties=false,
-   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="url", type="string", format="uri", description="URL of the newly created show entry")
-   *         )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/show/{id}",
-   *   description="Update an existing show entry. Requires staff permissions.",
-   *   tags={"shows"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"title","airs"},
-   *       @OA\Property(property="season", type="integer"),
-   *       @OA\Property(property="episode", type="integer"),
-   *       @OA\Property(property="twoparter", type="boolean"),
-   *       @OA\Property(property="type", type="string", description="Cannot be changed to episode via this interface if not already an episode"),
-   *       @OA\Property(property="no", type="integer"),
-   *       @OA\Property(property="title", type="string", minLength=5, maxLength=100),
-   *       @OA\Property(property="airs", type="string"),
-   *       @OA\Property(property="notes", type="string", maxLength=1000, nullable=true)
-   *     )
-   *   ),
-   *   @OA\Response(response="204", description="Updated"),
-   *   @OA\Response(response="409", description="Another episode already has this season and episode number, or the next part exists", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Delete(
-   *   path="/show/{id}",
-   *   description="Delete a show entry. Requires staff permissions.",
-   *   tags={"shows"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"upcoming"},
-   *           additionalProperties=false,
-   *           @OA\Property(property="upcoming", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the sidebar's upcoming episode info")
-   *         )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function api($params):void {
     if ($this->action !== 'GET' && Permission::insufficient('staff'))
       Response::denied();
@@ -462,61 +278,6 @@ class ShowAPIController extends APIController {
     return (object)$counts;
   }
 
-  /**
-   * @OA\Get(
-   *   path="/show/{id}/vote",
-   *   description="Get the current voting status/results for an episode, either as rendered HTML (if `html` is set) or as vote counts grouped by score",
-   *   tags={"shows"},
-   *   security={},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(name="html", in="query", required=false, @OA\Schema(type="string"), description="If present, returns the rendered sidebar voting HTML instead of vote counts"),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           additionalProperties=false,
-   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered sidebar voting HTML (only present if `html` query param was set)"),
-   *           @OA\Property(
-   *             property="data",
-   *             type="object",
-   *             description="Map of vote values (1-5) to the number of votes received for that value (only present if `html` query param was not set)",
-   *             additionalProperties=@OA\Property(type="integer")
-   *           )
-   *         )
-   *   ),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Post(
-   *   path="/show/{id}/vote",
-   *   description="Cast a vote for an episode. Requires the user to be signed in, the episode to have already aired, and the user to not have voted before.",
-   *   tags={"shows"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"vote"},
-   *       @OA\Property(property="vote", type="integer", minimum=1, maximum=5, description="The vote value to cast")
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"data"},
-   *           additionalProperties=false,
-   *           @OA\Property(property="data", type="object", description="Number of votes per rating after this vote, rating to count", additionalProperties=@OA\AdditionalProperties(type="integer")),
-   *           @OA\Property(property="newhtml", type="string", description="Winterchilla UI detail, not part of the contract: updated rendered sidebar voting HTML")
-   *         )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Episode hasn't aired yet, or the user already voted", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Invalid vote value", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function voteApi($params):void {
     $this->load_show($params);
 
@@ -561,76 +322,6 @@ class ShowAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Get(
-   *   path="/show/{id}/appearances",
-   *   description="Get the list of color guide appearances that can be linked to this show, along with the appearances currently linked. Requires staff permissions.",
-   *   tags={"shows","appearances","color guide"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"groups","entries","linkedIds"},
-   *           additionalProperties=false,
-   *           @OA\Property(property="groups", type="object", description="Map of color guide group keys to their display labels"),
-   *           @OA\Property(
-   *             property="entries",
-   *             type="array",
-   *             description="List of appearances eligible to be linked, excluding pinned/group-owned ones",
-   *             @OA\Items(
-   *               type="object",
-   *               additionalProperties=false,
-   *               @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *               @OA\Property(property="label", type="string"),
-   *               @OA\Property(property="guide", type="string", nullable=true)
-   *             )
-   *           ),
-   *           @OA\Property(
-   *             property="linkedIds",
-   *             type="array",
-   *             description="IDs of the appearances currently linked to this show",
-   *             @OA\Items(ref="#/components/schemas/OneBasedId")
-   *           )
-   *         )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/show/{id}/appearances",
-   *   description="Update the list of color guide appearances linked to this show. Requires staff permissions.",
-   *   tags={"shows","appearances","color guide"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(
-   *     @OA\JsonContent(
-   *       type="object",
-   *       @OA\Property(
-   *         property="ids",
-   *         type="array",
-   *         description="List of appearance IDs that should be linked to this show. Existing relations not in this list are removed, missing ones are added.",
-   *         @OA\Items(ref="#/components/schemas/OneBasedId")
-   *       )
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"section"},
-   *           additionalProperties=false,
-   *           @OA\Property(property="section", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the show's linked appearances section")
-   *         )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Show not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function guideRelationsApi($params):void {
     if (Permission::insufficient('staff'))
       Response::denied();
@@ -696,35 +387,6 @@ class ShowAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Get(
-   *   path="/show/next",
-   *   description="Get information about the next upcoming episode that hasn't aired yet",
-   *   tags={"shows"},
-   *   security={},
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           additionalProperties=false,
-   *           @OA\Property(property="episode", type="integer"),
-   *           @OA\Property(property="airs", type="string", format="date-time"),
-   *           @OA\Property(property="season", type="integer"),
-   *           @OA\Property(property="title", type="string")
-   *         )
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="The show is on hiatus, no upcoming episode is known",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           additionalProperties=false,
-   *           @OA\Property(property="hiatus", type="boolean")
-   *         )
-   *   )
-   * )
-   */
   public function next():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -738,29 +400,6 @@ class ShowAPIController extends APIController {
     ]));
   }
 
-  /**
-   * @OA\Get(
-   *   path="/show/prefill",
-   *   description="Get suggested values for creating the next episode entry, based on the most recently added one. Requires staff permissions.",
-   *   tags={"shows"},
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"season","episode","no","airday"},
-   *           additionalProperties=false,
-   *           @OA\Property(property="season", type="integer"),
-   *           @OA\Property(property="episode", type="integer"),
-   *           @OA\Property(property="no", type="integer", description="Suggested overall number"),
-   *           @OA\Property(property="airday", type="string", format="date", description="Suggested air date")
-   *         )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="No last added episode found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function prefill():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

@@ -8,7 +8,6 @@ use App\GlobalSettings;
 use App\Permission;
 use App\Response;
 use Exception;
-use OpenApi\Annotations as OA;
 
 class SettingAPIController extends APIController {
   public function __construct() {
@@ -29,61 +28,6 @@ class SettingAPIController extends APIController {
     $this->value = GlobalSettings::get($this->setting);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/settings/{key}",
-   *   description="Get the value of a global site setting. Requires staff role",
-   *   tags={"settings"},
-   *   @OA\Parameter(
-   *     name="key",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(type="string", enum={"reservation_rules","about_reservations","dev_role_label"})
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *       required={"value"},
-   *       additionalProperties=false,
-   *       @OA\Property(property="value", type="string")
-   *     )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Unknown setting key", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/settings/{key}",
-   *   description="Update the value of a global site setting. Requires staff role",
-   *   tags={"settings"},
-   *   @OA\Parameter(
-   *     name="key",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(type="string", enum={"reservation_rules","about_reservations","dev_role_label"})
-   *   ),
-   *   @OA\RequestBody(@OA\JsonContent(
-   *     required={"value"},
-   *     additionalProperties=false,
-   *     @OA\Property(property="value", type="string")
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *       required={"value"},
-   *       additionalProperties=false,
-   *       @OA\Property(property="value", type="string")
-   *     )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Unknown setting key", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
-   *   @OA\Response(response="500", description="The value could not be saved", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function api($params) {
     $this->load_setting($params);
 

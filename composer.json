@@ -53,8 +53,7 @@
     "symfony/dotenv": "^6.0|^7.0|^8.0",
     "twig/twig": "^3.0",
     "whichbrowser/parser": "^2.0",
-    "wohali/oauth2-discord-new": "^1.0",
-    "zircote/swagger-php": "^6.0"
+    "wohali/oauth2-discord-new": "^1.0"
   },
   "require-dev": {
     "ext-pcntl": "*",

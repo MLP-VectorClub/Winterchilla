@@ -13,23 +13,7 @@ use App\Models\EventEntry;
 use App\Permission;
 use App\Response;
 use Exception;
-use OpenApi\Annotations as OA;
 
-/**
- * @OA\Schema(
- *   schema="EventEntry",
- *   type="object",
- *   description="A submission made to a community event",
- *   required={
- *     "link",
- *     "title",
- *     "prevSrc",
- *   },
- *   @OA\Property(property="link", type="string", format="uri", description="URL of the submitted deviation or Sta.sh submission"),
- *   @OA\Property(property="title", type="string", minLength=2, maxLength=64),
- *   @OA\Property(property="prevSrc", type="string", format="uri", nullable=true, description="URL of the custom preview image, if one was provided"),
- * )
- */
 class EventEntryAPIController extends APIController {
   use EventLoaderTrait;
 
@@ -119,60 +103,6 @@ class EventEntryAPIController extends APIController {
     return $update;
   }
 
-  /**
-   * @OA\Get(
-   *   path="/event-entries/{entryid}",
-   *   description="Get an entry's details for management purposes. Requires the entry to belong to the current user, or staff permissions.",
-   *   tags={"events"},
-   *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/EventEntry")
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions to manage this entry", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
-   * @OA\Put(
-   *   path="/event-entries/{entryid}",
-   *   description="Update an existing entry. Requires the entry to belong to the current user (or staff permissions), and the event must not have ended (unless staff).",
-   *   tags={"events"},
-   *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"link", "title"},
-   *       @OA\Property(property="link", type="string", format="uri", description="URL of a deviation or Sta.sh submission"),
-   *       @OA\Property(property="title", type="string", minLength=2, maxLength=64),
-   *       @OA\Property(property="prevSrc", type="string", format="uri", nullable=true, description="Optional custom preview image URL"),
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *           @OA\Property(property="entryHtml", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML for the updated entry list item. Other implementations may answer with an empty object")
-   *         )
-   *   ),
-   *   @OA\Response(response="422", description="Validation error with the submitted link, title or preview image", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions, or the event has ended", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
-   * @OA\Delete(
-   *   path="/event-entries/{entryid}",
-   *   description="Delete an existing entry. Requires the entry to belong to the current user (or staff permissions), and the event must not have ended (unless staff).",
-   *   tags={"events"},
-   *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="204", description="Deleted"),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions, or the event has ended", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Entry or event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="500", description="Database error while deleting the entry", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
-   */
   public function api($params) {
     switch ($this->action){
       case 'GET':
@@ -213,23 +143,6 @@ class EventEntryAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Get(
-   *   path="/event-entries/{entryid}/lazyload",
-   *   description="Get the lazily-loaded preview HTML for an entry. Does not require the user to be signed in.",
-   *   tags={"events"},
-   *   security={},
-   *   @OA\Parameter(name="entryid", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", required={"html"}, additionalProperties=false,
-   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the entry's preview")
-   *         )
-   *   ),
-   *   @OA\Response(response="404", description="Entry not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
-   */
   public function lazyload($params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

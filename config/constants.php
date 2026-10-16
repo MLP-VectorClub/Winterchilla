@@ -14,7 +14,6 @@ const SVGO_BINARY = PROJPATH.'node_modules/svgo/bin/svgo';
 const SVGO_CONFIG = PROJPATH.'svgo.config.js';
 const DISCORD_INVITE_LINK = 'https://discord.mlpvector.club';
 define('CSP_NONCE', base64_encode(random_bytes(16)));
-const API_SCHEMA_PATH = 'dist/api.json';
 const PUBLIC_API_V0_PATH = '/api/v0';
 
 require __DIR__.'/init/env.php';

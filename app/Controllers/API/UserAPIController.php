@@ -16,44 +16,11 @@ use App\Permission;
 use App\Response;
 use App\Twig;
 use App\Users;
-use OpenApi\Annotations as OA;
 use Throwable;
 
 class UserAPIController extends APIController {
   use UserLoaderTrait;
 
-  /**
-   * @OA\Delete(
-   *   path="/users/sessions/{id}",
-   *   description="Deletes one of the current user's login sessions, or any session if the current user is staff",
-   *   tags={"users"},
-   *   @OA\Parameter(
-   *     name="id",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
-   *   ),
-   *   @OA\Response(
-   *     response="204",
-   *     description="Session successfully removed"
-   *   ),
-   *   @OA\Response(
-   *     response="401",
-   *     description="Not signed in",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="403",
-   *     description="The session does not belong to the current user and they are not staff",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="No session found with this ID, or missing ID",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   */
   public function sessionApi($params):void {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();
@@ -75,62 +42,6 @@ class UserAPIController extends APIController {
     Response::noContent();
   }
 
-  /**
-   * @OA\Put(
-   *   path="/users/{id}/role",
-   *   description="Changes the role of the specified user. Requires staff permission, the target user must be in the same or a lower-level group than the requester, and a user cannot change their own role.",
-   *   tags={"users"},
-   *   @OA\Parameter(
-   *     name="id",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
-   *   ),
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\MediaType(
-   *       mediaType="application/x-www-form-urlencoded",
-   *       @OA\Schema(
-   *         required={"value"},
-   *         @OA\Property(property="value", ref="#/components/schemas/UserRole", description="The new role to assign to the user")
-   *       )
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="204",
-   *     description="Role updated successfully"
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="The user was already in the requested role",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"alreadyIn"},
-   *           @OA\Property(property="alreadyIn", type="boolean")
-   *         )
-   *   ),
-   *   @OA\Response(
-   *     response="401",
-   *     description="Not signed in",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="422",
-   *     description="The specified role does not exist",
-   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="403",
-   *     description="Insufficient permission, or attempting to change own role, or attempting to change a higher-level user's role",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="User not found",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   */
   public function roleApi($params):void {
     if ($this->action !== 'PUT')
       CoreUtils::notAllowed();
@@ -164,49 +75,6 @@ class UserAPIController extends APIController {
     Response::noContent();
   }
 
-  /**
-   * @OA\Post(
-   *   path="/users/me/password",
-   *   description="Sets a new password for the currently signed in user. Requires staff permission. If a password is already set, the current password must be provided for verification. On success, all existing sessions of the user are deleted.",
-   *   tags={"users","authentication"},
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\MediaType(
-   *       mediaType="application/x-www-form-urlencoded",
-   *       @OA\Schema(
-   *         required={"newPassword"},
-   *         @OA\Property(property="currentPassword", type="string", description="The user's current password, required if a password is already set"),
-   *         @OA\Property(property="newPassword", type="string", minLength=8, maxLength=300, description="The new password to set")
-   *       )
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="Password successfully changed",
-   *     @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))
-   *   ),
-   *   @OA\Response(
-   *     response="401",
-   *     description="Not signed in",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="403",
-   *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="422",
-   *     description="Invalid new password, or the current password is missing or incorrect",
-   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="500",
-   *     description="The password could not be saved",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   */
   public function passwordApi():void {
     if ($this->action !== 'POST'){
       CoreUtils::notAllowed();
@@ -273,65 +141,6 @@ class UserAPIController extends APIController {
     Response::ok(['message' => 'Your new password has been set successfully. As a security precaution your existing sessions have been deleted, so you will need to log in again.']);
   }
 
-  /**
-   * @OA\Post(
-   *   path="/users/{id}/email-changes",
-   *   description="Requests an e-mail address change (or resend of a pending verification e-mail) for the specified user. Requires staff permission. When changing the address of the requester's own account, the current password must be set and verified first.",
-   *   tags={"users"},
-   *   @OA\Parameter(
-   *     name="id",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
-   *   ),
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\MediaType(
-   *       mediaType="application/x-www-form-urlencoded",
-   *       @OA\Schema(
-   *         @OA\Property(property="resend", type="boolean", description="If true, resends the existing pending verification e-mail instead of requesting a new address change"),
-   *         @OA\Property(property="newEmail", type="string", minLength=3, maxLength=128, description="The new e-mail address to verify, required unless 'resend' is true"),
-   *         @OA\Property(property="currentPassword", type="string", description="The user's current password, required when changing their own e-mail address")
-   *       )
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="A confirmation e-mail has been sent",
-   *     @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))
-   *   ),
-   *   @OA\Response(
-   *     response="401",
-   *     description="Not signed in",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="403",
-   *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="409",
-   *     description="A password must be set before the e-mail address can be changed",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="422",
-   *     description="Invalid, unchanged, blocked or already used e-mail address, or a missing or incorrect current password",
-   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="429",
-   *     description="A confirmation e-mail was sent to this address recently",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="503",
-   *     description="The confirmation e-mail could not be sent",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   */
   public function emailApi($params):void {
     if ($this->action !== 'POST'){
       CoreUtils::notAllowed();
@@ -396,44 +205,6 @@ class UserAPIController extends APIController {
     Response::ok(['message' => 'A confirmation e-mail has been sent to the specified address with a link to verify your address. Click the link to update the address in your account.']);
   }
 
-  /**
-   * @OA\Post(
-   *   path="/users/email/verify",
-   *   description="Verifies or blocks an e-mail address based on a verification hash sent to that address. Requires staff permission.",
-   *   tags={"users"},
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\MediaType(
-   *       mediaType="application/x-www-form-urlencoded",
-   *       @OA\Schema(
-   *         required={"hash","action"},
-   *         @OA\Property(property="hash", type="string", minLength=128, maxLength=128, description="The verification hash sent to the e-mail address"),
-   *         @OA\Property(property="action", type="string", enum={"verify","block"}, description="Whether to verify the e-mail address for the account, or add it to the do-not-send list")
-   *       )
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="The e-mail address was successfully verified or blocked",
-   *     @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))
-   *   ),
-   *   @OA\Response(
-   *     response="422",
-   *     description="The verification hash or action is invalid, or the hash has expired",
-   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="500",
-   *     description="The e-mail address could not be updated in the database",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="403",
-   *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   */
   public function verifyApi():void {
     if ($this->action !== 'POST'){
       CoreUtils::notAllowed();
@@ -477,44 +248,6 @@ class UserAPIController extends APIController {
     Response::ok(['message' => 'Your e-mail address has been verified successfully.']);
   }
 
-  /**
-   * @OA\Delete(
-   *   path="/users/{id}/contributions/cache",
-   *   description="Clears the cached contributions list of the specified user and returns the freshly rendered contributions HTML. Requires staff permission.",
-   *   tags={"users"},
-   *   @OA\Parameter(
-   *     name="id",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="Contributions cache successfully cleared",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"message","html"},
-   *           @OA\Property(property="message", type="string"),
-   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered contributions section HTML")
-   *         )
-   *   ),
-   *   @OA\Response(
-   *     response="401",
-   *     description="Not signed in",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="403",
-   *     description="Insufficient permission (staff required)",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="The specified user does not exist, or missing ID",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   */
   public function contribCacheApi($params):void {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();
@@ -549,34 +282,6 @@ class UserAPIController extends APIController {
     ]);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/users/{id}/avatar-wrap",
-   *   description="Returns rendered HTML for the avatar of the specified user",
-   *   tags={"users"},
-   *   security={},
-   *   @OA\Parameter(
-   *     name="id",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"html"},
-   *           @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered avatar wrapper HTML")
-   *         )
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="The specified user does not exist",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   */
   public function avatarWrap($params):void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -586,21 +291,6 @@ class UserAPIController extends APIController {
     Response::ok(['html' => $this->user->getAvatarWrap()]);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/users/contributions/lazyload/{favme}",
-   *   description="Get the rendered link (with preview) of a deviation shown on a contributions page",
-   *   tags={"users"},
-   *   security={},
-   *   @OA\Parameter(name="favme", in="path", required=true, @OA\Schema(type="string", example="d7abcde")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", required={"html"}, @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered link with a preview image"))
-   *   ),
-   *   @OA\Response(response="404", description="The deviation could not be found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function contribLazyload($params):void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

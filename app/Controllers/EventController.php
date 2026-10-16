@@ -5,7 +5,6 @@ namespace App\Controllers;
 use App\Controllers\Traits\EventLoaderTrait;
 use App\CoreUtils;
 use App\Models\Event;
-use OpenApi\Annotations as OA;
 
 class EventController extends Controller {
   use EventLoaderTrait;

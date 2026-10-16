@@ -12,7 +12,6 @@ use App\Models\Log;
 use App\Models\UsefulLink;
 use App\Permission;
 use App\Response;
-use OpenApi\Annotations as OA;
 
 class AdminAPIController extends APIController {
   public function __construct() {
@@ -24,43 +23,6 @@ class AdminAPIController extends APIController {
       Response::denied();
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="LogItem",
-   *   type="object",
-   *   required={"id", "type", "typeLabel", "initiator", "ip", "createdAt", "hasDetails"},
-   *   additionalProperties=false,
-   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *   @OA\Property(property="type", type="string", example="rolechange"),
-   *   @OA\Property(property="typeLabel", type="string", example="User group change"),
-   *   @OA\Property(property="initiator", nullable=true, ref="#/components/schemas/PostUser", description="Null when the web server itself made the change"),
-   *   @OA\Property(property="ip", type="string", nullable=true),
-   *   @OA\Property(property="createdAt", type="string", format="date-time"),
-   *   @OA\Property(property="hasDetails", type="boolean", description="Whether GET /admin/logs/{id} has anything to show")
-   * )
-   * @OA\Get(
-   *   path="/admin/logs",
-   *   description="List log entries, newest first. Staff only.",
-   *   tags={"admin"},
-   *   @OA\Parameter(in="query", name="type", @OA\Schema(type="string"), description="Only entries of this type"),
-   *   @OA\Parameter(in="query", name="initiatorId", @OA\Schema(type="integer", minimum=0), description="Only entries made by this user; 0 selects the ones made by the web server"),
-   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
-   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=100, default=20)),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"entries", "pagination"},
-   *       @OA\Property(property="entries", type="array", @OA\Items(ref="#/components/schemas/LogItem")),
-   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
-   *     )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function logList() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -117,31 +79,6 @@ class AdminAPIController extends APIController {
     ]);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/admin/pcg-appearances",
-   *   description="List every personal color guide appearance of every user, newest first. Staff only.",
-   *   tags={"admin", "personal color guide"},
-   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
-   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=100, default=10)),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"appearances", "pagination"},
-   *       @OA\Property(property="appearances", type="array", @OA\Items(allOf={
-   *         @OA\Schema(ref="#/components/schemas/PreviewAppearance"),
-   *         @OA\Schema(type="object", required={"private", "createdAt"}, @OA\Property(property="private", type="boolean"), @OA\Property(property="createdAt", type="string", format="date-time"))
-   *       })),
-   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
-   *     )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function pcgAppearanceList() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -173,43 +110,6 @@ class AdminAPIController extends APIController {
     ]);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/admin/logs/{id}",
-   *   description="Get the details of a log entry. Requires staff role",
-   *   tags={"admin"},
-   *   @OA\Parameter(
-   *     name="id",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *           type="object",
-   *           required={"details", "data"},
-   *           @OA\Property(
-   *             property="details",
-   *             type="array",
-   *             description="Winterchilla UI detail: a list of [label, value] pairs describing the log entry, where values may contain HTML (links, images). Prefer `data`.",
-   *             @OA\Items(type="array", @OA\Items())
-   *           ),
-   *           @OA\Property(
-   *             property="data",
-   *             type="object",
-   *             additionalProperties=true,
-   *             description="The structured data that was logged with the entry (references by ID, old and new values); its keys depend on the entry type"
-   *           )
-   *         )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="The entry has no details to show", @OA\JsonContent(type="object", required={"message","unclickable"}, @OA\Property(property="message", type="string"), @OA\Property(property="unclickable", type="boolean")))
-   * )
-   */
   public function logDetail($params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -241,67 +141,6 @@ class AdminAPIController extends APIController {
       Response::error(404, 'The specified link does not exist');
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="UsefulLink",
-   *   type="object",
-   *   required={"label","url","title","minRole"},
-   *   additionalProperties=false,
-   *   @OA\Property(property="label", type="string", minLength=3, maxLength=35),
-   *   @OA\Property(property="url", type="string", format="uri", minLength=3, maxLength=255),
-   *   @OA\Property(property="title", type="string", maxLength=255),
-   *   @OA\Property(property="minRole", ref="#/components/schemas/UserRole")
-   * )
-   * @OA\Schema(
-   *   schema="UsefulLinkInput",
-   *   type="object",
-   *   description="Used to create or update a useful link. 'title' is optional and defaults to an empty string if omitted",
-   *   required={"label","url","minRole"},
-   *   additionalProperties=false,
-   *   @OA\Property(property="label", type="string", minLength=3, maxLength=35),
-   *   @OA\Property(property="url", type="string", format="uri", minLength=3, maxLength=255),
-   *   @OA\Property(property="title", type="string", maxLength=255),
-   *   @OA\Property(property="minRole", ref="#/components/schemas/UserRole")
-   * )
-   * @OA\Get(
-   *   path="/useful-links/{id}",
-   *   description="Get the details of a useful link. Requires staff role",
-   *   tags={"admin"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/UsefulLink")
-   *   ),
-   *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Post(
-   *   path="/useful-links",
-   *   description="Create a new useful link. Requires staff role",
-   *   tags={"admin"},
-   *   @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/UsefulLinkInput")),
-   *   @OA\Response(response="201", description="Created", @OA\JsonContent(type="object", required={"id"}, @OA\Property(property="id", ref="#/components/schemas/OneBasedId"))),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/useful-links/{id}",
-   *   description="Update an existing useful link. Requires staff role",
-   *   tags={"admin"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/UsefulLinkInput")),
-   *   @OA\Response(response="204", description="Updated (or nothing needed changing)"),
-   *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Delete(
-   *   path="/useful-links/{id}",
-   *   description="Delete a useful link. Requires staff role",
-   *   tags={"admin"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="204", description="Deleted"),
-   *   @OA\Response(response="404", description="Not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function usefulLinksApi($params) {
     if (!$this->creating)
       $this->load_useful_link($params);
@@ -390,25 +229,6 @@ class AdminAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Put(
-   *   path="/useful-links/order",
-   *   description="Reorder useful links. Requires staff role",
-   *   tags={"admin"},
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\MediaType(
-   *       mediaType="application/x-www-form-urlencoded",
-   *       @OA\Schema(
-   *         required={"list"},
-   *         @OA\Property(property="list", type="string", description="Comma-separated list of useful link IDs in their new order", example="3,1,2")
-   *       )
-   *     )
-   *   ),
-   *   @OA\Response(response="204", description="Reordered"),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function reorderUsefulLinks() {
     if ($this->action !== 'PUT')
       CoreUtils::notAllowed();
@@ -427,14 +247,6 @@ class AdminAPIController extends APIController {
     Response::noContent();
   }
 
-  /**
-   * @OA\Delete(
-   *   path="/admin/stat-cache",
-   *   description="Clear the PHP stat cache. Requires staff role",
-   *   tags={"admin"},
-   *   @OA\Response(response="204", description="Cleared")
-   * )
-   */
   public function statCacheApi() {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();

@@ -34,22 +34,10 @@ use App\UploadedFile;
 use App\UserPrefs;
 use App\Users;
 use Exception;
-use OpenApi\Annotations as OA;
 use Ramsey\Uuid\Uuid;
 use function count;
 use function in_array;
 
-/**
- * @OA\Schema(
- *   schema="PrivateAppearance",
- *   type="object",
- *   description="Represents a color guide appearance",
- *   additionalProperties=false,
- *   @OA\Property(property="label", type="string", description="The display name of the appearance"),
- *   @OA\Property(property="notes", type="string", nullable=true, description="Raw (markdown) source of the appearance's notes"),
- *   @OA\Property(property="private", type="boolean", description="Whether this appearance is only visible to its owner and staff")
- * )
- */
 class AppearanceAPIController extends APIController {
   use ColorGuideAccessTrait;
 
@@ -59,86 +47,6 @@ class AppearanceAPIController extends APIController {
     $this->_initAppearancePageState();
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/metadata",
-   *   description="Get basic editable details of an appearance. The user must be signed in and have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/PrivateAppearance")
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Post(
-   *   path="/appearances",
-   *   description="Create a new appearance. The user must be signed in and have permission to create appearances in the specified guide (or their personal guide if no guide is given).",
-   *   tags={"appearances"},
-   *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"label"},
-   *     @OA\Property(property="guide", type="string", nullable=true, description="Guide identifier (staff only). When omitted, the appearance is created in the user's Personal Color Guide"),
-   *     @OA\Property(property="label", type="string", minLength=2, maxLength=70, description="Appearance name"),
-   *     @OA\Property(property="notes", type="string", nullable=true, maxLength=1000, description="Raw (markdown) notes"),
-   *     @OA\Property(property="private", type="boolean", description="Whether the appearance should be private"),
-   *     @OA\Property(property="template", type="boolean", description="Whether to apply the default color group template to the new appearance")
-   *   )),
-   *   @OA\Response(
-   *     response="201",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *         @OA\Property(property="message", type="string", description="Winterchilla UI detail, not part of the contract: confirmation text for its dialog"),
-   *         @OA\Property(property="goto", type="string", format="uri", description="Winterchilla UI detail, not part of the contract: page path of the new appearance"),
-   *         @OA\Property(property="info", type="string", description="Winterchilla UI detail, not part of the contract: extra text, e.g. when applying the template failed")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to create appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/appearances/{id}",
-   *   description="Update an existing appearance's label, notes or private flag. The user must be signed in and have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"label"},
-   *     @OA\Property(property="guide", type="string", nullable=true, description="Guide identifier (staff only)"),
-   *     @OA\Property(property="label", type="string", minLength=2, maxLength=70, description="Appearance name"),
-   *     @OA\Property(property="notes", type="string", nullable=true, maxLength=1000, description="Raw (markdown) notes"),
-   *     @OA\Property(property="private", type="boolean", description="Whether the appearance should be private"),
-   *     @OA\Property(property="appearancePage", type="boolean", description="Whether this request originates from the appearance page; when set, the response will not include 'label', 'newUrl' or 'notes'")
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="label", type="string"),
-   *         @OA\Property(property="newUrl", type="string", format="uri", description="New URL if the label changed"),
-   *         @OA\Property(property="notes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the notes")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Delete(
-   *   path="/appearances/{id}",
-   *   description="Delete an appearance. The user must be signed in and have permission to manage the appearance. Pinned appearances cannot be deleted.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="204", description="Deleted"),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="The appearance is currently pinned and cannot be deleted", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function api($params):void {
     $this->_initialize($params);
 
@@ -371,25 +279,6 @@ class AppearanceAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Post(
-   *   path="/appearances/{id}/template",
-   *   description="Apply the default color group template to an appearance. The user must have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="cgs", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's color groups")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Applying the template failed", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function applyTemplate($params):void {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
@@ -407,29 +296,6 @@ class AppearanceAPIController extends APIController {
     Response::ok(['cgs' => $this->appearance->getColorsHTML(compact: !$this->appearance_page, wrap: NOWRAP)]);
   }
 
-  /**
-   * @OA\Delete(
-   *   path="/appearances/{id}/contents",
-   *   description="Selectively clear cached files, colors, tags, notes and other data on an appearance. The user must have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(@OA\JsonContent(
-   *     @OA\Property(property="wipeCache", type="boolean", description="Clear rendered preview/palette images"),
-   *     @OA\Property(property="wipeCmTokenized", type="boolean", description="Delete tokenized and rendered cutie mark files"),
-   *     @OA\Property(property="wipeCmSource", type="boolean", description="Delete cutie mark source SVG files"),
-   *     @OA\Property(property="wipeSprite", type="boolean", description="Delete the sprite image"),
-   *     @OA\Property(property="wipeColors", type="string", enum={"color_hex","color_all","all"}, description="color_hex: clear hex values; color_all: delete all colors; all: delete all color groups"),
-   *     @OA\Property(property="wipeTags", type="boolean", description="Remove all tags (only for appearances not in a personal guide)"),
-   *     @OA\Property(property="wipeNotes", type="boolean", description="Clear the appearance's notes"),
-   *     @OA\Property(property="mkpriv", type="boolean", description="Mark the appearance as private"),
-   *     @OA\Property(property="resetPrivKey", type="boolean", description="Regenerate the appearance's private share token")
-   *   )),
-   *   @OA\Response(response="204", description="Cleared"),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function selectiveClear($params):void {
     if ($this->action !== 'DELETE')
       CoreUtils::notAllowed();
@@ -547,49 +413,6 @@ class AppearanceAPIController extends APIController {
     Response::noContent();
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/color-groups/order",
-   *   description="Get the IDs and labels of an appearance's color groups, for reordering. The user must have permission to manage the appearance. Requires at least 2 color groups.",
-   *   tags={"appearances","color groups"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="cgs", type="array", @OA\Items(type="object", additionalProperties=false,
-   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="label", type="string")
-   *         ))
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Not enough color groups to reorder", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/appearances/{id}/color-groups/order",
-   *   description="Set the display order of an appearance's color groups. The user must have permission to manage the appearance.",
-   *   tags={"appearances","color groups"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"cgs"},
-   *     @OA\Property(property="cgs", type="array", description="Color group IDs in the desired order", @OA\Items(ref="#/components/schemas/OneBasedId"))
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="cgs", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's color groups")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error, e.g. an unknown color group ID was given", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function colorGroupsApi($params):void {
     $this->load_appearance($params);
     $this->appearance->enforceManagePermission();
@@ -645,46 +468,6 @@ class AppearanceAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Post(
-   *   path="/appearances/{id}/sprite",
-   *   description="Upload a new sprite image for an appearance. The user must have permission to manage the appearance. PCG owners are blocked unless they have the appropriate preference enabled.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(required=true, @OA\MediaType(
-   *     mediaType="multipart/form-data",
-   *     @OA\Schema(required={"sprite"}, @OA\Property(property="sprite", ref="#/components/schemas/File", description="PNG image, max 700x300px"))
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="path", type="string", format="uri", description="URL of the newly uploaded sprite")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error, e.g. invalid image format or size", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Delete(
-   *   path="/appearances/{id}/sprite",
-   *   description="Remove the sprite image of an appearance, reverting it to the default. The user must have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="sprite", type="string", description="Winterchilla UI detail, not part of the contract: path of the default sprite image")
-   *       )
-   *   ),
-   *   @OA\Response(response="204", description="Removed (an implementation without a default sprite image answers this instead of 200; afterwards GET /appearances/{id}/sprite answers 404 there, while Winterchilla serves its default image)"),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found, or (when deleting) no sprite file found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function spriteApi($params):void {
     $this->load_appearance($params);
     $this->appearance->enforceManagePermission();
@@ -714,56 +497,6 @@ class AppearanceAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/relations",
-   *   description="Get the list of appearances that can be related to this one, split into linked and unlinked groups. Unavailable for appearances in personal guides. The user must have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="unlinked", type="array", @OA\Items(type="object", additionalProperties=false,
-   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="label", type="string")
-   *         )),
-   *         @OA\Property(property="linked", type="array", @OA\Items(type="object", additionalProperties=false,
-   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="label", type="string"),
-   *           @OA\Property(property="mutual", type="boolean")
-   *         ))
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Relations are unavailable for personal guide appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/appearances/{id}/relations",
-   *   description="Set the related appearances for this appearance. Unavailable for appearances in personal guides. The user must have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(@OA\JsonContent(
-   *     @OA\Property(property="ids", type="array", description="IDs of related appearances", @OA\Items(ref="#/components/schemas/OneBasedId")),
-   *     @OA\Property(property="mutuals", type="array", description="IDs (a subset of ids) for which the relation should be marked as mutual", @OA\Items(ref="#/components/schemas/OneBasedId")),
-   *     @OA\Property(property="appearancePage", type="boolean", description="Whether this request originates from the appearance page; when set, 'section' is returned")
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="section", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the related appearances section, only present when called from the appearance page")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Relations are unavailable for personal guide appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Relations are unavailable for personal guide appearances, or validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function relationsApi($params):void {
     $this->load_appearance($params);
     $this->appearance->enforceManagePermission();
@@ -838,66 +571,6 @@ class AppearanceAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/cutie-marks",
-   *   description="Get the cutie marks associated with an appearance. The user must have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="cms", type="array", @OA\Items(type="object", additionalProperties=true,
-   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="appearanceId", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="facing", type="string", nullable=true, description="Which way the pony faces (`left` or `right`); null means the mark is symmetrical and applies to either side"),
-   *           @OA\Property(property="rotation", type="integer"),
-   *           @OA\Property(property="label", type="string", nullable=true),
-   *           @OA\Property(property="deviation", type="string", format="uri", description="Present if the cutie mark is attributed to a deviation"),
-   *           @OA\Property(property="username", type="string", description="Present if the cutie mark is attributed to a contributor"),
-   *           @OA\Property(property="rendered", type="string", format="uri", nullable=true, description="URL of the rendered cutie mark image, null when the mark has no SVG file")
-   *         )),
-   *         @OA\Property(property="preview", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML preview of the cutie marks")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/appearances/{id}/cutie-marks",
-   *   description="Replace the cutie marks of an appearance (up to 2). The user must have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"cutieMarks"},
-   *     @OA\Property(property="cutieMarks", type="array", description="List of cutie mark definitions, max 2 items", maxItems=2, @OA\Items(type="object",
-   *       required={"attribution", "rotation"},
-   *       @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of an existing cutie mark to update; omit to create a new one"),
-   *       @OA\Property(property="svgdata", ref="#/components/schemas/SVGFile", description="Required when creating a new cutie mark, max 1MB"),
-   *       @OA\Property(property="label", type="string", minLength=1, maxLength=32, nullable=true, description="Unique-per-appearance display label"),
-   *       @OA\Property(property="facing", type="string", nullable=true, description="Which way the pony faces (`left` or `right`); null or empty means the mark is symmetrical and applies to either side"),
-   *       @OA\Property(property="attribution", type="string", enum={"deviation","user","none"}, description="How the cutie mark's contributor is attributed"),
-   *       @OA\Property(property="deviation", type="string", format="uri", description="Deviation URL, required when attribution is 'deviation'"),
-   *       @OA\Property(property="username", type="string", description="DeviantArt username, required when attribution is 'user'"),
-   *       @OA\Property(property="rotation", type="integer", minimum=-45, maximum=45, description="Preview rotation amount in degrees")
-   *     )),
-   *     @OA\Property(property="appearancePage", type="boolean", description="Whether this request originates from the appearance page; affects whether 'html' is returned")
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="html", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the cutie marks list, only present when called from the appearance page and cutie marks remain")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error in one of the cutie mark entries", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function cutiemarkApi($params):void {
     $this->load_appearance($params);
     $this->appearance->enforceManagePermission();
@@ -1095,42 +768,6 @@ class AppearanceAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/tags",
-   *   description="Get the tags applied to an appearance as plain text. Unavailable for personal guide and pinned appearances. The user must have permission to manage the appearance.",
-   *   tags={"appearances","tags"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="tags", type="string", description="Comma-separated list of tag names")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Tagging is unavailable for this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/appearances/{id}/tags",
-   *   description="Update the tags applied to an appearance. Unavailable for personal guide and pinned appearances. The user must have permission to manage the appearance.",
-   *   tags={"appearances","tags"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"tags"},
-   *     @OA\Property(property="origTags", type="string", description="Comma-separated list of tag names as they were before editing"),
-   *     @OA\Property(property="tags", type="string", description="Comma-separated list of the new tag names")
-   *   )),
-   *   @OA\Response(response="204", description="Tags updated"),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Relations are unavailable for personal guide appearances", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Tagging is unavailable for this appearance, or validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function taggedApi($params):void {
     $this->load_appearance($params);
     $this->appearance->enforceManagePermission();
@@ -1169,32 +806,6 @@ class AppearanceAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Post(
-   *   path="/appearances/{id}/sanitize-svg",
-   *   description="Upload and sanitize an SVG file for use as a cutie mark, returning the sanitized SVG markup. The user must be signed in and have permission to manage the appearance.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(required=true, @OA\MediaType(
-   *     mediaType="multipart/form-data",
-   *     @OA\Schema(required={"file"}, @OA\Property(property="file", ref="#/components/schemas/SVGFile", description="SVG file, max 1MB"))
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="svgel", type="string", description="Untokenized, sanitized SVG markup"),
-   *         @OA\Property(property="svgdata", type="string", description="Original uploaded SVG markup"),
-   *         @OA\Property(property="keepDialog", type="boolean"),
-   *         @OA\Property(property="warnings", type="array", @OA\Items(type="string"))
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="SVG data is missing, invalid or too large", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function sanitizeSvg($params):void {
     if ($this->action !== 'POST')
       CoreUtils::notAllowed();
@@ -1224,50 +835,6 @@ class AppearanceAPIController extends APIController {
     Response::ok(['svgel' => $svgel, 'svgdata' => $svgdata, 'keepDialog' => true, 'warnings' => $warnings]);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/shows",
-   *   description="Get the list of shows/episodes that can be linked to an appearance, along with currently linked entries. Staff only.",
-   *   tags={"appearances","shows"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="groups", type="object", description="Map of valid show/episode types to their display names"),
-   *         @OA\Property(property="entries", type="array", @OA\Items(type="object", additionalProperties=false,
-   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="label", type="string"),
-   *           @OA\Property(property="type", type="string")
-   *         )),
-   *         @OA\Property(property="linkedIds", type="array", @OA\Items(ref="#/components/schemas/OneBasedId"))
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/appearances/{id}/shows",
-   *   description="Set the shows/episodes linked to an appearance. Staff only.",
-   *   tags={"appearances","shows"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(@OA\JsonContent(
-   *     @OA\Property(property="ids", type="array", description="IDs of shows/episodes to link", @OA\Items(ref="#/components/schemas/OneBasedId"))
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object", additionalProperties=false,
-   *         @OA\Property(property="section", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the related shows section")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function guideRelationsApi($params):void {
     if (Permission::insufficient('staff'))
       Response::denied();
@@ -1333,30 +900,6 @@ class AppearanceAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Post(
-   *   path="/appearances/{id}/pin",
-   *   description="Pin an appearance to the top of its guide. Staff only. Not available for personal guide appearances.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Appearances in personal guides cannot be pinned", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Delete(
-   *   path="/appearances/{id}/pin",
-   *   description="Unpin a previously pinned appearance. Staff only. Not available for personal guide appearances.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="object", required={"message"}, @OA\Property(property="message", type="string"))),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission (staff required)", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="409", description="Appearances in personal guides cannot be pinned", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function pinApi($params):void {
     if (Permission::insufficient('staff'))
       Response::denied();
@@ -1397,30 +940,6 @@ class AppearanceAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/autocomplete",
-   *   security={},
-   *   description="Search appearances by label for autocomplete purposes. Returns an empty array if the query or guide is missing.",
-   *   tags={"appearances"},
-   *   @OA\Parameter(name="q", in="query", required=true, description="Search query", @OA\Schema(ref="#/components/schemas/QueryString")),
-   *   @OA\Parameter(name="guide", in="query", required=true, description="Guide identifier to search within", @OA\Schema(ref="#/components/schemas/GuideName")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="array", maxItems=5, @OA\Items(allOf={
-   *       @OA\Schema(ref="#/components/schemas/PreviewAppearance"),
-   *       @OA\Schema(
-   *         type="object",
-   *         @OA\Property(property="babelLabel", type="string", description="Winterchilla UI detail, not part of the contract: the label as the site's 'nutshell names' mode shows it"),
-   *         @OA\Property(property="url", type="string", description="Winterchilla UI detail, not part of the contract: the page path of the appearance"),
-   *         @OA\Property(property="image", type="string", description="Winterchilla UI detail, not part of the contract: URL of the preview image")
-   *       )
-   *     }))
-   *   ),
-   *   @OA\Response(response="422", description="Invalid guide", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function autocomplete():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

@@ -24,7 +24,6 @@ use HTMLPurifier;
 use HTMLPurifier_Config;
 use HTMLPurifier_TagTransform_Simple;
 use Monolog\Logger;
-use OpenApi\Generator;
 use OpenSearch\Client;
 use OpenSearch\ClientBuilder;
 use OpenSearch\Common\Exceptions\TransportException;
@@ -1703,89 +1702,6 @@ class CoreUtils {
 
   public static function bin2dataUri(string $binary_str, string $content_type):string {
     return "data:$content_type;base64,".base64_encode($binary_str);
-  }
-
-  /**
-   * @param bool $only_if_missing Generates the file only if it doesn't exist
-   *
-   * @return void
-   */
-  /**
-   * Readable operation IDs in Luna's convention (HTTP method + path segments in PascalCase, `{param}` segments by name):
-   * `GET /appearances/{id}/color-groups` is `GetAppearancesIdColorGroups`. Celestia's type generator
-   * (packages/api-types) names every request/result type after the operation ID, and swagger-php's default is an md5 hash.
-   */
-  public static function apiOperationId(string $method, string $path):string {
-    $segments = preg_split('~[^A-Za-z0-9]+~', $path, -1, PREG_SPLIT_NO_EMPTY);
-
-    return ucfirst(strtolower($method)).implode('', array_map('ucfirst', $segments));
-  }
-
-  /**
-   * Operations that exist only for Winterchilla's own UI (they answer with rendered HTML) or for its own infrastructure (its
-   * session handling, the PHP stat cache) or are staff-only experiments there. They stay in the document, marked `x-internal`,
-   * but a re-implementation of the API (Luna) and the front end (Celestia) are not expected to cover them.
-   */
-  public const INTERNAL_OPERATIONS = [
-    'GET /about/upcoming',
-    'GET /cg/full',
-    'GET /event-entries/{entryid}/lazyload',
-    'GET /notifications',
-    'GET /posts/requests/suggestion',
-    'GET /posts/{id}/lazyload',
-    'GET /posts/{id}/reload',
-    'GET /show/{id}/posts',
-    'GET /users/contributions/lazyload/{favme}',
-    'GET /users/{id}/avatar-wrap',
-    'GET /appearances/{id}/preview',
-    'GET /tags/autocomplete',
-    'DELETE /users/{id}/contributions/cache',
-    'GET /users/session/status',
-    'DELETE /users/sessions/{id}',
-    'DELETE /admin/stat-cache',
-    // Under testing for staff only; Luna has its own e-mail verification and password flows
-    'POST /users/me/password',
-    'POST /users/{id}/email-changes',
-    'POST /users/email/verify',
-  ];
-
-  private static function assignOperationIds(\OpenApi\Annotations\OpenApi $openapi):void {
-    foreach ($openapi->paths as $path_item){
-      foreach (['get', 'post', 'put', 'delete', 'patch', 'options', 'head'] as $method){
-        $operation = $path_item->{$method};
-        if (is_object($operation)) {
-          $operation->operationId = self::apiOperationId($method, $path_item->path);
-          if (in_array(strtoupper($method).' '.$path_item->path, self::INTERNAL_OPERATIONS, true))
-            $operation->x = ['internal' => true];
-        }
-      }
-    }
-  }
-
-  public static function generateApiSchema($only_if_missing = false):void {
-    $output_path = APPATH.API_SCHEMA_PATH;
-    if ($only_if_missing && file_exists($output_path))
-      return;
-    $openapi = (new Generator())->generate([
-      PROJPATH.'app/Controllers/API',
-      PROJPATH.'app/Controllers/EventController.php',
-      PROJPATH.'app/Controllers/UserController.php',
-      PROJPATH.'app/Controllers/PersonalGuideController.php',
-      PROJPATH.'app/Controllers/AuthController.php',
-      PROJPATH.'app/Controllers/DiscordAuthController.php',
-      PROJPATH.'app/Controllers/AboutController.php',
-      PROJPATH.'app/Controllers/ShowController.php',
-      PROJPATH.'app/Controllers/PostController.php',
-      PROJPATH.'app/Controllers/AppearanceController.php',
-      PROJPATH.'app/Controllers/TagController.php',
-      PROJPATH.'app/Controllers/ColorGuideController.php',
-      PROJPATH.'app/Controllers/AdminController.php',
-    ]);
-    self::assignOperationIds($openapi);
-    if (!$openapi->validate())
-      throw new RuntimeException("Invalid OpenAPI schema, could not generate $output_path");
-    self::createFoldersFor($output_path);
-    $openapi->saveAs($output_path, 'json');
   }
 
   public static function generateCacheKey(int $version, ...$args) {

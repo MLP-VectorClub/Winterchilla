@@ -21,171 +21,9 @@ use App\Permission;
 use App\RedisHelper;
 use App\Response;
 use App\Tags;
-use OpenApi\Annotations as OA;
 use function count;
 
-/**
- * @OA\Schema(
- *   schema="SlimAppearanceList",
- *   type="object",
- *   description="All appearances of a guide in the requested order, under the appearances key, plus how to group them",
- *   required={
- *     "appearances",
- *     "groups"
- *   },
- *   additionalProperties=false,
- *   @OA\Property(
- *     property="appearances",
- *     type="array",
- *     @OA\Items(ref="#/components/schemas/SlimAppearance")
- *   ),
- *   @OA\Property(
- *     property="groups",
- *     type="array",
- *     description="Sections of the list: by tag group for `relevance` (the staff-managed order within), by first letter for `label`, none for `added`",
- *     @OA\Items(type="object", required={"name", "appearanceIds"}, @OA\Property(property="name", type="string"), @OA\Property(property="appearanceIds", type="array", @OA\Items(ref="#/components/schemas/ZeroBasedId")))
- *   )
- * )
- * @OA\Schema(
- *   schema="AppearanceList",
- *   type="object",
- *   description="A page of appearances under the appearances key",
- *   required={
- *     "appearances",
- *     "pagination"
- *   },
- *   additionalProperties=false,
- *   @OA\Property(
- *     property="appearances",
- *     type="array",
- *     @OA\Items(ref="#/components/schemas/Appearance")
- *   ),
- *   @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
- * )
- * @OA\Schema(
- *   schema="PreviewsIndicator",
- *   type="boolean",
- *   enum={true},
- *   description="Optional parameter that indicates whether you would like to get preview image data with the request. Typically unneccessary unless you want to display a temporary image while the larger image loads."
- * )
- * @OA\Schema(
- *   schema="Order",
- *   type="number",
- *   description="Used for displaying items in a specific order. The API guarantees that array return values are sorted in ascending order based on this property."
- * )
- 
- *
- * AppearancesAPIController
- 
- */
 class AppearancesAPIController extends APIController {
-  /**
-   * @OA\Schema(
-   *   schema="SlimAppearance",
-   *   type="object",
-   *   description="A less heavy version of the regular Appearance schema",
-   *   required={
-   *     "id",
-   *     "label",
-   *     "createdAt",
-   *     "notes",
-   *     "tags",
-   *     "sprite",
-   *     "hasCutieMarks",
-   *     "guide",
-   *     "ownerId",
-   *     "previewData"
-   *   },
-   *   @OA\Property(
-   *     property="id",
-   *     ref="#/components/schemas/ZeroBasedId"
-   *   ),
-   *   @OA\Property(
-   *     property="guide",
-   *     type="string",
-   *     nullable=true,
-   *     enum={"pony", "eqg", null},
-   *     description="The official guide the appearance belongs to; null for personal guide appearances (see ownerId)"
-   *   ),
-   *   @OA\Property(
-   *     property="ownerId",
-   *     type="integer",
-   *     nullable=true,
-   *     description="ID of the user whose personal guide the appearance belongs to; null for the official guides"
-   *   ),
-   *   @OA\Property(
-   *     property="previewData",
-   *     type="array",
-   *     description="Up to four hex colors (#rrggbb) that represent the appearance, for small previews and cards",
-   *     @OA\Items(type="string")
-   *   ),
-   *   @OA\Property(
-   *     property="label",
-   *     type="string",
-   *     description="The name of the appearance",
-   *     example="Twinkle Sprinkle"
-   *   ),
-   *   @OA\Property(
-   *     property="createdAt",
-   *     type="string",
-   *     format="date-time"
-   *   ),
-   *   @OA\Property(
-   *     property="notes",
-   *     type="string",
-   *     format="html",
-   *     nullable=true,
-   *     example="Far legs use darker colors. Based on <strong>S2E21</strong>."
-   *   ),
-   *   @OA\Property(
-   *     property="tags",
-   *     type="array",
-   *     minItems=0,
-   *     @OA\Items(ref="#/components/schemas/SlimGuideTag")
-   *   ),
-   *   @OA\Property(
-   *     property="sprite",
-   *     nullable=true,
-   *     ref="#/components/schemas/Sprite",
-   *     description="The sprite that belongs to this appearance, or null if there is none"
-   *   ),
-   *   @OA\Property(
-   *     property="hasCutieMarks",
-   *     type="boolean",
-   *     description="Indicates whether there are any cutie marks tied to this appearance"
-   *   )
-   * )
-   * @OA\Schema(
-   *   schema="ListOfColorGroups",
-   *   type="object",
-   *   description="Array of color groups under the `colorGroups` key",
-   *   required={
-   *     "colorGroups"
-   *   },
-   *   additionalProperties=false,
-   *   @OA\Property(
-   *     property="colorGroups",
-   *     type="array",
-   *     minItems=0,
-   *     @OA\Items(ref="#/components/schemas/ColorGroup"),
-   *    description="Array of color groups belonging to an appearance (may be an empty array)."
-   *   )
-   * )
-   * @OA\Schema(
-   *   schema="Appearance",
-   *   type="object",
-   *   description="Represents an entry in the color guide",
-   *   allOf={
-   *     @OA\Schema(ref="#/components/schemas/SlimAppearance"),
-   *     @OA\Schema(ref="#/components/schemas/ListOfColorGroups")
-   *   }
-   * )
-   * @param Appearance $a
-   * @param bool       $with_previews
-   * @param bool       $compact
-   *
-   * @return array
-   */
   static function mapAppearance(Appearance $a, bool $with_previews, bool $compact = false) {
     $tags = array_map(function (Tag $t) {
       return self::mapTag($t);
@@ -218,40 +56,6 @@ class AppearancesAPIController extends APIController {
     return $color_groups;
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="SlimGuideTag",
-   *   type="object",
-   *   required={
-   *     "id",
-   *     "name",
-   *     "type"
-   *   },
-   *   additionalProperties=false,
-   *   @OA\Property(
-   *     property="id",
-   *     ref="#/components/schemas/OneBasedId"
-   *   ),
-   *   @OA\Property(
-   *     property="name",
-   *     type="string",
-   *     minLength=1,
-   *     maxLength=255,
-   *     example="mane six",
-   *     description="Tag name (all lowercase)"
-   *   ),
-   *   @OA\Property(
-   *     property="type",
-   *     type="string",
-   *     nullable=true,
-   *     enum={"app", "cat", "gen", "spec", "char", "warn", null},
-   *     description="Category this tag belongs to, or null if uncategorized"
-   *   )
-   * )
-   * @param Tag $t
-   *
-   * @return array
-   */
   static function mapTag(Tag $t) {
     return [
       'id' => $t->id,
@@ -260,33 +64,6 @@ class AppearancesAPIController extends APIController {
     ];
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="Sprite",
-   *   type="object",
-   *   description="Data related to an appearance's sprite file. The image itself is `GET /appearances/{id}/sprite?size=300|600&hash={hash}` (the hash is only there for cache busting); `preview`, when sent, is a tiny data URI with the same proportions for laying the page out before the image loads.",
-   *   required={
-   *     "hash",
-   *   },
-   *   additionalProperties=false,
-   *   @OA\Property(
-   *     property="hash",
-   *     description="MD5 hash of the current sprite image",
-   *     ref="#/components/schemas/SpriteHash"
-   *   ),
-   *   @OA\Property(
-   *     property="preview",
-   *     type="string",
-   *     format="data-uri",
-   *     example="data:image/png;base64,<image data>",
-   *     description="Data URI for a small preview image with matching proportions to the actual image, suitable for displaying as a preview while the full image loads. May not be sent based on the request parameters."
-   *   ),
-   * )
-   * @param Appearance $a
-   * @param bool       $with_preview
-   *
-   * @return array|null
-   */
   static function mapSprite(Appearance $a, $with_preview = false):?array {
     if (!$a->hasSprite())
       return null;
@@ -298,45 +75,6 @@ class AppearancesAPIController extends APIController {
     return $value;
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="ColorGroup",
-   *   type="object",
-   *   description="Groups a list of colors",
-   *   required={
-   *     "id",
-   *     "label",
-   *     "order",
-   *     "colors"
-   *   },
-   *   additionalProperties=false,
-   *   @OA\Property(
-   *     property="id",
-   *     ref="#/components/schemas/OneBasedId"
-   *   ),
-   *   @OA\Property(
-   *     property="label",
-   *     type="string",
-   *     description="The name of the color group",
-   *     example="Coat"
-   *   ),
-   *   @OA\Property(
-   *     property="order",
-   *     ref="#/components/schemas/Order"
-   *   ),
-   *   @OA\Property(
-   *     property="colors",
-   *     type="array",
-   *     minItems=1,
-   *     @OA\Items(ref="#/components/schemas/Color"),
-   *     description="The list of colors inside this group"
-   *   )
-   * )
-   * @param ColorGroup $cg
-   * @param array      $color_map
-   *
-   * @return array
-   */
   static function mapColorGroup(ColorGroup $cg, array $color_map) {
     $colors = array_map(function (Color $c) {
       return self::mapColor($c);
@@ -350,52 +88,6 @@ class AppearancesAPIController extends APIController {
     ];
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="Color",
-   *   type="object",
-   *   description="A color entry. Colors may link to other colors, in which case `linkedTo` will be set to the link target, but `hex` will always point to the value that should be displayed.", required={
-   *     "id",
-   *     "label",
-   *     "order",
-   *     "hex"
-   *   },
-   *   additionalProperties=false,
-   *   @OA\Property(
-   *     property="id",
-   *     ref="#/components/schemas/OneBasedId"
-   *   ),
-   *   @OA\Property(
-   *     property="label",
-   *     type="string",
-   *     description="The name of the color",
-   *     example="Fill"
-   *   ),
-   *   @OA\Property(
-   *     property="order",
-   *     ref="#/components/schemas/Order"
-   *   ),
-   *   @OA\Property(
-   *     property="hex",
-   *     type="string",
-   *     nullable=true,
-   *     format="#RRGGBB",
-   *     description="The color value in uppercase hexadecimal form, including a # prefix",
-   *     example="#6181B6"
-   *   ),
-   *   @OA\Property(
-   *     property="linkedTo",
-   *     deprecated=true,
-   *     description="This field used to indicate if this color was linked to another color, however, this feature was removed and this field now only ever returns null",
-   *     nullable=true,
-   *     allOf={@OA\Schema(ref="#/components/schemas/Color")},
-   *     example=null
-   *   ),
-   * )
-   * @param Color $c
-   *
-   * @return array
-   */
   static function mapColor(Color $c) {
     return [
       'id' => $c->id,
@@ -406,68 +98,6 @@ class AppearancesAPIController extends APIController {
     ];
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="GuideName",
-   *   type="string",
-   *   enum={"pony", "eqg"},
-   *   default="pony"
-   * )
-   * @OA\Schema(
-   *   schema="GuidePageSize",
-   *   type="integer",
-   *   minimum=7,
-   *   maximum=20,
-   *   default=7
-   * )
-   * @OA\Get(
-   *   path="/appearances",
-   *   security={},
-   *   description="Allows querying the full library of public appearances (forced pagination)",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="guide",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/GuideName"),
-   *     description="Determines the guide to search in"
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="page",
-   *     required=false,
-   *     @OA\Schema(ref="#/components/schemas/PageNumber"),
-   *     description="Which page of results to return"
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="size",
-   *     required=false,
-   *     @OA\Schema(ref="#/components/schemas/GuidePageSize"),
-   *     description="The number of results to return per page"
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="q",
-   *     required=false,
-   *     @OA\Schema(ref="#/components/schemas/QueryString"),
-   *     description="Search query"
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="previews",
-   *     required=false,
-   *     @OA\Schema(ref="#/components/schemas/PreviewsIndicator")
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/AppearanceList")
-   *   ),
-   *   @OA\Response(response="422", description="Invalid guide name", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")),
-   *   @OA\Response(response="503", description="The OpenSearch server is unreachable", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   function queryPublic() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -495,40 +125,6 @@ class AppearancesAPIController extends APIController {
     ]);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/full",
-   *   security={},
-   *   description="Get a list of every appearance in the database (without color group data)",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="guide",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/GuideName"),
-   *     description="Determines the guide to search in"
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="previews",
-   *     required=false,
-   *     @OA\Schema(ref="#/components/schemas/PreviewsIndicator")
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="sort",
-   *     required=false,
-   *     @OA\Schema(type="string", enum={"relevance", "label", "added"}, default="relevance"),
-   *     description="`relevance` is the staff-managed order grouped by tag, `label` is alphabetical, `added` is newest first"
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/SlimAppearanceList")
-   *   ),
-   *   @OA\Response(response="422", description="Invalid guide name", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   function queryAll() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -618,23 +214,6 @@ class AppearancesAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="PreviewAppearance",
-   *   type="object",
-   *   description="The barest of properties for an appearance, enough to show a small colored preview",
-   *   required={"id", "label", "guide", "ownerId", "previewData"},
-   *   additionalProperties=false,
-   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *   @OA\Property(property="ownerId", type="integer", nullable=true, description="ID of the user whose personal guide the appearance belongs to; null for the official guides"),
-   *   @OA\Property(property="label", type="string"),
-   *   @OA\Property(property="guide", type="string", nullable=true, description="The guide the appearance belongs to; null for personal guide appearances"),
-   *   @OA\Property(property="previewData", type="array", description="Up to four hex colors (#rrggbb) that represent the appearance", @OA\Items(type="string"))
-   * )
-   * @param Appearance $a
-   *
-   * @return array
-   */
   static function mapPreviewAppearance(Appearance $a):array {
     return [
       'id' => $a->id,
@@ -645,17 +224,6 @@ class AppearancesAPIController extends APIController {
     ];
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/pinned",
-   *   security={},
-   *   description="Get the appearances pinned to the top of a guide",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(in="query", name="guide", required=true, @OA\Schema(type="string", enum={"pony", "eqg"})),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Appearance"))),
-   *   @OA\Response(response="422", description="Invalid guide", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   function pinned() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -668,19 +236,6 @@ class AppearancesAPIController extends APIController {
     Response::ok(array_map(fn(PinnedAppearance $p) => self::mapAppearance($p->appearance, false), $pins));
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/locate",
-   *   security={},
-   *   description="Get the minimum information needed to link to an appearance and show a small preview of it",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/ZeroBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/PreviewAppearance")),
-   *   @OA\Response(response="403", description="The appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @param array $params
-   */
   function locate(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -692,49 +247,6 @@ class AppearancesAPIController extends APIController {
     Response::ok(self::mapPreviewAppearance($appearance));
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="CutieMark",
-   *   type="object",
-   *   description="A cutie mark entry",
-   *   required={"id", "viewUrl", "facing", "rotation"},
-   *   additionalProperties=false,
-   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *   @OA\Property(property="viewUrl", type="string", description="The URL used for displaying the cutie mark SVG file."),
-   *   @OA\Property(property="facing", type="string", nullable=true, enum={"left", "right", null}, description="The direction the character is facing when this cutie mark should be used. `null` means the image is symmetrical."),
-   *   @OA\Property(property="favMe", type="string", nullable=true, description="Optional ID of a deviation on DeviantArt that is the original source of this cutie mark vector."),
-   *   @OA\Property(property="rotation", type="integer", minimum=-45, maximum=45, default=0),
-   *   @OA\Property(property="contributor", description="Optional details of the user who contributed this cutie mark.", ref="#/components/schemas/User"),
-   *   @OA\Property(property="label", type="string", description="Optional label in case the cutie mark warrants additional information.")
-   * )
-   * @OA\Schema(
-   *   schema="DetailedAppearance",
-   *   type="object",
-   *   description="An appearance object containing the full range of information available",
-   *   allOf={
-   *     @OA\Schema(ref="#/components/schemas/Appearance"),
-   *     @OA\Schema(
-   *       type="object",
-   *       required={"cutieMarks", "canEdit", "relatedAppearances", "relatedShows"},
-   *       @OA\Property(property="relatedAppearances", type="array", description="Appearances this one is linked to, e.g. other versions of the same character", @OA\Items(ref="#/components/schemas/PreviewAppearance")),
-   *       @OA\Property(property="relatedShows", type="array", description="Shows this appearance is linked to", @OA\Items(ref="#/components/schemas/ShowListItem")),
-   *       @OA\Property(property="canEdit", type="boolean", description="Whether the current user may edit this appearance (its owner, or staff)"),
-   *       @OA\Property(property="cutieMarks", type="array", minItems=0, @OA\Items(ref="#/components/schemas/CutieMark"))
-   *     )
-   *   }
-   * )
-   * @OA\Get(
-   *   path="/appearances/{id}",
-   *   security={},
-   *   description="Get all relevant information about an appearance at once, including tags, color groups and cutie marks",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/ZeroBasedId")),
-   *   @OA\Response(response="200", description="Complete appearance information", @OA\JsonContent(ref="#/components/schemas/DetailedAppearance")),
-   *   @OA\Response(response="403", description="The appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @param array $params
-   */
   function get(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -754,41 +266,6 @@ class AppearancesAPIController extends APIController {
     ]);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/tag-changes",
-   *   description="The history of tags being added to and removed from an appearance, newest first. Staff only; personal guide appearances have no history.",
-   *   tags={"color guide", "appearances", "tags"},
-   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
-   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=100, default=25)),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"changes", "pagination"},
-   *       @OA\Property(property="changes", type="array", @OA\Items(
-   *         type="object",
-   *         required={"id", "tagId", "tagName", "added", "user", "createdAt"},
-   *         additionalProperties=false,
-   *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *         @OA\Property(property="tagId", type="integer", description="The tag may have been deleted since, in which case it no longer resolves"),
-   *         @OA\Property(property="tagName", type="string", nullable=true, description="The tag's name at the time of the change; missing on very old entries"),
-   *         @OA\Property(property="added", type="boolean", description="True when the tag was added, false when it was removed"),
-   *         @OA\Property(property="user", nullable=true, ref="#/components/schemas/PostUser", description="Who made the change; null when the user no longer exists"),
-   *         @OA\Property(property="createdAt", type="string", format="date-time")
-   *       )),
-   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
-   *     )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found, or it belongs to a personal guide", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @param array $params
-   */
   function tagChanges(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -835,21 +312,6 @@ class AppearancesAPIController extends APIController {
     return [(int)$page, (int)$size];
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/palette",
-   *   security={},
-   *   description="Download the appearance's colors as a palette file: `json` is a nested swatch map (appearance, color group, color label to hex; the Illustrator swatch import format) and `gpl` is a GIMP/Inkscape palette. Both are served as attachments. Front ends may also build them from `GET /appearances/{id}/color-groups`.",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(in="query", name="format", required=true, @OA\Schema(type="string", enum={"json", "gpl"})),
-   *   @OA\Response(response="200", description="The palette file, as an attachment named after the appearance", @OA\MediaType(mediaType="application/octet-stream", @OA\Schema(type="string", format="binary"))),
-   *   @OA\Response(response="403", description="The appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Invalid format", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @param array $params
-   */
   function palette(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -866,23 +328,6 @@ class AppearancesAPIController extends APIController {
     Response::invalid('format', 'The format must be json or gpl.');
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/image",
-   *   security={},
-   *   description="A rendered image of the appearance. Combinations: `palette` as `png` (the colors listed next to the sprite), `sprite` as `png` (the uploaded sprite) or `svg` (traced from it), `preview` as `svg` (the four-color preview) and `facing` as `svg` (the body-orientation graphic, colored with the appearance's colors; pick the side with `facing`). Everything else is a 422, a missing sprite a 404. The server may answer with a redirect to a cache-busted URL of the same image.",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(in="query", name="type", required=true, @OA\Schema(type="string", enum={"palette", "sprite", "preview", "facing"})),
-   *   @OA\Parameter(in="query", name="format", required=true, @OA\Schema(type="string", enum={"png", "svg"})),
-   *   @OA\Parameter(in="query", name="facing", @OA\Schema(type="string", enum={"left", "right"}, default="left"), description="Only for `type=facing`"),
-   *   @OA\Response(response="200", description="The image", @OA\MediaType(mediaType="image/png", @OA\Schema(type="string", format="binary")), @OA\MediaType(mediaType="image/svg+xml", @OA\Schema(ref="#/components/schemas/SVGFile"))),
-   *   @OA\Response(response="403", description="The appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found, or it has no sprite", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Unsupported type and format combination", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @param array $params
-   */
   function image(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -916,22 +361,6 @@ class AppearancesAPIController extends APIController {
     Response::invalid('format', "A $type image is not available as $format.");
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/cutie-marks/{cutieMarkId}/download",
-   *   security={},
-   *   description="Download a cutie mark as an SVG attachment: the sanitized, rendered file by default, or the original upload with `source` (staff only).",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(in="path", name="id", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(in="path", name="cutieMarkId", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Parameter(in="query", name="source", @OA\Schema(type="boolean", default=false), description="Download the original uploaded file instead of the rendered one. Staff only"),
-   *   @OA\Response(response="200", description="The cutie mark file", @OA\MediaType(mediaType="application/octet-stream", @OA\Schema(type="string", format="binary"))),
-   *   @OA\Response(response="401", description="`source` was requested but nobody is signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="`source` was requested without the staff role, or the appearance is private", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance or cutie mark not found, or the cutie mark belongs to another appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @param array $params
-   */
   function cutieMarkDownload(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -977,26 +406,6 @@ class AppearancesAPIController extends APIController {
     return $result;
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/color-groups",
-   *   security={},
-   *   description="Get all color groups associated with an appearance",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(
-   *     in="path",
-   *     name="id",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/ZeroBasedId")
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/ListOfColorGroups")
-   *   )
-   * )
-   * @param array $params
-   */
   function getColorGroups(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -1008,73 +417,6 @@ class AppearancesAPIController extends APIController {
     Response::ok(['colorGroups' => self::_getColorGroups($appearance)]);
   }
 
-  /**
-   * @OA\Schema(
-   *   schema="SpriteSize",
-   *   type="integer",
-   *   enum={300, 600},
-   *   default=300
-   * )
-   * @OA\Schema(
-   *   schema="SpriteHash",
-   *   type="string",
-   *   format="md5",
-   *   minLength=32,
-   *   maxLength=32
-   * )
-   * @OA\Schema(
-   *   schema="AppearanceToken",
-   *   type="string",
-   *   format="uuid"
-   * )
-   * @OA\Get(
-   *   path="/appearances/{id}/sprite",
-   *   security={},
-   *   description="Fetch the sprite file associated with the appearance",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(
-   *     in="path",
-   *     name="id",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/ZeroBasedId")
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="size",
-   *     @OA\Schema(ref="#/components/schemas/SpriteSize")
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="token",
-   *     @OA\Schema(ref="#/components/schemas/AppearanceToken")
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="hash",
-   *     description="Used for cache busting. The latest value is provided by the appearance resource.",
-   *     @OA\Schema(ref="#/components/schemas/SpriteHash")
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="The sprite image at the specified size",
-   *     @OA\MediaType(
-   *       mediaType="image/png",
-   *       @OA\Schema(ref="#/components/schemas/File")
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="Sprite image missing",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="403",
-   *     description="You don't have permission to access this resource",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   * @param array $params
-   */
   function sprite(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -1086,44 +428,6 @@ class AppearancesAPIController extends APIController {
     CGUtils::renderSpritePNG($appearance, $_GET['size'] ?? null);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/appearances/{id}/preview",
-   *   security={},
-   *   description="Fetch the preview file associated with the appearance",
-   *   tags={"color guide", "appearances"},
-   *   @OA\Parameter(
-   *     in="path",
-   *     name="id",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/ZeroBasedId")
-   *   ),
-   *   @OA\Parameter(
-   *     in="query",
-   *     name="token",
-   *     @OA\Schema(ref="#/components/schemas/AppearanceToken")
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="The appearance preview image",
-   *     @OA\MediaType(
-   *       mediaType="image/svg+xml",
-   *       @OA\Schema(ref="#/components/schemas/SVGFile")
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="Appearance missing",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="403",
-   *     description="You don't have permission to access this resource",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   * @param array $params
-   */
   function preview(array $params) {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

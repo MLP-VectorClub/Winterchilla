@@ -9,21 +9,7 @@ use App\Permission;
 use App\Response;
 use App\UserPrefs;
 use Exception;
-use OpenApi\Annotations as OA;
 
-/**
- * @OA\Schema(
- *   schema="PreferenceValue",
- *   type="object",
- *   description="The current (or newly set) value of a user preference",
- *   required={"value"},
- *   additionalProperties=false,
- *   @OA\Property(
- *     property="value",
- *     description="The preference value. Type depends on the specified preference key."
- *   )
- * )
- */
 class PreferenceAPIController extends APIController {
   public function __construct() {
     parent::__construct();
@@ -55,95 +41,6 @@ class PreferenceAPIController extends APIController {
     $this->value = UserPrefs::get($this->preference, $this->user);
   }
 
-  /**
-   * @OA\Get(
-   *   path="/users/{id}/preferences/{key}",
-   *   description="Gets the value of a preference for the specified user. Requires user permission, and the requester must be the same user or staff.",
-   *   tags={"users"},
-   *   @OA\Parameter(
-   *     name="id",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
-   *   ),
-   *   @OA\Parameter(
-   *     name="key",
-   *     in="path",
-   *     required=true,
-   *     description="The preference key to retrieve",
-   *     @OA\Schema(type="string")
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/PreferenceValue")
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(
-   *     response="403",
-   *     description="Insufficient permission, or not the same user and not staff",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="The specified user does not exist, or missing user ID",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   * @OA\Put(
-   *   path="/users/{id}/preferences/{key}",
-   *   description="Sets the value of a preference for the specified user. Requires user permission, and the requester must be the same user or staff.",
-   *   tags={"users"},
-   *   @OA\Parameter(
-   *     name="id",
-   *     in="path",
-   *     required=true,
-   *     @OA\Schema(ref="#/components/schemas/OneBasedId")
-   *   ),
-   *   @OA\Parameter(
-   *     name="key",
-   *     in="path",
-   *     required=true,
-   *     description="The preference key to update",
-   *     @OA\Schema(type="string")
-   *   ),
-   *   @OA\RequestBody(
-   *     required=true,
-   *     description="The new preference value, processed and validated according to the specified preference key",
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"value"},
-   *       @OA\Property(property="value", description="The new value: a boolean for the on/off preferences (see UserPrefs), an integer for `cg_itemsperpage`, a string for `p_vectorapp` (a key from GET /config `vectorApps`) and `cg_defaultguide`", oneOf={@OA\Schema(type="boolean"), @OA\Schema(type="integer"), @OA\Schema(type="string", nullable=true)})
-   *     )
-   *   ),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/PreferenceValue")
-   *   ),
-   *   @OA\Response(
-   *     response="422",
-   *     description="The new preference value is invalid",
-   *     @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="500",
-   *     description="The preference could not be saved due to a database error",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(
-   *     response="403",
-   *     description="Insufficient permission, or not the same user and not staff",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   ),
-   *   @OA\Response(
-   *     response="404",
-   *     description="The specified user does not exist, or missing user ID",
-   *     @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-   *   )
-   * )
-   */
   public function api($params) {
     $this->load_preference($params);
 

@@ -7,29 +7,8 @@ use App\CoreUtils;
 use App\Models\UsefulLink;
 use App\Permission;
 use App\Response;
-use OpenApi\Annotations as OA;
 
 class UsefulLinksAPIController extends APIController {
-  /**
-   * @OA\Schema(
-   *   schema="SidebarUsefulLink",
-   *   type="object",
-   *   required={"id", "label", "url", "minRole"},
-   *   additionalProperties=false,
-   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *   @OA\Property(property="label", type="string"),
-   *   @OA\Property(property="url", type="string"),
-   *   @OA\Property(property="title", type="string", nullable=true),
-   *   @OA\Property(property="minRole", type="string", description="The lowest role that can see this link")
-   * )
-   * @OA\Get(
-   *   path="/useful-links/sidebar",
-   *   description="Get the links shown in the sidebar for the current user, in display order. Signed-out visitors get an empty list.",
-   *   tags={"useful links"},
-   *   security={},
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/SidebarUsefulLink")))
-   * )
-   */
   public function sidebar():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -51,16 +30,6 @@ class UsefulLinksAPIController extends APIController {
     ], $links)));
   }
 
-  /**
-   * @OA\Get(
-   *   path="/useful-links",
-   *   description="Every useful link in display order, whatever role it is meant for, for managing them. Staff only.",
-   *   tags={"useful links"},
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/SidebarUsefulLink"))),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function list():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

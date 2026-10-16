@@ -6,22 +6,10 @@ use App\Auth;
 use App\CoreUtils;
 use App\Response;
 use App\UserPrefs;
-use OpenApi\Annotations as OA;
 
 class UserPrefsAPIController extends APIController {
   private const FLAGS = ['cg_hidesynon', 'cg_hideclrinfo', 'cg_fulllstprev', 'cg_nutshell', 'p_hidediscord', 'p_hidepcg', 'p_homelastep', 'ep_noappprev', 'ep_revstepbtn', 'a_pcgearn', 'a_pcgmake', 'a_pcgsprite', 'a_postreq', 'a_postres', 'a_reserve'];
 
-  /**
-   * @OA\Get(
-   *   path="/user-prefs/me",
-   *   description="Get the effective preference values of the current user (defaults for signed-out visitors). Send `keys[]` to limit the result.",
-   *   tags={"user preferences"},
-   *   security={},
-   *   @OA\Parameter(in="query", name="keys[]", @OA\Schema(type="array", minItems=1, @OA\Items(type="string"))),
-   *   @OA\Response(response="200", description="Preference key to value", @OA\JsonContent(ref="#/components/schemas/UserPrefs")),
-   *   @OA\Response(response="422", description="Unknown or repeated key", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function me():void {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();

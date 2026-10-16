@@ -18,37 +18,8 @@ use App\Models\MajorChange;
 use App\Permission;
 use App\Regexes;
 use App\Response;
-use OpenApi\Annotations as OA;
 use function count;
 
-/**
- * @OA\Schema(
- *   schema="PrivateColor",
- *   type="object",
- *   description="Represents a single color within a color group",
- *   additionalProperties=false,
- *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
- *   @OA\Property(property="order", type="integer", minimum=1),
- *   @OA\Property(property="label", type="string", minLength=3, maxLength=30),
- *   @OA\Property(property="hex", type="string", nullable=true, description="Hex color code, e.g. #FF0000")
- * )
- * @OA\Schema(
- *   schema="PrivateColorGroup",
- *   type="object",
- *   description="Represents a color group belonging to an appearance",
- *   required={
- *     "id",
- *     "appearanceId",
- *     "order",
- *     "label"
- *   },
- *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
- *   @OA\Property(property="appearanceId", ref="#/components/schemas/OneBasedId"),
- *   @OA\Property(property="order", type="integer", minimum=1),
- *   @OA\Property(property="label", type="string", minLength=2, maxLength=30),
- *   @OA\Property(property="colors", type="array", description="Only present in the GET response", @OA\Items(ref="#/components/schemas/PrivateColor"))
- * )
- */
 class ColorGroupAPIController extends APIController {
   use ColorGuideAccessTrait;
 
@@ -78,102 +49,6 @@ class ColorGroupAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Get(
-   *   path="/color-groups/{id}",
-   *   description="Get a color group's details and its colors. The user must be signed in and either own the appearance's personal guide or be staff.",
-   *   tags={"color groups"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(ref="#/components/schemas/PrivateColorGroup")
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Color group not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Post(
-   *   path="/color-groups",
-   *   description="Create a new color group with its colors on an appearance. The user must be signed in and have permission to manage the appearance.",
-   *   tags={"color groups"},
-   *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"appearanceId","label","colors"},
-   *     @OA\Property(property="appearanceId", ref="#/components/schemas/OneBasedId", description="ID of the appearance to add the color group to"),
-   *     @OA\Property(property="label", type="string", minLength=2, maxLength=30, description="Color group label"),
-   *     @OA\Property(property="colors", type="array", minItems=1, description="Colors belonging to this group", @OA\Items(
-   *       required={"label"},
-   *       @OA\Property(property="label", type="string", minLength=3, maxLength=30),
-   *       @OA\Property(property="hex", type="string", nullable=true, description="Hex color code")
-   *     )),
-   *     @OA\Property(property="major", type="boolean", description="Whether to record this as a major change (only for non-personal guide appearances)"),
-   *     @OA\Property(property="reason", type="string", maxLength=255, description="Reason for the change, required if major is set"),
-   *     @OA\Property(property="appearancePage", type="boolean", description="Whether this request originates from the appearance page; affects which HTML fragments are returned")
-   *   )),
-   *   @OA\Response(
-   *     response="201",
-   *     description="Created",
-   *     @OA\JsonContent(type="object",
-   *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of the color group"),
-   *         @OA\Property(property="cgs", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's color groups"),
-   *         @OA\Property(property="changes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the major changes section, present when major changes apply and called from the appearance page"),
-   *         @OA\Property(property="update", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML update notice, present when major changes apply and not called from the appearance page"),
-   *         @OA\Property(property="cmList", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the cutie marks list, present when called from the appearance page"),
-   *         @OA\Property(property="notes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's notes, present when not called from the appearance page")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission to manage this appearance", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Appearance not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error, e.g. duplicate color group label or invalid color data (errors are reported under label, reason or colors)", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Put(
-   *   path="/color-groups/{id}",
-   *   description="Update an existing color group and its colors. The user must be signed in and either own the appearance's personal guide or be staff.",
-   *   tags={"color groups"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(required=true, @OA\JsonContent(
-   *     required={"label","colors"},
-   *     @OA\Property(property="label", type="string", minLength=2, maxLength=30, description="Color group label"),
-   *     @OA\Property(property="colors", type="array", minItems=1, description="Colors belonging to this group. Existing colors should include their id; omitted existing colors are deleted", @OA\Items(
-   *       required={"label"},
-   *       @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *       @OA\Property(property="label", type="string", minLength=3, maxLength=30),
-   *       @OA\Property(property="hex", type="string", nullable=true, description="Hex color code")
-   *     )),
-   *     @OA\Property(property="major", type="boolean", description="Whether to record this as a major change (only for non-personal guide appearances)"),
-   *     @OA\Property(property="reason", type="string", maxLength=255, description="Reason for the change, required if major is set"),
-   *     @OA\Property(property="appearancePage", type="boolean", description="Whether this request originates from the appearance page; affects which HTML fragments are returned"),
-   *     @OA\Property(property="fullChangesSection", type="boolean", description="When present and major changes apply on the appearance page, wraps the changes HTML in the full changes section")
-   *   )),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(type="object",
-   *         @OA\Property(property="id", ref="#/components/schemas/OneBasedId", description="ID of the color group"),
-   *         @OA\Property(property="cgs", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's color groups"),
-   *         @OA\Property(property="changes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the major changes section, present when major changes apply and called from the appearance page"),
-   *         @OA\Property(property="update", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML update notice, present when major changes apply and not called from the appearance page"),
-   *         @OA\Property(property="cmList", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the cutie marks list, present when called from the appearance page"),
-   *         @OA\Property(property="notes", type="string", description="Winterchilla UI detail, not part of the contract: rendered HTML of the appearance's notes, present when not called from the appearance page")
-   *       )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Color group not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="422", description="Validation error (errors are reported under label, reason or colors)", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   * @OA\Delete(
-   *   path="/color-groups/{id}",
-   *   description="Delete a color group and its colors. The user must be signed in and either own the appearance's personal guide or be staff.",
-   *   tags={"color groups"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="204", description="Deleted"),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permission", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Color group not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   */
   public function api($params) {
     $this->load_colorgroup($params);
 

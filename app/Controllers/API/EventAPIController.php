@@ -10,82 +10,10 @@ use App\Response;
 use App\Models\Event;
 use App\Models\EventEntry;
 use App\Models\User;
-use OpenApi\Annotations as OA;
 
 class EventAPIController extends APIController {
   use EventLoaderTrait;
 
-  /**
-   * @OA\Schema(
-   *   schema="EventItem",
-   *   type="object",
-   *   description="A community collaboration event",
-   *   required={"id", "name", "startsAt", "endsAt", "maxEntries", "entryRole", "voteRole", "resultFavMe", "finalizedAt"},
-   *   additionalProperties=false,
-   *   @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *   @OA\Property(property="name", type="string"),
-   *   @OA\Property(property="startsAt", type="string", format="date-time"),
-   *   @OA\Property(property="endsAt", type="string", format="date-time"),
-   *   @OA\Property(property="maxEntries", type="integer", nullable=true, description="Maximum number of entries a single user may submit"),
-   *   @OA\Property(property="entryRole", type="string", nullable=true, description="Minimum role (or special role identifier) required to submit entries"),
-   *   @OA\Property(property="voteRole", type="string", nullable=true, description="Minimum role (or special role identifier) required to vote"),
-   *   @OA\Property(property="resultFavMe", type="string", nullable=true, description="fav.me ID of the winning entry's deviation, once finalized"),
-   *   @OA\Property(property="finalizedAt", type="string", format="date-time", nullable=true)
-   * )
-   * @OA\Schema(
-   *   schema="EventDetails",
-   *   type="object",
-   *   allOf={
-   *     @OA\Schema(ref="#/components/schemas/EventItem"),
-   *     @OA\Schema(
-   *       type="object",
-   *       required={"descriptionSrc", "addedBy", "createdAt", "canEnter", "canVote", "ongoing", "ended", "entries"},
-   *       @OA\Property(property="descriptionSrc", type="string", nullable=true, description="Markdown source of the description"),
-   *       @OA\Property(property="addedBy", ref="#/components/schemas/PostUser"),
-   *       @OA\Property(property="createdAt", type="string", format="date-time"),
-   *       @OA\Property(property="canEnter", type="boolean"),
-   *       @OA\Property(property="canVote", type="boolean"),
-   *       @OA\Property(property="ongoing", type="boolean"),
-   *       @OA\Property(property="ended", type="boolean"),
-   *       @OA\Property(
-   *         property="entries",
-   *         type="array",
-   *         @OA\Items(
-   *           type="object",
-   *           required={"id", "title", "submittedBy", "submissionProvider", "submissionId", "previewUrl", "fullUrl", "createdAt"},
-   *           @OA\Property(property="id", ref="#/components/schemas/OneBasedId"),
-   *           @OA\Property(property="title", type="string"),
-   *           @OA\Property(property="submittedBy", ref="#/components/schemas/PostUser"),
-   *           @OA\Property(property="submissionProvider", type="string", description="fav.me or sta.sh"),
-   *           @OA\Property(property="submissionId", type="string"),
-   *           @OA\Property(property="previewUrl", type="string", nullable=true),
-   *           @OA\Property(property="fullUrl", type="string", nullable=true),
-   *           @OA\Property(property="createdAt", type="string", format="date-time")
-   *         )
-   *       )
-   *     )
-   *   }
-   * )
-   * @OA\Get(
-   *   path="/events",
-   *   description="List events, newest first",
-   *   tags={"events"},
-   *   security={},
-   *   @OA\Parameter(in="query", name="page", @OA\Schema(type="integer", minimum=1, default=1)),
-   *   @OA\Parameter(in="query", name="size", @OA\Schema(type="integer", minimum=1, maximum=50, default=20)),
-   *   @OA\Response(
-   *     response="200",
-   *     description="OK",
-   *     @OA\JsonContent(
-   *       type="object",
-   *       required={"events", "pagination"},
-   *       @OA\Property(property="events", type="array", @OA\Items(ref="#/components/schemas/EventItem")),
-   *       @OA\Property(property="pagination", ref="#/components/schemas/Pagination")
-   *     )
-   *   ),
-   *   @OA\Response(response="422", description="Invalid query", @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse"))
-   * )
-   */
   public function list() {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
@@ -131,71 +59,6 @@ class EventAPIController extends APIController {
     return $u === null ? null : ['id' => $u->id, 'name' => $u->name];
   }
 
-  /**
-   * @OA\Get(
-   *   path="/events/{id}",
-   *   description="Fetch an event with its entries",
-   *   tags={"events"},
-   *   security={},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="200", description="OK", @OA\JsonContent(ref="#/components/schemas/EventDetails")),
-   *   @OA\Response(response="404", description="Event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
-   * )
-   * @OA\Post(
-   *   path="/events",
-   *   description="Create a new event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
-   *   tags={"events"},
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\JsonContent(
-   *       type="object",
-   *       @OA\Property(property="name", type="string"),
-   *       @OA\Property(property="entryRole", type="string"),
-   *       @OA\Property(property="voteRole", type="string"),
-   *       @OA\Property(property="startsAt", type="string", format="date-time"),
-   *       @OA\Property(property="endsAt", type="string", format="date-time"),
-   *       @OA\Property(property="maxEntries", type="integer", nullable=true),
-   *       @OA\Property(property="descSrc", type="string", nullable=true),
-   *     )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="501", description="creating events is currently disabled", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
-   * @OA\Put(
-   *   path="/events/{id}",
-   *   description="Edit an existing event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
-   *   tags={"events"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\RequestBody(
-   *     required=true,
-   *     @OA\JsonContent(
-   *       type="object",
-   *       @OA\Property(property="name", type="string"),
-   *       @OA\Property(property="entryRole", type="string"),
-   *       @OA\Property(property="voteRole", type="string"),
-   *       @OA\Property(property="startsAt", type="string", format="date-time"),
-   *       @OA\Property(property="endsAt", type="string", format="date-time"),
-   *       @OA\Property(property="maxEntries", type="integer", nullable=true),
-   *       @OA\Property(property="descSrc", type="string", nullable=true),
-   *     )
-   *   ),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="501", description="editing events is currently disabled", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
-   * @OA\Delete(
-   *   path="/events/{id}",
-   *   description="Delete an existing event. Requires staff permissions. Currently always fails. Requires the **staff** role.",
-   *   tags={"events"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="501", description="deleting events is currently disabled", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="404", description="Event not found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
-   */
   public function api($params) {
     if ($this->action === 'GET') {
       $this->load_event($params);
@@ -241,17 +104,6 @@ class EventAPIController extends APIController {
     }
   }
 
-  /**
-   * @OA\Post(
-   *   path="/events/{id}/finalize",
-   *   description="Finalize an event, locking in the winning entry. Requires staff permissions. Currently always fails. Requires the **staff** role.",
-   *   tags={"events"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="501", description="finalizing events is currently disabled", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
-   */
   public function finalize() {
     if (Permission::insufficient('staff'))
       Response::denied();
@@ -261,16 +113,6 @@ class EventAPIController extends APIController {
 
   /**
    * This method checks whether the current user can submit any more entries
-   *
-   * @OA\Post(
-   *   path="/events/{id}/entries/check",
-   *   description="Check whether the currently logged in user can submit any more entries to this event. Currently always fails.",
-   *   tags={"events"},
-   *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(ref="#/components/schemas/OneBasedId")),
-   *   @OA\Response(response="401", description="Not signed in", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="403", description="Insufficient permissions", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   *   @OA\Response(response="501", description="receiving entries is currently disabled", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
-   * )
    */
   public function checkEntries() {
     if (!Auth::$signed_in)

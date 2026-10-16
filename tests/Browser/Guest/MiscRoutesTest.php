@@ -55,6 +55,14 @@ it('sends the API docs page to the one of the new API', function () use ($base) 
     ->and(curl_getinfo($ch, CURLINFO_REDIRECT_URL))->toBe('https://api.mlpvector.club/');
 })->group('winterchilla-only');
 
+it('explains that the sprite color check is only on the new site', function () use ($base) {
+  visit($base . '/cg/sprite-colors/1')
+    ->assertNoJavaScriptErrors()->assertScript(APP_CONSOLE_ERRORS_JS, '')
+    ->assertSee('The sprite color check is only available on the new site');
+  visit($base . '/users/1/cg/sprite-colors/1')
+    ->assertSee('is only available on the new site');
+})->group('winterchilla-only');
+
 it('serves the muffin rating image as an SVG', function () use ($base) {
   $ch = curl_init($base . '/muffin-rating?w=42');
   curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true]);

@@ -1,0 +1,15 @@
+{# @controller \App\Controllers\NewSiteController::unavailable #}
+{# @var feature array #}
+{# @var new_site_url string|null #}
+{% extends 'layout/base.html.twig' %}
+
+{% block content %}
+  <div id="content">
+    <h1>{{ feature.title }} is only available on the new site</h1>
+    <p>{{ feature.summary }}</p>
+    <p>This site is the old version of the MLP Vector Club and only shows what already existed here, new features are added to the new site only.</p>
+    {% if new_site_url %}
+      <p class="align-center"><a class="btn link typcn typcn-arrow-forward" href="{{ new_site_url }}" data-testid="new-site-link">Open it on the new site</a></p>
+    {% endif %}
+  </div>
+{% endblock %}

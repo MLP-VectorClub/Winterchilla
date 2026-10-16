@@ -39,6 +39,8 @@ replaced everywhere (Stage 7); don't reintroduce it.
 
 Route inventory source of truth: `config/routes/pages.php`.
 
+Features that only exist on the new site get a page here that says so and links to it (`READ_ONLY_URL` + the new path), instead of a 404: add an entry to `config/new_site_only.php` (title, summary, this site's route patterns, the new path with `{param}` placeholders) and nothing else, `routes/pages.php` registers `NewSiteController::unavailable` for every pattern (`RouteHelper::processHandler` passes the entry's key as the third item of the route target). Tests: `tests/NewSiteFeaturesTest.php`, `MiscRoutesTest`. Wired in so far: the sprite color check (`/[cg]/sprite-colors/[id]`).
+
 Running: `vendor/bin/pest tests/Browser` runs the browser suite; a bare `vendor/bin/pest` runs only the unit
 tests (the browser suite is skipped unless the args mention `tests/Browser`).
 

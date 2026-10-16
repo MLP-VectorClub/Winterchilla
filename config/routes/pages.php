@@ -8,7 +8,7 @@ global $router;
  * Allowing all request methods lets us reply with HTTP 405 to unsupported methods at the controller level
  *
  * @param string $path
- * @param array{0: class-string, 1: string} $target
+ * @param array{0: class-string, 1: string, 2?: mixed} $target
  *
  * @return void
  */
@@ -117,6 +117,11 @@ $page_route('/manifest', [\App\Controllers\ManifestController::class, 'json']);
 # DiagnoseController
 $page_route('/diagnose/ex/[a:type]', [\App\Controllers\DiagnoseController::class, 'exception']);
 $page_route('/diagnose/lt/[i:time]', [\App\Controllers\DiagnoseController::class, 'loadtime']);
+# NewSiteController — features that only exist on the new site (config/new_site_only.php)
+foreach (\App\NewSiteFeatures::all() as $key => $feature){
+  foreach ($feature['routes'] as $path)
+    $page_route($path, [\App\Controllers\NewSiteController::class, 'unavailable', $key]);
+}
 # TestController — only registered in TEST_MODE
 if (\App\CoreUtils::env('TEST_MODE')) {
   $page_route('/test-login/[i:user_id]', [\App\Controllers\TestController::class, 'loginAs']);

@@ -102,6 +102,11 @@ class ApiClient {
     return $this->request('POST', $path, $data);
   }
 
+  /** A request to any path of the site (not under the API prefix) */
+  public function site(string $method, string $path):array {
+    return $this->raw($method, $path, accept: 'text/html');
+  }
+
   /** Fetches a regular (non-API) page as this client, e.g. to read data rendered into the HTML. */
   public function page(string $path):string {
     return $this->raw('GET', $path, accept: 'text/html')['body'];

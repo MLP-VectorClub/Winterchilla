@@ -210,9 +210,13 @@ class CoreUtils {
 
   /**
    * Display a 405 page
+   *
+   * @param string[] $allowed Methods the endpoint does answer, sent in the Allow header when known
    */
-  public static function notAllowed() {
+  public static function notAllowed(array $allowed = []) {
     HTTP::statusCode(405);
+    if (!empty($allowed))
+      header('Allow: '.implode(', ', $allowed));
 
     if (self::isJSONExpected())
       Response::error(405, "The endpoint {$_SERVER['REQUEST_URI']} does not support the {$_SERVER['REQUEST_METHOD']} method");

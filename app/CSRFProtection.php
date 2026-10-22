@@ -13,7 +13,7 @@ class CSRFProtection {
    */
   public static function detect():void {
     $cookie_missing = Cookie::missing(self::COOKIE_NAME);
-    $get_request = $_SERVER['REQUEST_METHOD'] === 'GET';
+    $get_request = in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD'], true);
     if (self::$tripped !== null || ($get_request && !$cookie_missing))
       return;
 

@@ -5,7 +5,7 @@ namespace App;
 global $router;
 
 /**
- * Allowing all request methods lets us reply with HTTP 405 to unsupported methods at the controller level
+ * Pages answer GET only, any other method on a known path gets HTTP 405 from public/index.php
  *
  * @param string $path
  * @param array{0: class-string, 1: string, 2?: mixed} $target

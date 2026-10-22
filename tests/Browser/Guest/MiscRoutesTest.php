@@ -71,3 +71,12 @@ it('serves the muffin rating image as an SVG', function () use ($base) {
     ->and(curl_getinfo($ch, CURLINFO_CONTENT_TYPE))->toStartWith('image/svg+xml')
     ->and($body)->toContain("width='42'");
 });
+
+it('answers 405 to a method a known path does not define, 404 to an unknown path', function () {
+  $guest = Tests\Browser\Helpers\ApiClient::guest();
+
+  expect($guest->site('POST', '/about')['status'])->toBe(405)
+    ->and($guest->site('DELETE', '/about')['status'])->toBe(405)
+    ->and($guest->site('HEAD', '/about')['status'])->toBe(200)
+    ->and($guest->site('POST', '/no-such-page')['status'])->toBe(404);
+})->group('winterchilla-only');

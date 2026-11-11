@@ -1301,6 +1301,7 @@ class CoreUtils {
     $ch = curl_init();
     curl_setopt_array($ch, [
       CURLOPT_URL => $url,
+      CURLOPT_USERAGENT => HTTP::userAgent(),
       CURLOPT_NOBODY => 1,
       CURLOPT_FAILONERROR => 1,
       CURLOPT_RETURNTRANSFER => 1,

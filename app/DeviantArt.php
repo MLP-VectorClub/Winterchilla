@@ -73,7 +73,7 @@ class DeviantArt {
   public static function request($endpoint, $token = null, $postdata = null, $proxy = null):?array {
     global $http_response_header;
 
-    $requestHeaders = ['Accept-Encoding: gzip', 'User-Agent: Winterchilla @ '.GITHUB_URL];
+    $requestHeaders = ['Accept-Encoding: gzip', 'User-Agent: '.HTTP::userAgent()];
     if ($token === null && Auth::$signed_in)
       $token = Auth::$session->access;
     if (!empty($token))

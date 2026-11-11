@@ -7,6 +7,16 @@ use Exception;
 
 class HTTP {
   /**
+   * Descriptive User-Agent for DeviantArt API calls and image availability checks (app name, URL, contact).
+   * The www scrapes in legitimateRequest() deliberately keep a browser User-Agent.
+   * Set DA_USER_AGENT to override it, e.g. to add a contact address.
+   */
+  public static function userAgent():string {
+    $custom = CoreUtils::env('DA_USER_AGENT');
+    return !empty($custom) ? $custom : 'Winterchilla/1.0 (+'.GITHUB_URL.')';
+  }
+
+  /**
    * Simulate a user visiting the URL from a browser as closely as we can
    *
    * @param string      $url

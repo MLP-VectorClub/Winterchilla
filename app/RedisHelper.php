@@ -19,6 +19,23 @@ class RedisHelper {
     self::$connected = self::$instance->connect($host, $port);
     if (!self::$connected)
       CoreUtils::logError("Could not connect to Redis server on $host:$port");
+    else {
+      // Valkey/Redis ACL users: REDIS_USERNAME + REDIS_PASSWORD (password only for the legacy requirepass)
+      [$username, $password] = [CoreUtils::env('REDIS_USERNAME'), CoreUtils::env('REDIS_PASSWORD')];
+      if (!empty($password)) {
+        try {
+          self::$connected = self::$instance->auth(!empty($username) ? [$username, $password] : $password);
+        }
+        catch (\RedisException $e) {
+          self::$connected = false;
+          CoreUtils::logError("Could not authenticate to Redis server on $host:$port: ".$e->getMessage());
+        }
+      }
+      // Key prefix, e.g. "winterchilla:" (ACL users restricted to a key pattern)
+      $prefix = CoreUtils::env('REDIS_PREFIX');
+      if (self::$connected && !empty($prefix))
+        self::$instance->setOption(Redis::OPT_PREFIX, $prefix);
+    }
   }
 
   public static function getInstance():?Redis {

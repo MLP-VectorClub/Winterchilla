@@ -29,7 +29,8 @@ const ONLY_RESERVATIONS = 2;
 const POSTGRES_INTEGER_MIN = -2_147_483_648;
 const POSTGRES_INTEGER_MAX = 2_147_483_647;
 # string
-define('FULL_LOG_PATH', PROJPATH.'logs/'.$_ENV['LOG_PATH']);
+// LOG_PATH is relative to logs/, unless it is absolute or a PHP stream (e.g. php://stderr in containers)
+define('FULL_LOG_PATH', (str_starts_with($_ENV['LOG_PATH'], '/') || str_contains($_ENV['LOG_PATH'], '://')) ? $_ENV['LOG_PATH'] : PROJPATH.'logs/'.$_ENV['LOG_PATH']);
 const OAUTH_REDIRECT_URI = ABSPATH.'da-auth';
 const GDPR_IP_PLACEHOLDER = '127.168.80.82';
 const SETTINGS_PAGE = '/settings';

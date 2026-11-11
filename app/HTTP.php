@@ -17,8 +17,10 @@ class HTTP {
    * @return array
    * @throws CURLRequestException
    */
-  public static function legitimateRequest($url, $cookies = null, $referrer = null, bool $skipBody = false, bool $allowRedirects = false, bool $followRedirects = true):array {
+  public static function legitimateRequest($url, $cookies = null, $referrer = null, bool $skipBody = false, bool $allowRedirects = false, bool $followRedirects = true, ?string $proxy = null):array {
     $r = curl_init($url);
+    // DeviantArt's CDN blocks datacenter addresses: DA_SCRAPE_PROXY_URL (http:// or socks5h://) is used for its pages unless a proxy is given
+    $proxy ??= self::scrapeProxyFor((string)$url);
     $curl_opt = [
       CURLOPT_HTTPHEADER => [
         'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -41,6 +43,8 @@ class HTTP {
     }
     if ($skipBody === true)
       $curl_opt[CURLOPT_NOBODY] = $skipBody;
+    if (!empty($proxy))
+      $curl_opt[CURLOPT_PROXY] = $proxy;
     curl_setopt_array($r, $curl_opt);
 
     $response = curl_exec($r);
@@ -65,6 +69,16 @@ class HTTP {
       'responseHeaders' => $response_headers,
       'response' => $response,
     ];
+  }
+
+  /** The proxy from DA_SCRAPE_PROXY_URL if the URL is on a DeviantArt host (www.deviantart.com pages, sta.sh, fav.me), otherwise null */
+  public static function scrapeProxyFor(string $url):?string {
+    $proxy = CoreUtils::env('DA_SCRAPE_PROXY_URL');
+    if (empty($proxy))
+      return null;
+    $host = strtolower((string)parse_url($url, PHP_URL_HOST));
+
+    return preg_match('~(^|\.)(deviantart\.com|sta\.sh|fav\.me)$~', $host) ? $proxy : null;
   }
 
   /**

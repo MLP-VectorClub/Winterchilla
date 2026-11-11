@@ -172,3 +172,9 @@ Failed runs leave data behind, hence the seed reload; test cleanup must use page
   advance their sequences (end of `TestSeeder`). `Pest`'s `toHaveKey($key, $value)` takes a *value* as its second argument, not a message.
 - Other Claude sessions may edit the same tree; production deploys (`git push deploy main` or the GitHub Actions "Deploy" button) need the
   user's explicit go-ahead. `origin` (GitHub) push is not a deploy.
+
+## Container / Kubernetes
+
+The site runs read-only in the Kubernetes cluster (Rathalos repo) from `docker/Dockerfile` (targets `fpm`, `web`),
+published by `.github/workflows/images.yml`; `.github/workflows/deploy.yml` only asks Argo CD to sync. Ports, env var
+names, volumes, health path and CronJobs are in `docs/KUBERNETES.md`. Commit subjects are lower-case Conventional Commits.

@@ -3,6 +3,7 @@
 # GDPR
 
 require __DIR__.'/../config/init/minimal.php';
+require __DIR__.'/../config/init/monolog.php';
 
 use App\CoreUtils;
 use App\Models\EmailVerification;

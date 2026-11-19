@@ -3,6 +3,9 @@
 Winterchilla runs read-only (`READ_ONLY=true`, see CLAUDE.md "Read-only mode") on Luna's database, served as `www.`/`old.mlpvector.club`. Its `/dist` assets are also used by Celestia.
 
 ## Images (`.github/workflows/images.yml`, every push to `main`; tags `sha-<sha7>` only)
+
+Rebuild now (e.g. to pick up a new base image such as a PHP security release): Actions > Publish container images > Run workflow on `main` (`gh workflow run images.yml --ref main`).
+
 - `ghcr.io/mlp-vectorclub/winterchilla-fpm`: PHP 8.5 php-fpm on `127.0.0.1:9000`, non-root `www-data`, logs to stderr. Also used for the CronJobs.
 - `ghcr.io/mlp-vectorclub/winterchilla-web`: nginx (unprivileged) on **8080**: static files, fastcgi to the fpm container of the same pod. Config baked in at `/etc/nginx/conf.d/default.conf` (`docker/nginx.conf`), a ConfigMap may override it.
 - Web pod = both containers (same pod, `127.0.0.1:9000`).

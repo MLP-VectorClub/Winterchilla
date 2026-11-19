@@ -177,4 +177,4 @@ Failed runs leave data behind, hence the seed reload; test cleanup must use page
 
 The site runs read-only in the Kubernetes cluster (Rathalos repo) from `docker/Dockerfile` (targets `fpm`, `web`),
 published by `.github/workflows/images.yml`; `.github/workflows/deploy.yml` only asks Argo CD to sync. Ports, env var
-names, volumes, health path and CronJobs are in `docs/KUBERNETES.md`. Commit subjects are lower-case Conventional Commits.
+names, volumes, health path and CronJobs are in `docs/KUBERNETES.md`.

@@ -1,5 +1,9 @@
 .notice {
   display: block;
+
+  &[hidden] {
+    display: none;
+  }
   margin: 0;
   border: 2px solid;
   border-radius: 7px;

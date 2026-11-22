@@ -248,6 +248,7 @@ class CoreUtils {
     'lib/codemirror-modes/colorguide',
     'jquery.ponycolorpalette',
     'shared-utils',
+    'privacy-preferences',
     'dialog',
     'global',
     'react-components',

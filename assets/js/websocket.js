@@ -53,7 +53,8 @@
         if (this.conn)
           return;
 
-        this.conn = io(connpath, { reconnectionDelay: 10000, withCredentials: true });
+        // A visitor who opted out of the anonymous statistics (see privacy-preferences.js) says so in the handshake: the server then leaves the connection out
+        this.conn = io(connpath, { reconnectionDelay: 10000, withCredentials: true, auth: $.statsOptedOut && $.statsOptedOut() ? { optOut: true } : {} });
         this.conn.on('connect', () => {
           console.log('[WS] %cConnected', 'color:green');
 

@@ -5,6 +5,11 @@
     {% if read_only_url() %}To make changes, please visit the new site: <a href='{{ read_only_url() }}'>{{ read_only_url()|replace({'https://': '', 'http://': ''}) }}</a>.{% endif %}
   </div>
 {% endif %}
+{# Shown by assets/js/privacy-preferences.js until dismissed (the dismissal is shared with the new site). Raise data-updated together with the policy's date #}
+<div class='notice info' id='privacy-update-notice' data-updated='2026-11-22T00:00:00Z' hidden>
+  <strong>Privacy policy updated.</strong> We now count how many people are on the site, with anonymous numbers only (no IP addresses, names or page addresses). You can <a href='/about/privacy#visitor-statistics'>read what is counted and opt out</a>.
+  <button type='button' class='dismiss-notice'>Dismiss</button>
+</div>
 {% if site_notices is defined and site_notices is not empty %}
   {% for notice in site_notices %}
     <div class='notice {{ notice.type }}'>{{ notice.message }}</div>

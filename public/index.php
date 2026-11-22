@@ -21,6 +21,7 @@ require CONFPATH.'routes/index.php';
 // HEAD is answered by the handler of GET (the web server drops the body)
 $request_method = $_SERVER['REQUEST_METHOD'] === 'HEAD' ? 'GET' : $_SERVER['REQUEST_METHOD'];
 $match = $router->match($safe_uri, $request_method);
+\App\RouteNames::$current = \App\RouteNames::resolve($match['name'] ?? null, $safe_uri);
 if (!isset($match['target'])){
   // The path exists, only not for this method
   $allowed = array_values(array_filter(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], fn($method) => $method !== $request_method && isset($router->match($safe_uri, $method)['target'])));

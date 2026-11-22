@@ -13,7 +13,8 @@ global $router;
  * @return void
  */
 $page_route = function ($path, array $target) use ($router) {
-  $router->map('GET', $path, $target);
+  // The pattern is the route's name, which is how the page's Celestia route name is found (see config/route_names.php)
+  $router->map('GET', $path, $target, $path);
 };
 // Pages
 # AboutController

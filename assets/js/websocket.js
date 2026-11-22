@@ -98,9 +98,12 @@
         if (typeof this.conn === 'undefined')
           return;
 
-        const page = location.pathname + location.search + location.hash;
+        // The route name Celestia uses for this page (`/cg/[guide]`), never the address: ids, names and search terms stay out of the statistics. Pages
+        // without a counterpart there say nothing
+        if (!window.wsRoute)
+          return;
 
-        this.conn.emit('navigate', { page });
+        this.conn.emit('navigate', { page: window.wsRoute, route: true });
       }
 
       authme() {

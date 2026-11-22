@@ -305,6 +305,7 @@ class CoreUtils {
     $scope = $options['import'] ?? [];
     $fatal_error_page = isset($scope['fatal_error_page']);
     $scope['ws_server_host'] = self::wsServerHost();
+    $scope['route_name'] = RouteNames::$current;
     $scope['read_only'] = self::readOnly();
     $minimal = !empty($options['minimal']);
 

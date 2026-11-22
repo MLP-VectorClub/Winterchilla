@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\CGUtils;
 use App\CoreUtils;
 use App\HTTP;
+use App\LunaMedia;
 use App\Models\TagChange;
 use App\Pagination;
 use App\Permission;
@@ -102,29 +103,29 @@ class AppearanceController extends ColorGuideController {
       case 'png':
         switch ($params['type']){
           case 's':
-            HTTP::tempRedirect($this->appearance->getSpriteURL());
+            HTTP::tempRedirect($this->appearance->getSpriteURL() ?: CoreUtils::notFound());
           case 'p':
           default:
-            CGUtils::renderAppearancePNG($this->path, $this->appearance);
+            HTTP::tempRedirect(LunaMedia::paletteImage($this->appearance->id));
         }
       break;
       case 'svg':
         if (!empty($params['type'])) switch ($params['type']){
           case 's':
-            CGUtils::renderSpriteSVG($this->path, $this->appearance);
+            HTTP::tempRedirect(LunaMedia::spriteSvg($this->appearance->id));
           case 'p':
-            CGUtils::renderPreviewSVG($this->appearance);
+            HTTP::tempRedirect(LunaMedia::previewImage($this->appearance->id));
           case 'f':
-            CGUtils::renderCMFacingSVG($this->appearance);
+            HTTP::tempRedirect(LunaMedia::facingImage($this->appearance->id, $_GET['facing'] ?? 'left'));
           default:
             CoreUtils::notFound();
         }
       case 'json':
-        CGUtils::getSwatchesAI($this->appearance);
+        HTTP::tempRedirect(LunaMedia::swatches($this->appearance->id, 'json'));
       case 'gpl':
-        CGUtils::getSwatchesInkscape($this->appearance);
+        HTTP::tempRedirect(LunaMedia::swatches($this->appearance->id, 'gpl'));
     }
-    # rendering functions internally call die(), so execution stops above #
+    # the redirects end the request #
 
     CoreUtils::notFound();
   }

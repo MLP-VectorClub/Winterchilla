@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\LunaMedia;
 use App\Auth;
 use App\CGUtils;
 use App\CoreUtils;
@@ -90,7 +91,7 @@ class Cutiemark extends NSModel {
    * @see CGUtils::renderCMSVG()
    */
   public function getRenderedRelativeURL():?string {
-    return "/cg/cutiemark/{$this->id}.svg".(!empty($_GET['token']) ? "?token={$_GET['token']}" : '');
+    return LunaMedia::cutieMark($this->id);
   }
 
   /**
@@ -98,9 +99,7 @@ class Cutiemark extends NSModel {
    * @see CGUtils::renderCMSVG()
    */
   public function getRenderedURL():?string {
-    $token = !empty($_GET['token']) ? '&token='.urlencode($_GET['token']) : '';
-
-    return $this->getRenderedRelativeURL().'?t='.CoreUtils::filemtime($this->getRenderedFilePath()).$token;
+    return $this->getRenderedRelativeURL();
   }
 
   /**

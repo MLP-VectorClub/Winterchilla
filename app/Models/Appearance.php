@@ -6,6 +6,7 @@ use ActiveRecord\DatabaseException;
 use ActiveRecord\DateTime;
 use App\Appearances;
 use App\Auth;
+use App\LunaMedia;
 use App\CGUtils;
 use App\CoreUtils;
 use App\DB;
@@ -147,12 +148,7 @@ class Appearance extends NSModel implements Linkable {
    * @return string
    */
   public function getPaletteURL():string {
-    $pcg_prefix = $this->owner_id !== null ? $this->owner->toURL() : '';
-    $palette_path = $this->getPaletteFilePath();
-    $file_mod = CoreUtils::filemtime($palette_path);
-    $token = !empty($_GET['token']) ? '&token='.urlencode($_GET['token']) : '';
-
-    return "$pcg_prefix/cg/v/{$this->id}p.png?t=$file_mod$token";
+    return LunaMedia::paletteImage($this->id);
   }
 
   /**
@@ -193,54 +189,25 @@ class Appearance extends NSModel implements Linkable {
    * @return string
    */
   public function getSpriteURL(?int $size = null, string $fallback = ''):string {
-    if ($this->hasSprite()){
-      $sprite_hash = $this->sprite_hash ?? $this->regenerateSpriteHash();
-      $url = Uri::new(PUBLIC_API_V0_PATH."/appearances/{$this->id}/sprite");
-      $query_params = [];
-      if (!empty($sprite_hash))
-        $query_params['hash'] = $sprite_hash;
-      if ($size !== null)
-        $query_params['size'] = $size;
-      if (!empty($_GET['token']))
-        $query_params['token'] = $_GET['token'];
-
-      if (!empty($query_params))
-        $url = Modifier::wrap($url)->appendQuery(Query::fromVariable($query_params))->unwrap();
-
-      return (string)$url;
-    }
-
-    return $fallback;
+    return LunaMedia::spriteUrl($this->id, $size) ?? $fallback;
   }
 
   public function getStaticSpriteURL() {
-    $url = Uri::new("/img/sprites/{$this->id}.png");
-    $sprite_hash = $this->sprite_hash ?? $this->regenerateSpriteHash();
-    if (!empty($sprite_hash))
-      $url = Modifier::wrap($url)->appendQuery(Query::fromVariable(['hash' => $sprite_hash]))->unwrap();
-
-    return (string)$url;
+    return (string)$this->getSpriteURL();
   }
 
   /**
    * @return boolean
    */
   public function hasSprite():bool {
-    return file_exists($this->getSpriteFilePath());
+    return LunaMedia::spriteMedia($this->id) !== null;
   }
 
   /**
    * @return string|null
    */
   public function regenerateSpriteHash():?string {
-    $sprite_path = $this->getSpriteFilePath();
-    if (!file_exists($sprite_path)){
-      return null;
-    }
-
-    $this->sprite_hash = CoreUtils::generateFileHash($sprite_path);
-
-    return $this->sprite_hash;
+    return $this->sprite_hash = LunaMedia::spriteHash($this->id);
   }
 
   /**
@@ -466,13 +433,7 @@ class Appearance extends NSModel implements Linkable {
    * @see CGUtils::renderPreviewSVG()
    */
   public function getPreviewURL():string {
-    $colors = CGUtils::hexesToFilename(CGUtils::colorsToHexes($this->getPreviewColors()));
-    $path = str_replace('#', $colors, CGUtils::PREVIEW_SVG_PATH);
-    if (!file_exists($path))
-      CGUtils::renderPreviewSVG($this, false);
-    $relative_path = str_replace(FSPATH, '/img/', $path);
-
-    return "$relative_path?t=".CoreUtils::filemtime($path);
+    return LunaMedia::previewImage($this->id);
   }
 
   public function getPreviewHTML():string {
@@ -496,13 +457,7 @@ class Appearance extends NSModel implements Linkable {
    * @see CGUtils::renderCMFacingSVG()
    */
   public function getFacingSVGURL(?string $facing = null, bool $ts = true) {
-    if ($facing === null)
-      $facing = 'left';
-    $path = str_replace(['#', '@'], [$this->id, $facing], CGUtils::CMDIR_SVG_PATH);
-
-    return "/cg/v/{$this->id}f.svg?facing=$facing".
-      ($ts ? '&t='.CoreUtils::filemtime($path) : '').
-      (!empty($_GET['token']) ? "&token={$_GET['token']}" : '');
+    return LunaMedia::facingImage($this->id, $facing ?? 'left');
   }
 
   /**

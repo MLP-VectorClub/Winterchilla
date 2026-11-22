@@ -8,6 +8,7 @@ use App\CGUtils;
 use App\CoreUtils;
 use App\DB;
 use App\HTTP;
+use App\LunaMedia;
 use App\Models\Appearance;
 use App\Models\Color;
 use App\Models\ColorGroup;
@@ -68,9 +69,10 @@ class AppearancesAPIController extends APIController {
     if (!$a->hasSprite())
       return null;
 
-    $value = ['hash' => $a->sprite_hash];
+    $value = ['hash' => LunaMedia::spriteHash($a->id)];
+    // There is no local file to shrink into an inline preview any more: the (small) sprite itself is the preview
     if ($with_preview)
-      $value['preview'] = CoreUtils::bin2dataUri(CGUtils::generateSpritePreview($a->id, $a->owner_id !== null), 'image/png');
+      $value['preview'] = $a->getSpriteURL();
 
     return $value;
   }
@@ -320,10 +322,8 @@ class AppearancesAPIController extends APIController {
     self::_handlePrivateAppearanceCheck($appearance);
 
     $format = $_GET['format'] ?? null;
-    if ($format === 'json')
-      CGUtils::getSwatchesAI($appearance);
-    if ($format === 'gpl')
-      CGUtils::getSwatchesInkscape($appearance);
+    if ($format === 'json' || $format === 'gpl')
+      HTTP::tempRedirect(LunaMedia::swatches($appearance->id, $format));
 
     Response::invalid('format', 'The format must be json or gpl.');
   }
@@ -342,20 +342,19 @@ class AppearancesAPIController extends APIController {
     if (!in_array($format, ['png', 'svg'], true))
       Response::invalid('format', 'The format must be png or svg.');
 
-    $self = $_SERVER['REQUEST_URI'];
     switch ("$type.$format"){
       case 'palette.png':
-        CGUtils::renderAppearancePNG('', $appearance, $self);
+        HTTP::tempRedirect(LunaMedia::paletteImage($appearance->id));
       case 'sprite.png':
         if (!$appearance->hasSprite())
           CoreUtils::notFound();
         HTTP::tempRedirect($appearance->getSpriteURL());
       case 'sprite.svg':
-        CGUtils::renderSpriteSVG('', $appearance, $self);
+        HTTP::tempRedirect(LunaMedia::spriteSvg($appearance->id));
       case 'preview.svg':
-        CGUtils::renderPreviewSVG($appearance, true, $self);
+        HTTP::tempRedirect(LunaMedia::previewImage($appearance->id));
       case 'facing.svg':
-        CGUtils::renderCMFacingSVG($appearance, $self);
+        HTTP::tempRedirect(LunaMedia::facingImage($appearance->id, $_GET['facing'] ?? 'left'));
     }
 
     Response::invalid('format', "A $type image is not available as $format.");
@@ -372,21 +371,8 @@ class AppearancesAPIController extends APIController {
     if (empty($cutiemark) || (int)$cutiemark->appearance_id !== $appearance->id || $appearance->hidden())
       Response::error(404, 'The cutie mark could not be found');
 
-    $source = CoreUtils::truthy($_GET['source'] ?? false);
-    if ($source && Permission::insufficient('staff'))
-      Response::denied();
-
-    $file = $source ? $cutiemark->getSourceFilePath() : $cutiemark->getRenderedFilePath();
-    if (!$source && !file_exists($file))
-      CGUtils::renderCMSVG($cutiemark, false);
-    if (!file_exists($file))
-      Response::error(404, 'The cutie mark has no file');
-
-    $filename = $cutiemark->label === null
-      ? CoreUtils::posess($appearance->label).' Cutie Mark'
-      : $appearance->label.' - '.$cutiemark->label;
-
-    CoreUtils::downloadFile($file, $filename.($source ? ' (source)' : '').'.svg');
+    // Luna only keeps the sanitized file, so the `source` variant is the same file now
+    HTTP::tempRedirect(LunaMedia::cutieMark($cutiemark->id, true));
   }
 
   static function mapCutieMark(Cutiemark $cm):array {
@@ -425,7 +411,8 @@ class AppearancesAPIController extends APIController {
 
     self::_handlePrivateAppearanceCheck($appearance);
 
-    CGUtils::renderSpritePNG($appearance, $_GET['size'] ?? null);
+    $size = isset($_GET['size']) && is_numeric($_GET['size']) ? (int)$_GET['size'] : null;
+    HTTP::tempRedirect($appearance->getSpriteURL($size) ?: CoreUtils::notFound());
   }
 
   function preview(array $params) {
@@ -436,6 +423,6 @@ class AppearancesAPIController extends APIController {
 
     self::_handlePrivateAppearanceCheck($appearance);
 
-    CGUtils::renderPreviewSVG($appearance, true, $_SERVER['REQUEST_URI']);
+    HTTP::tempRedirect(LunaMedia::previewImage($appearance->id));
   }
 }

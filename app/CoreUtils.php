@@ -942,13 +942,37 @@ class CoreUtils {
   }
 
   /**
+   * Reads the commit the container image was built from (docker build args GIT_COMMIT_HASH and, optionally,
+   * GIT_COMMIT_DATE, kept as environment variables in the final image).
+   *
+   * @param string|null $hash Defaults to the GIT_COMMIT_HASH environment variable
+   * @param string|null $date Defaults to the GIT_COMMIT_DATE environment variable
+   *
+   * @return string|null "<short sha>;<date>" (date empty if unknown), or null if the hash is missing or invalid ("unknown")
+   */
+  public static function getBuildCommitInfo(?string $hash = null, ?string $date = null):?string {
+    $hash = trim($hash ?? (string)getenv('GIT_COMMIT_HASH'));
+    $date = trim($date ?? (string)getenv('GIT_COMMIT_DATE'));
+    if (!preg_match('/^[0-9a-f]{7,40}$/i', $hash))
+      return null;
+    if ($date !== '' && strtotime($date) === false)
+      $date = '';
+
+    return substr($hash, 0, 9).";$date";
+  }
+
+  /**
    * Returns the HTML raw GIT information
    *
    * @return array
    */
   public static function getFooterGitInfoRaw():array {
-    $commit_info = RedisHelper::get('commit_info');
-    if (empty($commit_info) || !self::env('PRODUCTION')){
+    // The container images carry their commit in the environment; unlike the Redis copy below it can't go stale
+    // across deploys, so it wins whenever it is set
+    $commit_info = self::getBuildCommitInfo();
+    if ($commit_info === null)
+      $commit_info = RedisHelper::get('commit_info');
+    if (empty($commit_info) || (!self::env('PRODUCTION') && self::getBuildCommitInfo() === null)){
       // -c safe.directory=* avoids "detected dubious ownership" errors when the
       // files are owned by a different user than the one running the web server
       $commit_info = self::getDeployedCommitInfo()
@@ -958,9 +982,10 @@ class CoreUtils {
 
     $data = [];
     if (!empty($commit_info)){
-      [$commit_id, $commit_time] = explode(';', $commit_info);
+      [$commit_id, $commit_time] = array_pad(explode(';', $commit_info, 2), 2, '');
       $data['commit_id'] = $commit_id;
-      $data['commit_time'] = $commit_time;
+      if ($commit_time !== '')
+        $data['commit_time'] = $commit_time;
     }
 
     return $data;

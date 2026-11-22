@@ -4,6 +4,7 @@
 variable "REGISTRY" { default = "localhost:5000" }
 variable "TAGS" { default = "dev" }
 variable "GIT_COMMIT_HASH" { default = "unknown" }
+variable "GIT_COMMIT_DATE" { default = "" }
 
 group "default" { targets = ["fpm", "web"] }
 
@@ -13,6 +14,7 @@ target "_common" {
   platforms  = ["linux/amd64", "linux/arm64"]
   args = {
     GIT_COMMIT_HASH = GIT_COMMIT_HASH
+    GIT_COMMIT_DATE = GIT_COMMIT_DATE
   }
 }
 

@@ -20,8 +20,7 @@ FROM --platform=$BUILDPLATFORM composer:2 AS composer-bin
 
 # ---------------------------------------------------------------------------------------------------------
 FROM php-base-build AS build
-ARG GIT_COMMIT_HASH=unknown
-ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH} COMPOSER_ALLOW_SUPERUSER=1 CI=true
+ENV COMPOSER_ALLOW_SUPERUSER=1 CI=true
 COPY --from=composer-bin /usr/bin/composer /usr/local/bin/composer
 COPY --from=node-bin /usr/local/bin/node /usr/local/bin/node
 COPY --from=node-bin /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -57,6 +56,10 @@ COPY --from=build --chown=www-data:www-data /runtime/ ./
 RUN mkdir -p fs/appearance_previews fs/cg_render fs/cm_source fs/cm_tokenized fs/contribs fs/sprites fs/sprites_pcg fs/tmp logs /data/export \
  && ln -sfn /data/export/mlpvc-colorguide.json public/dist/mlpvc-colorguide.json \
  && chown -R www-data:www-data fs logs /data/export
+# Shown in the footer (CoreUtils::getBuildCommitInfo). Declared here, not in the build stage: ARG/ENV don't cross stages.
+ARG GIT_COMMIT_HASH=unknown
+ARG GIT_COMMIT_DATE=
+ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH} GIT_COMMIT_DATE=${GIT_COMMIT_DATE}
 ENV LOG_PATH=php://stderr PRODUCTION=true NPM_BUILD_LOCK_FILE_PATH=fs/gulp.lock
 USER www-data
 EXPOSE 9000

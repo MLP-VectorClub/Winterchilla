@@ -26,6 +26,14 @@ class CoreUtilsTest extends TestCase {
     unlink($path);
   }
 
+  public function testGetBuildCommitInfo():void {
+    self::assertSame('4f3972734;2026-09-29T21:33:39+02:00', CoreUtils::getBuildCommitInfo('4f397273461bc9137a4923cc685173af735b36af', '2026-09-29T21:33:39+02:00'));
+    self::assertSame('abc1234;', CoreUtils::getBuildCommitInfo('abc1234', ''));
+    self::assertSame('abc1234;', CoreUtils::getBuildCommitInfo('abc1234', 'not a date'));
+    self::assertNull(CoreUtils::getBuildCommitInfo('unknown', ''));
+    self::assertNull(CoreUtils::getBuildCommitInfo('', ''));
+  }
+
   public function testGetDeployedCommitInfoIgnoresBadFiles():void {
     self::assertNull(CoreUtils::getDeployedCommitInfo('/nonexistent/.git-deploy-commit'));
     foreach ([

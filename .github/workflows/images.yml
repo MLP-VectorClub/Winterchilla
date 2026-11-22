@@ -50,6 +50,7 @@ jobs:
         id: meta
         run: |
           echo "sha=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+          echo "date=$(git show -s --format=%cI "$GITHUB_SHA")" >> "$GITHUB_OUTPUT"
           echo "tag=${GITHUB_SHA:0:7}-${{ matrix.arch }}" >> "$GITHUB_OUTPUT"
           echo "registry=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
@@ -58,6 +59,7 @@ jobs:
           REGISTRY: ${{ steps.meta.outputs.registry }}
           TAGS: ${{ steps.meta.outputs.tag }}
           GIT_COMMIT_HASH: ${{ steps.meta.outputs.sha }}
+          GIT_COMMIT_DATE: ${{ steps.meta.outputs.date }}
         with:
           files: docker/docker-bake.hcl
           push: true

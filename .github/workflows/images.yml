@@ -1,7 +1,7 @@
 name: Publish container images
 
 # Publishes the two images (fpm, web), multi-arch, to ghcr.io for EVERY push to main, tagged <sha7> and
-# sha-<sha7>. There are no version tags, no `latest` and no git tags: the commit is the version. The same images serve
+# sha-<sha7>. There are no version tags, no git tags (`latest` is also pushed from main as a moving convenience tag; deployments pin sha-<sha7>): the commit is the version. The same images serve
 # prod; configuration is runtime environment only and there are no build inputs.
 #
 # The sha-<sha7> tag is what Argo CD Image Updater follows. It is added to both manifest lists as the very last
@@ -94,7 +94,7 @@ jobs:
 
       # Last registry step: only now that both multi-arch manifest lists exist is the tag Image Updater follows
       # added (re-pointing the already-pushed manifest list, no rebuild), so it never exists on a partial set.
-      - name: Add sha- tag to both images
+      - name: Add latest and sha- tags to both images
         run: |
           registry="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
           sha="${GITHUB_SHA:0:7}"
@@ -104,5 +104,6 @@ jobs:
           done
           for image in fpm web; do
             repo="$registry/winterchilla-$image"
+            docker buildx imagetools create -t "$repo:latest" "$repo:$sha"
             docker buildx imagetools create -t "$repo:sha-$sha" "$repo:$sha"
           done

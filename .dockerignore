@@ -15,6 +15,5 @@ fs/*
 !fs/.gitignore
 public/js
 public/css
-public/dist/api.json
 public/dist/mlpvc-colorguide.json
 graphics

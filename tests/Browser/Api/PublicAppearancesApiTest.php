@@ -33,15 +33,12 @@ it('validates the guide of /appearances/full with 422', function () {
   }
 });
 
-it('searches a guide, or reports that OpenSearch is unreachable', function () {
+it('searches a guide', function () {
   $r = ApiClient::guest()->get('/appearances', ['guide' => 'pony']);
 
-  expect($r['status'])->toBeIn([200, 503])->and($r['json'])->not->toHaveKey('status');
-  if ($r['status'] === 200)
-    expect($r['json'])->toHaveKeys(['appearances', 'pagination'])
-      ->and($r['json']['pagination'])->toHaveKeys(['currentPage', 'totalPages', 'totalItems', 'itemsPerPage']);
-  else
-    expect($r['json'])->toHaveKey('message');
+  expect($r['status'])->toBe(200)
+    ->and($r['json'])->toHaveKeys(['appearances', 'pagination'])
+    ->and($r['json']['pagination'])->toHaveKeys(['currentPage', 'totalPages', 'totalItems', 'itemsPerPage']);
 });
 
 it('returns the color groups of an appearance', function () {

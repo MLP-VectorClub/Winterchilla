@@ -1,8 +1,5 @@
 {# @controller \App\Controllers\AdminController::index #}
 {# @var title string #}
-{# @var elastic_down bool #}
-{# @var index_list string #}
-{# @var node_list string #}
 {# @var recent_posts \App\Models\Post[] #}
 {% extends "layout/base.html.twig" %}
 
@@ -23,18 +20,6 @@
         <button class='btn blue typcn typcn-database' id="clear-stat-cache">Clear Stat Cache</button>
       {% endif %}
     </div>
-
-    {% if is_dev %}
-      <section class="elastic-status">
-        <h2><span class="typcn typcn-zoom"></span>OpenSearch status</h2>
-        {% if elastic_down %}
-          <strong>Server is down.</strong>
-        {% else %}
-          <pre><code><strong>Indices</strong><br>{{ index_list }}</code></pre>
-          <pre><code><strong>Nodes</strong><br>{{ node_list }}</code></pre>
-        {% endif %}
-      </section>
-    {% endif %}
 
     <section class="recent-posts">
       <h2><span class="typcn typcn-bell"></span>{{ make_plural('Most recent post', (recent_posts|length), constant('PREPEND_NUMBER')) }}</h2>

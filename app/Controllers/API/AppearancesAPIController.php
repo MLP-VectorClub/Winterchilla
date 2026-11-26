@@ -104,9 +104,6 @@ class AppearancesAPIController extends APIController {
     if ($this->action !== 'GET')
       CoreUtils::notAllowed();
 
-    $elastic_avail = CGUtils::isElasticAvailable();
-    if (!$elastic_avail)
-      Response::error(503, 'The OpenSearch server is unreachable');
     if (isset($_GET['size']) && is_numeric($_GET['size']))
       $appearances_per_page = CoreUtils::rangeLimit((int)$_GET['size'], 7, 20);
     else $appearances_per_page = 7;

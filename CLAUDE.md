@@ -1,6 +1,6 @@
 # Winterchilla
 
-PHP web app (MLP Vector Club) using DeviantArt OAuth2, Redis caching, OpenSearch for the color guide.
+PHP web app (MLP Vector Club) using DeviantArt OAuth2, Redis caching, the color guide search is a Postgres table (`appearance_search`, kept by Luna).
 
 ## Read-only mode (how production runs now)
 
@@ -43,7 +43,7 @@ tests (the browser suite is skipped unless the args mention `tests/Browser`).
 
 If you ever see **every single test** in the suite (including pre-existing, untouched ones) fail with
 `Timeout 5000ms exceeded` at a near-identical duration, and no screenshot gets attached to the failure
-(Playwright never even reaches a renderable page) — **do not** chase OpenSearch, Redis, leftover
+(Playwright never even reaches a renderable page) — **do not** chase Redis, leftover
 processes, system load, or WSL/Playwright browser-launch speed first. Those were all investigated at
 length in a past session and ruled out. Instead check first: is `tests/Browser/Helpers/ServerManager`'s
 PHP built-in test server actually running (`ss -ltn | grep 8765`, or just `curl 127.0.0.1:8765` from a

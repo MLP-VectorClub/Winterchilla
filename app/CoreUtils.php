@@ -24,10 +24,6 @@ use HTMLPurifier;
 use HTMLPurifier_Config;
 use HTMLPurifier_TagTransform_Simple;
 use Monolog\Logger;
-use OpenSearch\Client;
-use OpenSearch\ClientBuilder;
-use OpenSearch\Common\Exceptions\TransportException;
-use OpenSearch\Exception\HttpExceptionInterface;
 use Parsedown;
 use RuntimeException;
 use TypeError;
@@ -1369,53 +1365,6 @@ class CoreUtils {
 
   public static function execSqlBuilderArgs(SQLBuilder $builder):array {
     return [$builder->to_s(), $builder->bind_values()];
-  }
-
-  public static function elasticClient():Client {
-    /** @var $elasticClient Client */
-    static $elasticClient;
-    if ($elasticClient !== null)
-      return $elasticClient;
-
-    $env = static fn(string $name) => self::env("OPENSEARCH_$name") ?: self::env("ELASTIC_$name");
-    $builder = ClientBuilder::create()
-      ->setHosts([$env('HOST') ?: 'http://127.0.0.1:9200'])
-      ->setConnectionParams(['client' => [
-        'timeout' => (float) ($env('TIMEOUT') ?: 15),
-        'connect_timeout' => (float) ($env('CONNECT_TIMEOUT') ?: 5),
-      ]]);
-
-    if ($env('USERNAME'))
-      $builder->setBasicAuthentication($env('USERNAME'), (string) $env('PASSWORD'));
-    if ($env('CA_BUNDLE'))
-      $builder->setSSLVerification($env('CA_BUNDLE'));
-
-    $elasticClient = $builder->build();
-
-    return $elasticClient;
-  }
-
-  /**
-   * Decodes the JSON error body of a failed OpenSearch request (the client puts it in the exception message)
-   */
-  public static function elasticErrorBody(\Throwable $e):array {
-    $decoded = json_decode($e->getMessage(), true);
-
-    return is_array($decoded) ? $decoded : [];
-  }
-
-  /**
-   * The HTTP status of a failed OpenSearch request, null for exceptions that did not come with a response
-   */
-  public static function elasticErrorStatus(\Throwable $e):?int {
-    return $e instanceof HttpExceptionInterface ? $e->getStatusCode() : null;
-  }
-
-  /**
-   * Whether an OpenSearch exception means the server could not be reached or failed itself
-   */
-  public static function elasticIsDown(\Throwable $e):bool {
-    return $e instanceof TransportException || (self::elasticErrorStatus($e) ?? 0) >= 500;
   }
 
   public static function isJSONExpected():bool {

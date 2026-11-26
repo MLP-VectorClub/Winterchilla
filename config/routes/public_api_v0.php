@@ -77,7 +77,6 @@ $api_endpoint('/cg/full', [\App\Controllers\API\ColorGuideAPIController::class, 
 $api_endpoint('/color-guide', [\App\Controllers\API\ColorGuideAPIController::class, 'index']);
 $api_endpoint('/color-guide/major-changes', [\App\Controllers\API\ColorGuideAPIController::class, 'majorChanges']);
 $api_endpoint('/color-guide/export', [\App\Controllers\API\ColorGuideAPIController::class, 'export']);
-$api_endpoint('/color-guide/reindex', [\App\Controllers\API\ColorGuideAPIController::class, 'reindex']);
 $api_endpoint('/tags', [\App\Controllers\API\TagAPIController::class, 'list'], 'GET');
 $api_endpoint('/tags/autocomplete', [\App\Controllers\API\TagAPIController::class, 'autocomplete'], 'GET');
 $api_endpoint('/tags/recount-uses', [\App\Controllers\API\TagAPIController::class, 'recountUses']);

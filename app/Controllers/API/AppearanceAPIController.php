@@ -157,12 +157,10 @@ class AppearanceAPIController extends APIController {
         /** @var $new_appearance Appearance */
         if ($this->creating){
           $new_appearance = Appearance::create($data);
-          $new_appearance->reindex();
         }
         else {
           $old_data = $this->appearance->to_array();
           $this->appearance->update_attributes($data);
-          $this->appearance->reindex();
         }
 
         /** @var Appearance $edited_appearance */
@@ -797,7 +795,6 @@ class AppearanceAPIController extends APIController {
           ],
         ]))->out();
         $this->appearance->processTagChanges($orig_tags ?? '', $tags, $this->guide);
-        $this->appearance->updateIndex();
 
         Response::noContent();
       break;

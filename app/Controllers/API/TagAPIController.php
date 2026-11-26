@@ -183,8 +183,6 @@ class TagAPIController extends APIController {
 
         if (!empty(CGUtils::GROUP_TAG_IDS_ASSOC[$this->guide][$this->tag->id]))
           Appearances::getSortReorder($this->guide);
-        foreach ($Uses as $use)
-          $use->appearance->updateIndex();
 
         Response::noContent();
       break;
@@ -239,7 +237,7 @@ class TagAPIController extends APIController {
             if (empty($Appearance))
               Response::ok($created + ['warning' => "The tag was created, but it could not be added to the appearance (#$appearance_id) because it doesn't seem to exist. Please try adding the tag manually."], 201);
 
-            $Appearance->addTag($Tag)->updateIndex();
+            $Appearance->addTag($Tag);
             Response::ok($created + ['tags' => $Appearance->getTagsHTML(NOWRAP)], 201);
           }
           Response::ok($created, 201);
@@ -247,10 +245,6 @@ class TagAPIController extends APIController {
         else {
           $this->tag->update_attributes($data);
           $data = $this->tag->to_array();
-          $tag_relations = Tagged::by_tag($this->tag->id);
-          foreach ($tag_relations as $tagged){
-            $tagged->appearance->updateIndex();
-          }
         }
 
         Response::ok(CoreUtils::camelKeys($data));
@@ -298,16 +292,6 @@ class TagAPIController extends APIController {
           'synonym_of' => $target->id,
           'uses' => 0,
         ]);
-        if (!empty($tagged_appearance_ids)){
-          $tagged_appearances = Appearance::find('all', [
-            'conditions' => [
-              'id IN (?)',
-              $tagged_appearance_ids,
-            ],
-          ]);
-          foreach ($tagged_appearances as $tapp)
-            $tapp->updateIndex();
-        }
 
         $target->updateUses();
         Response::ok(['message' => 'Tag synonyms created', 'target' => CoreUtils::camelKeys($target->to_array())]);
@@ -328,9 +312,6 @@ class TagAPIController extends APIController {
 
         if (!$this->tag->update_attributes(['synonym_of' => null]))
           Response::dbError('Could not update tag', status: 500);
-
-        foreach ($this->tag->appearances as $app)
-          $app->updateIndex();
 
         Response::ok(['keepTagged' => $keep_tagged]);
       break;

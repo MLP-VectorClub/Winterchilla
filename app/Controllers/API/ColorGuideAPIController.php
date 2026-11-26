@@ -121,12 +121,4 @@ class ColorGuideAPIController extends APIController {
     CoreUtils::downloadAsFile(CGUtils::getExportData(), 'mlpvc-colorguide.json');
   }
 
-  public function reindex():void {
-    if ($this->action !== 'POST')
-      CoreUtils::notAllowed();
-
-    if (Permission::insufficient('developer'))
-      Response::denied();
-    Appearances::reindex();
-  }
 }

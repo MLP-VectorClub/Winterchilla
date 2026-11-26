@@ -5,7 +5,6 @@ namespace App;
 use App\Models\Appearance;
 use App\Models\Notification;
 use App\Models\PinnedAppearance;
-use OpenSearch\Common\Exceptions\OpenSearchException;
 use function count;
 use function is_int;
 use function is_string;
@@ -113,7 +112,6 @@ class Appearances {
       if (!$app->save())
         Response::error(500, "Updating appearance #{$app->id} failed, process halted");
 
-      $app->updateIndex();
     }
   }
 
@@ -121,115 +119,4 @@ class Appearances {
     self::reorder(self::sort(self::get($guide, null, null, 'id'), $guide, SIMPLE_ARRAY));
   }
 
-  public static function reindex() {
-    $elastic_client = CoreUtils::elasticClient();
-    try {
-      $elastic_client->indices()->delete(CGUtils::ELASTIC_BASE);
-    }
-    catch (OpenSearchException $e){
-      if (CoreUtils::elasticIsDown($e))
-        Response::error(503, 'Re-index failed, the OpenSearch server is down!');
-
-      $message = CoreUtils::elasticErrorBody($e);
-
-      // Eat exception if the index we're re-creating does not exist yet
-      if (CoreUtils::elasticErrorStatus($e) !== 404 || ($message['error']['type'] ?? null) !== 'index_not_found_exception' || ($message['error']['index'] ?? null) !== CGUtils::ELASTIC_BASE['index'])
-        throw $e;
-    }
-    $params = array_merge(CGUtils::ELASTIC_BASE, [
-      'body' => [
-        'mappings' => [
-          'properties' => [
-            'label' => [
-              'type' => 'text',
-              'analyzer' => 'overkill',
-            ],
-            'order' => ['type' => 'integer'],
-            'guide' => ['type' => 'keyword'],
-            'private' => ['type' => 'boolean'],
-            'tags' => [
-              'type' => 'text',
-              'analyzer' => 'overkill',
-            ],
-          ],
-        ],
-        'settings' => [
-          // Single-node setup, replicas could never be allocated (cluster health would stay yellow)
-          'number_of_replicas' => 0,
-          'analysis' => [
-            'analyzer' => [
-              'overkill' => [
-                'type' => 'custom',
-                'tokenizer' => 'overkill',
-                'filter' => [
-                  'lowercase',
-                ],
-              ],
-            ],
-            'tokenizer' => [
-              'overkill' => [
-                'type' => 'edge_ngram',
-                'min_gram' => 2,
-                'max_gram' => 30,
-                'token_chars' => [
-                  'letter',
-                  'digit',
-                ],
-              ],
-            ],
-          ],
-        ],
-      ],
-    ]);
-    try {
-      $elastic_client->indices()->create($params);
-    }
-    catch (OpenSearchException $e){
-      if (CoreUtils::elasticIsDown($e))
-        Response::error(503, 'Re-index failed, the OpenSearch server is down!');
-      if (CoreUtils::elasticErrorStatus($e) !== 400)
-        throw $e;
-      Response::error(500, 'Failed to create index', ['details' => CoreUtils::elasticErrorBody($e)]);
-    }
-
-    $pinned_appearances = array_map(static fn(PinnedAppearance $a) => $a->appearance_id, PinnedAppearance::all());
-    /** @var $appearances Appearance[] */
-    $appearances = DB::$instance->where('id', $pinned_appearances, '!=')->where('owner_id IS NULL')->get('appearances');
-
-    $params = ['body' => []];
-    foreach ($appearances as $i => $a){
-      $meta = $a->getElasticMeta();
-      $params['body'][] = [
-        'index' => [
-          '_index' => $meta['index'],
-          '_id' => $meta['id'],
-        ],
-      ];
-
-      $params['body'][] = $a->getElasticBody();
-
-      if ($i % 100 === 0){
-        self::handleBulkError($elastic_client->bulk($params));
-        $params = ['body' => []];
-      }
-    }
-    if (!empty($params['body'])){
-      self::handleBulkError($elastic_client->bulk($params));
-    }
-
-    Response::ok(['message' => 'Re-index completed']);
-  }
-
-  private static function handleBulkError(array $bulkResult) {
-    if ($bulkResult['errors'] !== true)
-      return;
-
-    $error_messages = [];
-    foreach ($bulkResult['items'] as $item){
-      $ix = $item['index'];
-      $error_messages[] = "#{$ix['_id']}: HTTP {$ix['status']}: {$ix['error']['type']} - {$ix['error']['reason']}";
-    }
-
-    Response::error(500, 'Bulk index update failed, see the errors', ['failures' => $error_messages]);
-  }
 }

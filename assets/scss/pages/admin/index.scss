@@ -3,10 +3,6 @@
 
 #content {
   > section {
-    &.elastic-status pre {
-      overflow: auto;
-    }
-
     &.recent-posts {
       > div:empty:before {
         content: "No recent posts to display.";

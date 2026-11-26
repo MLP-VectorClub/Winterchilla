@@ -5,18 +5,6 @@
     window.open(`${$.API.API_PATH}/color-guide/export`, '_blank');
   });
 
-  $('.cg-reindex').on('click', function() {
-    $.Dialog.confirm('Re-index all appearances', 'Wipe and rebuild OpenSearch index?', function(sure) {
-      if (!sure) return;
-
-      $.Dialog.wait(false);
-
-      $.API.post('/color-guide/reindex').done(function(resp = {}) {
-        $.Dialog.segway(false, resp.message);
-      }).fail($.API.fail());
-    });
-  });
-
   const
     {
       HEX_COLOR_PATTERN,

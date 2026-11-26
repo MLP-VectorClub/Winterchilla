@@ -21,9 +21,6 @@ class PinnedAppearance extends NSModel {
     ['appearance'],
   ];
 
-  public static $after_create = ['reindexAppearance'];
-  public static $after_destroy = ['reindexAppearance'];
-
   /**
    * Checks if a specific appearance is pinned
    *
@@ -56,7 +53,4 @@ class PinnedAppearance extends NSModel {
     ]));
   }
 
-  public function reindexAppearance() {
-    $this->appearance->updateIndex();
-  }
 }

@@ -193,14 +193,7 @@ class Pagination {
     return $this->toHTML();
   }
 
-  public function toElastic():array {
-    $limit = $this->getLimit();
 
-    return [
-      'from' => $limit[0],
-      'size' => $limit[1],
-    ];
-  }
 
   /**
    * Creates the LIMIT array that can be used with PostgresDb's get() method

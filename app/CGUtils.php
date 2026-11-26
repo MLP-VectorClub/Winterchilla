@@ -11,7 +11,6 @@ use App\Models\PCGSlotHistory;
 use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
-use OpenSearch\Common\Exceptions\OpenSearchException;
 use Exception;
 use Generator;
 use RuntimeException;
@@ -1023,26 +1022,6 @@ class CGUtils {
     CM_FACING_RIGHT => 'Tail-head',
   ];
 
-  public const ELASTIC_BASE = [
-    'index' => 'appearances',
-  ];
-
-  /**
-   * Performs an OpenSearch search operation
-   *
-   * @param array      $body
-   * @param Pagination $Pagination
-   *
-   * @return array
-   */
-  public static function searchElastic(array $body, Pagination $Pagination):array {
-    $params = array_merge(self::ELASTIC_BASE, $Pagination->toElastic(), [
-      'body' => $body,
-    ]);
-
-    return CoreUtils::elasticClient()->search($params);
-  }
-
   /**
    * Get the colors belonging to a set of color groups
    *
@@ -1223,92 +1202,47 @@ class CGUtils {
     File::put(self::GUIDE_EXPORT_PATH, self::getExportData());
   }
 
-  public static function isElasticAvailable():bool {
-    if (CoreUtils::env('TEST_MODE'))
-      return false;
-    try {
-      $elastic_avail = CoreUtils::elasticClient()->ping();
-    }
-    catch (\Throwable $e){
-      return false;
-    }
-
-    return $elastic_avail;
-  }
-
   /**
+   * The official appearances of a guide in guide order that match every word of the search (`$_GET['q']`). Luna keeps the
+   * `appearance_search` table: a search word matches the start of a word of the label or of a tag, one-letter words are ignored
+   *
    * @param Pagination  $pagination
    * @param string      $guide
    * @param bool        $searching
    * @param string|null $title
    *
    * @return array
-   * @throws OpenSearchException
    */
   public static function searchGuide(Pagination $pagination, string $guide, bool $searching = true, ?string &$title = null):array {
-    $in_order = true;
-    $must = [];
+    $where = '';
+    $bind = [$guide];
 
     // Search query exists
     if ($searching){
       $search_query = preg_replace("~[^\w\s*?'-]~", '', CoreUtils::trim($_GET['q']));
       if ($title !== null)
         $title .= "$search_query - ";
-      $must[] = [
-        'multi_match' => [
-          'query' => $search_query,
-          'fields' => ['label', 'tags'],
-          'type' => 'cross_fields',
-          'minimum_should_match' => '100%',
-        ],
-      ];
-    }
-    $must[] = ['term' => ['guide' => $guide]];
-
-    $search = [
-      'query' => ['bool' => ['must' => $must]],
-      'sort' => [['order' => ['order' => 'asc']]],
-      '_source' => false,
-    ];
-    try {
-      $search = self::searchElastic($search, $pagination);
-    }
-    catch (OpenSearchException $e){
-      if (CoreUtils::elasticErrorStatus($e) === 404){
-        $search = [];
-      }
-      else {
-        $message = json_encode(CoreUtils::elasticErrorBody($e));
-        if (
-          !CoreUtils::contains($message, 'Result window is too large, from + size must be less than or equal to')
-          && !CoreUtils::contains($message, 'Failed to parse int parameter [from] with value')
-        ){
-          throw $e;
-        }
-
-        $search = [];
+      $words = preg_split('~[^\p{L}\p{N}]+~u', mb_strtolower($search_query), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+      $terms = array_values(array_filter($words, static fn(string $word) => mb_strlen($word) >= 2));
+      if ($words !== [] && $terms === []){
         $pagination->calcMaxPages(0);
+
+        return [[], $search_query];
+      }
+      if ($terms !== []){
+        $where = " AND s.doc @@ to_tsquery('simple', ?)";
+        $bind[] = implode(' & ', array_map(static fn(string $term) => "$term:*", $terms));
       }
     }
 
-    if (!empty($search)){
-      $total_hits = $search['hits']['total'];
-      if (is_array($total_hits) && isset($total_hits['value']))
-        $total_hits = $total_hits['value'];
-      $pagination->calcMaxPages($total_hits);
-      if (!empty($search['hits']['hits'])){
-        $ids = [];
-        /** @noinspection ForeachSourceInspection */
-        foreach ($search['hits']['hits'] as $i => $hit)
-          $ids[$hit['_id']] = $i;
+    $from = "FROM appearances a JOIN appearance_search s ON s.appearance_id = a.id WHERE a.guide = ?$where";
+    [$offset, $limit] = $pagination->getLimit();
+    $ids = array_column(DB::$instance->query("SELECT a.id $from ORDER BY a.\"order\" LIMIT ".(int)$limit.' OFFSET '.(int)$offset, $bind), 'id');
+    $pagination->calcMaxPages((int)DB::$instance->querySingle("SELECT count(*) AS cnt $from", $bind)['cnt']);
 
-        DB::$instance->orderBy('order')->where('id', array_keys($ids));
-        $appearances = Appearances::get($guide);
-        if (!empty($appearances) && !$in_order)
-          usort($appearances, static function (Appearance $a, Appearance $b) use ($ids) {
-            return $ids[$a->id] <=> $ids[$b->id];
-          });
-      }
+    if (!empty($ids)){
+      DB::$instance->orderBy('order')->where('id', $ids);
+      $appearances = Appearances::get($guide);
     }
 
     return [$appearances ?? [], $search_query ?? null];

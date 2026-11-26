@@ -190,19 +190,9 @@ class ColorGuideController extends Controller {
     $title = '';
     /** @var $appearances_per_page int */
     $appearances_per_page = UserPrefs::get('cg_itemsperpage');
-    $elastic_avail = CGUtils::isElasticAvailable();
     $searching = !empty($_GET['q']) && CoreUtils::trim($_GET['q']) !== '';
-    if ($elastic_avail){
-      $pagination = new Pagination($this->path, $appearances_per_page);
-      [$appearances, $search_query] = CGUtils::searchGuide($pagination, $this->guide, $searching, $title);
-    }
-    else {
-      $search_query = null;
-      $entry_count = DB::$instance->where('guide', $this->guide)->where('id != 0')->count('appearances');
-
-      $pagination = new Pagination($this->path, $appearances_per_page, $entry_count);
-      $appearances = Appearances::get($this->guide, $pagination->getLimit());
-    }
+    $pagination = new Pagination($this->path, $appearances_per_page);
+    [$appearances, $search_query] = CGUtils::searchGuide($pagination, $this->guide, $searching, $title);
 
     if (isset($_REQUEST['btnl'])){
       // The "I'm feeling lucky" button: go straight to the first result
@@ -237,7 +227,6 @@ class ColorGuideController extends Controller {
         'guide' => $this->guide,
         'appearances' => $appearances,
         'pagination' => $pagination,
-        'elastic_avail' => $elastic_avail,
         'pinned_appearances' => PinnedAppearance::getGuideAppearances($this->guide),
         'search_query' => $search_query ?? null,
         'json_export_url' => $json_export_url,

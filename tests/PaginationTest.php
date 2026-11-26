@@ -51,16 +51,6 @@ class PaginationTest extends TestCase {
     $this->assertEquals(3, $limit[1]);
   }
 
-  public function testToElastic() {
-    $_GET['page'] = 3;
-    $p = new Pagination('', 10, 30);
-    $elastic = $p->toElastic();
-    $this->assertArrayHasKey('from', $elastic);
-    $this->assertArrayHasKey('size', $elastic);
-    $this->assertEquals(20, $elastic['from']);
-    $this->assertEquals(10, $elastic['size']);
-  }
-
   public function testGetAssocLimit() {
     $_GET['page'] = 3;
     $p = new Pagination('', 10, 30);
